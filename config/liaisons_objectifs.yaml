@@ -1,0 +1,1951 @@
+# Liaisons entre objectifs d'un niveau et leur équivalent au niveau N-1.
+# Partiellement auto-généré par peuplement_03_deduire_liaisons.py,
+# complété interactivement par peuplement_06_resoudre_liaisons_interactif.py.
+#
+liaisons:
+- niveau: N10
+  sequence: S01
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  est_nouveau: true
+- niveau: N10
+  sequence: S01
+  code: '02'
+  nom: Pour les nombres décimaux, passer de l'écriture décimale à l'écriture fractionnaire
+    et inversement.
+  est_nouveau: true
+- niveau: N10
+  sequence: S01
+  code: '03'
+  nom: Pour exprimer les proportions, utiliser les pourcentages, les nombres décimaux
+    et les fractions.
+  est_nouveau: true
+- niveau: N10
+  sequence: S01
+  code: '04'
+  nom: Se repérer sur une droite graduée et dans le plan muni d'un repère cartésien.
+  est_nouveau: true
+- niveau: N10
+  sequence: S01
+  code: '05'
+  nom: Repérer et placer un nombre décimal sur une droite graduée.
+  est_nouveau: true
+- niveau: N10
+  sequence: S02
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  est_nouveau: true
+- niveau: N10
+  sequence: S02
+  code: '02'
+  nom: Reconnaître et produire des fractions égales.
+  est_nouveau: true
+- niveau: N10
+  sequence: S02
+  code: '03'
+  nom: Comparer, ranger, encadrer des nombres décimaux.
+  est_nouveau: true
+- niveau: N10
+  sequence: S02
+  code: '04'
+  nom: Comparer, ranger, encadrer des fractions dont les dénominateurs sont égaux
+    ou multiples l'un de l'autre.
+  est_nouveau: true
+- niveau: N10
+  sequence: S03
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  est_nouveau: true
+- niveau: N10
+  sequence: S03
+  code: '02'
+  nom: Traduire un enchaînement d'opérations à l'aide d'une expression avec des parenthèses.
+  est_nouveau: true
+- niveau: N10
+  sequence: S03
+  code: '03'
+  nom: Effectuer un enchaînement d'opérations en respectant les priorités opératoires.
+  est_nouveau: true
+- niveau: N10
+  sequence: S03
+  code: '04'
+  nom: 'Calculer avec des nombres décimaux: addition, soustraction.'
+  est_nouveau: true
+- niveau: N10
+  sequence: S03
+  code: '05'
+  nom: 'Calculer avec des fractions dont les dénominateurs sont égaux ou multiples
+    l''un de l''autre: addition, soustraction.'
+  est_nouveau: true
+- niveau: N10
+  sequence: S03
+  code: '06'
+  nom: Contrôler la vraisemblance d'un résultat.
+  est_nouveau: true
+- niveau: N10
+  sequence: S04
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  est_nouveau: true
+- niveau: N10
+  sequence: S04
+  code: '02'
+  nom: Calculer le quotient et le reste dans une division euclidienne.
+  est_nouveau: true
+- niveau: N10
+  sequence: S04
+  code: '03'
+  nom: Déterminer si un nombre entier est un multiple ou un diviseur d'un autre nombre
+    entier.
+  est_nouveau: true
+- niveau: N10
+  sequence: S04
+  code: '04'
+  nom: Décomposer une fraction sous la forme de la somme d'un entier et d'une fraction
+    inférieure à 1.
+  est_nouveau: true
+- niveau: N10
+  sequence: S04
+  code: '05'
+  nom: Utiliser les critères de divisibilité.
+  est_nouveau: true
+- niveau: N10
+  sequence: S05
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  est_nouveau: true
+- niveau: N10
+  sequence: S05
+  code: '02'
+  nom: Produire une expression littérale pour élaborer une formule traduisant une
+    propriété ou un programme de calcul.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S05
+  code: '03'
+  nom: Utiliser une expression littérale pour démontrer une propriété.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S05
+  code: '04'
+  nom: Réduire une expression littérale sans parenthèses à la forme $ax + b$ où $a$
+    et $b$ sont des nombres décimaux.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S05
+  code: '05'
+  nom: Substituer une valeur numérique à une lettre pour calculer la valeur d'une
+    expression littérale, ou tester si une égalité où figurent une ou deux indéterminées
+    est vraie quand on leur attribue des valeurs numériques, ou pour contrôler son
+    résultat.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S06
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S06
+  code: '02'
+  nom: Recueillir et organiser des données brutes sous forme de tableau d'effectifs.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S06
+  code: '03'
+  nom: Calculer et interpréter l'effectif total et l'étendue d'une série statistique.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S06
+  code: '04'
+  nom: Calculer et interpréter l'effectif et la fréquence d'une valeur.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S06
+  code: '05'
+  nom: Calculer et interpréter la moyenne d'une valeur d'une série statistique sous
+    forme de liste de valeurs.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S06
+  code: '06'
+  nom: Représenter, lire et interpréter une série statistique sous forme de diagramme
+    bâton.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S07
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S07
+  code: '02'
+  nom: Placer un événement sur une échelle de probabilités.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S07
+  code: '03'
+  nom: Calculer des probabilités dans des situations simples d'équiprobabilité.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S08
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S08
+  code: '02'
+  nom: Reconnaître une situation de proportionnalité.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S08
+  code: '03'
+  nom: Calculer une quatrième proportionnelle par la procédure de son choix.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S08
+  code: '04'
+  nom: Partager une quantité en deux ou trois parts selon un ratio donné.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S08
+  code: '05'
+  nom: Calculer avec l'échelle d'une carte ou d'un plan.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S08
+  code: '06'
+  nom: Résoudre des problèmes faisant intervenir des pourcentages ou des échelles.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S09
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S09
+  code: '02'
+  nom: Représenter la relation de dépendance entre deux grandeurs par un tableau de
+    valeur.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '01'
+  nom: Connaître les notions et les méthodes (partie 1).
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '02'
+  nom: Calculer le périmètre des figures connues et de leur assemblage, en utilisant
+    les formules et les propriétés de symétrie.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '03'
+  nom: Calculer l'aire des figures connues et de leur assemblage, en utilisant les
+    formules et les propriétés de symétrie.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '04'
+  nom: Convertir entre unités de longueurs, entre unités d'aires.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '05'
+  nom: Calculer l'aire des figures connues et de leur assemblage, en utilisant les
+    formules et les propriétés de symétrie.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '06'
+  nom: Calculer le volume des figures connues et de leur assemblage, en utilisant
+    les formules et les propriétés de symétrie.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '07'
+  nom: Convertir entre unités de longueurs, entre unités d'aires, entre unités de
+    volumes (y compris entre litre et mètre cube).
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: 08
+  nom: Exprimer les résultats dans une unité adaptée et vérifier la cohérence des
+    résultats du point de vue des unités.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '11'
+  nom: Connaître les notions et les méthodes (partie 2).
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '12'
+  nom: Calculer des durées et des horaires.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '13'
+  nom: Convertir entre unités de durées.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '14'
+  nom: Calculer le volume des figures connues et de leur assemblage, en utilisant
+    les formules et les propriétés de symétrie.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '15'
+  nom: Convertir entre unités de volumes (y compris entre litre et mètre cube).
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S10
+  code: '16'
+  nom: Exprimer les résultats dans une unité adaptée et vérifier la cohérence des
+    résultats du point de vue des unités.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S11
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S11
+  code: '02'
+  nom: Construire l'image d'un point, d'un segment, d'une droite, d'un cercle par
+    une symétrie axiale.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S11
+  code: '03'
+  nom: Construire l'image d'un point, d'un segment, d'une droite, d'un cercle par
+    une symétrie centrale.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S11
+  code: '04'
+  nom: Transformer une figure par une symétrie axiale.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S11
+  code: '05'
+  nom: Transformer une figure par une symétrie centrale.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S11
+  code: '06'
+  nom: Identifier des symétries dans des frises, des pavages, des rosaces.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '01'
+  nom: 'Connaître les notions et les méthodes (partie 1: angles).'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '02'
+  nom: Utiliser les définitions et les propriétés des angles pour démontrer un résultat.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '03'
+  nom: Utiliser les définitions et les propriétés des triangles pour démontrer un
+    résultat.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '04'
+  nom: Construire un parallélogramme.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '05'
+  nom: \'Ecrire et mettre en \oe uvre un programme de construction de figure.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '11'
+  nom: 'Connaître les notions et les méthodes (partie 2: triangles).'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '12'
+  nom: Utiliser les définitions et les propriétés des triangles pour démontrer un
+    résultat.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '21'
+  nom: 'Connaître les notions et les méthodes (partie 3: parallélogrammes).'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '22'
+  nom: Construire un parallélogramme.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '23'
+  nom: Utiliser les définitions et les propriétés des parallélogrammes pour démontrer
+    un résultat.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S12
+  code: '24'
+  nom: \'Ecrire et mettre en \oe uvre un programme de construction de figure.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S13
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S13
+  code: '02'
+  nom: Reconnaître un pavé droit, un cylindre de révolution, un prisme droit à partir
+    d'une représentation en perspective cavalière, ou de la vue de dessus, de face,
+    etc.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S13
+  code: '03'
+  nom: Mettre en relation une représentation en perspective cavalière et un patron
+    d'un pavé droit, d'un cylindre de révolution ou d'un prisme droit.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S13
+  code: '04'
+  nom: Construire la section plane d'un pavé droit, d'un prisme droit ou d'un cylindre
+    de révolution.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S13
+  code: '05'
+  nom: Utiliser un logiciel de géométrie dynamique pour représenter un pavé droit,
+    un cylindre de révolution ou un prisme droit.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S13
+  code: '06'
+  nom: Utiliser un logiciel de géométrie dynamique pour représenter un pavé droit,
+    un cylindre de révolution ou un prisme droit.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '01'
+  nom: Connaître les notions et les méthodes (partie 1).
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '02'
+  nom: Réaliser des activités d'algorithmique débranchée.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '03'
+  nom: Mettre en ordre ou compléter des blocs pour construire un programme simple.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '04'
+  nom: \'Ecrire et mettre au point un programme de géométrie (déplacement, construction
+    d'une figure, d'un motif répété) utilisant des instructions conditionnelles et/ou
+    des boucles.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '11'
+  nom: Connaître les notions et les méthodes (partie 2).
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '12'
+  nom: Mettre en ordre ou compléter des blocs pour construire un programme simple.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N10
+  sequence: S14
+  code: '13'
+  nom: \'Ecrire et mettre au point un programme de géométrie (déplacement, construction
+    d'une figure, d'un motif répété) utilisant des instructions conditionnelles et/ou
+    des boucles.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N09'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S01
+  code: '01'
+  nom: Connaître les notions et les méthodes (1ère partie).
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '01'
+- niveau: N11
+  sequence: S01
+  code: '02'
+  nom: Utiliser les puissances d'exposant entier strictement positif d'un nombre quelconque.
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '02'
+- niveau: N11
+  sequence: S01
+  code: '03'
+  nom: Utiliser les puissances de 10 d'exposant entier.
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '03'
+- niveau: N11
+  sequence: S01
+  code: '04'
+  nom: Utiliser l'écriture décimale, l'écriture scientifique et passer d'une représentation
+    à l'autre.
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '04'
+- niveau: N11
+  sequence: S01
+  code: '05'
+  nom: Utiliser la racine carrée d'un nombre positif.
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '05'
+- niveau: N11
+  sequence: S01
+  code: '06'
+  nom: Repérer et placer un nombre rationnel sur une droite graduée.
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '05'
+  _regle: nom_proche_meme_seq
+  _similarite: 0.898
+  _auto_match: true
+  _nom_precedent: Repérer et placer un nombre décimal sur une droite graduée.
+  _hint: '# Vérifier : les libellés sont proches mais pas identiques. Ajuster si besoin.'
+- niveau: N11
+  sequence: S01
+  code: '11'
+  nom: Connaître les notions et les méthodes (2nde partie).
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '01'
+  _regle: nom_proche_meme_seq
+  _similarite: 0.86
+  _auto_match: true
+  _nom_precedent: Connaître les notions et les méthodes.
+  _hint: '# Vérifier : les libellés sont proches mais pas identiques. Ajuster si besoin.'
+- niveau: N11
+  sequence: S01
+  code: '12'
+  nom: Utiliser la racine carrée d'un nombre positif.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S01
+  code: '13'
+  nom: Repérer et placer un nombre rationnel sur une droite graduée.
+  precedent:
+    niveau: N10
+    sequence: S01
+    code: '05'
+  _regle: nom_proche_meme_seq
+  _similarite: 0.898
+  _auto_match: true
+  _nom_precedent: Repérer et placer un nombre décimal sur une droite graduée.
+  _hint: '# Vérifier : les libellés sont proches mais pas identiques. Ajuster si besoin.'
+- niveau: N11
+  sequence: S02
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S02
+    code: '01'
+- niveau: N11
+  sequence: S02
+  code: '02'
+  nom: Comparer, ranger et encadrer des nombres rationnels en écriture décimale, en
+    écriture fractionnaire, en notation scientifique.
+  precedent:
+    niveau: N10
+    sequence: S02
+    code: '02'
+- niveau: N11
+  sequence: S02
+  code: '03'
+  nom: Encadrer la racine carrée d'un nombre positif entre deux entiers.
+  precedent:
+    niveau: N10
+    sequence: S02
+    code: '03'
+- niveau: N11
+  sequence: S03
+  code: '01'
+  nom: Connaître les notions et les méthodes (1ere partie).
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '01'
+- niveau: N11
+  sequence: S03
+  code: '02'
+  nom: 'Calculer avec les nombres décimaux: multiplication, division.'
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '02'
+- niveau: N11
+  sequence: S03
+  code: '03'
+  nom: 'Calculer avec les nombres rationnels: addition, soustraction.'
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '03'
+- niveau: N11
+  sequence: S03
+  code: '04'
+  nom: 'Calculer avec les nombres rationnels: multiplication, division.'
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '04'
+- niveau: N11
+  sequence: S03
+  code: '05'
+  nom: Utiliser la racine carrée d'un nombre positif en lien avec des situations géométriques.
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '05'
+- niveau: N11
+  sequence: S03
+  code: '06'
+  nom: Utiliser les ordres de grandeur pour vérifier ses résultats.
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '06'
+- niveau: N11
+  sequence: S03
+  code: '11'
+  nom: Connaître les notions et les méthodes (2nde partie).
+  precedent:
+    niveau: N10
+    sequence: S03
+    code: '01'
+  _regle: nom_proche_meme_seq
+  _similarite: 0.86
+  _auto_match: true
+  _nom_precedent: Connaître les notions et les méthodes.
+  _hint: '# Vérifier : les libellés sont proches mais pas identiques. Ajuster si besoin.'
+- niveau: N11
+  sequence: S03
+  code: '12'
+  nom: Utiliser la racine carrée d'un nombre positif en lien avec des situations géométriques.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S03
+  code: '13'
+  nom: Utiliser les ordres de grandeur pour vérifier ses résultats.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S04
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S04
+    code: '01'
+- niveau: N11
+  sequence: S04
+  code: '02'
+  nom: Déterminer si un nombre entier strictement positif inférieur à 100 est premier.
+  precedent:
+    niveau: N10
+    sequence: S04
+    code: '02'
+- niveau: N11
+  sequence: S04
+  code: '03'
+  nom: Décomposer un nombre entier strictement positif en produit de facteurs premiers.
+  precedent:
+    niveau: N10
+    sequence: S04
+    code: '03'
+- niveau: N11
+  sequence: S04
+  code: '04'
+  nom: Mettre des fractions au même dénominateur.
+  precedent:
+    niveau: N10
+    sequence: S04
+    code: '04'
+- niveau: N11
+  sequence: S04
+  code: '05'
+  nom: Reconnaître et produire des fractions égales.
+  precedent:
+    niveau: N10
+    sequence: S04
+    code: '05'
+- niveau: N11
+  sequence: S04
+  code: '06'
+  nom: Simplifier une fraction.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S05
+    code: '01'
+- niveau: N11
+  sequence: S05
+  code: '02'
+  nom: 'Identifier la structure d''une expression littérale: développée ou factorisée.'
+  precedent:
+    niveau: N10
+    sequence: S05
+    code: '02'
+- niveau: N11
+  sequence: S05
+  code: '03'
+  nom: Réduire une expression littérale.
+  precedent:
+    niveau: N10
+    sequence: S05
+    code: '03'
+- niveau: N11
+  sequence: S05
+  code: '04'
+  nom: Utiliser la simple distributivité pour développer ou factoriser une expression
+    littérale.
+  precedent:
+    niveau: N10
+    sequence: S05
+    code: '04'
+- niveau: N11
+  sequence: S05
+  code: '05'
+  nom: Réduire une expression littérale.
+  precedent:
+    niveau: N10
+    sequence: S05
+    code: '05'
+- niveau: N11
+  sequence: S05
+  code: '06'
+  nom: Utiliser la simple distributivité pour développer ou factoriser une expression
+    littérale.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: '07'
+  nom: Démontrer l'équivalence de deux programmes de calcul.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: 08
+  nom: Résoudre algébriquement une équation du premier degré de type $ax=b$.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: '11'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S05
+    code: '01'
+  _regle: nom_identique_meme_seq
+  _auto_match: true
+- niveau: N11
+  sequence: S05
+  code: '12'
+  nom: Introduire une lettre pour désigner une valeur inconnue et mettre un problème
+    en équation.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: '13'
+  nom: Tester si un nombre est solution d'une équation.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: '14'
+  nom: Démontrer l'équivalence de deux programmes de calcul.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S05
+  code: '15'
+  nom: Résoudre algébriquement une équation du premier degré de type $ax=b$.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S06
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S06
+    code: '01'
+- niveau: N11
+  sequence: S06
+  code: '02'
+  nom: Calculer et interpréter la médiane d'une série statistique sous forme de liste
+    de valeurs.
+  precedent:
+    niveau: N10
+    sequence: S06
+    code: '02'
+- niveau: N11
+  sequence: S06
+  code: '03'
+  nom: Représenter, lire et interpréter une série statistique sous forme de diagramme
+    circulaire.
+  precedent:
+    niveau: N10
+    sequence: S06
+    code: '03'
+- niveau: N11
+  sequence: S07
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S07
+    code: '01'
+- niveau: N11
+  sequence: S07
+  code: '02'
+  nom: Calculer la probabilité d'un événement certain ou d'un événement impossible.
+  precedent:
+    niveau: N10
+    sequence: S07
+    code: '02'
+- niveau: N11
+  sequence: S07
+  code: '03'
+  nom: Calculer des probabilités en utilisant des événements contraires, ou la somme
+    des probabilités d'une expérience aléatoire.
+  precedent:
+    niveau: N10
+    sequence: S07
+    code: '03'
+- niveau: N11
+  sequence: S07
+  code: '04'
+  nom: 'Exprimer des probabilités sous diverses formes: nombre décimal, fraction,
+    pourcentage.'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S07
+  code: '05'
+  nom: Utiliser le fait que la probabilité d'un événement est un nombre compris entre
+    0 et 1 pour contrôler ses résultats.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S08
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S08
+    code: '01'
+- niveau: N11
+  sequence: S08
+  code: '02'
+  nom: Reconnaître si un graphique représente une situation de proportionnalité.
+  precedent:
+    niveau: N10
+    sequence: S08
+    code: '02'
+- niveau: N11
+  sequence: S08
+  code: '03'
+  nom: Calculer une quatrième proportionnelle par la procédure de son choix.
+  precedent:
+    niveau: N10
+    sequence: S08
+    code: '03'
+- niveau: N11
+  sequence: S08
+  code: '04'
+  nom: Utiliser une formule liant deux grandeurs dans une situation de proportionnalité
+    en lien avec d'autres disciplines.
+  precedent:
+    niveau: N10
+    sequence: S08
+    code: '04'
+- niveau: N11
+  sequence: S08
+  code: '05'
+  nom: Modéliser et résoudre des problèmes faisant intervenir la proportionnalité
+    dans le cadre de la géométrie.
+  precedent:
+    niveau: N10
+    sequence: S08
+    code: '05'
+- niveau: N11
+  sequence: S09
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S09
+    code: '01'
+- niveau: N11
+  sequence: S09
+  code: '02'
+  nom: Produire une formule algébrique représentant la dépendance de deux grandeurs.
+  precedent:
+    niveau: N10
+    sequence: S09
+    code: '02'
+- niveau: N11
+  sequence: S09
+  code: '03'
+  nom: Représenter la relation de dépendance de deux grandeurs par un graphique.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S09
+  code: '04'
+  nom: Lire et interpréter des valeurs sur l'axe des abscisses ou l'axe des ordonnées,
+    sur un graphique représentant la relation de dépendance de deux grandeurs.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S10
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S10
+    code: '01'
+- niveau: N11
+  sequence: S10
+  code: '02'
+  nom: Calculer des grandeurs géométriques (périmètre, aire, volume) des figures connues
+    et de leur assemblage, en utilisant les formules et les propriétés de symétrie,
+    de rotation et de translation des figures.
+  precedent:
+    niveau: N10
+    sequence: S10
+    code: '02'
+- niveau: N11
+  sequence: S10
+  code: '03'
+  nom: Calculer avec des grandeurs composées.
+  precedent:
+    niveau: N10
+    sequence: S10
+    code: '03'
+- niveau: N11
+  sequence: S10
+  code: '04'
+  nom: Convertir entre unités avec des grandeurs composées.
+  precedent:
+    niveau: N10
+    sequence: S10
+    code: '04'
+- niveau: N11
+  sequence: S11
+  code: '01'
+  nom: Connaître les notions et les méthodes (1ère partie).
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '01'
+- niveau: N11
+  sequence: S11
+  code: '02'
+  nom: Construire l'image d'un point, d'un segment, d'une droite, d'une cercle par
+    une translation.
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '02'
+- niveau: N11
+  sequence: S11
+  code: '03'
+  nom: Transformer une figure par une translation.
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '03'
+- niveau: N11
+  sequence: S11
+  code: '04'
+  nom: Transformer une figure par une rotation.
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '04'
+- niveau: N11
+  sequence: S11
+  code: '05'
+  nom: Transformer une figure par une translation.
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '05'
+- niveau: N11
+  sequence: S11
+  code: '06'
+  nom: Reconnaître et construire des triangles égaux.
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '06'
+- niveau: N11
+  sequence: S11
+  code: '07'
+  nom: Identifier des translations ou des rotations dans des frises, des pavages et
+    des rosaces.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S11
+  code: '11'
+  nom: Connaître les notions et les méthodes (2ème partie).
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '01'
+  _regle: nom_proche_meme_seq
+  _similarite: 0.86
+  _auto_match: true
+  _nom_precedent: Connaître les notions et les méthodes.
+  _hint: '# Vérifier : les libellés sont proches mais pas identiques. Ajuster si besoin.'
+- niveau: N11
+  sequence: S11
+  code: '12'
+  nom: Construire l'image d'un point, d'un segment, d'une droite, d'une cercle par
+    une rotation.
+  precedent:
+    niveau: N10
+    sequence: S11
+    code: '02'
+  _regle: nom_proche_meme_seq
+  _similarite: 0.898
+  _auto_match: true
+  _nom_precedent: Construire l'image d'un point, d'un segment, d'une droite, d'un
+    cercle par une symétrie axiale.
+  _hint: '# Vérifier : les libellés sont proches mais pas identiques. Ajuster si besoin.'
+- niveau: N11
+  sequence: S11
+  code: '13'
+  nom: Transformer une figure par une rotation.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S11
+  code: '14'
+  nom: Reconnaître et construire des triangles égaux.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S11
+  code: '15'
+  nom: Identifier des translations ou des rotations dans des frises, des pavages et
+    des rosaces.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S12
+  code: '01'
+  nom: Connaître les notions et les méthodes (1ère partie).
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '01'
+- niveau: N11
+  sequence: S12
+  code: '02'
+  nom: 'Théorème de Pythagore: calculer une longueur.'
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '02'
+- niveau: N11
+  sequence: S12
+  code: '03'
+  nom: 'Théorème de Pythagore: prouver qu''un triangle est (ou n''est pas) rectangle.'
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '03'
+- niveau: N11
+  sequence: S12
+  code: '04'
+  nom: 'Théorème de Thalès: calculer une longueur.'
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '04'
+- niveau: N11
+  sequence: S12
+  code: '05'
+  nom: 'Théorème de Thalès: prouver que deux droites sont (ou ne sont pas) parallèles.'
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '05'
+- niveau: N11
+  sequence: S12
+  code: '06'
+  nom: Déterminer et utiliser le cosinus d'un angle aigu dans un triangle rectangle.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S12
+  code: '11'
+  nom: Connaître les notions et les méthodes (2ème partie).
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '11'
+- niveau: N11
+  sequence: S12
+  code: '12'
+  nom: 'Théorème de Thalès: calculer une longueur.'
+  precedent:
+    niveau: N10
+    sequence: S12
+    code: '12'
+- niveau: N11
+  sequence: S12
+  code: '13'
+  nom: 'Théorème de Thalès: prouver que deux droites sont (ou ne sont pas) parallèles.'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S12
+  code: '14'
+  nom: Déterminer et utiliser le cosinus d'un angle aigu dans un triangle rectangle.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N10'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N11
+  sequence: S13
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S13
+    code: '01'
+- niveau: N11
+  sequence: S13
+  code: '02'
+  nom: Se repérer dans un pavé droit.
+  precedent:
+    niveau: N10
+    sequence: S13
+    code: '02'
+- niveau: N11
+  sequence: S13
+  code: '03'
+  nom: Construire et mettre en relation une représentation en perspective cavalière
+    et un patron d'une pyramide ou d'un cône de révolution.
+  precedent:
+    niveau: N10
+    sequence: S13
+    code: '03'
+- niveau: N11
+  sequence: S13
+  code: '04'
+  nom: Construire la section plane d'une pyramide ou d'un cône de révolution.
+  precedent:
+    niveau: N10
+    sequence: S13
+    code: '04'
+- niveau: N11
+  sequence: S13
+  code: '05'
+  nom: Utiliser un logiciel de géométrie dynamique pour représenter une pyramide ou
+    un cône de révolution.
+  precedent:
+    niveau: N10
+    sequence: S13
+    code: '05'
+- niveau: N11
+  sequence: S14
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N10
+    sequence: S14
+    code: '01'
+- niveau: N11
+  sequence: S14
+  code: '02'
+  nom: Gérer le déclenchement d'une action en réponse à un événement interne ou une
+    interaction utilisateur.
+  precedent:
+    niveau: N10
+    sequence: S14
+    code: '02'
+- niveau: N11
+  sequence: S14
+  code: '03'
+  nom: \'Ecrire et mettre au point un programme de géométrie ou de calcul utilisant
+    des variables.
+  precedent:
+    niveau: N10
+    sequence: S14
+    code: '03'
+- niveau: N12
+  sequence: S01
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S01
+    code: '01'
+- niveau: N12
+  sequence: S01
+  code: '02'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir diverses représentations
+    d''un nombre: écriture décimale, écriture fractionnaire, pourcentage, notation
+    scientifique.'
+  precedent:
+    niveau: N11
+    sequence: S01
+    code: '02'
+- niveau: N12
+  sequence: S01
+  code: '03'
+  nom: Modéliser et résoudre des problèmes faisant intervenir la racine carrée d'un
+    nombre.
+  precedent:
+    niveau: N11
+    sequence: S01
+    code: '03'
+- niveau: N12
+  sequence: S02
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S02
+    code: '01'
+- niveau: N12
+  sequence: S02
+  code: '02'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir la comparaison, le
+    rangement, l''encadrement: de nombres en écriture décimale; de nombres en écriture
+    fractionnaire; de nombres en notation scientifique; de racines carrées.'
+  precedent:
+    niveau: N11
+    sequence: S02
+    code: '02'
+- niveau: N12
+  sequence: S03
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S03
+    code: '01'
+- niveau: N12
+  sequence: S03
+  code: '02'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir l''addition, la soustraction,
+    la multiplication, la division, les puissances entières, la racine carrée avec:
+    des nombres en écriture décimale; des nombres en écriture fractionnaire; des nombres
+    en notation scientifique.'
+  precedent:
+    niveau: N11
+    sequence: S03
+    code: '02'
+- niveau: N12
+  sequence: S04
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S04
+    code: '01'
+- niveau: N12
+  sequence: S04
+  code: '02'
+  nom: Rendre une fraction irréductible.
+  precedent:
+    niveau: N11
+    sequence: S04
+    code: '02'
+- niveau: N12
+  sequence: S04
+  code: '03'
+  nom: Modéliser et résoudre des problèmes faisant intervenir la divisibilité et les
+    nombres premiers.
+  precedent:
+    niveau: N11
+    sequence: S04
+    code: '03'
+- niveau: N12
+  sequence: S05
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '01'
+- niveau: N12
+  sequence: S05
+  code: '02'
+  nom: Utiliser la double distributivité pour développer une expression littérale.
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '02'
+- niveau: N12
+  sequence: S05
+  code: '03'
+  nom: Développer une expression littérale du type \mbox{$(a + b)(a - b)$}.
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '03'
+- niveau: N12
+  sequence: S05
+  code: '04'
+  nom: Factoriser une expression littérale du type \mbox{$a^2-b^2$}.
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '04'
+- niveau: N12
+  sequence: S05
+  code: '05'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir le calcul littéral:
+    \begin{itemize}[label=\ding{51}] \item équation du premier degré, \item équation-produit
+    se ramenant au premier degré, \item équation de la forme \mbox{$x^2 = a$}. \end{itemize}'
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '05'
+- niveau: N12
+  sequence: S05
+  code: '11'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '11'
+- niveau: N12
+  sequence: S05
+  code: '12'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir le calcul littéral:
+    équation du premier degré; équation-produit se ramenant au premier degré; équation
+    de la forme \mbox{$x^2 = a$}.'
+  precedent:
+    niveau: N11
+    sequence: S05
+    code: '12'
+- niveau: N12
+  sequence: S06
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S06
+    code: '01'
+- niveau: N12
+  sequence: S06
+  code: '02'
+  nom: Calculer et interpréter la médiane et la moyenne d'une série statistique sous
+    forme de tableau d'effectifs.
+  precedent:
+    niveau: N11
+    sequence: S06
+    code: '02'
+- niveau: N12
+  sequence: S06
+  code: '03'
+  nom: Représenter, lire et interpréter une série statistique sous forme d'histogramme
+    pour des classes de même amplitude.
+  precedent:
+    niveau: N11
+    sequence: S06
+    code: '03'
+- niveau: N12
+  sequence: S06
+  code: '04'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir les séries statistiques:
+    l''organisation de données; le calcul d''indicateurs de position et de dispersion;
+    la représentation sous forme de diagramme-bâton, de diagramme circulaire, d''histogramme.'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S07
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S07
+    code: '01'
+- niveau: N12
+  sequence: S07
+  code: '02'
+  nom: Calculer des probabilités pour des expériences aléatoires simples à deux épreuves.
+  precedent:
+    niveau: N11
+    sequence: S07
+    code: '02'
+- niveau: N12
+  sequence: S07
+  code: '03'
+  nom: Faire le lien entre stabilisation des fréquences et probabilités.
+  precedent:
+    niveau: N11
+    sequence: S07
+    code: '03'
+- niveau: N12
+  sequence: S07
+  code: '04'
+  nom: Modéliser et résoudre des problèmes faisant intervenir les probabilités.
+  precedent:
+    niveau: N11
+    sequence: S07
+    code: '04'
+- niveau: N12
+  sequence: S08
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S08
+    code: '01'
+- niveau: N12
+  sequence: S08
+  code: '02'
+  nom: Modéliser une situation de proportionnalité à l'aide d'une fonction linéaire.
+  precedent:
+    niveau: N11
+    sequence: S08
+    code: '02'
+- niveau: N12
+  sequence: S08
+  code: '03'
+  nom: Utiliser le lien entre pourcentage d'évolution et c\oe fficient multiplicateur.
+  precedent:
+    niveau: N11
+    sequence: S08
+    code: '03'
+- niveau: N12
+  sequence: S08
+  code: '04'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir la proportionnalité:
+    ratio; quatrième proportionnelle; pourcentage; évolution d''une grandeur; échelle;
+    agrandissement/réduction.'
+  precedent:
+    niveau: N11
+    sequence: S08
+    code: '04'
+- niveau: N12
+  sequence: S09
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S09
+    code: '01'
+- niveau: N12
+  sequence: S09
+  code: '02'
+  nom: Déterminer l'image d'un nombre.
+  precedent:
+    niveau: N11
+    sequence: S09
+    code: '02'
+- niveau: N12
+  sequence: S09
+  code: '03'
+  nom: 'Déterminer un antécédent d''un nombre à partir: de la représentation graphique;
+    du tableau de valeurs; de la formule algébrique quand elle se ramène au premier
+    degré.'
+  precedent:
+    niveau: N11
+    sequence: S09
+    code: '03'
+- niveau: N12
+  sequence: S09
+  code: '04'
+  nom: Représenter graphiquement une fonction affine.
+  precedent:
+    niveau: N11
+    sequence: S09
+    code: '04'
+- niveau: N12
+  sequence: S09
+  code: '05'
+  nom: Déterminer les paramètres d'une fonction affine à partir de sa courbe représentative.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S09
+  code: '06'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir les fonctions dans
+    le cas de: \begin{itemize}[label=\ding{51}] \item une situation de proportionnalité,
+    \item un phénomène continu. \end{itemize}'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S09
+  code: '11'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S09
+    code: '01'
+  _regle: nom_identique_meme_seq
+  _auto_match: true
+- niveau: N12
+  sequence: S09
+  code: '12'
+  nom: Représenter graphiquement une fonction affine.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S09
+  code: '13'
+  nom: Déterminer les paramètres d'une fonction affine à partir de sa courbe représentative.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S09
+  code: '14'
+  nom: Modéliser et résoudre des problèmes faisant intervenir les fonctions dans le
+    cas d'une situation de proportionnalité ou d'un phénomène continu.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S10
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S10
+    code: '01'
+- niveau: N12
+  sequence: S10
+  code: '02'
+  nom: Calculer des grandeurs géométriques (périmètre, aire, volume) des figures connues
+    et de leur assemblage, en utilisant les formules et les propriétés de symétrie,
+    de rotation, de translation, de réduction ou d'agrandissement des figures.
+  precedent:
+    niveau: N11
+    sequence: S10
+    code: '02'
+- niveau: N12
+  sequence: S10
+  code: '03'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir le calcul de grandeurs,
+    en utilisant les unités adaptées et en vérifiant la cohérence des résultats: durées
+    et horaires; grandeurs géométriques des figures connues et de leur assemblage;
+    calcul de grandeurs composées; conversion d''unités.'
+  precedent:
+    niveau: N11
+    sequence: S10
+    code: '03'
+- niveau: N12
+  sequence: S11
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S11
+    code: '01'
+- niveau: N12
+  sequence: S11
+  code: '02'
+  nom: Construire l'image d'un point, d'un segment, d'une droite, d'une cercle par
+    une homothétie.
+  precedent:
+    niveau: N11
+    sequence: S11
+    code: '02'
+- niveau: N12
+  sequence: S11
+  code: '03'
+  nom: Transformer une figure par une homothétie.
+  precedent:
+    niveau: N11
+    sequence: S11
+    code: '03'
+- niveau: N12
+  sequence: S11
+  code: '04'
+  nom: Identifier des homothéties dans des frises, des pavages et des rosaces.
+  precedent:
+    niveau: N11
+    sequence: S11
+    code: '04'
+- niveau: N12
+  sequence: S11
+  code: '05'
+  nom: Faire le lien entre les homothéties et la proportionnalité.
+  precedent:
+    niveau: N11
+    sequence: S11
+    code: '05'
+- niveau: N12
+  sequence: S11
+  code: '06'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir les transformations
+    géométriques pour tracer l''image d''une figure donnée: symétries; rotations;
+    translations; homothéties.'
+  precedent:
+    niveau: N11
+    sequence: S11
+    code: '06'
+- niveau: N12
+  sequence: S12
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '01'
+- niveau: N12
+  sequence: S12
+  code: '02'
+  nom: 'Théorème de Thalès: calculer une longueur.'
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '02'
+- niveau: N12
+  sequence: S12
+  code: '03'
+  nom: 'Théorème de Thalès: prouver que deux droites sont (ou ne sont pas) parallèles.'
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '03'
+- niveau: N12
+  sequence: S12
+  code: '04'
+  nom: Déterminer et utiliser le sinus et la tangente d'un angle aigu trigonométrie
+    dans un triangle rectangle.
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '04'
+- niveau: N12
+  sequence: S12
+  code: '05'
+  nom: 'Démontrer un résultat en utilisant les définitions et les propriétés connues:
+    \begin{itemize}[label=\ding{51}] \item angles, \item triangles et parallélogrammes,
+    \item théorème de Pythagore, réciproque et contraposée, \item théorème de Thalès,
+    réciproque et contraposée, \item trigonométrie dans un triangle rectangle. \end{itemize}'
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '05'
+- niveau: N12
+  sequence: S12
+  code: '11'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '11'
+- niveau: N12
+  sequence: S12
+  code: '12'
+  nom: Déterminer et utiliser le sinus et la tangente d'un angle aigu trigonométrie
+    dans un triangle rectangle.
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '12'
+- niveau: N12
+  sequence: S12
+  code: '13'
+  nom: 'Démontrer un résultat en utilisant les définitions et les propriétés connues:
+    angles; triangles et parallélogrammes; théorème de Pythagore, réciproque et contraposée;
+    théorème de Thalès, réciproque et contraposée; trigonométrie dans un triangle
+    rectangle.'
+  precedent:
+    niveau: N11
+    sequence: S12
+    code: '13'
+- niveau: N12
+  sequence: S13
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S13
+    code: '01'
+- niveau: N12
+  sequence: S13
+  code: '02'
+  nom: Se repérer sur une sphère.
+  precedent:
+    niveau: N11
+    sequence: S13
+    code: '02'
+- niveau: N12
+  sequence: S13
+  code: '03'
+  nom: Utiliser un logiciel de géométrie dynamique pour représenter des solides.
+  precedent:
+    niveau: N11
+    sequence: S13
+    code: '03'
+- niveau: N12
+  sequence: S13
+  code: '04'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir la représentation en
+    3D: \begin{itemize}[label=\ding{51}] \item repérage en une, deux ou trois dimensions,
+    \item relation entre perspective cavalière et patron d''un solide connu, \item
+    section plane d''un solide connu. \end{itemize}'
+  precedent:
+    niveau: N11
+    sequence: S13
+    code: '04'
+- niveau: N12
+  sequence: S13
+  code: '05'
+  nom: Utiliser un logiciel de géométrie dynamique pour représenter des solides.
+  precedent:
+    niveau: N11
+    sequence: S13
+    code: '05'
+- niveau: N12
+  sequence: S13
+  code: '11'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S13
+    code: '01'
+  _regle: nom_identique_meme_seq
+  _auto_match: true
+- niveau: N12
+  sequence: S13
+  code: '12'
+  nom: Construire la section plane d'une boule.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S13
+  code: '13'
+  nom: 'Modéliser et résoudre des problèmes faisant intervenir la représentation en
+    3D: repérage en une, deux ou trois dimensions; relation entre perspective cavalière
+    et patron d''un solide connu; section plane d''un solide connu.'
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'
+- niveau: N12
+  sequence: S14
+  code: '01'
+  nom: Connaître les notions et les méthodes.
+  precedent:
+    niveau: N11
+    sequence: S14
+    code: '01'
+- niveau: N12
+  sequence: S14
+  code: '02'
+  nom: Décomposer un problème en sous-problèmes et le traduire en un programme principal
+    et des sous-programmes.
+  precedent:
+    niveau: N11
+    sequence: S14
+    code: '02'
+- niveau: N12
+  sequence: S14
+  code: '03'
+  nom: Ecrire et mettre au point un programme de géométrie, de calcul, de simulations
+    d'expérience aléatoire utilisant des sous-programmes.
+  precedent:
+    niveau: N11
+    sequence: S14
+    code: '03'
+- niveau: N12
+  sequence: S14
+  code: '04'
+  nom: Ecrire et mettre au point un jeu utilisant des instructions conditionnelles,
+    des boucles, des variables et des sous-programmes.
+  a_completer: true
+  _hint_precedent: '# chercher un précédent en N11'
+  _hint_nouveau: '# ou marquer est_nouveau: true si objectif nouveau'

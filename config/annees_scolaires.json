@@ -1,0 +1,12 @@
+{
+  "_commentaire": "Années scolaires connues de seqenseigne. À éditer à la main. 'archive: true' = années passées (apparaissent en bas de la liste). 'annee_courante' = présélection à l'ouverture de l'écran Progression annuelle.",
+  "annee_courante": "2026-2027",
+  "annees_scolaires": [
+    { "code": "2021-2022", "libelle": "2021-2022", "archive": true  },
+    { "code": "2022-2023", "libelle": "2022-2023", "archive": true  },
+    { "code": "2023-2024", "libelle": "2023-2024", "archive": true  },
+    { "code": "2024-2025", "libelle": "2024-2025", "archive": true  },
+    { "code": "2025-2026", "libelle": "2025-2026", "archive": true },
+    { "code": "2026-2027", "libelle": "2026-2027", "archive": false }
+  ]
+}
