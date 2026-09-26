@@ -1,0 +1,15 @@
+{
+  "name": "seqenseigne-js-tests",
+  "version": "0.18.0.3",
+  "private": true,
+  "description": "Tests JS (Vitest) pour les ateliers front de seqenseigne. Exécutés côté développement uniquement — non requis au déploiement (USB portable).",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.8"
+  }
+}

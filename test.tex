@@ -1,0 +1,301 @@
+%% Document généré pour rendu atomique — ne pas éditer à la main
+%% Atome : fiche N12/S05 — 68a54b3cd64f4997b30c605caedb0674
+%% Préambule sur mesure : 53 définitions inlinées, 24 paquets externes
+
+\documentclass[11pt,a4paper]{article}
+
+%% ── Paquets externes (noyau pour atome) ───────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{etoolbox}
+\usepackage{xkeyval}
+\usepackage{xifthen}
+\usepackage{environ}
+\usepackage{forloop}
+\usepackage{xcolor}
+\usepackage{ninecolors}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{tabularray}
+\usepackage{multicol}
+\usepackage[inline]{enumitem}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage[theorems,breakable,skins]{tcolorbox}
+\usepackage{pifont}
+
+%% ── Marges (alignées sur les livrets) ───────────────
+\newgeometry{left=35pt,right=35pt,top=65pt,bottom=70pt}
+
+%% ── Initialisations de bibliothèques ─────────────────
+\usetikzlibrary{babel,shapes.geometric,arrows.meta,positioning,calc,matrix,fit,intersections}
+\UseTblrLibrary{booktabs}
+\UseTblrLibrary{varwidth}
+
+%% ── Définitions du paquet seqenseigne (inlinées) ─────
+%%    Fermeture transitive des macros effectivement utilisées
+%%    par l'atome — au lieu de \usepackage{seqenseigne}
+%%    qui chargerait ~110 paquets.
+\makeatletter
+\newcommand{\seqCouleurRougeVif}{red!85!black}
+\newcommand{\seqCouleurRougeModere}{red!50!white}
+\newcommand{\seqCouleurRougeMoyen}{red!25!white}
+\newcommand{\seqCouleurRougePale}{red!10!white}
+\newcommand{\seqCouleurJauneModere}{yellow!50!white}
+\newcommand{\seqCouleurJaunePale}{yellow!10!white}
+\newcommand{\seqCouleurBleuVif}{blue!85!black}
+\newcommand{\seqCouleurBleuModere}{blue!50!white}
+\newcommand{\seqCouleurBleuMoyen}{blue!25!white}
+\newcommand{\seqCouleurBleuPale}{blue!10!white}
+\newcommand{\seqCouleurCanardModere}{teal!50!white}
+\newcommand{\seqCouleurCanardPale}{teal!10!white}
+\newcommand{\seqCouleurMarronVif}{brown!85!black}
+\newcommand{\seqCouleurMarronModere}{brown!50!white}
+\newcommand{\seqCouleurMarronMoyen}{brown!25!white}
+\newcommand{\seqCouleurMarronPale}{brown!10!white}
+\newcommand{\seqCouleurOrangeModere}{orange!50!white}
+\newcommand{\seqCouleurOrangePale}{orange!10!white}
+\newcommand{\seqCouleurVioletVif}{violet!85!black}
+\newcommand{\seqCouleurVioletMoyen}{violet!25!white}
+\newcommand{\seqCouleurVioletModere}{violet!50!white}
+\newcommand{\seqCouleurVioletPale}{violet!10!white}
+\newcommand{\seqCouleurVertModere}{green!50!white}
+\newcommand{\seqCouleurVertPale}{green!10!white}
+\newcommand{\seqCouleurRoseVif}{magenta!85!black}
+\newcommand{\seqCouleurRoseMoyen}{magenta!25!white}
+\newcommand{\seqCouleurRoseModere}{magenta!50!white}
+\newcommand{\seqCouleurRosePale}{magenta!10!white}
+\newcommand{\seqCouleurLimeModere}{lime!50!white}
+\newcommand{\seqCouleurLimePale}{lime!10!white}
+\newcommand{\seqCouleurNoirVif}{black!85!black}
+\newcommand{\seqCouleurNoirMoyen}{black!25!white}
+\newcommand{\seqCouleurNoirModere}{black!50!white}
+\newcommand{\seqCouleurNoirPale}{black!10!white}
+\newcommand{\seqCouleurGrisModere}{gray!50!white}
+\newcommand{\seqCouleurGrisPale}{gray!10!white}
+\newcommand{\seq@setColors}[1]{
+\ifthenelse{ \equal{#1}{nombres} }
+{
+\def\seq@couleuri@vif{\seqCouleurRougeVif}
+\def\seq@couleuri@moyen{\seqCouleurRougeMoyen}
+\def\seq@couleuri@modere{\seqCouleurRougeModere}
+\def\seq@couleuri@pale{\seqCouleurRougePale}
+\def\seq@couleurii@modere{\seqCouleurJauneModere}
+\def\seq@couleurii@pale{\seqCouleurJaunePale}
+}
+{
+\ifthenelse{ \equal{#1}{donnees} }
+{
+\def\seq@couleuri@vif{\seqCouleurBleuVif}
+\def\seq@couleuri@moyen{\seqCouleurBleuMoyen}
+\def\seq@couleuri@modere{\seqCouleurBleuModere}
+\def\seq@couleuri@pale{\seqCouleurBleuPale}
+\def\seq@couleurii@modere{\seqCouleurCanardModere}
+\def\seq@couleurii@pale{\seqCouleurCanardPale}
+}
+{
+\ifthenelse{ \equal{#1}{grandeurs} }
+{
+\def\seq@couleuri@vif{\seqCouleurMarronVif}
+\def\seq@couleuri@moyen{\seqCouleurMarronMoyen}
+\def\seq@couleuri@modere{\seqCouleurMarronModere}
+\def\seq@couleuri@pale{\seqCouleurMarronPale}
+\def\seq@couleurii@modere{\seqCouleurOrangeModere}
+\def\seq@couleurii@pale{\seqCouleurOrangePale}
+}
+{
+\ifthenelse{ \equal{#1}{geometrie} }
+{
+\def\seq@couleuri@vif{\seqCouleurVioletVif}
+\def\seq@couleuri@moyen{\seqCouleurVioletMoyen}
+\def\seq@couleuri@modere{\seqCouleurVioletModere}
+\def\seq@couleuri@pale{\seqCouleurVioletPale}
+\def\seq@couleurii@modere{\seqCouleurVertModere}
+\def\seq@couleurii@pale{\seqCouleurVertPale}
+}
+{
+\ifthenelse{ \equal{#1}{algorithmique} }
+{
+\def\seq@couleuri@vif{\seqCouleurRoseVif}
+\def\seq@couleuri@moyen{\seqCouleurRoseMoyen}
+\def\seq@couleuri@modere{\seqCouleurRoseModere}
+\def\seq@couleuri@pale{\seqCouleurRosePale}
+\def\seq@couleurii@modere{\seqCouleurLimeModere}
+\def\seq@couleurii@pale{\seqCouleurLimePale}
+}
+{
+\def\seq@couleuri@vif{\seqCouleurNoirVif}
+\def\seq@couleuri@moyen{\seqCouleurNoirMoyen}
+\def\seq@couleuri@modere{\seqCouleurNoirModere}
+\def\seq@couleuri@pale{\seqCouleurNoirPale}
+\def\seq@couleurii@modere{\seqCouleurGrisModere}
+\def\seq@couleurii@pale{\seqCouleurGrisPale}
+}
+}
+}
+}
+}
+}
+\newcommand{\acompleter}[1]{\;\underline{\phantom{#1}}\;}
+\newtcolorbox{boiteTitreSection}{
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif
+}
+\define@cmdkey[seq]{boiteContenuFlashcard}{titre}[Exemples]{}
+\newenvironment{seqBoiteContenuFlashcard}[1][]{
+\setkeys[seq]{boiteContenuFlashcard}{titre,#1}
+\begin{tcolorbox}[title=\cmdseq@boiteContenuFlashcard@titre
+,natural height
+,colback=\seq@couleurii@pale
+,colframe=\seq@couleuri@vif
+,colbacktitle=\seq@couleuri@vif
+,fonttitle=\bfseries
+,enhanced
+,attach boxed title to top left={yshift=-5pt,xshift=20pt}
+]
+}{
+\end{tcolorbox}
+}
+\define@cmdkey[seq]{boiteFillContenuFlashcard}{titre}[Exemples]{}
+\newenvironment{seqBoiteFillContenuFlashcard}[1][]{
+\setkeys[seq]{boiteFillContenuFlashcard}{titre,#1}
+\begin{tcolorbox}[title=\cmdseq@boiteFillContenuFlashcard@titre
+,height fill
+,colback=\seq@couleurii@pale
+,colframe=\seq@couleuri@vif
+,colbacktitle=\seq@couleuri@vif
+,fonttitle=\bfseries
+,enhanced
+,attach boxed title to top left={yshift=-5pt,xshift=20pt}
+]
+}{
+\end{tcolorbox}
+\newpage
+}
+\define@cmdkey[seq]{colItem}{nbCols}[2]{}
+\define@cmdkey[seq]{colItem}{label}[$\bullet$]{}
+\newenvironment{seqColItem}[1][]{
+\setkeys[seq]{colItem}{nbCols,label,#1}
+\ifthenelse{\cmdseq@colItem@nbCols > 1}
+{\begin{multicols}{\cmdseq@colItem@nbCols}}{}
+\begin{itemize}[label=\cmdseq@colItem@label]
+}{
+\end{itemize}
+\ifthenelse{\cmdseq@colItem@nbCols > 1}{\end{multicols}}{}
+}
+\newcommand{\seqSetColorsTheme}[1]{
+\seq@setColors{#1}
+}
+\newcommand{\seqSetCodeNiveau}[1]{\gdef\seq@code@niveau{#1}}
+\newcommand{\seqSetCodeSequence}[1]{\gdef\seq@code@sequence{#1}}
+\newcommand{\seqTitreSection}[1]{
+\ifdocstd
+\newpage
+\newgeometry{left=35pt,right=35pt,top=65pt,bottom=70pt}
+\fi
+\begin{boiteTitreSection}
+\begin{minipage}[c][20pt][c]{\linewidth}
+\centering \Large \textbf{#1}
+\end{minipage}
+\end{boiteTitreSection}
+\par\vspace{10pt}
+}
+\newcommand\seqCreeCompteurs{
+\newcounter{NotionNum}
+\newcounter{DefinitionNum}
+\newcounter{ProprieteNum}
+\newcounter{MethodeNum}
+\newcounter{SerieExosNum}
+\newcounter{ExoNum}
+\newcounter{AnnexeNum}
+
+\renewcommand{\theHExoNum}{\theSerieExosNum-\theExoNum}
+\renewcommand{\theHNotionNum}{\theSerieExosNum-\theNotionNum}
+\renewcommand{\theHMethodeNum}{\theSerieExosNum-\theMethodeNum}
+\renewcommand{\theHDefinitionNum}{\theSerieExosNum-\theDefinitionNum}
+\renewcommand{\theHProprieteNum}{\theSerieExosNum-\theProprieteNum}
+}
+\newcommand{\seqFrac}[2]{\dfrac{\strut{} #1}{\strut{} #2}}
+\newif\ifdocstd
+\makeatother
+
+%% ── Macros transverses ───────────────────────────────
+\providecommand{\acompleter}[1]{\;\underline{\phantom{#1}}\;}
+
+%% Thème de la séquence
+\seqSetColorsTheme{nombres}
+\seqSetCodeNiveau{N12}
+\seqSetCodeSequence{S05}
+
+\begin{document}
+
+%% Fallback pour les \theHxxx normalement définis par hyperref.
+\providecommand{\theHExoNum}{\theExoNum}
+\providecommand{\theHNotionNum}{\theNotionNum}
+\providecommand{\theHMethodeNum}{\theMethodeNum}
+\providecommand{\theHDefinitionNum}{\theDefinitionNum}
+\providecommand{\theHProprieteNum}{\theProprieteNum}
+
+\seqCreeCompteurs
+
+\seqTitreSection{Modéliser et résoudre des problèmes faisant intervenir le calcul littéral: équation du premier degré; équation-produit se ramenant au premier degré; équation de la forme \mbox{$x^2 = a$}.}
+\begin{seqBoiteContenuFlashcard}[titre=Méthode]
+Modéliser un problème signifie \acompleter{traduire l'énoncé}, qui est écrit en langage \acompleter{naturel}, en langage \acompleter{mathématique}:
+			\begin{seqColItem}[nbCols=1,label=\ding{224}]
+				\item La valeur cherchée dans le problème devient \acompleter{l'inconnue de l'équation}.
+				\item Le type d'équation qu'on va écrire dépend fortement \acompleter{de l'énoncé} et il n'y a pas de procédure précise à suivre pour construire l'équation. \newline Cependant, on se basera souvent sur \acompleter{la compréhension des mathématiques en langage naturel}, \acompleter{la connaissance des formules de calcul de grandeurs}, et éventuellement \acompleter{les formules scientifiques \og classiques \fg{}}.
+			\end{seqColItem}
+\end{seqBoiteContenuFlashcard}
+\begin{seqBoiteContenuFlashcard}[titre=Méthode]
+Une équation du premier degré est de la forme \og \acompleter{$ax+b=0$} \fg{} où $a$ et $b$ sont \acompleter{des nombres} (avec \acompleter{$a \neq 0$}) et $x$ est \acompleter{l'inconnue}. \newline Résoudre cette équation veut dire trouver par quelle \acompleter{valeur numérique} il faut remplacer \acompleter{$x$} pour que l'équation \acompleter{soit vraie}. \newline Pour ce faire, on a le droit d'effectuer les \acompleter{transformations} suivantes, qui ne changent pas \acompleter{les solutions de l'équation}:
+			\begin{seqColItem}[nbCols=1,label=\ding{224}]
+				\item Ajouter \acompleter{la même quantité} aux deux \acompleter{membres} de l'équation.
+				\item Multiplier chaque \acompleter{membre} de l'équation par \acompleter{la même quantité non nulle}.
+			\end{seqColItem}
+\end{seqBoiteContenuFlashcard}
+\begin{seqBoiteContenuFlashcard}[titre=Méthode]
+En utilisant le symbole \og $\Leftrightarrow$ \fg{} qui signifie que \acompleter{l'équation précédente} a les mêmes solutions que \acompleter{l'équation suivante}, on a:
+			\begin{align*}
+				& ax+b &= \quad & 0 \\
+				\Leftrightarrow \quad & ax+b\acompleter{-b} &= \quad & 0\acompleter{-b} & \text{(en \acompleter{ajoutant $(-b)$} aux 2\,membres)} \\
+				\Leftrightarrow \quad & \acompleter{ax} &= \quad & \acompleter{-b} & \\
+				\Leftrightarrow \quad & ax \acompleter{\div a} &= \quad & -b \acompleter{\div a} & \text{(en \acompleter{divisant par $a$} les 2\,membres)} \\
+				\Leftrightarrow \quad & \acompleter{x} &= \quad & \acompleter{-\seqFrac{b}{a}}
+			\end{align*}
+			Finalement, l'ensemble solution est $\mathcal{S}=\{\acompleter{-\seqFrac{b}{a}}\}$.
+\end{seqBoiteContenuFlashcard}
+\begin{seqBoiteContenuFlashcard}[titre=Méthode]
+Une équation-produit se ramenant au premier degré est de la forme \og \acompleter{$(ax+b)(cx+d)=0$} \fg{} où $a$, $b$, $c$ et $d$ sont \acompleter{des nombres} (avec \acompleter{$a \neq 0$} et \acompleter{$c \neq 0$}) et $x$ est \acompleter{l'inconnue}. \newline En utilisant ce qui précède, on a:
+			\begin{align*}
+				& (ax+b)(cx+d) &= \quad & 0 \\
+				\Leftrightarrow \quad & \acompleter{ax+b=0} & \text{ou\quad} & \acompleter{cx+d=0} & \text{(un produit est nul quand \acompleter{un des facteurs l'est})} \\
+				\Leftrightarrow \quad & x=\acompleter{-\seqFrac{b}{a}} & \text{ou\quad} & x=\acompleter{-\seqFrac{d}{c}} 
+			\end{align*}
+			Finalement, l'ensemble solution est $\mathcal{S}=\{\acompleter{-\seqFrac{b}{a}}; \acompleter{-\seqFrac{d}{c}}\}$.
+\end{seqBoiteContenuFlashcard}
+\begin{seqBoiteContenuFlashcard}[titre=Méthode]
+Pour résoudre une équation de la forme $x^2=a$, on doit considérer \acompleter{2\,cas disjoints}:
+			\begin{seqColItem}[nbCols=1,label=\ding{224}]
+				\item Si $a$ est \acompleter{strictement négatif}, l'ensemble solution est \acompleter{vide} car un \acompleter{carré} est \acompleter{toujours positif ou nul}: $\mathcal{S}=\acompleter{\emptyset}$ 
+				\item Si $a$ est \acompleter{positif ou nul}, on a:
+					\begin{align*}
+						& x^2 &= \quad & a \\
+						\Leftrightarrow \quad & x^2\acompleter{-a} &= \quad & a\acompleter{-a} & \text{(en \acompleter{ajoutant $(-a)$} aux 2\,membres)} \\
+						\Leftrightarrow \quad & \acompleter{x^2-a} &= \quad & \acompleter{0} & \\
+						\Leftrightarrow \quad & x^2-\acompleter{(\sqrt{a})^2} &= \quad & 0 & \text{(car \acompleter{$a=(\sqrt{a})^2$})} \\
+						\Leftrightarrow \quad & (\acompleter{x+\sqrt{a}})(\acompleter{x-\sqrt{a}}) &= \quad & 0 & \text{(en utilisant \acompleter{la 3e identité remarquable})} \\
+						\Leftrightarrow \quad & x=\acompleter{-\sqrt{a}} & \text{ou\quad} & x=\acompleter{\sqrt{a}} 
+					\end{align*}
+					Finalement, l'ensemble solution est $\mathcal{S}=\{\acompleter{-\sqrt{a}}; \acompleter{\sqrt{a}}\}$.
+			\end{seqColItem}
+\end{seqBoiteContenuFlashcard}
+\begin{seqBoiteFillContenuFlashcard}\end{seqBoiteFillContenuFlashcard}
+
+\end{document}
