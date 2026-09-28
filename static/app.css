@@ -253,6 +253,15 @@ select { padding: 6px 10px; border: 1px solid var(--border-medium); border-radiu
 .badge-I,  .b-I  { background: var(--niv-I-bg);  color: var(--niv-I-text); }
 .badge-NE, .b-NE { background: var(--niv-NE-bg); color: var(--niv-NE-text); }
 
+/* v0.36.1 — Fond des cellules « niveau » selon le niveau choisi. */
+.td-niv.niv-rouge  { background: #fee2e2; }
+.td-niv.niv-orange { background: #fef3c7; }
+.td-niv.niv-vert   { background: #dcfce7; }
+.td-niv.niv-bleu   { background: #dbeafe; }
+.td-niv.niv-gris   { background: #ececec; }
+.td-niv.niv-neutre, .td-niv.niv-blanc { background: transparent; }
+.td-niv select { background: transparent; }
+
 /* ============================================================================
    12. TABLEAU DE SUIVI
    ============================================================================ */

@@ -1067,10 +1067,13 @@ function renderClasseView() {
   head+='<th class="th-note">Note<br>/20</th></tr></thead>';
   let body='<tbody>';
   eleves.forEach(e=>{
-    body+=`<tr><td class="td-eleve">${e.nom} ${e.prenom[0]}.</td>`;
+    // v0.36.1 — Prénom en entier (les élèves sont mieux identifiés par le prénom).
+    body+=`<tr><td class="td-eleve">${e.prenom} ${e.nom}</td>`;
     objs.forEach(obj=>{
       const niv=getNiv(currentSeq,e.id,obj.code);
-      body+=`<td class="td-niv"><select onchange="setNivManuel('${e.id}','${obj.code}',this.value)">${tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('')}</select></td>`;
+      // v0.36.1 — Couleur de la cellule selon le niveau choisi (NIV_REF.couleur).
+      const coul=(NIV_REF?.[niv]?.couleur)||'neutre';
+      body+=`<td class="td-niv niv-${coul}"><select onchange="setNivManuel('${e.id}','${obj.code}',this.value)">${tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('')}</select></td>`;
     });
     body+=`<td class="td-note">${calcNote(currentSeq,e.id,currentPartie)}</td></tr>`;
   });
@@ -1081,9 +1084,12 @@ function renderClasseView() {
 
 function renderSummary() {
   const seq=getSeq(currentSeq); if(!seq)return;
+  // v0.36.1 — Compter sur les objectifs de la PARTIE affichée (cohérent avec le
+  // tableau), pas sur toute la séquence.
+  const objs=_objectifsDeLaPartie(seq,currentPartie);
   const cnt={};
   tousLesCodes().forEach(c=>cnt[c]=0);
-  eleves.forEach(e=>seq.objectifs.forEach(o=>{const c=getNiv(currentSeq,e.id,o.code);cnt[c]=(cnt[c]||0)+1;}));
+  eleves.forEach(e=>objs.forEach(o=>{const c=getNiv(currentSeq,e.id,o.code);cnt[c]=(cnt[c]||0)+1;}));
   const notes=eleves.map(e=>parseFloat(calcNote(currentSeq,e.id,currentPartie))).filter(v=>!isNaN(v));
   const avg=notes.length?(notes.reduce((a,b)=>a+b,0)/notes.length).toFixed(1):'—';
   const badges=codesAvecNote().concat(codesSansNote())
