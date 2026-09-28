@@ -1057,39 +1057,25 @@ function renderClasseView() {
     document.getElementById('summary').innerHTML=''; return;
   }
   const objs=_objectifsDeLaPartie(seq,currentPartie);
-  let h1='<thead><tr><th class="th-eleve" rowspan="3">Élève</th>',h2='<tr>',h3='<tr>';
+  // v0.36.0 — Saisie simplifiée : une seule colonne « niveau » par objectif
+  // (sélecteur direct). Plus de cases à cocher exercices/cours ni de dépliage :
+  // l'enseignant juge lui-même le niveau de maîtrise atteint.
+  let head='<thead><tr><th class="th-eleve">Élève</th>';
   objs.forEach(obj=>{
-    const k=currentSeq+'_'+obj.code, exp=!!expanded[k], arrow=exp?'▾':'▸';
-    let span=1;
-    if(exp){ span=obj.is01?4:1+(obj.exercices.fondamental?.length?1:0)+(obj.exercices.avancé?.length?1:0)+(obj.exercices.exploration?.length?1:0); }
-    h1+=`<th colspan="${span}" class="th-obj" title="${obj.nom}" onclick="toggleObj('${obj.code}')"><div class="th-obj-lbl">${arrow} <span>obj.${obj.code}</span></div></th>`;
-    if(!exp){h2+='<th></th>';h3+='<th></th>';return;}
-    if(obj.is01){
-      h2+=`<th class="th-serie" colspan="3">${obj.nom}</th><th class="th-serie">niv.</th>`;
-      h3+=`<th class="th-nums">notes<br>cahier</th><th class="th-nums">fiches<br>résumé</th><th class="th-nums">oral<br>prof</th><th></th>`;
-    } else {
-      [['fondamental','F'],['avancé','A'],['exploration','E']].forEach(([s,lbl])=>{if(!(obj.exercices[s]?.length))return;h2+=`<th class="th-serie">${lbl}</th>`;h3+=`<th class="th-nums">${obj.exercices[s].join(' ')}</th>`;});
-      h2+='<th class="th-serie">niv.</th>';h3+='<th></th>';
-    }
+    head+=`<th class="th-obj" title="${obj.nom}"><div class="th-obj-lbl">obj.${obj.code}</div></th>`;
   });
-  h1+='<th class="th-note" rowspan="3">Note<br>/20</th></tr>';h2+='</tr>';h3+='</tr></thead>';
+  head+='<th class="th-note">Note<br>/20</th></tr></thead>';
   let body='<tbody>';
   eleves.forEach(e=>{
     body+=`<tr><td class="td-eleve">${e.nom} ${e.prenom[0]}.</td>`;
     objs.forEach(obj=>{
-      const k=currentSeq+'_'+obj.code,exp=!!expanded[k],niv=getNiv(currentSeq,e.id,obj.code);
-      if(!exp){body+=`<td class="td-niv">${badge(niv)}</td>`;return;}
-      if(obj.is01){
-        [1,2,3].forEach(step=>{const on=getExos(currentSeq,e.id,'cours').includes(step);body+=`<td class="td-exos"><div class="exo-row"><div class="cb ${on?'cours-on':''}" onclick="toggleCours('${e.id}',${step},this)">${on?'✓':''}</div></div></td>`;});
-      } else {
-        [['fondamental','F'],['avancé','A'],['exploration','E']].forEach(([serie,lbl])=>{const nums=obj.exercices[serie]||[];if(!nums.length)return;const done=getExos(currentSeq,e.id,serie);body+=`<td class="td-exos"><div class="exo-row">${nums.map(n=>`<div class="cb ${done.includes(n)?serie+'-on':''}" onclick="toggleExo('${e.id}','${serie}',${n},this)">${n}</div>`).join('')}</div></td>`;});
-      }
+      const niv=getNiv(currentSeq,e.id,obj.code);
       body+=`<td class="td-niv"><select onchange="setNivManuel('${e.id}','${obj.code}',this.value)">${tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('')}</select></td>`;
     });
     body+=`<td class="td-note">${calcNote(currentSeq,e.id,currentPartie)}</td></tr>`;
   });
   body+='</tbody>';
-  document.getElementById('main-tbl').innerHTML=h1+h2+h3+body;
+  document.getElementById('main-tbl').innerHTML=head+body;
   renderSummary();
 }
 
@@ -1109,7 +1095,7 @@ function renderSummary() {
 
 function renderEleveView() {
   const eid=document.getElementById('elv-sel')?.value; if(!eid)return;
-  document.getElementById('elv-detail').innerHTML=SEQ.map(s=>`<div class="seq-card-e"><h3>${s.code} — ${s.nom}<span style="margin-left:auto;font-weight:400;font-size:12px;color:#666">note : <strong>${calcNote(s.code,eid)}/20</strong></span></h3>${s.objectifs.map(obj=>{const niv=getNiv(s.code,eid,obj.code);const opts=tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('');let cbs='';if(obj.is01){[1,2,3].forEach(step=>{const on=getExos(s.code,eid,'cours').includes(step);cbs+=`<div class="cb ${on?'cours-on':''}" style="width:18px;height:18px;font-size:9px" onclick="toggleCoursElv('${s.code}','${eid}',${step},this)">${on?'✓':['','fond.','avancé','explor.'][step]}</div>`;});}else{[['fondamental','F'],['avancé','A'],['exploration','E']].forEach(([serie,lbl])=>{(obj.exercices[serie]||[]).forEach(n=>{const on=getExos(s.code,eid,serie).includes(n);cbs+=`<div class="cb ${on?serie+'-on':''}" style="width:18px;height:18px;font-size:10px" onclick="toggleExoElv('${s.code}','${eid}','${serie}',${n},this)">${n}</div>`;});});}return `<div class="obj-row-e"><span class="obj-nom-e" title="${obj.nom}">obj.${obj.code} ${obj.nom}</span><div style="display:flex;gap:2px;flex-wrap:wrap">${cbs}</div><select style="border:1px solid #d0cfc8;border-radius:4px;background:#fff;font-size:11px;padding:2px 4px" onchange="setNivManuelSeq('${s.code}','${eid}','${obj.code}',this.value)">${opts}</select></div>`;}).join('')}</div>`).join('');
+  document.getElementById('elv-detail').innerHTML=SEQ.map(s=>`<div class="seq-card-e"><h3>${s.code} — ${s.nom}<span style="margin-left:auto;font-weight:400;font-size:12px;color:#666">note : <strong>${calcNote(s.code,eid)}/20</strong></span></h3>${s.objectifs.map(obj=>{const niv=getNiv(s.code,eid,obj.code);const opts=tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('');return `<div class="obj-row-e"><span class="obj-nom-e" title="${obj.nom}">obj.${obj.code} ${obj.nom}</span><select style="border:1px solid #d0cfc8;border-radius:4px;background:#fff;font-size:11px;padding:2px 4px" onchange="setNivManuelSeq('${s.code}','${eid}','${obj.code}',this.value)">${opts}</select></div>`;}).join('')}</div>`).join('');
 }
 
 async function _postExo(seqCode,eid,serie,num,on) {
@@ -1126,7 +1112,7 @@ async function toggleExoElv(seqCode,eid,serie,num,el){const on=!el.classList.con
 async function toggleCoursElv(seqCode,eid,step,el){const on=!el.classList.contains('cours-on');el.classList.toggle('cours-on',on);el.textContent=on?'✓':['','fond.','avancé','explor.'][step];await _postExo(seqCode,eid,'cours',step,on);}
 
 async function _postNiv(seqCode,eid,objCode,val){niveaux[seqCode]=niveaux[seqCode]||{};niveaux[seqCode][eid]=niveaux[seqCode][eid]||{};niveaux[seqCode][eid][objCode]=val;await api('/api/niveaux/set',{method:'POST',body:JSON.stringify({classe:currentCid,seq:seqCode,eleve_id:eid,obj_code:objCode,niveau:val})});}
-async function setNivManuel(eid,objCode,val){await _postNiv(currentSeq,eid,objCode,val);renderSummary();}
+async function setNivManuel(eid,objCode,val){await _postNiv(currentSeq,eid,objCode,val);renderClasseView();}
 async function setNivManuelSeq(seqCode,eid,objCode,val){await _postNiv(seqCode,eid,objCode,val);}
 
 function askCalc(){document.getElementById('confirm-strip').classList.add('show');}
