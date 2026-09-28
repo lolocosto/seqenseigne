@@ -1,2 +1,57 @@
-# Created by pytest automatically.
-*
+# ─────────────────────────────────────────────────────────────────────────────
+# seqenseigne — fichiers à NE PAS versionner
+# Cohérent avec les exclusions de push-to-github.html.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── DONNÉES ÉLÈVES / RGPD (ne JAMAIS versionner) ─────────────────────────────
+# La base contient des données personnelles de mineurs (noms, suivi).
+data/seqenseigne.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ── Données volumineuses / régénérables ──────────────────────────────────────
+data/cache_rendus/
+data/backups/
+data/rapports/
+data/images/
+data/referentiels/
+data/referentiels_externes/
+static/vendor/
+log/
+*.pdf
+
+# ── Artefacts LaTeX ──────────────────────────────────────────────────────────
+*.aux
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+env/
+
+# ── Tests ────────────────────────────────────────────────────────────────────
+.pytest_cache/
+v/
+
+# ── Node ─────────────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+log/
+
+# ── Divers ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
