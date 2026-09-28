@@ -372,3 +372,25 @@ class TestGrouperObjectifsParCreneau:
         groupes = grouper_objectifs_par_creneau(objectifs)
         assert len(groupes[1]) == 4   # 01, 02, 03, 04
         assert len(groupes[2]) == 3   # 11, 12, 13
+
+
+# ── v0.36.2 — Champ `couleur` cohérent avec la palette Pronote ────────────────
+
+class TestCouleursPronote:
+    """Le champ `couleur` est servi au front par /api/referentiel/niveaux.
+    Il doit décrire la teinte réellement affichée (palette unique alignée sur
+    Pronote). En v0.36.1 il valait « bleu » pour Très bien, ce qui a produit un
+    fond bleu incohérent avec le vert foncé du reste de l'appli."""
+
+    def test_couleurs_des_niveaux_notes_suivent_pronote(self):
+        assert NIVEAUX["1"]["couleur"] == "rouge"
+        assert NIVEAUX["2"]["couleur"] == "jaune"
+        assert NIVEAUX["3"]["couleur"] == "vert"
+        assert NIVEAUX["4"]["couleur"] == "vert_fonce"
+
+    def test_tres_bien_n_est_jamais_bleu(self):
+        assert NIVEAUX["4"]["couleur"] != "bleu"
+
+    def test_absent_et_dispense_en_bleu_comme_pronote(self):
+        assert NIVEAUX["A"]["couleur"] == "bleu"
+        assert NIVEAUX["D"]["couleur"] == "bleu"

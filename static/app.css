@@ -31,12 +31,7 @@
     --serie-E:         #5b4ab3;
     --serie-cours:     #0f766e;
 
-    /* Niveaux de maîtrise */
-    --niv-TB-bg:   #14532d; --niv-TB-text: #ffffff;  /* vert foncé */
-    --niv-S-bg:    #dcfce7; --niv-S-text:  #166534;  /* vert clair */
-    --niv-F-bg:    #fef9c3; --niv-F-text:  #854d0e;  /* jaune */
-    --niv-I-bg:    #fee2e2; --niv-I-text:  #7f1d1d;  /* rouge */
-    --niv-NE-bg:   #f0efe9; --niv-NE-text: #999;
+    /* Niveaux de maîtrise : palette unique en §20 (--niv-<code>-*), v0.36.2. */
 
     /* Surfaces */
     --bg-main:     #f5f7fa;
@@ -247,20 +242,7 @@ select { padding: 6px 10px; border: 1px solid var(--border-medium); border-radiu
     font-size: var(--font-xs); font-weight: var(--fw-semibold); line-height: 1.4;
     white-space: nowrap;
 }
-.badge-TB, .b-TB { background: var(--niv-TB-bg); color: var(--niv-TB-text); }
-.badge-S,  .b-S  { background: var(--niv-S-bg);  color: var(--niv-S-text); }
-.badge-F,  .b-F  { background: var(--niv-F-bg);  color: var(--niv-F-text); }
-.badge-I,  .b-I  { background: var(--niv-I-bg);  color: var(--niv-I-text); }
-.badge-NE, .b-NE { background: var(--niv-NE-bg); color: var(--niv-NE-text); }
-
-/* v0.36.1 — Fond des cellules « niveau » selon le niveau choisi. */
-.td-niv.niv-rouge  { background: #fee2e2; }
-.td-niv.niv-orange { background: #fef3c7; }
-.td-niv.niv-vert   { background: #dcfce7; }
-.td-niv.niv-bleu   { background: #dbeafe; }
-.td-niv.niv-gris   { background: #ececec; }
-.td-niv.niv-neutre, .td-niv.niv-blanc { background: transparent; }
-.td-niv select { background: transparent; }
+/* Badges et fonds de cellule des niveaux : voir §20 (palette unique, v0.36.2). */
 
 /* ============================================================================
    12. TABLEAU DE SUIVI
@@ -284,7 +266,7 @@ tr:hover .td-note  { background: var(--surface-light); }
 .th-note  { padding: 5px 6px; text-align: center; font-size: var(--font-xs); min-width: 52px; white-space: nowrap; }
 
 .td-niv { padding: 3px 5px; text-align: center; vertical-align: middle; }
-.td-niv select { border: 1px solid var(--border-medium); background: var(--surface); padding: 2px 4px; font-size: var(--font-xs); color: var(--text); cursor: pointer; border-radius: var(--radius-sm); width: 48px; }
+.td-niv select { border: 1px solid var(--border-medium); background: transparent; padding: 2px 4px; font-size: var(--font-xs); color: inherit; cursor: pointer; border-radius: var(--radius-sm); width: 48px; }
 .td-exos { padding: 3px 6px; vertical-align: middle; }
 .exo-row { display: flex; gap: 2px; flex-wrap: nowrap; justify-content: center; }
 
@@ -820,17 +802,32 @@ tr:hover .td-note  { background: var(--surface-light); }
    20. NOUVEAUX CODES DE NIVEAU (1/2/3/4/A/D/NE)
    ============================================================================ */
 
-/* Couleurs des niveaux — palette cohérente */
+/* Couleurs des niveaux — PALETTE UNIQUE de l'appli (v0.36.2).
+   Teintes relevées au pixel sur Pronote (pastilles de compétences) :
+   rouge #F80A0A, jaune #FFDA01, vert #45B851, vert foncé #008000,
+   bleu Abs/Disp #009EE1.
+   -bg / -text : badges (teinte Pronote pleine, texte lisible dessus).
+   -cell       : fond de cellule du tableau de suivi (même teinte éclaircie
+                 à 30 % sur blanc, pour ne pas saturer une grille entière). */
 :root {
-    --niv-0-bg:   #f9fafb; --niv-0-text: #d1d5db;  /* 0 — Aucune donnée — très pâle */
-    --niv-4-bg:   #14532d; --niv-4-text: #ffffff;  /* 4 — Très bien   — vert foncé */
-    --niv-3-bg:   #dcfce7; --niv-3-text: #166534;  /* 3 — Satisfaisant — vert      */
-    --niv-2-bg:   #fef9c3; --niv-2-text: #854d0e;  /* 2 — À consolider — jaune     */
-    --niv-1-bg:   #fee2e2; --niv-1-text: #7f1d1d;  /* 1 — Insuffisant  — rouge     */
-    --niv-A-bg:   #f3f4f6; --niv-A-text: #6b7280;  /* A — Absent       — gris      */
-    --niv-D-bg:   #f3f4f6; --niv-D-text: #6b7280;  /* D — Dispensé     — gris      */
-    --niv-NE-bg:  #f0efe9; --niv-NE-text: #999;    /* NE — Non évalué  — neutre    */
+    --niv-0-bg:   #f9fafb; --niv-0-text: #d1d5db;                         /* 0 — Aucune donnée */
+    --niv-4-bg:   #008000; --niv-4-text: #ffffff; --niv-4-cell: #b2d9b2;  /* 4 — Très bien    — vert foncé */
+    --niv-3-bg:   #45B851; --niv-3-text: #0f3d16; --niv-3-cell: #c7eacb;  /* 3 — Satisfaisant — vert       */
+    --niv-2-bg:   #FFDA01; --niv-2-text: #4a3f00; --niv-2-cell: #fff4b3;  /* 2 — À consolider — jaune      */
+    --niv-1-bg:   #F80A0A; --niv-1-text: #ffffff; --niv-1-cell: #fdb6b6;  /* 1 — Insuffisant  — rouge      */
+    --niv-A-bg:   #f3f4f6; --niv-A-text: #009EE1;                         /* A — Absent       — lettre bleue */
+    --niv-D-bg:   #f3f4f6; --niv-D-text: #009EE1;                         /* D — Dispensé     — lettre bleue */
+    --niv-NE-bg:  #f0efe9; --niv-NE-text: #999;                           /* NE — Non évalué  — neutre     */
 }
+
+/* Fond des cellules « niveau » du tableau de suivi, indexé par CODE de niveau
+   (classe niv-<code> posée par renderClasseView). 0 et NE : pas de fond. */
+.td-niv.niv-1 { background: var(--niv-1-cell); }
+.td-niv.niv-2 { background: var(--niv-2-cell); }
+.td-niv.niv-3 { background: var(--niv-3-cell); }
+.td-niv.niv-4 { background: var(--niv-4-cell); }
+.td-niv.niv-A, .td-niv.niv-D { background: var(--niv-A-bg); color: var(--niv-A-text); font-weight: var(--fw-semibold); }
+.td-niv.niv-0, .td-niv.niv-NE { background: transparent; }
 
 /* Badges nouveaux codes */
 .badge-0,  .b-0  { background: var(--niv-0-bg);  color: var(--niv-0-text); border: 1px solid #e5e7eb; }
@@ -2485,9 +2482,9 @@ textarea.latex-textarea {
   font-weight: var(--fw-medium);
   padding-top: 5px;
 }
-.asm-crit-label--F  { color: var(--niv-F-text); }
-.asm-crit-label--A  { color: var(--niv-S-text); }
-.asm-crit-label--E  { color: var(--niv-TB-bg); }
+.asm-crit-label--F  { color: var(--niv-2-text); }
+.asm-crit-label--A  { color: var(--niv-3-text); }
+.asm-crit-label--E  { color: var(--niv-4-bg); }
 .asm-crit-textarea {
   width: 100%;
   border: 1px solid var(--border);

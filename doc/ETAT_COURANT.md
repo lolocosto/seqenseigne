@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.36.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.36.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -45,6 +45,10 @@
   (refactor), casse la collecte pytest → à supprimer/réécrire.
 - `tests/test_annees_scolaires.py` (2 cas) : attendent « 2025-2026 » comme année
   courante, dépendants de la date système → à corriger.
+- `tests_js/deeplink_atelier_defini.test.js` : lit app.js par un chemin absolu
+  codé en dur (`/home/claude/extract/...`) → échoue hors de cet environnement.
+- Palette des niveaux : source unique = variables `--niv-*` du §20 de app.css
+  (v0.36.2). Ne pas recréer de palette parallèle.
 
 ## Points d'attention récurrents
 

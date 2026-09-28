@@ -1,4 +1,7 @@
-c0068a1880d0db47a66876f36875f524  272169  static\app.js
-07d749c0827c64f0e13a657a2bb1fd02  132749  static\app.css
-7de453daa647aec27b5a1cef36fa30e2  1509  doc\redemarrage_v0_36_1.md
-cc3524c69ab6aeb7212f8e46355e295b  2784  doc\ETAT_COURANT.md
+8093619ff62f78c944b5f66f58ece843  132892  static\app.css
+3593c7b74cda7064814e95d51d032fb8  272355  static\app.js
+7c1ab1ac20022eaa84fa46fbc2202416  11070  services\niveaux.py
+8c5c2118336cb66d6c38b5e4f2cab1ad  15360  tests\test_niveaux.py
+c46f8e18cd69e1587b789d1a0404b028  2943  tests_js\palette_niveaux_pronote.test.js
+8c1b6d62fdc3904884e48611fe4ef578  2987  doc\redemarrage_v0_36_2.md
+f61336af641ac424892bf649dc377013  3077  doc\ETAT_COURANT.md

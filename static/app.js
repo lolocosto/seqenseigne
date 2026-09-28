@@ -72,11 +72,11 @@ async function chargerNiveauxRef() {
     NIV_REF = {
       "0":  {libelle:"Aucune donnée", libelle_court:"-",    points:null, couleur:"neutre"},
       "1":  {libelle:"Insuffisant",  libelle_court:"I",    points:4,  couleur:"rouge"},
-      "2":  {libelle:"À consolider", libelle_court:"F",    points:10, couleur:"orange"},
+      "2":  {libelle:"À consolider", libelle_court:"F",    points:10, couleur:"jaune"},
       "3":  {libelle:"Satisfaisant", libelle_court:"A",    points:16, couleur:"vert"},
-      "4":  {libelle:"Très bien",    libelle_court:"E",    points:20, couleur:"bleu"},
-      "A":  {libelle:"Absent",       libelle_court:"Abs",  points:null, couleur:"gris"},
-      "D":  {libelle:"Dispensé",     libelle_court:"Disp", points:null, couleur:"gris"},
+      "4":  {libelle:"Très bien",    libelle_court:"E",    points:20, couleur:"vert_fonce"},
+      "A":  {libelle:"Absent",       libelle_court:"Abs",  points:null, couleur:"bleu"},
+      "D":  {libelle:"Dispensé",     libelle_court:"Disp", points:null, couleur:"bleu"},
       "NE": {libelle:"Non évalué",   libelle_court:"NE",   points:null, couleur:"blanc"},
     };
   }
@@ -1071,9 +1071,11 @@ function renderClasseView() {
     body+=`<tr><td class="td-eleve">${e.prenom} ${e.nom}</td>`;
     objs.forEach(obj=>{
       const niv=getNiv(currentSeq,e.id,obj.code);
-      // v0.36.1 — Couleur de la cellule selon le niveau choisi (NIV_REF.couleur).
-      const coul=(NIV_REF?.[niv]?.couleur)||'neutre';
-      body+=`<td class="td-niv niv-${coul}"><select onchange="setNivManuel('${e.id}','${obj.code}',this.value)">${tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('')}</select></td>`;
+      // v0.36.2 — Fond de cellule indexé par CODE de niveau (niv-1…niv-4, niv-A…),
+      // stylé par la palette unique §20 de app.css (teintes Pronote éclaircies).
+      // Ne plus dériver la classe de NIV_REF.couleur : c'est ce qui avait produit
+      // un fond bleu pour « Très bien » en v0.36.1.
+      body+=`<td class="td-niv niv-${niv||'0'}"><select onchange="setNivManuel('${e.id}','${obj.code}',this.value)">${tousLesCodes().map(v=>`<option value="${v}" ${niv===v?'selected':''}>${nivLibelleCourt(v)}</option>`).join('')}</select></td>`;
     });
     body+=`<td class="td-note">${calcNote(currentSeq,e.id,currentPartie)}</td></tr>`;
   });
