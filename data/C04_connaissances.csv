@@ -1,0 +1,129 @@
+CodeNiveau,CodeSequence,CodeConnaissance,Nom
+N10,S01,01,Proportion.
+N10,S01,02,Pourcentage.
+N10,S01,03,Nombre entier relatif.
+N10,S01,04,Nombre décimal.
+N10,S01,05,Nombre rationnel.
+N10,S01,06,Repère d'une droite.
+N10,S01,07,Repère d'un plan.
+N10,S03,01,"Opérations arithmétiques: addition, soustraction, multiplication, division."
+N10,S03,02,"Opérandes des opérations arithmétiques: terme, facteur, dividende, diviseur."
+N10,S03,03,"Résultats des opérations arithmétiques: somme, différence, produit, quotient."
+N10,S03,04,Opposé d'un nombre.
+N10,S04,01,Multiple et diviseur d'un entier.
+N10,S04,02,"Critères de divisibilité par 2, 3, 5, 9 et 10."
+N10,S04,03,"Division euclidienne: dividende, diviseur, quotient, reste."
+N10,S05,01,"Indéterminée, inconnue."
+N10,S05,02,\'Egalité.
+N10,S05,03,Expression littérale.
+N10,S05,04,Forme réduite d'une expression littérale.
+N10,S05,05,"Omission du symbole $\times$: $2a$, $ab$, etc."
+N10,S05,06,"Notation carré et cube: $a^2$, $a^3$."
+N10,S06,01,Série statistique et valeurs.
+N10,S06,02,\ding{51} Effectif total.
+N10,S06,03,"Effectif, fréquence d'une valeur."
+N10,S06,04,\'Etendue et moyenne d'une série statistique.
+N10,S06,05,Représentation sous forme de diagramme bâton.
+N10,S07,01,Expérience aléatoire.
+N10,S07,02,"Issue, événement."
+N10,S07,03,Probabilité d'un événement.
+N10,S07,04,\'Equiprobabilité.
+N10,S08,01,Tableau et c\oe fficient de proportionnalité.
+N10,S08,02,Passage à l'unité.
+N10,S08,03,Linéarité de la proportionnalité.
+N10,S08,04,Ratio.
+N10,S08,05,"\'Echelle d'une carte, d'un plan."
+N10,S09,01,Variable.
+N10,S09,02,Variables dépendantes.
+N10,S10,01,"Périmètre d'un polygone, d'un cercle."
+N10,S10,02,"Aire d'un parallélogramme, d'un triangle, d'un disque."
+N10,S10,03,Tableaux de conversion (longueur et aire).
+N10,S10,04,"Horaire initial, horaire final, durée."
+N10,S10,05,"Volume d'un pavé droit, d'un prisme droit, d'un cylindre de révolution."
+N10,S10,06,Tableaux de conversion (volume).
+N10,S11,01,Image d'un point par une transformation et point invariant.
+N10,S11,02,Symétrie axiale et axe de symétrie d'une figure.
+N10,S11,03,Symétrie centrale et centre de symétrie d'une figure.
+N10,S11,04,Propriétés de conservation des symétries axiales et centrales.
+N10,S12,01,Codage d'une figure.
+N10,S12,02,Angles opposés par le sommet.
+N10,S12,03,Angles alternes-internes.
+N10,S12,04,Angles correspondants.
+N10,S12,05,Inégalité triangulaire et triangle constructible.
+N10,S12,06,Triangles particuliers.
+N10,S12,07,Somme des angles d'un triangle.
+N10,S12,08,Médiatrices d'un triangle.
+N10,S12,09,Hauteurs d'un triangle.
+N10,S12,10,Définitions équivalentes d'un parallélogramme.
+N10,S12,11,Centre de symétrie d'un parallélogramme et diagonales.
+N10,S12,12,Parallélogrammes particuliers.
+N10,S13,01,Perspective cavalière.
+N10,S13,02,"Patron d'un pavé droit, d'un cylindre, d'un prisme droit."
+N10,S13,03,"Section plane d'un pavé droit, d'un cylindre de révolution, d'un prisme droit."
+N10,S14,01,"Algorithme, programme."
+N10,S14,11,Instructions conditionnelles.
+N10,S14,12,Boucles.
+N10,S14,13,Mise au point d'un programme: tests et corrections.
+N11,S01,01,Puissances d'un nombre.
+N11,S01,02,Puissances de 10.
+N11,S01,03,Notation scientifique.
+N11,S01,04,Préfixes de nano à giga.
+N11,S01,05,Racine carrée d'un nombre positif.
+N11,S01,06,Liste des carrés parfaits de 1 à 144.
+N11,S02,01,Relation d'ordre sur les nombres en écriture fractionnaire.
+N11,S02,02,Relation d'ordre sur les puissances d'exposant entier strictement positif d'un nombre.
+N11,S02,03,Relation d'ordre sur les puissances d'exposant entier de 10.
+N11,S02,04,Associer à des objets des ordres de grandeur en lien avec d'autres disciplines.
+N11,S03,01,Inverse d'un nombre non nul.
+N11,S03,02,Inverse d'une fraction non nulle.
+N11,S04,01,Nombre premier.
+N11,S04,02,Liste des nombres premiers inférieurs à 30.
+N11,S05,01,"\,Equation."
+N11,S05,02,Distributivité de la multiplication par rapport à l'addition.
+N11,S05,03,Formes développée et factorisée d'une expression.
+N11,S06,01,Médiane d'une série statistique.
+N11,S06,02,Représentation sous forme de diagramme circulaire.
+N11,S07,01,"\'Evénement certain, événement impossible."
+N11,S07,02,\'Evénements contraires.
+N11,S07,03,Somme des probabilités d'une expérience aléatoire.
+N11,S08,01,\'Egalité des produits en croix.
+N11,S08,02,Représentation graphique de la proportionnalité.
+N11,S09,01,Repère du plan; abscisse et ordonnée d'un point.
+N11,S10,01,"Volume d'une pyramide, d'un cône."
+N11,S10,02,"Grandeurs composées: grandeur-produit, grandeur-quotient."
+N11,S11,01,"Translation: direction, longueur et sens de translation."
+N11,S11,02,"Rotation: centre, angle et sens de rotation."
+N11,S11,03,Propriétés de conservation des rotations et des translations.
+N11,S11,04,Triangles égaux.
+N11,S12,01,"Théorème de Pythagore, réciproque et contraposée."
+N11,S12,02,"Théorème de Thalès, réciproque et contraposée dans la configuration des triangles emboîtés."
+N11,S12,03,Trigonométrie dans un triangle rectangle: cosinus d'un angle aigu.
+N11,S13,01,"Repère de l'espace; Abscisse, ordonnée, altitude/cote d'un point."
+N11,S13,02,"Patron d'une pyramide, d'un cône de révolution."
+N11,S13,03,"Section plane d'une pyramide, d'un cône de révolution."
+N11,S14,01,"\,Evénements."
+N11,S14,02,Variables.
+N12,S04,01,Nombres premiers entre eux.
+N12,S04,02,Fraction irréductible.
+N12,S05,01,Double distributivité.
+N12,S05,02,\'Equation-produit nul.
+N12,S06,01,Représentation en classes de valeurs.
+N12,S06,02,Représentation sous forme d'histogramme.
+N12,S07,01,Expérience aléatoire à deux épreuves.
+N12,S07,02,"Arbre des probabilités, n\oe ud, branche, chemin."
+N12,S08,01,C\oe fficient multiplicateur.
+N12,S08,02,Taux d'évolution.
+N12,S09,01,"Antécédent, fonction, image."
+N12,S09,02,Notations $f(x)$ et $x \mapsto f(x)$.
+N12,S09,03,"Représentations d'une fonction: formule algébrique, programme de calcul, tableau de valeurs, représentation graphique."
+N12,S09,04,Fonction linéaire et fonction affine.
+N12,S10,01,Aire d'une sphère.
+N12,S10,02,Volume d'une boule.
+N12,S11,01,Homothétie: centre et rapport d'homothétie.
+N12,S11,02,Propriétés de conservation des homothéties.
+N12,S11,03,Triangles semblables.
+N12,S12,01,"Théorème de Thalès, réciproque et contraposée."
+N12,S12,02,"Trigonométrie dans un triangle rectangle: sinus, tangente d'un angle aigu."
+N12,S13,01,"Latitude, longitude d'un point."
+N12,S13,02,Section plane d'une boule.
+N12,S14,01,Sous-programmes.

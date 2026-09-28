@@ -1,0 +1,20 @@
+{
+  "chemin_racine_seqenseigne": "G:\\Enseignement\\seqenseigne",
+  "chemin_sources_livrets": "",
+  "chemin_pdflatex": "",
+  "chemin_paquet": "",
+  "chemin_reference_sequences": "",
+  "timeout_compilation_s": 30,
+  "timeout_compilation_court_s": 30,
+  "timeout_compilation_long_s": 300,
+  "compilation_batch_max_erreurs_consecutives": 5,
+  "tikz_libraries": "babel,shapes.geometric,arrows.meta,positioning,calc,matrix,fit,intersections",
+  "tblr_libraries": "booktabs,varwidth",
+  "atl_textarea_lignes": 25,
+  "atelier_assemblage_criteres_connaitre": {
+    "nom": "Connaître les notions et les méthodes",
+    "critere_F": "A noté la trace écrite en classe.",
+    "critere_A": "A complété les fiches de résumé.",
+    "critere_E": "Sait résumer le cours à l'oral."
+  }
+}

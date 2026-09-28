@@ -1,0 +1,209 @@
+CodeNiveau,CodeSequence,CodeObjectif,FinCycle,Nom,MaitriseTB,MaitriseS,MaitriseF
+N07,S01,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S01,02,N,Utiliser les règles de la numération décimale de position.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise les règles de la numération décimale de position.,-
+N07,S01,03,N,"Utiliser les rangs des chiffres dans un nombre entier: chiffre des unités, nombre d'unités, etc.",Utilise ce savoir-faire pour résoudre des problèmes.,Utilise les rangs des chiffres dans un nombre entier.,Utilise les rangs des chiffres dans un nombre entier quand il est placé dans un tableau de décomposition.
+N07,S01,04,N,"Comparer, ranger des nombres entiers.",Utilise ce savoir-faire pour résoudre des problèmes.,"Compare et range des nombres entiers, en chiffres, en lettres, en écriture décomposée.",Compare et range des nombres entiers inférieurs à 100.
+N07,S01,05,N,Encadrer un nombre entier à la précision requise.,Utilise ce savoir-faire pour résoudre des problèmes.,Encadre un nombre entier à la précision requise.,Encadre un nombre entier à l'unité.
+N07,S01,06,N,Repérer et placer un nombre entier sur une demi-droite graduée adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,Repère et place un nombre entier sur une demi-droite graduée adaptée.,Repère un nombre entier sur une demi-droite. \newline Place un nombre entier sur une demi-droite déjà graduée.
+N07,S02,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S02,02,N,Utiliser les fractions simples et les fractions décimales dans le cadre de partage ou de mesure de grandeurs.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,03,N,Faire le lien entre les formulations en langage courant et leur écriture mathématique.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,04,N,Utiliser des fractions décimales jusqu’au millième.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,05,N,Repérer et placer une fraction sur une demi-droite graduée adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,06,N,Encadrer une fraction entre deux entiers consécutifs.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,07,N,\'Ecrire une fraction décimale sous forme de somme d’un entier et d’une fraction inférieure à 1.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,08,N,Comparer deux fractions de même dénominateur.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S02,09,N,Ajouter des fractions décimales de même dénominateur.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S03,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S03,02,N,Utiliser les rangs des chiffres dans un nombre décimal.,Utilise ce savoir-faire pour résoudre des problèmes.,Utiliser les rangs des chiffres dans un nombre décimal.,Utiliser les rangs des chiffres dans un nombre décimal quand il est positionné dans un tableau de décomposition.
+N07,S03,03,N,Utiliser les règles de la numération décimale de position.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S03,04,N,Utiliser les nombres décimaux pour rendre compte de mesures de grandeurs.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S03,05,N,Repérer et placer un nombre décimal sur une demi-droite graduée adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S03,06,N,"Comparer, ranger des nombres décimaux.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S03,07,N,Encadrer un nombre décimal par deux nombres entiers.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S04,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S04,02,N,Multiplier ou diviser un nombre décimal par 10.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S04,03,N,Utiliser la commutativité et l'associativité.,Utilise ce savoir-faire pour résoudre des problèmes.,"Utilise la commutativité et l'associativité, de manière astucieuse quand c'est possible.",Utiliser la commutativité et l'associativité.
+N07,S04,04,N,Rechercher le complément d'un nombre décimal au nombre entier supérieur.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S04,05,N,"Vérifier la vraisemblance d’un résultat, notamment en estimant un ordre de grandeur.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S05,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S05,02,N,Calculer l’addition ou la soustraction de deux nombres décimaux.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S05,03,N,Calculer la division euclidienne de deux nombres entiers.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S06,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S06,02,N,Prélever des données numériques à partir de supports variés.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S06,03,N,Organiser des données issues d’autres enseignements en vue de les traiter.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S06,04,N,Lire ou construire des tableaux en colonnes ou à double entrée organisant des données numériques.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S06,05,N,"Lire ou construire des diagrammes en bâtons, circulaires ou semi-circulaires organisant des données numériques.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S06,06,N,Lire ou construire des graphiques cartésiens organisant des données numériques.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S06,07,N,Exploiter et communiquer des résultats de mesures.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S07,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S07,02,N,Identifier une situation de proportionnalité entre deux grandeurs à partir du sens de la situation.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S07,03,N,Utiliser la linéarité de la proportionnalité.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S08,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S08,02,N,Comparer des périmètres avec ou sans recours à la mesure.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S08,03,N,"Mesurer des périmètres par report d’unités, et de fractions d’unités (par exemple en utilisant une ficelle) ou par report des longueurs des côtés sur un segment de droite avec le compas.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S08,04,N,Travailler la notion de longueur avec le cas particulier du périmètre.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S08,05,N,Calculer le périmètre d’un polygone en ajoutant les longueurs de ses côtés.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S09,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S09,02,N,"Comparer des surfaces selon leur aire, par estimation visuelle ou par superposition ou découpage et recollement.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S09,03,N,Différencier aire et périmètre d’une figure.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S09,04,N,"Déterminer des aires, ou les estimer, en faisant appel à une aire de référence.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S09,05,N,"Utiliser systématiquement une unité de référence, cette unité pouvant être une maille d’un réseau quadrillé adapté, le cm$^2$, le dm$^2$ ou le m$^2$.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S10,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S10,02,N,"Comparer des contenances sans les mesurer, puis en les mesurant.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S10,03,N,"Découvrir qu’un litre est la contenance d’un cube de 10\,cm d’arête. Faire des analogies avec les autres unités de mesure à l’appui des préfixes.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S10,04,N,Utiliser les unités de volume et de contenance.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S10,05,N,Relier les unités de volume et de contenance.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S10,06,N,"Estimer la mesure d’un volume ou d’une contenance par différentes procédures (transvasements, appréciation de l’ordre de grandeur).",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S10,07,N,Exprimer la mesure d’un volume ou d’une contenance dans une unité adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S11,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S11,02,N,Identifier les angles d’une figure plane.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S11,03,N,"Comparer des angles par superposition, avec du papier calque ou en utilisant un gabarit.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S11,04,N,"Estimer, puis vérifier en utilisant l’équerre, qu’un angle est droit, aigu ou obtus.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S11,05,N,Construire un angle droit à l’aide de l’équerre.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S12,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S12,02,N,Consolider la lecture de l’heure.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S12,03,N,Utiliser les unités de mesure des durées et leurs relations.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S12,04,N,Calculer une durée à partir de la donnée de l’instant initial et de l’instant final.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S12,05,N,"Déterminer un instant, initial ou final, à partir de la donnée de l’autre instant et de la durée.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S12,06,N,"Réaliser des conversions : siècle/années, semaine/jours, heure/minutes, minute/secondes.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S13,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S13,02,N,"Reconnaître, nommer, décrire des figures simples ou leur assemblage.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S13,03,N,"Reconnaître, nommer, décrire des solides simples ou leur assemblage.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S13,04,N,"Reproduire, représenter, construire des figures simples ou leur assemblage.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S13,05,N,Tracer un cercle de rayon donné.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S13,06,N,"Reproduire, représenter, construire des solides simples ou leur assemblage sous forme de maquettes ou de dessins ou à partir d’un patron (donné, dans le cas d’un prisme ou d’une pyramide, ou à construire dans le cas d’un pavé droit, d’un cube).",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S13,07,N,"Réaliser, compléter, rédiger un programme de construction.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S14,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S14,02,N,"Se repérer, décrire, exécuter des déplacements, sur un plan ou sur une carte (école, quartier, ville, village).",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S14,03,N,"Accomplir, décrire, coder des déplacements dans des espaces familiers.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S14,04,N,Programmer les déplacements relatifs d’un personnage sur un écran.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S14,05,N,"Réaliser divers modes de représentation de l’espace : maquettes, plans, schémas.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S15,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S15,02,N,Tracer avec l’équerre la droite perpendiculaire à une droite donnée passant par un point donné qui peut être extérieur à la droite.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S15,03,N,Tracer avec la règle et l’équerre la droite parallèle à une droite donnée passant par un point donné.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S15,04,N,Déterminer le plus court chemin entre deux points.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S15,05,N,Tracer un segment de droite.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S15,06,N,"Tracer un carré, un rectangle ou un triangle rectangle de dimensions données.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N07,S16,01,O,Connaître le vocabulaire et les notations,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N07,S16,02,N,"Reconnaître si une figure présente un axe de symétrie en validant avec du papier calque, des découpages, des pliages.",Utilise ce savoir-faire pour résoudre des problèmes.,Reconnaît si une figure présente un axe de symétrie.,-
+N07,S16,03,N,Compléter une figure par symétrie axiale.,Utilise ce savoir-faire pour résoudre des problèmes.,Complète une figure par symétrie axiale.,-
+N07,S16,04,N,"Construire le symétrique d'une droite, d’un segment, d’un point par rapport à un axe donné.",Utilise ce savoir-faire pour résoudre des problèmes.,"Construit le symétrique d'une droite, d’un segment, d’un point par rapport à un axe donné.",-
+N07,S16,05,N,"Construire la figure symétrique d'une figure donnée par rapport à un axe donné, que l’axe de symétrie coupe ou non la figure.",Utilise ce savoir-faire pour résoudre des problèmes.,Construit la figure symétrique d'une figure donnée par rapport à un axe donné.,-
+N08,S01,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S01,01,N,Composer et décomposer des nombres entiers: $1053=(1 \times 1000)+(0 \times 100)+(5 \times 10)+(3 \times 1)$.,Utilise ce savoir-faire pour résoudre des problèmes.,Compose et décompose des nombres entiers.,Compose et décompose des nombres entiers quand ils sont placés dans un tableau de décomposition.
+N08,S02,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S03,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S03,02,N,Utiliser les rangs des chiffres dans un nombre décimal.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise les rangs des chiffres dans un nombre décimal.,Utilise les rangs des chiffres dans un nombre décimal quand il est positionné dans un tableau de décomposition.
+N08,S03,03,N,Utiliser les règles de la numération décimale de position.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S03,04,N,Utiliser les nombres décimaux pour rendre compte de mesures de grandeurs.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S03,05,N,Repérer et placer un nombre décimal sur une demi-droite graduée adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S03,06,N,"Comparer, ranger des nombres décimaux.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S03,07,N,"Encadrer un nombre décimal par deux nombres entiers, par deux nombres décimaux.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S03,08,N,Trouver des nombres décimaux à intercaler entre deux nombres donnés.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S04,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S04,02,N,Multiplier ou diviser un nombre décimal par 100.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S04,03,N,Multiplier un nombre décimal par 5 ou 50.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S04,04,N,"Utiliser la commutativité et l'associativité pour des calculs rendus plus complexes par la nature des nombres en jeu, leur taille ou leur nombre.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S05,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S05,02,N,Calculer la multiplication d’un nombre décimal par un nombre entier.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S05,03,N,Calculer la division d’un nombre décimal par un nombre entier.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S06,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S07,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S07,02,N,Utiliser le passage à l'unité.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S08,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S08,02,N,Calculer le périmètre du carré et du rectangle en utilisant une formule.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S09,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S09,02,N,Utiliser les formules d’aire du carré et du rectangle.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S10,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S10,02,N,Utiliser les unités de contenance.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S10,03,N,Relier les unités de volume et de contenance.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S11,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S12,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S12,02,N,"Réaliser des conversions nécessitant l’interprétation d’un reste: transformer des heures en jours avec un reste en heures, transformer des secondes en minutes avec un reste en secondes.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S13,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S13,02,N,"Construire, pour un cube de dimension donnée, des patrons différents.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S13,03,N,"Reconnaître, parmi un ensemble de patrons et de faux patrons donnés, ceux qui correspondent à un solide donné : cube, pavé droit, pyramide.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S13,04,N,Réaliser une figure simple ou une figure composée de figures simples à l’aide d’un logiciel.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S14,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S15,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S16,01,O,Connaître le vocabulaire et les notations.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N08,S16,02,N,Observer que deux points sont symétriques par rapport à une droite donnée lorsque le segment qui les joint coupe cette droite perpendiculairement en son milieu.,Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N08,S16,03,N,"Construire, à l’équerre et à la règle graduée, le symétrique par rapport à une droite d’un point, d’un segment, d’une figure.",Utilise ce savoir-faire pour résoudre des problèmes.,-,-
+N09,S01,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S01,02,O,Résoudre des problèmes mettant en jeu des nombres entiers.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S02,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S02,02,N,Utiliser des fractions pour exprimer un quotient.,Utilise ce savoir-faire pour résoudre des problèmes.,\'Ecrit le quotient d'une division sous forme décimale ou fractionnaire selon les cas.,Fait la correspondance entre une division et une fraction.
+N09,S02,03,N,Utiliser l'égalité $\seqFrac{a}{b} \times b = a$.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise cette égalité pour n'importe quel numérateur.,Utilise cette égalité quand $a=1$.
+N09,S02,04,N,Utiliser des fractions pour rendre compte de mesures de grandeurs.,Utilise ce savoir-faire pour résoudre des problèmes.,Calcule une fraction d'une grandeur.,Utilise une fraction pour écrire le résultat du partage d'une grandeur.
+N09,S02,05,N,Additionner ou soustraire des fractions de même dénominateur.,Utilise ce savoir-faire pour résoudre des problèmes.,Additionne ou soustrait des fractions de même dénominateur.,Additionne ou soustrait des fractions de même dénominateur en utilisant un schéma de partage.
+N09,S02,06,O,Résoudre des problèmes mettant en jeu des fractions.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S03,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S03,02,N,Utiliser les rangs des chiffres dans un nombre décimal.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise les rangs des chiffres d'un nombre.,Donne le rang d'un chiffre d'un nombre quand ce nombre est correctement positionné dans un tableau de décomposition.
+N09,S03,03,N,Utiliser les règles de la numération décimale de position.,Utilise ce savoir-faire pour résoudre des problèmes.,Compose et décompose des nombres décimaux.,Compose et décompose des nombres entiers.
+N09,S03,04,N,Utiliser les nombres décimaux pour rendre compte de mesures de grandeurs.,Utilise ce savoir-faire pour résoudre des problèmes.,Convertit une mesure d'une unité à une autre.,Convertit une mesure d'une unité à une autre quand elle est correctement positionnée dans le bon tableau de conversion.
+N09,S03,05,N,Repérer et placer un nombre décimal sur une demi-droite graduée adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,"Gradue une demi-droite, repère et place un nombre décimal.",Repère et place un nombre entier sur une demi-droite déjà correctement graduée.
+N09,S03,06,N,"Comparer, ranger des nombres décimaux.",Utilise ce savoir-faire pour résoudre des problèmes.,Compare et range des décimaux.,Compare et range des décimaux qui ont le même nombre de décimales.
+N09,S03,07,N,"Encadrer un nombre décimal par deux nombres entiers, par deux nombres décimaux.",Utilise ce savoir-faire pour résoudre des problèmes.,Encadre un décimal par deux décimaux à la précision requise.,Encadre un décimal par deux entiers.
+N09,S03,08,N,Trouver des nombres décimaux à intercaler entre deux nombres donnés.,Utilise ce savoir-faire pour résoudre des problèmes.,Intercale des décimaux entre deux nombres donnés.,Intercale des décimaux entre deux nombres donnés quand ils ont au moins deux dixièmes d'écart.
+N09,S03,09,O,Résoudre des problèmes mettant en jeu des nombres décimaux.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S04,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S04,02,N,Multiplier ou diviser un nombre décimal par 1000.,Utilise ce savoir-faire pour résoudre des problèmes.,Effectue les opérations de tête ou en les écrivant.,Multiplie un nombre entier. Divise quand le nombre se termine par suffisamment de zéros.
+N09,S04,03,N,"Multiplier un nombre décimal par 25 ou 0,1 ou 0,5.",Utilise ce savoir-faire pour résoudre des problèmes.,Effectue les opérations de tête ou en les écrivant.,Multiplie un nombre entier.
+N09,S04,04,N,Utiliser la distributivité simple dans les deux sens.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise la distributivité dans les deux sens.,"Utilise la distributivité pour développer, quand l'addition ou la soustraction est explicitée."
+N09,S04,05,N,Respecter les règles de priorité.,Utilise ce savoir-faire pour résoudre des problèmes.,Respecte les règles de priorités.,Respecte les règles de priorités quand elles sont explicitées avec des parenthèses.
+N09,S04,06,N,"Organiser un calcul en une seule ligne, utilisant si nécessaire des parenthèses.",Utilise ce savoir-faire pour résoudre des problèmes.,"Organise un calcul en une seule ligne, utilisant si nécessaire des parenthèses.",Organise un calcul en plusieurs lignes au lieu d'utiliser des parenthèses.
+N09,S04,07,O,Résoudre des problèmes mettant en jeu le calcul mental et ligne.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S05,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S05,02,N,Multiplier des nombres décimaux.,Utilise ce savoir-faire pour résoudre un problème.,"Sait multiplier des nombres décimaux, de manière astucieuse quand c'est possible.",Sait multiplier des nombres entiers.
+N09,S05,03,N,Utiliser une calculatrice pour calculer un enchaînement d'opérations.,Utilise ce savoir-faire pour résoudre un problème.,Calcule un enchaînement d'opérations en respectant la priorité de la multiplication sur l’addition et la soustraction.,Calcule un enchaînement d'opérations qui ont toutes la même priorité.
+N09,S05,04,N,Utiliser une calculatrice pour trouver ou vérifier un résultat.,Utilise ce savoir-faire pour résoudre un problème.,Utilise une calculatrice pour trouver un résultat.,Utilise une calculatrice pour vérifier un résultat.
+N09,S05,05,O,Résoudre des problèmes mettant en jeu le calcul posé et instrumenté.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S06,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S06,02,O,Résoudre des problèmes mettant en jeu l'organisation et la gestion des données.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S07,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S07,02,N,Utiliser un tableau de proportionnalité et son coefficient de proportionnalité.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise un tableau avec des valeurs et un coefficient de proportionnalité décimaux.,Utilise un tableau avec des valeurs et un coefficient de proportionnalité entiers.
+N09,S07,03,N,Appliquer un pourcentage.,Utilise ce savoir-faire pour résoudre des problèmes.,Applique un pourcentage.,"Applique un pourcentage simple dans le contexte, et 0\%, 10\%, 50\%, 100\% dans tous les cas."
+N09,S07,04,N,Reproduire une figure en respectant une échelle donnée.,Utilise ce savoir-faire pour résoudre des problèmes.,Reproduit une figure en respectant une échelle.,Reproduit une figure en respectant une échelle simple dans le contexte.
+N09,S07,05,O,Résoudre des problèmes mettant en jeu la proportionnalité.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S08,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S08,02,N,Calculer la longueur d’un cercle en utilisant une formule.,Utilise ce savoir-faire pour résoudre des problèmes.,"Calcule le périmètre du cercle, du demi-cercle, du quart de cercle, à partir du diamètre ou du rayon..",Calcule le périmètre du cercle à partir du diamètre ou du rayon.
+N09,S08,03,O,Résoudre des problèmes mettant en jeu des longueurs et des périmètres.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S09,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S09,02,N,Utiliser les multiples et divisions du m$^2$ et les relations qui les lient.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise ce savoir-faire pour des nombres décimaux.,Utilise ce savoir-faire pour des nombres entiers.
+N09,S09,03,N,Calculer l’aire d’un triangle à l’aide de la formule.,Utilise ce savoir-faire pour résoudre des problèmes.,Calcule l'aire de n'importe quel triangle.,Calcule l'aire d'un triangle rectangle uniquement.
+N09,S09,04,N,Calculer l’aire d’un disque à l’aide de la formule.,Utilise ce savoir-faire pour résoudre des problèmes.,Calcule la valeur exacte de l’aire d’un disque en fonction du symbole $\pi$.,Calcule une valeur approchée decimale de l’aire d’un disque.
+N09,S09,05,N,Déterminer la mesure de l’aire d’une surface à partir d’un pavage simple.,Utilise ce savoir-faire pour résoudre des problèmes.,Déterminer la mesure de l’aire avec n'importe quel pavage.,Déterminer la mesure de l’aire avec un pavage carré ou rectangulaire.
+N09,S09,06,O,Résoudre des problèmes mettant en jeu des aires.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S10,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S10,02,N,Estimer la mesure d’un volume ou d’une contenance et l’exprimer dans une unité adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,.,.
+N09,S10,03,N,Relier les unités de volume entre elles.,Utilise ce savoir-faire pour résoudre des problèmes.,.,.
+N09,S10,04,N,Relier les unités de volume et de contenance.,Utilise ce savoir-faire pour résoudre des problèmes.,.,.
+N09,S10,05,N,Déterminer le volume d’un cube ou d’un pavé droit en dénombrant des cubes de taille adaptée.,Utilise ce savoir-faire pour résoudre des problèmes.,.,.
+N09,S10,06,N,Déterminer le volume d’un cube ou d’un pavé droit en utilisant une formule.,Utilise ce savoir-faire pour résoudre des problèmes.,.,.
+N09,S10,07,O,Résoudre des problèmes mettant en jeu des volumes et des contenances.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S11,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S11,02,N,Utiliser le rapporteur pour déterminer la mesure d’un angle.,Utilise ce savoir-faire pour résoudre des problèmes.,Détermine la mesure d'un angle.,Détermine la mesure d'un angle quand le rapporteur est déjà positionné correctement.
+N09,S11,03,N,Utiliser le rapporteur pour construire un angle de mesure donnée.,Utilise ce savoir-faire pour résoudre des problèmes.,Construit un angle de mesure donnée.,Construit un angle de mesure donnée quand le rapporteur est déjà positionné correctement.
+N09,S11,04,O,Résoudre des problèmes mettant en jeu des angles.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S12,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S12,02,O,Résoudre des problèmes mettant en jeu des durées.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S13,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S13,02,N,Reconnaître le patron d’un prisme ou d’une pyramide.,Utilise ce savoir-faire pour résoudre des problèmes.,Reconnaît le patron d’un prisme ou d’une pyramide.,Reconnaît le patron d’un prisme régulier ou d’une pyramide régulière à base carrée.
+N09,S13,03,N,Construire le patron d’un pavé droit.,Utilise ce savoir-faire pour résoudre des problèmes.,Sait construire le patron d’un pavé droit.,Sait construire le patron d’un pavé droit à partir de l’objet concret.
+N09,S13,04,O,Résoudre des problèmes mettant en jeu la géométrie en deux ou en trois dimensions.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S14,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S14,02,N,Programmer les déplacements absolus d’un personnage sur un écran.,Utilise ce savoir-faire pour résoudre des problèmes.,Programme les déplacements absolus d’un personnage sur un écran.,.
+N09,S14,03,O,Résoudre des problèmes mettant en jeu la représentation en trois dimensions.,Résoudre des problèmes mettant en jeu la représentation en trois dimensions.,Résout des problèmes avec des déplacements absolus.,Résout des problèmes avec des déplacements relatifs.
+N09,S15,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S15,02,N,Tracer le milieu d'un segment de droite.,Utilise ce savoir-faire pour résoudre des problèmes.,Trace le milieu d'un segment sans quadrillage avec une précision de l'ordre du millimètre.,Trace le milieu d'un segment quand les extrémités du segment sont sur un quadrillage.
+N09,S15,03,N,Tracer le plus court chemin entre un point et une droite.,Utilise ce savoir-faire pour résoudre des problèmes.,Trace le plus court chemin entre un point et une droite sans quadrillage avec une précision de l'ordre du millimètre.,Trace le plus court chemin entre un point et une droite quand ils sont sur un quadrillage.
+N09,S15,04,N,Estimer la distance entre un point et une droite.,Utilise ce savoir-faire pour résoudre des problèmes.,Estime la distance entre un point et une droite sans quadrillage avec une précision de l'ordre du millimètre.,Estime la distance entre un point et une droite quand ils sont sur un quadrillage.
+N09,S15,05,O,"Résoudre des problèmes mettant en jeu l'appartenance, la perpendicularité et le parallélisme.",Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.
+N09,S16,01,O,Connaître les notions et les méthodes.,Sait résumer le cours à l'oral.,A complété les fiches de résumé.,A noté la trace écrite en classe
+N09,S16,02,N,Verbaliser ou expliciter la méthode de construction d'un symétrique.,Utilise ce savoir-faire pour résoudre des problèmes.,Explicite correctement la méthode de construction d'un symétrique.,Utilise un vocabulaire imprécis/impropre mais sait construire correctement un symétrique .
+N09,S16,03,N,Construire la figure symétrique d’une figure donnée par rapport à un axe donné à l’aide d’un logiciel de géométrie dynamique.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise le logiciel de manière autonome.,Déroule correctement une procédure en pas à pas dans le logiciel.
+N09,S16,04,N,Utiliser les propriétés de conservation de la symétrie axiale.,Utilise ce savoir-faire pour résoudre des problèmes.,Utilise les quatre propriétés de conservation.,Utilise la conservation des longueurs et des aires.
+N09,S16,05,N,Reconnaître et coder la médiatrice d’un segment.,Utilise ce savoir-faire pour résoudre des problèmes.,Code la médiatrice d'un segment.,Reconnait la médiatrice d'un segment quand elle est déjà codée.
+N09,S16,06,N,Tracer la médiatrice d’un segment à l’aide des instruments adéquats.,Utilise ce savoir-faire pour résoudre des problèmes.,Trace la médiatrice d'un segment.,Trace la médiatrice d'un segment quand il est sur un quadrillage et mesure un nombre pair de carreaux.
+N09,S16,07,O,Résoudre des problèmes mettant en jeu la symétrie axiale.,Résout des problèmes de recherche ou mettant en \oe uvre plusieurs documents.,Résout des problèmes.,Résout des exercices non contextualisés.

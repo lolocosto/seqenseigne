@@ -1,0 +1,152 @@
+--- a/services/latex_rendu_atome.py
++++ b/services/latex_rendu_atome.py
+@@ -736,7 +736,8 @@
+     return _rendu_sections(atome)
+ 
+ 
+-def generer_corps_notion(atome: Atome) -> str:
++def generer_corps_notion(atome: Atome,
++                         inclure_init_annexes: bool = True) -> str:
+     r"""Produit le corps LaTeX pour une notion isolée.
+ 
+     La signature du paquet est \begin{seqNotion}{titre}{corps}. Le numéro
+@@ -758,11 +759,23 @@
+     \seqAnnexe (cas observé sur N11/S04 méthodes), le \newwrite\annfile
+     est ouvert, ce qui évite un « Undefined control sequence » fatal
+     sur \annfile dans \immediate\write\annfile.
++
++    Parameters
++    ----------
++    inclure_init_annexes : bool, default True
++        Si True (rendu unitaire), encadre par \\seqInitAnnexes /
++        \\seqAfficheAnnexes (comportement v0.9.1). Si False (rendu agrégé,
++        ex. livret recap cours), n'émet PAS ces macros : l'appelant doit
++        alors les placer une seule fois en début/fin de document. C'est
++        nécessaire car \\seqInitAnnexes appelle \\newwrite, et TeX limite
++        à 16 streams ouverts simultanément ; émettre 122 cycles dans un
++        livret agrégé déclenche « No room for a new \\write ».
+     """
+     parties = []
+-    # v0.9.1 — \seqInitAnnexes ouvre \newwrite\annfile (no-op visuel
+-    # si la notion n'a aucun \seqAnnexe, voir docstring).
+-    parties.append(r'\seqInitAnnexes')
++    if inclure_init_annexes:
++        # v0.9.1 — \seqInitAnnexes ouvre \newwrite\annfile (no-op visuel
++        # si la notion n'a aucun \seqAnnexe, voir docstring).
++        parties.append(r'\seqInitAnnexes')
+     num_str = (atome.num_connaissance or '1').lstrip('0') or '1'
+     # Initialiser à num-1 car \refstepcounter incrémente en entrée
+     parties.append(
+@@ -776,13 +789,15 @@
+     if sections:
+         parties.append(sections)
+     parties.append(r'\end{seqNotion}')
+-    # v0.9.1 — \seqAfficheAnnexes ferme \annfile et inclut AnnList.tex
+-    # ssi AnnexeNum > 0 (sinon no-op).
+-    parties.append(r'\seqAfficheAnnexes')
++    if inclure_init_annexes:
++        # v0.9.1 — \seqAfficheAnnexes ferme \annfile et inclut AnnList.tex
++        # ssi AnnexeNum > 0 (sinon no-op).
++        parties.append(r'\seqAfficheAnnexes')
+     return '\n'.join(parties)
+ 
+ 
+-def generer_corps_methode(atome: Atome) -> str:
++def generer_corps_methode(atome: Atome,
++                          inclure_init_annexes: bool = True) -> str:
+     r"""Produit le corps LaTeX pour une méthode isolée.
+ 
+     Signature : \begin{seqMethode}{titre}{corps}. Numéro calé par compteur.
+@@ -809,11 +824,20 @@
+     utilisent \seqAnnexe pour insérer un algorithme en annexe ; sans
+     \seqInitAnnexes, le \immediate\write\annfile dans \seqAnnexe plante
+     avec « Undefined control sequence » sur \annfile.
++
++    Parameters
++    ----------
++    inclure_init_annexes : bool, default True
++        Cf. generer_corps_notion. Passer False pour le rendu agrégé
++        (livret recap cours), où l'appelant gère un cycle init/affiche
++        unique en début/fin de document pour éviter « No room for a
++        new \\write ».
+     """
+     parties = []
+-    # v0.9.1 — Init annexes (no-op visuel si la méthode n'utilise pas
+-    # \seqAnnexe, voir generer_corps_notion docstring).
+-    parties.append(r'\seqInitAnnexes')
++    if inclure_init_annexes:
++        # v0.9.1 — Init annexes (no-op visuel si la méthode n'utilise pas
++        # \seqAnnexe, voir generer_corps_notion docstring).
++        parties.append(r'\seqInitAnnexes')
+     if atome.num is not None:
+         parties.append(
+             r'\setcounter{MethodeNum}{' + str(max(0, atome.num - 1)) + '}'
+@@ -826,8 +850,9 @@
+     if sections:
+         parties.append(sections)
+     parties.append(r'\end{seqMethode}')
+-    # v0.9.1 — Affichage des annexes (no-op si AnnexeNum == 0).
+-    parties.append(r'\seqAfficheAnnexes')
++    if inclure_init_annexes:
++        # v0.9.1 — Affichage des annexes (no-op si AnnexeNum == 0).
++        parties.append(r'\seqAfficheAnnexes')
+     return '\n'.join(parties)
+ 
+ 
+--- a/services/livret_recap_cours.py
++++ b/services/livret_recap_cours.py
+@@ -142,14 +142,29 @@
+ 
+     Permet une numérotation continue à l'échelle du livret entier au lieu
+     d'un reset par séquence.
++
++    On désactive aussi l'émission de \\seqInitAnnexes / \\seqAfficheAnnexes
++    par atome : avec 100+ atomes dans un livret, chaque \\seqInitAnnexes
++    appelle \\newwrite et TeX limite à 16 streams ouverts simultanément
++    (« No room for a new \\write »). Le livret recap émet un seul cycle
++    global init/affiche en début/fin de document, ce qui suffit pour les
++    rares atomes qui utilisent \\seqAnnexe (3 méthodes en N11/S04 et N12/S04
++    au moment d'écrire ces lignes). Effet de bord : leurs annexes sont
++    accumulées dans un même AnnList.tex global et affichées à la toute fin
++    du livret, au lieu de juste après leur méthode — comportement cohérent
++    avec un livret papier classique.
+     """
+-    tex = generer_corps_notion(atome)
++    tex = generer_corps_notion(atome, inclure_init_annexes=False)
+     return _RE_SETCOUNTER_NOTION.sub('', tex)
+ 
+ 
+ def _generer_corps_methode_continu(atome: Atome) -> str:
+-    """Comme generer_corps_methode mais en supprimant le \\setcounter local."""
+-    tex = generer_corps_methode(atome)
++    """Comme generer_corps_methode mais en supprimant le \\setcounter local.
++
++    Cf. _generer_corps_notion_continu pour la justification de
++    inclure_init_annexes=False.
++    """
++    tex = generer_corps_methode(atome, inclure_init_annexes=False)
+     return _RE_SETCOUNTER_METHODE.sub('', tex)
+ 
+ 
+@@ -316,6 +331,11 @@
+     lignes.append('')
+     lignes.append(r'\seqCreeCompteurs')
+     lignes.append(r'\seqSetCodeNiveau{' + niveau + '}')
++    # Cycle annexes global : un seul \seqInitAnnexes pour tout le livret
++    # (les corps notion/méthode sont générés avec inclure_init_annexes=False
++    # pour ne pas saturer la limite de 16 \newwrite de TeX). Le
++    # \seqAfficheAnnexes correspondant est émis juste avant \end{document}.
++    lignes.append(r'\seqInitAnnexes')
+     lignes.append('')
+ 
+     # 4. Page de garde
+@@ -358,6 +378,9 @@
+                     lignes.append(tex)
+                     lignes.append('')
+ 
++    # Cycle annexes global : ferme \annfile et inclut AnnList.tex (no-op
++    # si aucun atome du livret n'a utilisé \seqAnnexe).
++    lignes.append(r'\seqAfficheAnnexes')
+     lignes.append(r'\end{document}')
+     return '\n'.join(lignes)
+ 

@@ -1,0 +1,805 @@
+niveau: N12
+cycle: C04
+sequences:
+- code: S01
+  numero: 1
+  nom: Représentations d'un nombre
+  theme: A
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      - 4
+      avancé:
+      - 1
+      - 2
+      - 3
+      exploration:
+      - 1
+      - 2
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 5
+      avancé:
+      - 4
+      - 5
+      exploration:
+      - 3
+- code: S02
+  numero: 2
+  nom: Comparaison de nombres
+  theme: A
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      avancé:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      exploration:
+      - 1
+      - 2
+      - 3
+- code: S03
+  numero: 3
+  nom: Calcul numérique
+  theme: A
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      avancé:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      exploration:
+      - 1
+      - 2
+      - 3
+      - 4
+- code: S04
+  numero: 4
+  nom: Divisibilité et nombres premiers
+  theme: A
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      avancé:
+      - 1
+      - 2
+      exploration:
+      - 1
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      avancé:
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      exploration:
+      - 2
+      - 3
+      - 4
+      - 5
+- code: S05
+  numero: 5
+  nom: Calcul littéral
+  theme: A
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      - 4
+      avancé:
+      - 1
+      - 2
+      - 3
+      - 4
+      exploration:
+      - 1
+      - 2
+      - 3
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 5
+      avancé:
+      - 5
+      exploration:
+      - 4
+      - 5
+  - code: '04'
+    nom: \seqObjectifGetNom{04}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 6
+      avancé:
+      - 6
+      exploration:
+      - 6
+  - code: '12'
+    nom: \seqObjectifGetNom{12}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 7
+      - 8
+      - 9
+      - 10
+      avancé:
+      - 7
+      - 8
+      - 9
+      exploration:
+      - 7
+      - 8
+      - 9
+- code: S06
+  numero: 6
+  nom: Traitement, représentation et interprétation des données
+  theme: B
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      avancé:
+      - 1
+      - 2
+      - 3
+      exploration:
+      - 1
+      - 2
+      - 3
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 5
+      avancé:
+      - 4
+      exploration:
+      - 4
+  - code: '04'
+    nom: \seqObjectifGetNom{04}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 6
+      - 7
+      - 8
+      avancé:
+      - 5
+      - 6
+      - 7
+      exploration:
+      - 5
+      - 6
+      - 7
+- code: S07
+  numero: 7
+  nom: Probabilités
+  theme: B
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      avancé:
+      - 1
+      - 2
+      exploration:
+      - 1
+      - 2
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 3
+      avancé:
+      - 3
+      exploration:
+      - 3
+      - 4
+  - code: '04'
+    nom: \seqObjectifGetNom{04}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 4
+      - 5
+      - 6
+      avancé:
+      - 4
+      - 5
+      - 6
+      exploration:
+      - 5
+      - 6
+- code: S08
+  numero: 8
+  nom: Proportionnalité
+  theme: B
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      avancé:
+      - 1
+      - 2
+      exploration:
+      - 1
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 3
+      - 4
+      avancé:
+      - 3
+      - 4
+      exploration:
+      - 2
+      - 3
+  - code: '04'
+    nom: \seqObjectifGetNom{04}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 5
+      - 6
+      - 7
+      avancé:
+      - 5
+      - 6
+      - 7
+      - 8
+      exploration:
+      - 4
+      - 5
+      - 6
+      - 7
+- code: S09
+  numero: 9
+  nom: Fonctions
+  theme: B
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      avancé:
+      - 1
+      - 2
+      - 3
+      exploration:
+      - 1
+      - 2
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 4
+      - 5
+      - 6
+      avancé:
+      - 4
+      - 5
+      exploration:
+      - 4
+  - code: '12'
+    nom: \seqObjectifGetNom{12}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 7
+      - 8
+      avancé:
+      - 6
+      - 7
+      exploration:
+      - 5
+      - 6
+  - code: '13'
+    nom: \seqObjectifGetNom{13}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 9
+      - 10
+      avancé:
+      - 8
+      - 9
+      exploration:
+      - 7
+      - 8
+  - code: '14'
+    nom: \seqObjectifGetNom{14}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 11
+      - 12
+      - 13
+      avancé:
+      - 10
+      - 11
+      - 12
+      exploration:
+      - 9
+      - 10
+- code: S10
+  numero: 10
+  nom: Calcul de grandeurs
+  theme: C
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      avancé:
+      - 1
+      exploration:
+      - 1
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 2
+      - 3
+      - 4
+      - 5
+      avancé:
+      - 3
+      - 4
+      - 5
+      - 6
+      exploration:
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+- code: S11
+  numero: 11
+  nom: Transformations géométriques
+  theme: C
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      avancé:
+      - 1
+      exploration: []
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 2
+      avancé:
+      - 2
+      exploration:
+      - 2
+  - code: '04'
+    nom: \seqObjectifGetNom{04}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 3
+      avancé:
+      - 3
+      exploration: []
+  - code: '05'
+    nom: \seqObjectifGetNom{05}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 4
+      avancé:
+      - 4
+      exploration:
+      - 4
+  - code: '06'
+    nom: \seqObjectifGetNom{06}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 5
+      - 6
+      - 7
+      - 8
+      avancé:
+      - 5
+      - 6
+      - 7
+      exploration:
+      - 5
+      - 6
+- code: S12
+  numero: 12
+  nom: Géométrie plane
+  theme: D
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      - 2
+      - 3
+      - 4
+      avancé:
+      - 1
+      - 2
+      - 3
+      exploration:
+      - 1
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 5
+      - 6
+      avancé:
+      - 4
+      - 5
+      exploration:
+      - 4
+  - code: '12'
+    nom: \seqObjectifGetNom{12}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 7
+      - 8
+      - 9
+      avancé:
+      - 6
+      - 7
+      - 8
+      exploration:
+      - 5
+      - 6
+      - 7
+      - 8
+  - code: '13'
+    nom: \seqObjectifGetNom{13}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 10
+      avancé:
+      - 9
+      exploration:
+      - 9
+- code: S13
+  numero: 13
+  nom: Représentation en trois dimensions
+  theme: D
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 1
+      avancé:
+      - 1
+      exploration:
+      - 1
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 2
+      avancé:
+      - 2
+      exploration:
+      - 2
+  - code: '12'
+    nom: \seqObjectifGetNom{12}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 3
+      avancé:
+      - 3
+      exploration:
+      - 3
+  - code: '13'
+    nom: \seqObjectifGetNom{13}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 4
+      avancé:
+      - 4
+      exploration:
+      - 4
+- code: S14
+  numero: 14
+  nom: Algorithmique et programmation
+  theme: E
+  objectifs:
+  - code: '02'
+    nom: \seqObjectifGetNom{02}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental: []
+      avancé: []
+      exploration:
+      - 1
+  - code: '03'
+    nom: \seqObjectifGetNom{03}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 2
+      avancé: []
+      exploration:
+      - 2
+  - code: '04'
+    nom: \seqObjectifGetNom{04}
+    fin_cycle: N
+    criteres:
+      '2': ''
+      '3': ''
+      '4': ''
+    exercices:
+      fondamental:
+      - 3
+      avancé:
+      - 2
+      exploration:
+      - 3

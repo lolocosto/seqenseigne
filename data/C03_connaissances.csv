@@ -1,0 +1,99 @@
+CodeNiveau,CodeSequence,CodeConnaissance,Nom
+N07,S01,01,Numération décimale de position.
+N07,S01,02,"\'Ecriture des nombres: regroupement par classe (des unités, des milliers, des millions, des milliards) et positions dans chaque classe (unités, dizaines, centaines)"
+N07,S01,03,"Préfixes liés aux unités de mesure: deca, hecto, kilo, mega, giga."
+N07,S01,04,Abscisse d'un point.
+N07,S02,01,Lire et écrire une fraction.
+N07,S02,02,Fraction en tant que partage.
+N07,S02,03,\'Egalité entre fractions usuelles.
+N07,S02,04,Décomposition additive.
+N07,S02,05,Décomposition multiplicative.
+N07,S03,01,"Partie décimale d'un nombre: dixièmes, centièmes."
+N07,S03,02,"Préfixes liés aux unités de mesure: deci, centi."
+N07,S03,03,Fraction décimale.
+N07,S03,04,\'Ecriture décimale.
+N07,S03,05,Décomposition additive.
+N07,S03,06,Décomposition multiplicative.
+N07,S04,01,Commutativité de l'addition et de la multiplication.
+N07,S04,02,Associativité de l'addition et de la multiplication.
+N07,S04,03,Tables de multiplication jusqu'à 9.
+N07,S04,04,Premiers multiples de 25 et de 50.
+N07,S04,05,"Critères de divisibilité par 2, 5 et 10."
+N07,S05,01,Algorithme de l’addition de deux nombres décimaux.
+N07,S05,02,Algorithme de la soustraction de deux nombres décimaux.
+N07,S05,03,Algorithme de la division euclidienne de deux nombres entiers.
+N07,S06,01,Série de données numérique.
+N07,S06,02,Tableau de données.
+N07,S06,03,Tableau à double entrée.
+N07,S06,04,Diagramme en bâtons.
+N07,S06,05,Diagramme circulaire et semi-circulaire.
+N07,S06,06,Graphique cartésien.
+N07,S07,01,Proportionnalité entre deux grandeurs.
+N07,S07,02,Propriété de linéarité additive et multiplicative.
+N07,S08,01,Périmètre d'une figure.
+N07,S08,02,"Unités de longueur, du millimètre (mm) au kilomètre (km)."
+N07,S09,01,Aire d'une figure.
+N07,S09,02,"Unités d'aire: le mètre-carré (m$^2$), le décimètre-carré (dm$^2$), le centimètre-carré (cm$^2$)."
+N07,S10,01,"Unités de volume: le mètre-cube (m$^3$), le décimètre-cube (dm$^3$), le centimètre-cube (cm$^3$)."
+N07,S10,02,unités de contenance: le litre (L).
+N07,S11,01,"Angle, sommet, côtés."
+N07,S11,02,"Angle aigu, droit, obtus."
+N07,S12,01,"Unités de durée: seconde, minute, heure, jour, semaine, mois, année, siècle, millénaire."
+N07,S13,01,"Polygone, solide."
+N07,S13,02,"Triangle quelconque, rectangle, isocèle, équilatéral."
+N07,S13,03,"Quadrilatère, rectangle, losange, carré, parallélogramme."
+N07,S13,04,"Cercle, disque, boule."
+N07,S13,05,"Cube, pavé droit, prisme droit."
+N07,S13,06,"Pyramide, cylindre, cône."
+N07,S13,07,"Côté, sommet, angle, diagonale, centre, rayon, diamètre, milieu, hauteur, face, arête."
+N07,S14,01,"Maquette, plan, schéma."
+N07,S14,02,"Déplacements relatifs: tourner à gauche ou à droite, faire demi-tour, faire un quart de tour à gauche ou à droite."
+N07,S15,01,"Droite, segment de droite."
+N07,S15,02,"alignement, appartenance."
+N07,S15,03,"Perpendicularité, parallélisme."
+N07,S15,04,Distance entre deux points.
+N07,S16,01,Symétrie axiale.
+N07,S16,02,"Symétrique d'un point, d'un segment de droite, d'une droite."
+N07,S16,03,Axe de symétrie d’une figure.
+N07,S16,04,Figures symétriques par rapport à un axe.
+N08,S03,01,Partie décimale d'un nombre: millièmes.
+N08,S03,02,Préfixes liés aux unités de mesure: milli.
+N08,S03,03,Fraction décimale.
+N08,S03,04,\'Ecriture décimale.
+N08,S03,05,Décomposition additive.
+N08,S03,06,Décomposition multiplicative.
+N08,S04,01,Critères de divisibilité par 3 et 9.
+N08,S05,01,Algorithme de la multiplication d’un nombre décimal par un nombre entier.
+N08,S05,02,algorithme de la division d’un nombre décimal par un nombre entier.
+N08,S07,01,Passage à l'unité.
+N08,S08,01,"Formule du périmètre d’un carré, d’un rectangle."
+N08,S09,01,Formules de l’aire du carré et du rectangle.
+N08,S10,01,"Unités de contenance: décilitre (dL), centilibtre (cL) et millilitre (mL)."
+N09,S02,01,\'Ecriture fractionnaire.
+N09,S03,01,Partie décimale d'un nombre: dix-millièmes.
+N09,S03,02,Fraction décimale.
+N09,S03,03,\'Ecriture décimale.
+N09,S03,04,Décomposition additive.
+N09,S03,05,Décomposition multiplicative.
+N09,S04,01,Distributivité de la multiplication par rapport à l'addition.
+N09,S04,02,Règles de priorité des calculs.
+N09,S04,03,Diviseurs de 100.
+N09,S05,01,Algorithme de la multiplication de deux nombres décimaux.
+N09,S05,02,Utilisation de la calculatrice.
+N09,S07,01,Tableau de proportionnalité.
+N09,S07,02,Coefficient de proportionnalité.
+N09,S07,03,\'Echelle.
+N09,S07,04,Pourcentage.
+N09,S08,01,Formule de la longueur d’un cercle.
+N09,S09,01,Unités d'aire du mm$^2$ au km$^2$.
+N09,S09,02,Formule de l’aire du triangle.
+N09,S09,03,Formule de l’aire du disque.
+N09,S10,01,Unités de contenance: les multiples du litre.
+N09,S10,02,Formule du volume d’un cube.
+N09,S10,03,Formule du volume d’un pavé droit.
+N09,S11,01,Mesure de mesure d'angle: le degré.
+N09,S14,01,"Déplacements absolus (aller vers le haut ou le bas, aller vers l'ouest ou l'est ou le nord ou le sud)."
+N09,S15,01,"Milieu d'un segment,"
+N09,S15,02,Distance entre un point et une droite.
+N09,S16,01,"Propriétés de conservation de la symétrie axiale,"
+N09,S16,02,Médiatrice d’un segment.

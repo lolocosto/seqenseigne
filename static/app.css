@@ -1,0 +1,4207 @@
+/**
+ * seqenseigne — Design System
+ * Version : 0.1 — avril 2026
+ * Adapté du design system "Parcours Avenir" (v0.67)
+ * Police : Inter · Palette : bleu #2E5090
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* ============================================================================
+   1. VARIABLES
+   ============================================================================ */
+:root {
+    --primary:         #2E5090;
+    --primary-light:   #4472C4;
+    --primary-dark:    #1e3a6f;
+    --primary-bg:      #e8eef7;
+
+    --success:         #70AD47;
+    --success-bg:      #e8f5e9;
+    --warning:         #d9a832;
+    --warning-bg:      #fffbeb;
+    --warning-text:    #7a4f10;
+    --danger:          #dc2626;
+    --danger-bg:       #fee2e2;
+    --danger-dark:     #b91c1c;
+
+    /* Séries d'exercices */
+    --serie-F:         #5a8a1a;
+    --serie-A:         #1d5fa8;
+    --serie-E:         #5b4ab3;
+    --serie-cours:     #0f766e;
+
+    /* Niveaux de maîtrise */
+    --niv-TB-bg:   #14532d; --niv-TB-text: #ffffff;  /* vert foncé */
+    --niv-S-bg:    #dcfce7; --niv-S-text:  #166534;  /* vert clair */
+    --niv-F-bg:    #fef9c3; --niv-F-text:  #854d0e;  /* jaune */
+    --niv-I-bg:    #fee2e2; --niv-I-text:  #7f1d1d;  /* rouge */
+    --niv-NE-bg:   #f0efe9; --niv-NE-text: #999;
+
+    /* Surfaces */
+    --bg-main:     #f5f7fa;
+    --surface:     #ffffff;
+    --surface-light: #e8eef7;
+    --surface-medium:#d4dce8;
+
+    /* Textes */
+    --text:         #2c3e50;
+    --text-light:   #7f8c8d;
+    --text-muted:   #95a5a6;
+    --text-on-primary: #ffffff;
+    --text-secondary:  #475569;
+    --text-tertiary:   #666;
+
+    /* Bordures */
+    --border:       #e1e8ed;
+    --border-light: #ecf0f3;
+    --border-medium:#cbd5e0;
+
+    /* Typographie */
+    --font-family:  'Inter', 'Segoe UI', system-ui, sans-serif;
+    --font-2xs: 11px; --font-xs: 12px; --font-sm: 13px;
+    --font-base: 14px; --font-md: 15px; --font-lg: 16px; --font-xl: 18px;
+    --fw-normal: 400; --fw-medium: 500; --fw-semibold: 600;
+
+    /* Espacements */
+    --sp-xs: 4px; --sp-sm: 8px; --sp-md: 16px;
+    --sp-lg: 24px; --sp-xl: 32px;
+
+    /* Rayons */
+    --radius-sm: 4px; --radius: 8px; --radius-lg: 12px; --radius-pill: 20px;
+
+    /* Ombres */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+    --shadow:    0 2px 6px rgba(0,0,0,.10);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.12);
+
+    /* Transitions */
+    --t-fast: 150ms ease-in-out;
+    --t-base: 200ms ease-in-out;
+
+    /* Focus */
+    --focus-ring: rgba(46,80,144,.15);
+}
+
+/* ============================================================================
+   2. RESET & BASE
+   ============================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-base);
+    background: var(--bg-main);
+    color: var(--text);
+    line-height: 1.5;
+}
+
+::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: var(--radius-sm); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+button { cursor: pointer; border: none; background: transparent; font-family: var(--font-family); font-size: var(--font-base); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+input, select { font-family: var(--font-family); font-size: var(--font-sm); }
+code { font-family: 'Consolas','Courier New',monospace; font-size: var(--font-xs); background: var(--surface-light); padding: 1px 5px; border-radius: var(--radius-sm); }
+
+/* ============================================================================
+   3. LAYOUT
+   ============================================================================ */
+header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: var(--text-on-primary);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow-md);
+}
+.header-inner { display: flex; align-items: center; gap: var(--sp-md); padding: 0 var(--sp-lg); height: 50px; flex-wrap: wrap; }
+.logo { font-size: var(--font-lg); font-weight: var(--fw-semibold); letter-spacing: -.02em; color: var(--text-on-primary); }
+
+.tabs { display: flex; gap: 2px; }
+.tab { padding: 6px 16px; border: none; border-radius: var(--radius-sm); font-size: var(--font-sm); font-weight: var(--fw-medium); cursor: pointer; transition: background var(--t-fast); color: rgba(255,255,255,.8); background: transparent; }
+.tab:hover  { background: rgba(255,255,255,.15); color: #fff; }
+.tab.active { background: rgba(255,255,255,.25); color: #fff; }
+.header-actions { display: flex; gap: var(--sp-sm); margin-left: auto; }
+
+.tab-content { padding: var(--sp-md) var(--sp-lg); }
+.two-col { display: grid; grid-template-columns: 300px minmax(0,1fr); gap: var(--sp-lg); align-items: start; }
+@media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ============================================================================
+   4. BOUTONS
+   ============================================================================ */
+.btn-prim {
+    display: inline-flex; align-items: center; padding: 6px 14px;
+    border: none; border-radius: var(--radius-sm); cursor: pointer;
+    background: var(--primary); color: var(--text-on-primary);
+    font-size: var(--font-sm); font-weight: var(--fw-medium); font-family: var(--font-family);
+    transition: background var(--t-fast), transform var(--t-fast);
+}
+.btn-prim:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
+.btn-prim:active { transform: translateY(0); }
+
+.btn-sm {
+    padding: 5px 10px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text); font-size: var(--font-xs);
+    transition: background var(--t-fast);
+}
+.btn-sm:hover { background: var(--surface-light); }
+
+.btn-danger {
+    padding: 5px 12px; border: 1px solid #fca5a5; border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--danger); font-size: var(--font-xs);
+}
+.btn-danger:hover { background: var(--danger-bg); }
+
+.btn-calc {
+    padding: 6px 12px; background: var(--warning-bg); border: 1px solid var(--warning);
+    border-radius: var(--radius-sm); color: var(--warning-text);
+    font-size: var(--font-xs); font-weight: var(--fw-medium);
+}
+.btn-calc:hover { background: #fef3c7; }
+
+.btn-yes { padding: 4px 10px; background: #b45309; color: #fff; border: none; border-radius: var(--radius-sm); font-size: var(--font-2xs); }
+.btn-no  { padding: 4px 10px; background: transparent; border: 1px solid var(--warning); border-radius: var(--radius-sm); font-size: var(--font-2xs); color: var(--warning-text); }
+
+/* ============================================================================
+   5. FORMULAIRES
+   ============================================================================ */
+input:not([type=file]):not([type=range]):not([type=checkbox]) {
+    padding: 6px 10px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+input:not([type=file]):not([type=range]):not([type=checkbox]):focus,
+select:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+select { padding: 6px 10px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: pointer; }
+
+.field-row { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
+.field-row label { width: 105px; font-size: var(--font-xs); color: var(--text-secondary); flex-shrink: 0; }
+.field-row input, .field-row select { flex: 1; }
+
+/* ============================================================================
+   6. CARTES
+   ============================================================================ */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: var(--sp-sm); }
+.card h3 { font-size: var(--font-sm); font-weight: var(--fw-semibold); margin-bottom: var(--sp-sm); color: var(--text); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-sm); }
+.card-header h2 { font-size: var(--font-md); font-weight: var(--fw-semibold); color: var(--text); }
+.import-zone { background: var(--bg-main); }
+
+/* ============================================================================
+   7. BARRE DE CALCUL & CONFIRMATION
+   ============================================================================ */
+.calc-bar { display: flex; align-items: center; gap: var(--sp-md); padding: var(--sp-sm) var(--sp-md); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--sp-sm); flex-wrap: wrap; }
+.confirm-strip { display: none; align-items: center; gap: var(--sp-sm); font-size: var(--font-xs); color: var(--warning-text); flex-wrap: wrap; }
+.confirm-strip.show { display: flex; }
+
+/* ============================================================================
+   8. LISTE DES CLASSES
+   ============================================================================ */
+.classe-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 6px; cursor: pointer; display: flex; align-items: center; gap: var(--sp-sm); transition: border-color var(--t-fast), background var(--t-fast); }
+.classe-card:hover  { background: var(--surface-light); border-color: var(--border-medium); }
+.classe-card.active { border-color: var(--primary); background: var(--primary-bg); }
+.classe-badge { background: var(--primary-bg); color: var(--primary); font-size: var(--font-2xs); font-weight: var(--fw-semibold); padding: 2px 8px; border-radius: var(--radius-pill); flex-shrink: 0; }
+.classe-info { flex: 1; min-width: 0; }
+.classe-nom  { font-weight: var(--fw-medium); font-size: var(--font-sm); }
+.classe-meta { font-size: var(--font-xs); color: var(--text-muted); }
+
+.eleve-item { display: flex; align-items: center; gap: var(--sp-sm); padding: 5px 0; border-bottom: 1px solid var(--border-light); font-size: var(--font-sm); }
+.eleve-item:last-child { border-bottom: none; }
+.eleve-item .nom { flex: 1; font-weight: var(--fw-medium); }
+.eleve-num { font-size: var(--font-xs); color: var(--text-muted); width: 24px; text-align: right; flex-shrink: 0; }
+
+/* ============================================================================
+   9. BARRE D'OUTILS SUIVI
+   ============================================================================ */
+.toolbar { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-sm); flex-wrap: wrap; }
+#classe-sel { min-width: 160px; font-weight: var(--fw-medium); }
+#seq-sel    { min-width: 220px; }
+.view-btns  { display: flex; gap: 2px; }
+.vbtn { padding: 5px 12px; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); background: var(--surface); font-size: var(--font-xs); cursor: pointer; color: var(--text-secondary); transition: all var(--t-fast); }
+.vbtn:hover  { background: var(--surface-light); color: var(--text); }
+.vbtn.active { background: var(--primary-bg); color: var(--primary); border-color: var(--primary-light); font-weight: var(--fw-medium); }
+
+/* ============================================================================
+   10. LÉGENDE
+   ============================================================================ */
+.legend { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-sm); font-size: var(--font-xs); color: var(--text-secondary); flex-wrap: wrap; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 2px; }
+.dot-F { background: var(--serie-F); }
+.dot-A { background: var(--serie-A); }
+.dot-E { background: var(--serie-E); }
+.sep  { display: inline-block; width: 1px; height: 14px; background: var(--border-medium); margin: 0 4px; }
+.pts  { color: var(--text-muted); font-size: 10px; margin-left: 2px; margin-right: 4px; }
+
+/* ============================================================================
+   11. BADGES DE NIVEAU
+   ============================================================================ */
+.badge, .badge-niveau {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; padding: 2px 6px;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-xs); font-weight: var(--fw-semibold); line-height: 1.4;
+    white-space: nowrap;
+}
+.badge-TB, .b-TB { background: var(--niv-TB-bg); color: var(--niv-TB-text); }
+.badge-S,  .b-S  { background: var(--niv-S-bg);  color: var(--niv-S-text); }
+.badge-F,  .b-F  { background: var(--niv-F-bg);  color: var(--niv-F-text); }
+.badge-I,  .b-I  { background: var(--niv-I-bg);  color: var(--niv-I-text); }
+.badge-NE, .b-NE { background: var(--niv-NE-bg); color: var(--niv-NE-text); }
+
+/* ============================================================================
+   12. TABLEAU DE SUIVI
+   ============================================================================ */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-sm); }
+table { border-collapse: collapse; font-size: var(--font-xs); width: 100%; }
+th, td { border: 1px solid var(--border-light); }
+th { background: var(--surface-light); font-weight: var(--fw-medium); color: var(--text-secondary); white-space: nowrap; }
+
+.th-eleve { min-width: 115px; padding: 7px 10px; position: sticky; left: 0; z-index: 3; background: var(--surface-light); border-right: 2px solid var(--border-medium); }
+.td-eleve { padding: 5px 10px; font-weight: var(--fw-medium); white-space: nowrap; position: sticky; left: 0; z-index: 1; background: var(--surface); border-right: 2px solid var(--border-medium); transition: background var(--t-fast); }
+tr:hover .td-eleve { background: var(--surface-light); }
+tr:hover td        { background: #fafaf7; }
+tr:hover .td-note  { background: var(--surface-light); }
+
+.th-obj { padding: 5px 8px; cursor: pointer; user-select: none; text-align: center; min-width: 58px; transition: background var(--t-fast); }
+.th-obj:hover { background: var(--primary-bg); color: var(--primary); }
+.th-obj-lbl { font-size: var(--font-xs); display: flex; align-items: center; justify-content: center; gap: 3px; }
+.th-serie { padding: 3px 5px; font-size: 10px; text-align: center; color: var(--text-muted); font-weight: var(--fw-medium); background: var(--surface-light); }
+.th-nums  { padding: 2px 5px; font-size: 9px; text-align: center; color: var(--border-medium); background: var(--surface-light); }
+.th-note  { padding: 5px 6px; text-align: center; font-size: var(--font-xs); min-width: 52px; white-space: nowrap; }
+
+.td-niv { padding: 3px 5px; text-align: center; vertical-align: middle; }
+.td-niv select { border: 1px solid var(--border-medium); background: var(--surface); padding: 2px 4px; font-size: var(--font-xs); color: var(--text); cursor: pointer; border-radius: var(--radius-sm); width: 48px; }
+.td-exos { padding: 3px 6px; vertical-align: middle; }
+.exo-row { display: flex; gap: 2px; flex-wrap: nowrap; justify-content: center; }
+
+.cb { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-medium); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: var(--font-xs); font-weight: var(--fw-semibold); flex-shrink: 0; user-select: none; color: var(--text-muted); transition: border-color var(--t-fast), background var(--t-fast); }
+.cb:hover { border-color: var(--text-secondary); color: var(--text); }
+.cb.F-on    { background: var(--serie-F); color: #fff; border-color: var(--serie-F); }
+.cb.A-on    { background: var(--serie-A); color: #fff; border-color: var(--serie-A); }
+.cb.E-on    { background: var(--serie-E); color: #fff; border-color: var(--serie-E); }
+.cb.cours-on{ background: var(--serie-cours); color: #fff; border-color: var(--serie-cours); }
+
+.td-note { padding: 3px 8px; text-align: center; font-weight: var(--fw-semibold); font-size: var(--font-xs); background: var(--surface-light); white-space: nowrap; }
+
+.summary { display: flex; gap: var(--sp-md); padding: 8px 12px; font-size: var(--font-xs); align-items: center; flex-wrap: wrap; border-top: 1px solid var(--border); background: var(--surface-light); border-radius: 0 0 var(--radius) var(--radius); }
+.summary strong { font-weight: var(--fw-semibold); }
+
+/* ============================================================================
+   13. VUE ÉLÈVE
+   ============================================================================ */
+.elv-bar { margin-bottom: var(--sp-sm); }
+.elv-bar select { min-width: 200px; }
+.seq-card-e { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: var(--sp-sm); box-shadow: var(--shadow-sm); }
+.seq-card-e h3 { font-size: var(--font-sm); font-weight: var(--fw-semibold); margin-bottom: var(--sp-sm); display: flex; align-items: center; gap: 6px; }
+.obj-row-e { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-top: 1px solid var(--border-light); }
+.obj-row-e:first-child { border-top: none; }
+.obj-nom-e { flex: 1; font-size: var(--font-xs); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* ============================================================================
+   14. RESPONSIVE
+   ============================================================================ */
+@media (max-width: 900px) { .tbl-wrap { font-size: 11px; } .cb { width: 18px; height: 18px; font-size: 9px; } }
+@media (max-width: 600px) { .header-inner { height: auto; padding: var(--sp-sm) var(--sp-md); } .tab-content { padding: var(--sp-sm) var(--sp-md); } .toolbar { flex-direction: column; align-items: flex-start; } #seq-sel { min-width: 100%; } }
+
+/* ============================================================================
+   15. ATELIERS
+   ============================================================================ */
+
+/* Shell deux colonnes sidebar + main */
+.atl-shell {
+  display: flex;
+  height: calc(100vh - 96px); /* header + sous-nav ateliers */
+  overflow: hidden;
+}
+
+.atl-panel { height: 100%; }
+.atl-panel[style*="display:none"] { display: none !important; }
+
+/* Sidebar liste — largeur réglable via le splitter (cf. atelier_commun.js) :
+   le `flex: 0 0 Xpx` posé par atelierInstallerSplitter surcharge la width
+   par défaut. min-width : 200 (la borne basse du splitter). */
+.atl-sidebar {
+  width: 240px;
+  min-width: 200px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+}
+.atl-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.atl-sidebar-title { font-size: var(--font-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
+
+/* v0.12.2 — Bouton « + Créer » dans le bandeau de tête des sidebars
+   d'atelier. Combine `.btn-prim` (couleurs / hover / active) + une
+   taille compacte adaptée au header. Évite la duplication 4× du
+   `style="font-size:12px;padding:4px 10px"` qui figurait sur chaque
+   sidebar avant cette livraison. */
+.atl-sidebar-btn-creer {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.atl-list { flex: 1; overflow-y: auto; padding: 6px; }
+
+/* Items liste — v0.12.2 : flex-wrap pour permettre une 2e ligne (chips
+   d'objectifs liés), et min-width:0 sur le titre pour que l'ellipsis
+   fonctionne réellement quand le titre est long (sans écraser visuellement
+   le badge d'état placé à droite). */
+.atl-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+.atl-item:hover { background: var(--surface-light); }
+.atl-item.active { background: var(--primary-bg); color: var(--primary); }
+
+/* Badges série */
+.badge-fondamental { background: #dbeafe; color: #1d4ed8; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+.badge-avancé { background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+.badge-exploration { background: #fce7f3; color: #9d174d; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+.badge-révision, .badge-approche { background: var(--surface-light); color: var(--text-secondary); padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+
+/* Filtres */
+.exo-filt {
+  font-size: 11px; padding: 2px 8px; border-radius: 3px;
+  border: 1px solid var(--border-medium); background: var(--surface);
+  color: var(--text-secondary); cursor: pointer;
+}
+.exo-filt.active { background: var(--primary-bg); color: var(--primary); border-color: var(--primary-light); }
+
+/* Zone principale */
+.atl-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-main);
+}
+.atl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  /* v0.6.4 (correctif) : hauteur fixe pour que le bandeau ne saute pas
+     selon que des boutons sont visibles ou non, ou selon que le titre
+     « Modifier l'exercice » / « Atelier Notion » a une longueur différente.
+     min-height = 48px : laisse de la place pour les boutons (~32px) +
+     padding (8+8=16px). On utilise min-height plutôt que height pour
+     accepter quand même un débordement vertical si jamais. */
+  min-height: 48px;
+  box-sizing: border-box;
+}
+/* Le titre dans la toolbar ne doit pas wrapper sur 2 lignes — sinon la
+   toolbar grandit en hauteur. On force ellipsis si trop long. */
+.atl-toolbar > span[id$="-toolbar-title"] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;   /* indispensable pour que ellipsis fonctionne dans flex */
+}
+.atl-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.atl-tab {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-weight: var(--fw-medium);
+}
+.atl-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.atl-tab:hover:not(.active) { color: var(--text); }
+
+/* État vide */
+.atl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Champs formulaire */
+.atl-field { margin-bottom: 18px; }
+.atl-label {
+  display: block;
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+
+/* v0.13.6.12 — Ligne du label « Titre » avec bouton « reprendre titre
+   objectif » à droite. Utilisée pour les ateliers atomiques (notion,
+   méthode, exercice, fiche). Le bouton est injecté dynamiquement par
+   AtelierEditeur._injecterBoutonReprendreTitre selon la cardinalité
+   1:1 obj de l'item actif. */
+.atl-field-titre-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.atl-field-titre-row .atl-label { margin-bottom: 0; }
+.atl-btn-reprendre-obj {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.atl-btn-reprendre-obj:hover {
+  background: var(--surface-light);
+  color: var(--text-secondary);
+}
+
+/* Sélecteur de série */
+.serie-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.serie-btn {
+  flex: 1; min-width: 120px;
+  padding: 7px 10px; border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm); background: var(--surface);
+  cursor: pointer; font-size: 12px; font-weight: var(--fw-medium);
+  color: var(--text-secondary); text-align: center;
+}
+.serie-btn:hover { background: var(--surface-light); }
+.serie-btn.active-fondamental { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+.serie-btn.active-avancé { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.serie-btn.active-exploration { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
+.serie-btn.active-révision, .serie-btn.active-approche { background: var(--surface-light); color: var(--text); border-color: var(--border-medium); }
+
+/* Tags objectifs */
+.obj-tags { display: flex; flex-wrap: wrap; gap: 5px; min-height: 30px; }
+.obj-tag {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--primary-bg); color: var(--primary);
+  border-radius: 3px; padding: 2px 7px; font-size: 12px; font-weight: var(--fw-medium);
+}
+.obj-tag button { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 13px; padding: 0; line-height: 1; }
+.obj-tag button:hover { color: var(--danger); }
+
+/* v0.6.4 — fin_cycle et notions associées dans seqniv */
+.seqniv-fin-cycle-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  cursor: pointer; font-size: 12px;
+}
+.seqniv-fin-cycle-label { color: var(--text-secondary); }
+.seqniv-fin-cycle-toggle input[type="checkbox"]:checked + .seqniv-fin-cycle-label {
+  color: var(--primary); font-weight: var(--fw-medium);
+}
+.seqniv-notions-zone {
+  display: flex; flex-direction: column; gap: 6px; flex: 1;
+}
+.seqniv-notion-tags {
+  display: flex; flex-wrap: wrap; gap: 5px; min-height: 24px;
+}
+.seqniv-notion-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--primary-bg); color: var(--primary);
+  border-radius: 3px; padding: 2px 7px; font-size: 12px;
+}
+.seqniv-notion-tag-rm {
+  background: none; border: none; cursor: pointer;
+  color: var(--primary); font-size: 13px; padding: 0; line-height: 1;
+}
+.seqniv-notion-tag-rm:hover { color: var(--danger); }
+.seqniv-notions-vide {
+  font-size: 11px; color: var(--text-muted); font-style: italic;
+}
+.seqniv-notion-sel {
+  font-size: 12px; max-width: 320px;
+}
+
+/* Items de sections (exemples / remarques) */
+.atl-items-list { display: flex; flex-direction: column; gap: 5px; }
+.atl-item-row {
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.atl-item-row textarea {
+  flex: 1; font-family: monospace; font-size: 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 5px 8px; resize: vertical; min-height: 36px;
+  background: var(--surface); color: var(--text);
+}
+.atl-item-row textarea:focus { border-color: var(--primary); outline: none; }
+.atl-item-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 15px; padding: 4px;
+  line-height: 1; flex-shrink: 0;
+}
+.atl-item-del:hover { color: var(--danger); }
+
+/* ============================================================================
+   16. ATELIER LIVRET
+   ============================================================================ */
+.liv-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.liv-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-light);
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.liv-section-title {
+  font-size: 12px; font-weight: var(--fw-semibold); color: var(--text);
+  white-space: nowrap;
+}
+.liv-atoms-list { padding: 8px; display: flex; flex-direction: column; gap: 4px; min-height: 36px; }
+.liv-atom-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: var(--radius-sm);
+  background: var(--bg-main); border: 1px solid var(--border-light);
+  font-size: 12px;
+}
+.liv-atom-row .liv-num {
+  min-width: 22px; text-align: center; font-size: 10px; font-weight: 600;
+  color: var(--text-muted); background: var(--surface-medium);
+  border-radius: 3px; padding: 1px 4px;
+}
+.liv-atom-row .liv-label { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.liv-atom-row .liv-move { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 13px; padding: 0 2px; }
+.liv-atom-row .liv-move:hover { color: var(--text); }
+.liv-atom-row .liv-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 0; line-height: 1; }
+.liv-atom-row .liv-del:hover { color: var(--danger); }
+/* Exercices par objectif */
+.liv-obj-exos { padding: 6px 8px 8px; border-top: 1px solid var(--border-light); background: var(--surface); }
+.liv-exo-serie { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px; }
+.liv-exo-serie label { font-size: 10px; font-weight: 600; color: var(--text-secondary); width: 70px; flex-shrink: 0; padding-top: 5px; }
+.liv-exo-serie input { font-size: 11px; flex: 1; }
+
+/* ============================================================================
+   17. SOUS-ONGLETS (Suivi de classe)
+   ============================================================================ */
+.sub-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 var(--sp-md);
+}
+.sub-tab {
+  padding: 8px 18px; font-size: 13px; font-weight: var(--fw-medium);
+  color: var(--text-secondary); border: none; background: none;
+  cursor: pointer; border-bottom: 2px solid transparent;
+}
+.sub-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.sub-tab:hover:not(.active) { color: var(--text); }
+
+/* Chips d'exercices cliquables dans le Livret */
+.liv-exo-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 5px;
+  background: var(--primary-bg); color: var(--primary);
+  border-radius: var(--radius-sm); font-size: 11px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--primary-light);
+}
+.liv-exo-chip:hover { background: var(--primary); color: #fff; }
+
+/* ============================================================================
+   18. ADMINISTRATION — badges import + tableau atomes + reset
+   ============================================================================ */
+
+/* Badges statut dans le tableau d'atomes */
+.badge-import {
+  display: inline-block; padding: 1px 7px;
+  border-radius: 10px; font-size: 10px; font-weight: 600;
+  letter-spacing: .03em; white-space: nowrap;
+}
+.badge-import.nouveau   { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.badge-import.existant  { background: var(--surface-light); color: var(--text-secondary); border: 1px solid var(--border-medium); }
+
+/* Ligne d'atome dans le tableau de scan */
+.admin-atom-row {
+  display: grid;
+  grid-template-columns: 70px 90px 1fr 80px;
+  align-items: center; gap: 8px;
+  padding: 5px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--surface); margin-bottom: 3px;
+  font-size: 12px;
+}
+.admin-atom-row:hover { background: var(--surface-light); }
+.admin-atom-type {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  color: var(--text-secondary); letter-spacing: .04em;
+}
+.admin-atom-fichier {
+  font-family: monospace; font-size: 11px;
+  color: var(--text-secondary); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.admin-atom-titre {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text);
+}
+
+/* Carte de réinitialisation */
+.admin-reset-card { border-color: #fca5a5; }
+
+.admin-reset-row {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 16px;
+}
+.admin-reset-btn {
+  flex-shrink: 0; font-size: 12px;
+  padding: 5px 12px; white-space: nowrap;
+}
+.admin-reset-all {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  font-weight: 600;
+}
+.admin-reset-all:hover { background: var(--danger); color: #fff; }
+
+/* ============================================================================
+   19. ATELIERS — barre de filtre niveau/séquence + meta dans les items
+   ============================================================================ */
+
+.atl-filtre-bar {
+  display: flex; gap: 4px; padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-light);
+}
+.atl-filtre-bar select {
+  padding: 3px 6px; font-size: 11px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  min-width: 0;
+}
+
+/* Petit badge niveau/séquence dans les items de sidebar */
+.atl-item-meta {
+  flex-shrink: 0; font-size: 10px; font-weight: 600;
+  color: var(--text-muted); background: var(--surface-medium);
+  border-radius: 3px; padding: 1px 4px; white-space: nowrap;
+}
+
+/* Identification d'un atome dans la sidebar : N11/S01/F01, N11/S01/C01, ...
+   Largeur fixe monospace pour aligner les colonnes visuellement. */
+.atl-item-id {
+  flex-shrink: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 78px;
+}
+
+/* v0.12.2 — Variante pour les ateliers Thème (`A`, `B`…) et Séquence-cycle
+   (`S01`, `S14`…) où le code est court : pas de `min-width` 78px qui
+   créerait un espace blanc disgracieux. Garde monospace + couleur muted
+   pour la cohérence visuelle avec les atl-item-id "longs". */
+.atl-item-id--compact {
+  min-width: 0;
+}
+
+/* v0.12.2 — Pastille de couleur (cercle de 10px) en tête d'item, pour
+   les ateliers Thème et Séquence-cycle. La couleur de fond est posée
+   via style inline (variable suivant la famille de couleur du thème). */
+.atl-item-pastille {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+/* Variante invisible : conserve l'espace pour aligner les items qui
+   n'ont pas de couleur définie. */
+.atl-item-pastille--vide {
+  visibility: hidden;
+}
+
+/* v0.12.2 — Badge compteur à droite d'un item (« 5 seq », « 12 »).
+   Pour les ateliers Thème (compteur de séquences) et Séquence-cycle
+   (compteur d'atomes). Style discret, ne concurrence pas le titre. */
+.atl-item-compteur {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Titre d'un atome dans la sidebar : ellipsis sur une ligne.
+   v0.12.2 — `min-width: 0` indispensable pour que l'ellipsis fonctionne
+   dans un conteneur flex (sans cela, le titre déborde sur le badge état
+   placé à droite, recouvrement visuel observé pré-v0.12.2). */
+.atl-item-titre {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* v0.12.2 — Code de l'objectif lié, affiché à droite d'un item Fiche
+   (« obj 02 »). Aligné stylistiquement sur .atl-list-item-etat (taille
+   10px, couleur muted), placé sur la 1re ligne avant le badge état. */
+.atl-item-obj-code {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* v0.12.2 — Variante "titre dérivé" : utilisé par l'atelier Fiche
+   quand le titre de la fiche est vide et qu'on affiche à la place le
+   nom de l'objectif lié (fallback). Italique pour signaler que ce
+   n'est pas le titre saisi par l'enseignant. */
+.atl-item-titre--derive {
+  font-style: italic;
+}
+
+/* Badge « Fin de cycle » pour les méthodes */
+.atl-item-fc {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-bg);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* Correction grille admin-atom-row : 5 colonnes (badge + type + fichier + titre + info) */
+.admin-atom-row {
+  grid-template-columns: 80px 65px 140px 1fr 90px;
+}
+
+/* ============================================================================
+   20. NOUVEAUX CODES DE NIVEAU (1/2/3/4/A/D/NE)
+   ============================================================================ */
+
+/* Couleurs des niveaux — palette cohérente */
+:root {
+    --niv-0-bg:   #f9fafb; --niv-0-text: #d1d5db;  /* 0 — Aucune donnée — très pâle */
+    --niv-4-bg:   #14532d; --niv-4-text: #ffffff;  /* 4 — Très bien   — vert foncé */
+    --niv-3-bg:   #dcfce7; --niv-3-text: #166534;  /* 3 — Satisfaisant — vert      */
+    --niv-2-bg:   #fef9c3; --niv-2-text: #854d0e;  /* 2 — À consolider — jaune     */
+    --niv-1-bg:   #fee2e2; --niv-1-text: #7f1d1d;  /* 1 — Insuffisant  — rouge     */
+    --niv-A-bg:   #f3f4f6; --niv-A-text: #6b7280;  /* A — Absent       — gris      */
+    --niv-D-bg:   #f3f4f6; --niv-D-text: #6b7280;  /* D — Dispensé     — gris      */
+    --niv-NE-bg:  #f0efe9; --niv-NE-text: #999;    /* NE — Non évalué  — neutre    */
+}
+
+/* Badges nouveaux codes */
+.badge-0,  .b-0  { background: var(--niv-0-bg);  color: var(--niv-0-text); border: 1px solid #e5e7eb; }
+.badge-4,  .b-4  { background: var(--niv-4-bg);  color: var(--niv-4-text); }
+.badge-3,  .b-3  { background: var(--niv-3-bg);  color: var(--niv-3-text); }
+.badge-2,  .b-2  { background: var(--niv-2-bg);  color: var(--niv-2-text); }
+.badge-1,  .b-1  { background: var(--niv-1-bg);  color: var(--niv-1-text); }
+.badge-A,  .b-A  { background: var(--niv-A-bg);  color: var(--niv-A-text); }
+.badge-D,  .b-D  { background: var(--niv-D-bg);  color: var(--niv-D-text); }
+.badge-NE, .b-NE { background: var(--niv-NE-bg); color: var(--niv-NE-text); }
+
+/* Compatibilité anciens badges (affichage archivé) */
+.badge-TB, .b-TB { background: var(--niv-4-bg);  color: var(--niv-4-text); }
+.badge-S,  .b-S  { background: var(--niv-3-bg);  color: var(--niv-3-text); }
+.badge-F,  .b-F  { background: var(--niv-2-bg);  color: var(--niv-2-text); }
+.badge-I,  .b-I  { background: var(--niv-1-bg);  color: var(--niv-1-text); }
+
+/* ============================================================================
+   21. ATELIER PROGRESSION
+   ============================================================================ */
+
+/* Ligne de créneau dans la sidebar */
+.prog-creneau-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    border: 1px solid transparent;
+    margin-bottom: 3px;
+    user-select: none;
+}
+.prog-creneau-item:hover  { background: var(--surface-light); }
+.prog-creneau-item.active { background: var(--primary-bg); border-color: var(--primary-light); color: var(--primary); }
+.prog-creneau-item.dragging { opacity: 0.4; }
+.prog-creneau-item.dragover { border-color: var(--primary); background: var(--primary-bg); }
+
+.prog-periode-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.prog-periode-Sem1     { background: #dbeafe; color: #1d4ed8; }
+.prog-periode-Sem2     { background: #fce7f3; color: #9d174d; }
+.prog-periode-FinAnnee { background: #fef3c7; color: #92400e; }
+.prog-periode-vide     { background: var(--surface-light); color: var(--text-muted); }
+
+.prog-drag-handle {
+    color: var(--text-muted);
+    cursor: grab;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.prog-drag-handle:active { cursor: grabbing; }
+
+/* Tableau synthétique */
+.prog-tableau-row {
+    display: grid;
+    grid-template-columns: 60px 120px 1fr 100px 100px;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 12px;
+}
+.prog-tableau-row:hover { background: var(--surface-light); }
+.prog-tableau-head {
+    background: var(--surface-light);
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    border: 1px solid var(--border);
+}
+.prog-tableau-body {
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    background: var(--surface);
+}
+
+/* ─── Calendrier scolaire (v0.6.3c) ─── */
+.cal-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+.cal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.cal-mois-sep {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+  padding: 8px 6px 3px 6px;
+  border-bottom: 1px solid var(--border, #ddd);
+  background: var(--surface-bg, #f9f9f9);
+  text-transform: capitalize;
+}
+.cal-row {
+  display: flex;
+  gap: 6px;
+  padding: 4px 6px;
+  border-bottom: 1px dotted #eee;
+  align-items: start;
+  font-size: 11px;
+  min-height: 22px;
+}
+.cal-row-vacances {
+  background: #fce8e6;
+}
+.cal-row-vacances .cal-date {
+  color: #a33;
+}
+.cal-date {
+  width: 54px;
+  min-width: 54px;
+  flex-shrink: 0;
+  color: #666;
+  font-size: 10px;
+  padding-top: 2px;
+}
+.cal-contenu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cal-vacances-label {
+  font-size: 10px;
+  font-style: italic;
+  color: #a33;
+}
+.cal-feries {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.cal-ferie {
+  font-size: 10px;
+  background: #fef7e0;
+  color: #b06000;
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.cal-creneau {
+  background: #e8f0fe;
+  color: #1967d2;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+  border-left: 3px solid #1967d2;
+  transition: background .15s;
+}
+.cal-creneau:hover {
+  background: #d2e3fc;
+}
+.cal-creneau-selected {
+  background: #1967d2;
+  color: #fff;
+}
+.cal-creneau-selected:hover {
+  background: #185abc;
+}
+
+/* ── Sélection de progression (v0.6.3d) ────────────────────────────────────── */
+
+.prog-selection-head {
+  background: var(--primary);
+  color: var(--text-on-primary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--primary-dark);
+}
+.prog-selection-title {
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: -.01em;
+}
+.prog-selection-subtitle {
+  font-size: 11px;
+  opacity: .85;
+  margin-top: 2px;
+}
+
+.prog-selection-body {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface);
+}
+.prog-selection-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.prog-selection-field label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+}
+.prog-selection-field select {
+  width: 100%;
+  font-size: 12px;
+}
+.prog-selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.prog-selection-lien {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.prog-selection-lien a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.prog-selection-lien a:hover {
+  text-decoration: underline;
+}
+
+/* Encadré « aucune progression trouvée » */
+.prog-aucune {
+  margin: 10px 12px;
+  padding: 12px 14px;
+  background: #fef7e0;
+  border: 1px solid #f9d568;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prog-aucune-msg {
+  font-size: 12px;
+  color: #744400;
+  line-height: 1.45;
+}
+.prog-aucune-btn {
+  align-self: flex-start;
+  padding: 7px 14px;
+  background: #b47800;
+  color: #fff;
+  border: 1px solid #8a5c00;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.prog-aucune-btn:hover {
+  background: #8a5c00;
+}
+
+/* Encadré « erreur grave » (cas ≥ 2 progressions) */
+.prog-erreur {
+  margin: 10px 12px;
+  padding: 12px 14px;
+  background: #fce8e6;
+  border: 1px solid #f28b82;
+  border-radius: var(--radius);
+}
+.prog-erreur-msg {
+  font-size: 12px;
+  color: #a50e0e;
+  line-height: 1.45;
+}
+
+/* Dialogue de création d'une progression (remplace l'encadré .prog-aucune) */
+.prog-dialogue {
+  margin: 10px 12px;
+  padding: 12px 14px;
+  background: var(--surface-light, #f5f6f8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prog-dialogue-titre {
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+.prog-dialogue-triplet {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.prog-dialogue-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.prog-dialogue-field label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.prog-dialogue-field select {
+  width: 100%;
+  font-size: 12px;
+}
+.prog-dialogue-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ── Rendu atomique (onglet "Rendu PDF" dans les ateliers) ──────────────── */
+
+.rendu-vide {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.rendu-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.rendu-hint {
+  font-size: 11px; color: var(--text-muted);
+}
+
+.rendu-contenu {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.rendu-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px; color: var(--text-muted); font-size: 13px;
+}
+.rendu-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary, #2563eb);
+  border-radius: 50%;
+  animation: rendu-spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+@keyframes rendu-spin {
+  to { transform: rotate(360deg); }
+}
+
+.rendu-pdf-wrapper {
+  width: 100%; height: 100%;
+  background: #525659;  /* fond de PDF viewer classique */
+}
+.rendu-pdf-iframe {
+  width: 100%; height: 100%;
+  border: none;
+  display: block;
+}
+
+/* ── Erreurs de compilation ─────────────────────────────────────────────── */
+
+.rendu-erreurs {
+  padding: 16px 20px;
+  max-width: 900px;
+}
+.rendu-err-title {
+  font-size: 14px; font-weight: 600;
+  color: #b45309;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: #fef3c7;
+  border-left: 4px solid #d97706;
+  border-radius: 4px;
+}
+.rendu-err-list {
+  list-style: none; padding: 0; margin: 0 0 16px 0;
+}
+.rendu-err-item {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--surface);
+  transition: background .15s;
+}
+.rendu-err-item.clickable {
+  cursor: pointer;
+}
+.rendu-err-item.clickable:hover {
+  background: var(--surface-light);
+  border-color: var(--primary, #2563eb);
+}
+.rendu-err-head {
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.rendu-err-ligne {
+  display: inline-block;
+  min-width: 50px;
+  padding: 2px 8px;
+  background: #dc2626; color: #fff;
+  border-radius: 4px;
+  font-family: monospace; font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+.rendu-err-msg {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+}
+.rendu-err-ctx {
+  margin-top: 6px; margin-left: 60px;
+  padding: 6px 10px;
+  background: #2c2c2a; color: #d3d1c7;
+  border-radius: 3px;
+  font-family: monospace; font-size: 11px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ── Zone .tex brut avec surlignage ─────────────────────────────────────── */
+
+.rendu-tex-toggle {
+  margin-top: 8px; margin-bottom: 8px;
+}
+.rendu-tex-zone {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.rendu-tex-code-bloc {
+  background: #2c2c2a;
+  color: #d3d1c7;
+  font-family: monospace; font-size: 12px;
+  line-height: 1.5;
+}
+.rendu-tex-ligne {
+  display: flex;
+  padding: 0 8px;
+  white-space: pre;
+}
+.rendu-tex-ligne:hover {
+  background: #3a3a38;
+}
+.rendu-tex-numero {
+  display: inline-block;
+  width: 40px;
+  color: #7a7870;
+  text-align: right;
+  padding-right: 12px;
+  user-select: none;
+  border-right: 1px solid #4a4a48;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.rendu-tex-code {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.rendu-tex-ligne-faute {
+  background: #5c1e1e;
+  border-left: 3px solid #ef4444;
+  padding-left: 5px;  /* compense le border-left */
+}
+.rendu-tex-ligne-faute:hover {
+  background: #6c2424;
+}
+.rendu-tex-ligne-faute .rendu-tex-numero {
+  color: #ffb3b3;
+  font-weight: 600;
+}
+.rendu-tex-ligne-flash {
+  animation: rendu-flash 1.2s ease;
+}
+@keyframes rendu-flash {
+  0%   { background: #f59e0b; color: #000; }
+  100% { background: inherit; color: inherit; }
+}
+
+.rendu-erreur-reseau {
+  padding: 20px;
+  color: var(--danger-text, #991b1b);
+  background: var(--danger-bg, #fee2e2);
+  border: 1px solid var(--danger, #ef4444);
+  border-radius: 4px;
+  margin: 20px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.6.4 — Modale LaTeX généré
+   Affichée en cliquant sur le bouton « LaTeX généré » dans la toolbar
+   d'un atelier (exercice, notion, méthode).
+   ───────────────────────────────────────────────────────────────────────── */
+.atelier-modale-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+.atelier-modale {
+  background: var(--surface, #fff);
+  border-radius: var(--radius-md, 6px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 900px;
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+.atelier-modale-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.atelier-modale-entete h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--fw-medium, 500);
+}
+.atelier-modale-actions {
+  display: flex;
+  gap: 8px;
+}
+.atelier-modale-corps {
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+}
+.atelier-modale-pre {
+  margin: 0;
+  padding: 16px;
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface-light, #f9fafb);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.6.4 — Mode split : édition + rendu PDF côte-à-côte
+   Toggle global activé depuis l'onglet « Préférences ».
+
+   Quand body.atelier-mode-split est actif, dans chaque atelier :
+     - les onglets Édition/Rendu sont cachés (les deux panneaux sont
+       affichés simultanément, plus besoin de basculer)
+     - .atl-main devient un grid avec 2 lignes (toolbar / contenu) et
+       2 colonnes (édition / rendu) : la toolbar occupe les 2 colonnes
+       de la 1re ligne, et form/rendu occupent les 2 colonnes de la 2e
+     - le grid contraint correctement la hauteur, ce qui permet aux
+       scrollbars internes de form et rendu de fonctionner
+
+   Note v0.6.4 (correctif) : la version précédente utilisait
+   flex-wrap:wrap, qui casse la contrainte de hauteur — la zone
+   d'édition n'avait alors pas d'ascenseur quand le contenu débordait.
+   ───────────────────────────────────────────────────────────────────────── */
+body.atelier-mode-split .atl-tabs {
+  display: none !important;
+}
+
+/* v0.11.4 — L'atelier d'assemblage de séquence ne supporte PAS le mode
+   côte-à-côte (un livret entier est trop grand pour s'inspecter en colonne
+   à côté de l'éditeur). Ses onglets Édition/Rendu PDF doivent donc rester
+   visibles même quand le mode split global est activé par l'utilisateur.
+   Le ID `#asm-tabs` cible exclusivement les onglets de cet atelier ;
+   les autres ateliers continuent à masquer leurs `.atl-tabs` normalement. */
+body.atelier-mode-split #asm-tabs.atl-tabs {
+  display: flex !important;
+}
+
+/* Le grid : 2 lignes (toolbar auto, contenu prend le reste) ×
+   2 colonnes égales par défaut (réglables via --split-ratio).
+   Les éléments masqués (#atl-*-empty, #atl-*-latex avec display:none)
+   restent hors grid grâce à display:none. */
+body.atelier-mode-split .atl-main {
+  display: grid;
+  /* La 2e colonne occupe le reste après la 1re ; la poignée est de 4px.
+     --split-ratio est un % de la 1re colonne. JS le règle au drag. */
+  --split-ratio: 50%;
+  grid-template-columns: var(--split-ratio) 4px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "toolbar toolbar  toolbar"
+    "form    splitter rendu";
+}
+
+body.atelier-mode-split .atl-main > .atl-toolbar {
+  grid-area: toolbar;
+}
+
+/* La poignée : insérée par JS dans .atl-main, mais positionnée par grid. */
+body.atelier-mode-split .atl-main > .atelier-splitter-split {
+  grid-area: splitter;
+  display: block;
+  background: var(--border, #e5e7eb);
+  cursor: col-resize;
+  transition: background 120ms ease;
+}
+body.atelier-mode-split .atl-main > .atelier-splitter-split:hover,
+body.atelier-mode-split .atl-main > .atelier-splitter-split:active {
+  background: var(--primary, #3b82f6);
+}
+/* Hors mode split, la poignée dédiée est cachée. */
+.atelier-splitter-split { display: none; }
+
+/* Forcer la visibilité simultanée de form et rendu */
+body.atelier-mode-split #atl-exo-form,
+body.atelier-mode-split #atl-notion-form,
+body.atelier-mode-split #atl-methode-form,
+body.atelier-mode-split #atl-fiche-form {
+  display: block !important;
+  grid-area: form;
+  min-height: 0;          /* Indispensable pour que overflow-y fonctionne dans grid */
+  overflow-y: auto;
+}
+body.atelier-mode-split #atl-exercice-rendu,
+body.atelier-mode-split #atl-notion-rendu,
+body.atelier-mode-split #atl-methode-rendu,
+body.atelier-mode-split #atl-fiche-rendu {
+  display: flex !important;
+  grid-area: rendu;
+  min-height: 0;
+  overflow: hidden;       /* L'iframe interne gère ses propres scrolls */
+}
+
+/* v0.11.5 — Neutraliser le grid mode-split pour l'atelier Livret/Séquence.
+   Cet atelier n'a pas de structure form/rendu (il a une structure tabs
+   Édition/Rendu PDF gérée par #asm-tabs). Sans ce reset, la règle
+   `body.atelier-mode-split .atl-main { display: grid }` ci-dessus
+   transforme #atl-livret .atl-main en grid 50/4/1fr et le contenu
+   se retrouve bridé à 50% de large alors que rien ne s'affiche dans
+   l'autre colonne. On revient au flex column standard. */
+body.atelier-mode-split #atl-livret .atl-main {
+  display: flex;
+  grid-template-columns: none;
+  grid-template-rows: none;
+  grid-template-areas: none;
+}
+body.atelier-mode-split #atl-livret .atl-main > .atl-toolbar,
+body.atelier-mode-split #atl-livret .atl-main > #liv-atl-content-assemblage {
+  grid-area: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.6.4 — Onglet Préférences
+   ───────────────────────────────────────────────────────────────────────── */
+.preferences-bloc {
+  padding: 24px;
+  max-width: 700px;
+}
+.preferences-bloc h2 {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  font-weight: var(--fw-medium, 500);
+}
+.preferences-section {
+  margin-bottom: 28px;
+}
+.preferences-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  font-weight: var(--fw-medium, 500);
+  color: var(--text-secondary, #6b7280);
+}
+.preferences-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-light, #f9fafb);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+}
+.preferences-toggle input[type="checkbox"] {
+  margin-top: 3px;
+}
+.preferences-toggle-texte {
+  flex: 1;
+}
+.preferences-toggle-titre {
+  font-size: 13px;
+  font-weight: var(--fw-medium, 500);
+  margin-bottom: 3px;
+}
+.preferences-toggle-desc {
+  font-size: 12px;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.6.4 — Zone Sections (modèle universel à 2 niveaux)
+   Utilisée dans les ateliers Notion et Méthode.
+   Chaque section a un titre (combobox extensible) et une liste d'items.
+   ───────────────────────────────────────────────────────────────────────── */
+.atl-sections-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.atl-section-bloc {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: var(--radius-sm, 4px);
+  padding: 10px 12px;
+  background: var(--surface-light, #f9fafb);
+}
+.atl-section-tete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.atl-section-titre-input {
+  flex: 1;
+  font-size: 13px;
+  font-weight: var(--fw-medium, 500);
+  padding: 4px 8px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 3px;
+  background: var(--surface, #fff);
+  min-width: 0;
+}
+.atl-section-actions {
+  display: flex;
+  gap: 4px;
+}
+.atl-section-actions button {
+  font-size: 13px;
+  padding: 2px 8px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1;
+}
+.atl-section-actions button:hover { background: var(--bg-main, #f3f4f6); }
+.atl-section-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.atl-section-actions button.btn-suppr-sec {
+  color: var(--danger, #ef4444);
+}
+.atl-section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.atl-section-item-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.atl-section-item-row textarea {
+  flex: 1;
+  min-width: 0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 6px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 3px;
+  background: var(--surface, #fff);
+}
+.atl-section-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.atl-section-item-actions button {
+  font-size: 11px;
+  padding: 1px 5px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 3px;
+  cursor: pointer;
+  line-height: 1;
+  min-width: 24px;
+}
+.atl-section-item-actions button:hover { background: var(--bg-main, #f3f4f6); }
+.atl-section-item-actions button:disabled {
+  opacity: 0.4; cursor: not-allowed;
+}
+.atl-section-item-actions button.btn-del-item {
+  color: var(--danger, #ef4444);
+}
+.atl-section-item-vide {
+  font-size: 11px;
+  color: var(--text-muted, #9ca3af);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.6.4 — Splitters cliquer-tirer
+   Poignée de quelques pixels insérée entre deux panneaux pour redimensionner.
+   Posée par atelierInstallerSplitter (cf. atelier_commun.js).
+
+   v0.6.4 (correctif post-livraison B) : suppression du pseudo-élément
+   ::before qui élargissait la zone hit-testing à ±3px de chaque côté.
+   Ce débordement faisait que les clics dans les 3px les plus proches du
+   splitter (côté sidebar OU côté main) étaient interceptés par le
+   splitter au lieu d'atteindre les items / champs sous-jacents —
+   l'utilisateur se retrouvait en mode redimensionnement au lieu de
+   cliquer normalement. La poignée passe de 4px à 6px pour rester
+   confortable à viser, sans débordement sur les zones adjacentes.
+   ───────────────────────────────────────────────────────────────────────── */
+.atelier-splitter {
+  flex: 0 0 6px;
+  background: var(--border, #e5e7eb);
+  cursor: col-resize;
+  transition: background 120ms ease;
+}
+.atelier-splitter:hover,
+.atelier-splitter:active {
+  background: var(--primary, #3b82f6);
+}
+
+/* ── v0.9.3 — Textareas LaTeX ────────────────────────────────────────────────
+ *
+ * Tabulations à 2 espaces (cohérent avec le hook Tab JS qui insère 2
+ * espaces). Sans cette règle, les navigateurs rendent les '\t' à 8 caractères
+ * par défaut, ce qui est trop large pour du code LaTeX déjà indenté en
+ * espaces.
+ *
+ * line-height légèrement aéré (1.4) : améliore la lisibilité sur des lignes
+ * de macros denses comme \xintdeffloatvar X := randrange(...).
+ *
+ * white-space: pre : préserve l'indentation (par défaut le textarea
+ * affiche déjà comme tel, mais on le force pour ne pas être surpris si
+ * un parent applique pre-wrap).
+ */
+textarea.latex-textarea {
+  -moz-tab-size: 2;
+  -o-tab-size: 2;
+  tab-size: 2;
+  line-height: 1.4;
+  /* v0.10.7 — pre-wrap au lieu de pre : les retours à la ligne et
+     espaces explicites sont préservés ; les lignes longues wrappent
+     visuellement sans insérer de \n dans la valeur. */
+  white-space: pre-wrap;
+  /* Casse les mots très longs (URLs, noms de fichiers) sans déborder */
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
+}
+
+/* ============================================================================
+   v0.10.1 — Atelier d'assemblage de séquence-niveau
+   ============================================================================ */
+
+/* ── Sidebar gauche : méthodes / exos draggables ── */
+
+.asm-sidebar-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-style: italic;
+}
+
+.asm-cat {
+  margin-bottom: 10px;
+}
+.asm-cat-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 6px;
+  font-size: 10px; font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .06em;
+  cursor: pointer;
+  user-select: none;
+}
+.asm-cat-head::before {
+  content: '▾';
+  font-size: 9px;
+  transition: transform var(--t-fast);
+}
+.asm-cat.collapsed .asm-cat-head::before { transform: rotate(-90deg); }
+.asm-cat.collapsed .asm-cat-body { display: none; }
+.asm-cat-count {
+  margin-left: auto;
+  background: var(--surface-light);
+  color: var(--text-secondary);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+}
+
+.asm-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  color: var(--text);
+  cursor: grab;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.asm-item:hover {
+  border-color: var(--primary-light);
+  background: var(--primary-bg);
+}
+.asm-item:active { cursor: grabbing; }
+.asm-item.dragging { opacity: .4; }
+
+/* v0.13.4 — Variante clickable (sidebars des ateliers d'atomes :
+   Notion / Méthode / Fiche / Exercice). Items non-draggables, le clic
+   ouvre l'item dans la zone d'édition. Override le `cursor: grab` du
+   modèle d'assemblage (où les items sont draggables vers les parties). */
+.asm-item--clickable        { cursor: pointer; }
+.asm-item--clickable:active { cursor: pointer; }
+
+/* v0.13.4 — État sélectionné (item ouvert dans la zone d'édition).
+   Bordure primaire + fond légèrement teinté pour distinguer du hover. */
+.asm-item.active {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+.asm-item.active:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+
+/* v0.13.6.14.1 — État sélectionné en multi-sélection (Ctrl+clic /
+   Maj+clic). Distinct visuellement de .active (l'item en cours d'édition,
+   au plus un dans la liste) : on utilise un fond bleu plus clair et une
+   bordure plus douce. Si un item est à la fois actif ET dans la sélection
+   multi, .active prime visuellement (combinaison naturelle des deux
+   règles, .active déclarée plus haut donc moins prioritaire mais bordure
+   identique). */
+.asm-item--selected {
+  background: var(--primary-bg);
+  border-color: var(--primary-light, #93c5fd);
+}
+.asm-item--selected:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary-light, #93c5fd);
+}
+
+.asm-item.placed {
+  cursor: default;
+  background: var(--surface-light);
+  border-color: var(--border-light);
+  color: var(--text-muted);
+}
+.asm-item.placed:hover {
+  border-color: var(--border-light);
+  background: var(--surface-light);
+}
+.asm-item-badge {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 18px; padding: 0 4px;
+  border-radius: var(--radius-sm);
+  font-size: 10px; font-weight: var(--fw-semibold);
+  background: var(--surface-medium);
+  color: var(--text-secondary);
+}
+.asm-item-badge--F  { background: var(--serie-F); color: white; }
+.asm-item-badge--A  { background: var(--serie-A); color: white; }
+.asm-item-badge--E  { background: var(--serie-E); color: white; }
+.asm-item-badge--EA { background: var(--warning); color: white; }
+.asm-item-lib {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.asm-item-placed-tag {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface-light);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Zone centrale : parties ── */
+
+.asm-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.asm-header-niv {
+  background: var(--primary);
+  color: white;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--fw-semibold);
+}
+.asm-header-code {
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+.asm-header-nom {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+}
+.asm-theme-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-xs);
+  background: var(--surface-light);
+  color: var(--text-secondary);
+}
+
+/* ── v0.11.2 — Bloc Livret de séquence ──
+   v0.11.3 — Le cadre principal .livret-seq-bloc a disparu (remplacé par
+   l'arbre .elem-incl-* dans l'onglet Édition). Les classes ci-dessous
+   sont réutilisées pour la zone de rendu dans l'onglet Rendu PDF. */
+.livret-seq-actions {
+  display: flex; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-light);
+  flex-shrink: 0;
+}
+.livret-seq-rendu {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.livret-seq-empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: var(--font-sm);
+}
+.livret-seq-loader {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px;
+  padding: 32px 20px;
+  text-align: center;
+}
+.livret-seq-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: livret-seq-spin 800ms linear infinite;
+}
+@keyframes livret-seq-spin {
+  to { transform: rotate(360deg); }
+}
+.livret-seq-loader-msg {
+  font-weight: var(--fw-semibold);
+  font-size: var(--font-md);
+}
+.livret-seq-loader-hint {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+.livret-seq-erreur {
+  padding: 16px 18px;
+  background: #fef2f2;
+  color: #991b1b;
+  border-top: 1px solid #fecaca;
+  font-size: var(--font-sm);
+  overflow: auto;
+}
+.livret-seq-tex-out {
+  padding: 12px 14px;
+  flex: 1;
+  overflow: auto;
+}
+.livret-seq-tex-out pre {
+  background: #2c2c2a;
+  color: #d3d1c7;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 12px;
+  white-space: pre;
+  margin: 0;
+}
+.livret-seq-pdf-wrapper {
+  /* v0.11.3 — Dans l'onglet Rendu PDF, on prend toute la hauteur dispo. */
+  flex: 1;
+  min-height: 0;
+  background: #525659;  /* gris PDF reader */
+}
+.livret-seq-pdf-iframe {
+  width: 100%; height: 100%;
+  border: 0;
+}
+
+/* v0.11.5 — Conteneurs des deux modes (Assemblage / Édition avancée) de
+   l'atelier Livret. Chacun est un flex item qui occupe la place restante
+   sous la toolbar. .liv-atl-content est lui-même un flex column pour que
+   ses enfants (.atl-tabs + les panneaux d'onglets) s'empilent verticalement
+   et que les panneaux scrollent quand leur contenu dépasse.
+
+   La chaîne complète :
+     .atl-shell        (height: calc(100vh - 96px), overflow: hidden)
+     └─ .atl-main      (flex:1, display:flex column, overflow:hidden)
+        ├─ .atl-toolbar    (hauteur naturelle)
+        └─ .liv-atl-content (flex:1, min-height:0, display:flex column)
+           ├─ .atl-tabs       (hauteur naturelle)
+           └─ .asm-tab-pane   (flex:1, min-height:0, overflow:auto)
+   Chaque maillon contraignant la hauteur du suivant via min-height:0,
+   le scroll interne devient possible. */
+.liv-atl-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.asm-tab-pane {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.asm-tab-pane--rendu {
+  /* En onglet Rendu, c'est l'iframe interne qui scrolle, pas le pane.
+     Le JS bascule l'affichage en flex (pas block) pour activer le
+     flex-direction:column qui dispose la toolbar Compiler en haut et
+     l'iframe en dessous. */
+  overflow: hidden;
+  flex-direction: column;
+}
+
+/* ── v0.11.4 — Classe générique « cadre » d'atelier ──
+   Encadré standardisé pour grouper visuellement des contrôles dans un
+   atelier (Éléments à inclure, Précédences, Principal/Remédiation à venir
+   dans l'atelier Exercice…). Usage : <div class="atl-cadre"> avec
+   éventuellement un <div class="atl-cadre-titre"> en première ligne.
+   Utiliser .atl-cadre--compact pour les variantes peu hautes (sans titre,
+   ou avec contenu inline comme les précédences). */
+.atl-cadre {
+  margin: 14px 18px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 14px 12px;
+}
+.atl-cadre--compact {
+  padding: 8px 14px;
+}
+.atl-cadre-titre {
+  font-weight: var(--fw-semibold);
+  font-size: var(--font-md);
+  margin-bottom: 6px;
+}
+
+/* v0.11.6 — Adaptation des .atl-cadre dans le formulaire de l'atelier
+   Exercice : le formulaire a déjà padding:20px à la racine, on retire
+   les marges latérales pour que les cadres s'étendent sur toute la
+   largeur. On garde une marge basse pour aérer entre cadres successifs. */
+#atl-exo-form .atl-cadre {
+  margin: 0 0 16px 0;
+}
+
+/* v0.11.6 — Section repliable (utilisée pour les Variables de l'exo,
+   repliée par défaut). Le bouton header sert de toggle. Le chevron
+   tourne quand la section s'ouvre. */
+.atl-collapsible {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  margin: 0 0 16px 0;
+}
+.atl-collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.atl-collapsible-header:hover {
+  background: var(--surface-light);
+}
+.atl-collapsible-chevron {
+  display: inline-block;
+  font-size: var(--font-md);
+  transition: transform 150ms ease;
+  color: var(--text-secondary);
+  width: 12px;
+  text-align: center;
+}
+.atl-collapsible.is-open .atl-collapsible-chevron {
+  transform: rotate(90deg);
+}
+.atl-collapsible-body {
+  padding: 0 14px 12px;
+}
+
+/* v0.11.6 — Ligne toggle « Cadre de réponse » + champ numérique dans
+   les cadres Principal et Remédiation. Le wrapper du nombre de lignes
+   est masqué tant que la case n'est pas cochée. */
+.atl-cadre-rep-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 6px 0 0;
+  border-top: 1px dashed var(--border);
+  margin-top: 6px;
+}
+.atl-cadre-rep-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-sm);
+  cursor: pointer;
+  user-select: none;
+}
+.atl-cadre-rep-lignes {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* v0.15.4 — Cadre « Éléments à inclure » SUPPRIMÉ.
+   Les classes `.elem-incl-*` qui vivaient ici (arbre, checkboxes,
+   warning) ont été retirées avec le bloc lui-même : la configuration
+   correspondante a migré dans le référentiel quelques versions plus
+   tôt et le double affichage n'avait plus d'utilité. */
+
+.asm-parties {
+  padding: 14px 18px 28px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.asm-vide {
+  padding: 30px 20px; text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Carte d'une partie ── */
+
+.asm-partie {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--t-fast);
+}
+.asm-partie.dragging { opacity: .5; }
+.asm-partie.drag-over-partie {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.asm-partie-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface-light);
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: grab;
+}
+.asm-partie-head:active { cursor: grabbing; }
+.asm-partie-handle {
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: grab;
+  user-select: none;
+}
+.asm-partie-titre {
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+}
+/* v0.12.1 — Total des séances prévues pour la partie, affiché à côté
+   du titre "Partie N" en lecture seule. Style discret pour ne pas
+   concurrencer le titre. */
+.asm-partie-total {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-weight: var(--fw-regular, 400);
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+  padding: 1px 7px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.asm-partie-meta {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
+}
+.asm-partie-num-input {
+  width: 48px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: var(--font-sm);
+}
+
+/* ── v0.12.0 — Plan de travail générique : input nb de séances ───────────────
+   Ce groupe (libellé + input + unité) apparaît :
+   - dans .asm-partie-meta : pour saisir les séances R+AE de la partie
+   - dans .asm-obj-actions  : pour saisir les séances de l'objectif
+   Conserve un look discret, aligné sur les autres inputs de l'atelier. */
+.asm-seances-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: text;
+}
+.asm-seances-libelle {
+  user-select: none;
+}
+.asm-seances-input {
+  width: 52px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: right;
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+  /* Désactive les flèches Chrome/Edge pour éviter le bruit visuel ;
+     les utilisateurs gardent les flèches clavier ↑/↓ et la molette. */
+  -moz-appearance: textfield;
+}
+.asm-seances-input::-webkit-outer-spin-button,
+.asm-seances-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.asm-seances-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+.asm-seances-unite {
+  color: var(--text-muted);
+  user-select: none;
+}
+
+/* v0.12.3.0 — Toggle "Fin de cycle" dans le bandeau d'objectif ouvert.
+   Affiché uniquement pour les objectifs exo (pas le Cours). Style
+   discret, aligné sur la même ligne que le contrôle séances. */
+.asm-obj-fincycle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.asm-obj-fincycle-input {
+  cursor: pointer;
+  margin: 0;
+}
+.asm-obj-fincycle-libelle {
+  user-select: none;
+}
+.asm-btn-suppr-partie {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--danger);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.asm-btn-suppr-partie:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.asm-partie-body {
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ── Zone Révision/Approche en haut de partie ── */
+
+.asm-zone-ra {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.asm-ra-col {
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  min-height: 50px;
+  background: var(--bg-main);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.asm-ra-col.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  border-style: solid;
+}
+.asm-ra-col.disabled {
+  opacity: .55;
+  background: var(--surface-light);
+}
+.asm-ra-titre {
+  font-size: 10px; font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 4px;
+}
+.asm-ra-titre-disabled-hint {
+  font-weight: var(--fw-normal);
+  color: var(--text-muted);
+  text-transform: none; letter-spacing: 0;
+  font-style: italic;
+}
+.asm-ra-vide {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.asm-exo-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px 2px 4px;
+  margin: 2px 4px 2px 0;
+  font-size: var(--font-xs);
+  color: var(--text);
+  cursor: grab;
+}
+.asm-exo-chip:active { cursor: grabbing; }
+.asm-exo-chip.dragging { opacity: .4; }
+.asm-exo-chip-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 16px;
+  background: var(--surface-medium);
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: var(--fw-semibold);
+}
+.asm-exo-chip-rm {
+  border: none; background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px; line-height: 1;
+  padding: 0 0 0 2px;
+}
+.asm-exo-chip-rm:hover { color: var(--danger); }
+
+/* ── Zone des objectifs (sous Révision/Approche) ── */
+
+.asm-zone-objs {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.asm-obj-vide-zone {
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 14px 12px;
+  text-align: center;
+  background: var(--bg-main);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.asm-obj-vide-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  border-style: solid;
+  color: var(--primary);
+  font-style: normal;
+}
+.asm-btn-connaitre {
+  background: transparent;
+  border: 1px dashed var(--primary-light);
+  color: var(--primary);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  margin-right: 6px;
+  transition: background var(--t-fast);
+}
+.asm-btn-connaitre:hover { background: var(--primary-bg); }
+
+/* ── Carte d'objectif (fermé / ouvert) ── */
+
+.asm-obj {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.asm-obj.dragging { opacity: .5; }
+.asm-obj.drop-target-obj {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+/* v0.12.3.0 — Indicateurs de zone d'insertion lors du drag-and-drop
+   d'objectifs. La barre apparaît en haut ou en bas de l'objectif cible
+   selon la position verticale de la souris (cf. seqnivAsmDragOverObj).
+   Utilise une bordure colorée plutôt qu'un trait pseudo-élément pour
+   rester compatible avec la box-shadow existante. */
+.asm-obj.drag-over-obj-above {
+  box-shadow: 0 -3px 0 -1px var(--primary) inset;
+}
+.asm-obj.drag-over-obj-below {
+  box-shadow: 0 3px 0 -1px var(--primary) inset;
+}
+
+.asm-obj-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.asm-obj-head:hover { background: var(--surface-light); }
+.asm-obj.open > .asm-obj-head {
+  background: var(--primary-bg);
+  border-bottom: 1px solid var(--primary-light);
+}
+.asm-obj-handle {
+  color: var(--text-muted);
+  cursor: grab;
+  user-select: none;
+}
+.asm-obj-handle:active { cursor: grabbing; }
+/* v0.12.3.0 — Variante "poignée fixe" pour l'objectif Connaître/Cours :
+   ce dernier est ancré en première position de sa partie et n'est pas
+   draggable. La poignée est invisible mais conserve la même largeur
+   que la poignée standard pour aligner verticalement les codes
+   d'objectif (01, 02, 03...) entre les bandeaux. */
+.asm-obj-handle--fixe {
+  cursor: default;
+  visibility: hidden;
+}
+.asm-obj-code {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; padding: 2px 6px;
+  background: var(--surface-medium);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 11px; font-weight: var(--fw-semibold);
+  font-family: ui-monospace, monospace;
+}
+.asm-obj.open .asm-obj-code {
+  background: var(--primary);
+  color: white;
+}
+.asm-obj-code--connaitre {
+  background: var(--serie-cours) !important;
+  color: white !important;
+}
+.asm-obj-titre {
+  flex: 1;
+  font-size: var(--font-sm);
+  color: var(--text);
+}
+.asm-obj.closed .asm-obj-titre { color: var(--text-secondary); }
+.asm-obj-resume {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+.asm-obj-actions {
+  display: flex; gap: 4px;
+}
+.asm-obj-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+}
+.asm-obj-btn:hover { background: var(--surface-light); }
+.asm-obj-btn--danger {
+  color: var(--danger);
+  border-color: var(--border);
+}
+.asm-obj-btn--danger:hover {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.asm-obj-body {
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--border-light);
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.asm-obj-nom-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  font-family: inherit;
+}
+
+/* Critères F/A/E (édition de l'objectif ouvert) */
+.asm-crits {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.asm-crit-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+.asm-crit-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  padding-top: 5px;
+}
+.asm-crit-label--F  { color: var(--niv-F-text); }
+.asm-crit-label--A  { color: var(--niv-S-text); }
+.asm-crit-label--E  { color: var(--niv-TB-bg); }
+.asm-crit-textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--font-xs);
+  padding: 4px 6px;
+  resize: vertical;
+  min-height: 30px;
+}
+
+/* Exos d'un objectif ouvert : pavés par série */
+.asm-obj-exos {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.asm-obj-exos-titre {
+  font-size: 10px; font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.asm-obj-exos-zone {
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  min-height: 36px;
+  background: var(--bg-main);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.asm-obj-exos-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  border-style: solid;
+}
+.asm-obj-exos-vide {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Bouton "+ Nouvelle partie" */
+.asm-btn-nouvelle-partie {
+  align-self: flex-start;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.asm-btn-nouvelle-partie:hover { background: var(--primary-dark); }
+
+/* Méthode liée (objectif ouvert) — affichage discret */
+.asm-obj-methode-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+.asm-obj-methode-tag {
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+}
+
+/* Indicateur de drop entre cartes (réordonnancement) */
+.asm-drop-indicator {
+  height: 3px;
+  background: var(--primary);
+  border-radius: 2px;
+  margin: 0 8px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.asm-drop-indicator.active { opacity: 1; }
+
+/* ── Préférences > Atelier d'assemblage ── */
+.pref-asm-bloc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.pref-asm-bloc h4 {
+  font-size: var(--font-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.pref-asm-bloc-hint {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.pref-asm-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  margin-bottom: 6px;
+  align-items: start;
+}
+.pref-asm-row label {
+  padding-top: 5px;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+.pref-asm-row input,
+.pref-asm-row textarea {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: var(--font-xs);
+}
+.pref-asm-row textarea { resize: vertical; min-height: 28px; }
+
+/* ──────────── v0.10.2 / v0.11.4 : bloc Précédences dans l'atelier d'assemblage ──── */
+/* v0.11.4 — Le cadre extérieur utilise maintenant .atl-cadre--compact ;
+   .asm-prec-bloc ne porte plus que des ajustements ciblés. */
+.asm-prec-bloc {
+  /* Pas d'override sur .atl-cadre — les styles communs suffisent. */
+}
+.asm-prec-bloc-row {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.asm-prec-bloc-titre {
+  font-size: var(--font-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  flex: 0 0 auto;
+}
+.asm-prec-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  flex: 1;
+}
+.asm-prec-vide {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+.asm-prec-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 4px 2px 10px;
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-xs);
+  color: var(--text);
+}
+.asm-prec-pill-lib {
+  font-family: ui-monospace, monospace;
+}
+.asm-prec-pill-rm {
+  border: none; background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px; line-height: 1;
+  padding: 0 4px;
+}
+.asm-prec-pill-rm:hover { color: var(--danger); }
+
+.asm-prec-btn-ajouter {
+  background: transparent;
+  border: 1px dashed var(--primary-light);
+  color: var(--primary);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.asm-prec-btn-ajouter:hover { background: var(--primary-bg); }
+
+.asm-prec-popover {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--surface-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.asm-prec-popover-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.asm-prec-popover-row label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  min-width: 70px;
+}
+.asm-prec-popover-row select {
+  flex: 1;
+  font-size: var(--font-xs);
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: inherit;
+}
+.asm-prec-popover-actions {
+  display: flex; gap: 8px;
+  margin-top: 4px;
+}
+.asm-prec-btn-valider {
+  font-size: var(--font-xs);
+  padding: 4px 12px;
+}
+.asm-prec-btn-annuler {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  cursor: pointer;
+}
+.asm-prec-btn-annuler:hover { background: var(--surface-medium); }
+
+/* ── v0.10.3 — Sidebar refondue : nouveaux badges, bouton Éditer ───────── */
+
+/* Badges de série/type dans la sidebar */
+.asm-item-badge--N  { background: var(--info, #6366f1); color: white; }
+.asm-item-badge--R  { background: var(--accent, #db2777); color: white; }
+.asm-item-badge--M  { background: var(--surface-medium); color: var(--text-secondary); }
+
+/* Bouton "Éditer" sur les méthodes (ligne sidebar) */
+.asm-item-edit {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 13px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+.asm-item-edit:hover { color: var(--primary); }
+
+/* Marqueur "déjà placé" : tag à droite avec liste de codes */
+.asm-item.placed-marker .asm-item-placed-tag {
+  background: var(--surface-light);
+  color: var(--text-secondary);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.04em;
+}
+
+/* Curseur "édition" sur les chips placés (double-clic = éditer) */
+.asm-obj-exos-zone .asm-exo-chip[ondblclick] {
+  /* nothing visual ; juste pour matcher le sélecteur si jamais */
+}
+
+/* ── v0.10.4 — État d'édition des atomes ──────────────────────────────── */
+
+/* Badge état dans la toolbar de l'atelier */
+.atome-etat-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-right: 6px;
+}
+.atome-etat-badge.atome-etat--en_cours {
+  background: var(--surface-medium, #f4f4ee);
+  color: var(--text-secondary);
+  border: 1px solid var(--border, #e2e1da);
+}
+.atome-etat-badge.atome-etat--valide {
+  background: #d8ecd6;
+  color: #2c5e2a;
+  border: 1px solid #b6d8b3;
+}
+
+/* Petit badge état dans la liste latérale (atl-list) — ligne d'item */
+.atl-list-item-etat {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  flex: 0 0 auto;
+  letter-spacing: 0.02em;
+  /* v0.12.2 — Plus de `margin-left: auto` : c'était inopérant car
+     `.atl-item-titre` a `flex:1` et absorbe déjà tout l'espace libre.
+     Le titre pousse maintenant naturellement le badge à droite. */
+}
+.atl-list-item-etat.atome-etat--en_cours {
+  background: var(--surface-medium, #f4f4ee);
+  color: var(--text-muted, #8b8a83);
+}
+.atl-list-item-etat.atome-etat--valide {
+  background: #d8ecd6;
+  color: #2c5e2a;
+}
+
+/* Filtres par état d'édition (3 boutons : Tous / En cours / Validé) */
+.exo-etat {
+  border: 1px solid var(--border, #e2e1da);
+  background: var(--surface, white);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  cursor: pointer;
+  line-height: 1.3;
+}
+.exo-etat:hover { background: var(--surface-light); }
+.exo-etat.active {
+  background: var(--primary, #5b8bb1);
+  color: white;
+  border-color: var(--primary, #5b8bb1);
+}
+
+/* Badge état dans la sidebar de l'atelier d'assemblage (sur méthodes/notions/exos) */
+.asm-item-etat-badge {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  margin-left: 4px;
+}
+.asm-item-etat-badge.atome-etat--en_cours {
+  background: var(--text-muted, #8b8a83);
+  opacity: 0.4;
+}
+.asm-item-etat-badge.atome-etat--valide {
+  background: #4a9747;
+}
+
+/* ── v0.10.5 — Atelier Fiche de résumé ───────────────────────────────── */
+
+.atl-fiche-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--bg-card);
+}
+.atl-fiche-section-titre {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+}
+.atl-fiche-section-corps {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  resize: vertical;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--surface);
+}
+
+/* ── v0.10.6 — Garde de sortie : badge "modifié" + modale ─────────────── */
+
+/* Badge "modifié" dans la toolbar des ateliers */
+.atl-badge-modifie {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-right: 6px;
+  background: #fff4d6;
+  color: #8a6914;
+  border: 1px solid #f1d97a;
+}
+
+/* Modale */
+.atl-garde-modale {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+}
+.atl-garde-modale-fond {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+.atl-garde-modale-contenu {
+  position: relative;
+  background: var(--surface, white);
+  border-radius: 8px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  max-width: 520px;
+  width: 90%;
+}
+.atl-garde-modale-titre {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.atl-garde-modale-corps {
+  font-size: 13px;
+  color: var(--text-secondary, #444);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.atl-garde-modale-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── v0.10.7 — Badges "objectifs liés" dans la sidebar des ateliers ──────── */
+
+/* Conteneur des chips d'objectifs liés en 2e ligne dans .atl-item.
+   v0.12.2 — `flex: 1 0 100%` force un retour à la ligne dans le flex
+   parent (qui doit avoir `flex-wrap: wrap`). Remplace l'ancien hack
+   `width: 100%` qui dépendait du wrap sans flex-wrap explicite. */
+.atl-item-objs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+  margin-left: 2px;
+  flex: 1 0 100%;
+}
+
+/* Chip "obj courant" (dans la séquence active) — petit et neutre. */
+.atl-item-objchip {
+  display: inline-block;
+  padding: 0 5px;
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  font-weight: var(--fw-medium, 500);
+  border-radius: 3px;
+  background: var(--surface-light, #f1f4f8);
+  color: var(--text-secondary, #555);
+  border: 1px solid var(--border, #d8dde3);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Chip "obj externe" (autre séquence/niveau, cas révision) —
+   fond plus pâle et police italique pour distinguer visuellement. */
+.atl-item-objchip--ext {
+  background: transparent;
+  color: var(--text-muted, #888);
+  border-style: dashed;
+  font-style: italic;
+}
+
+/* Suffixe "+N" si la liste dépasse l'affichage. */
+.atl-item-objchip-more {
+  display: inline-block;
+  padding: 0 4px;
+  font-size: 10px;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* v0.13.7.1 — Éditeur LaTeX (editeur_latex.js)                              */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/* Bouton « ✎ Éditer » apposé à droite des labels */
+.btn-ed-latex {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 400;
+  background: var(--surface-light, #f5f5f5);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text, #333);
+}
+.btn-ed-latex:hover {
+  background: var(--surface, #eee);
+  border-color: var(--text-muted, #888);
+}
+.btn-ed-latex--compact {
+  padding: 1px 6px;
+  font-size: 12px;
+}
+.btn-ed-latex--flottant {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+}
+
+/* Modale d'édition LaTeX (plein écran) */
+.ed-latex-modale {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.ed-latex-modale-fond {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+.ed-latex-modale-contenu {
+  position: relative;
+  width: 95vw;
+  height: 90vh;
+  background: var(--bg, white);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.ed-latex-modale-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border, #ddd);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.ed-latex-modale-titre {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text, #333);
+}
+.ed-latex-modale-onglets {
+  display: flex;
+  gap: 4px;
+}
+.ed-latex-onglet {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom-color: var(--border, #ddd);
+  cursor: pointer;
+  color: var(--text-muted, #666);
+}
+.ed-latex-onglet--actif {
+  background: var(--bg, white);
+  border: 1px solid var(--border, #ddd);
+  border-bottom-color: var(--bg, white);
+  color: var(--text, #333);
+  font-weight: 500;
+}
+.ed-latex-modale-fermer {
+  margin-left: auto;
+  padding: 0 8px;
+  font-size: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted, #666);
+}
+.ed-latex-modale-fermer:hover { color: var(--text, #333); }
+
+/* Panneaux */
+.ed-latex-panneau {
+  flex: 0 0 auto;
+  max-height: 35vh;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.ed-latex-placeholder {
+  padding: 16px;
+  color: var(--text-muted, #888);
+  font-style: italic;
+  font-size: 13px;
+}
+.ed-latex-erreur {
+  padding: 16px;
+  color: #c00;
+  font-size: 13px;
+}
+
+/* Onglet Outils — groupes */
+.ed-latex-groupe {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0 16px 12px 0;
+}
+.ed-latex-groupe-titre {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.ed-latex-groupe-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ed-latex-btn-outil {
+  padding: 3px 8px;
+  font-size: 12px;
+  font-family: monospace;
+  background: var(--surface-light, #f5f5f5);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text, #333);
+}
+.ed-latex-btn-outil:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+
+/* Onglet Tout le paquet */
+.ed-latex-paquet {
+  display: flex;
+  gap: 12px;
+}
+.ed-latex-paquet-nav {
+  flex: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ed-latex-paquet-fichier {
+  padding: 4px 8px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted, #666);
+}
+.ed-latex-paquet-fichier:hover {
+  background: var(--surface-light, #f5f5f5);
+}
+.ed-latex-paquet-fichier--actif {
+  background: var(--surface, #eaeaea);
+  color: var(--text, #333);
+  font-weight: 500;
+}
+.ed-latex-paquet-liste {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-content: flex-start;
+}
+.ed-latex-paquet-cat {
+  flex: 0 0 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  text-transform: uppercase;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+.ed-latex-paquet-item {
+  padding: 2px 6px;
+  font-size: 11px;
+  background: var(--surface-light, #f5f5f5);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text, #333);
+  white-space: nowrap;
+}
+.ed-latex-paquet-item:hover {
+  background: var(--accent, #d0e8ff);
+}
+.ed-latex-paquet-item code {
+  font-family: monospace;
+  background: transparent;
+}
+.ed-latex-paquet-spec {
+  color: var(--text-muted, #888);
+  font-size: 10px;
+}
+
+/* Zone d'édition de la modale */
+.ed-latex-zone {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Actions du bas */
+.ed-latex-modale-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #ddd);
+  margin-top: 10px;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* v0.13.7.2 — Engrenage de configuration des groupes d'outils                */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/* Bouton engrenage dans le header */
+.ed-latex-modale-engrenage {
+  padding: 0 8px;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted, #666);
+  margin-left: 4px;
+}
+.ed-latex-modale-engrenage:hover {
+  color: var(--text, #333);
+}
+
+/* Pied de panneau Outils : information « N groupes masqués » */
+.ed-latex-groupes-caches {
+  margin-top: 12px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  font-style: italic;
+  border-top: 1px dashed var(--border, #ddd);
+}
+
+/* Mini-modale interne (overlay de configuration) */
+.ed-latex-conf {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  align-items: center;
+  justify-content: center;
+}
+.ed-latex-conf-fond {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+.ed-latex-conf-contenu {
+  position: relative;
+  /* v0.13.7.4 — Largeur élargie +50% (440→660px) pour confort de saisie
+     dans les générateurs (QCM, Liste) et place pour les vignettes du
+     navigateur d'images. */
+  width: min(660px, 90vw);
+  max-height: 80vh;
+  background: var(--bg, white);
+  border-radius: 6px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.ed-latex-conf-titre {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text, #333);
+}
+.ed-latex-conf-aide {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted, #666);
+}
+.ed-latex-conf-liste {
+  overflow-y: auto;
+  max-height: 40vh;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ed-latex-conf-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.ed-latex-conf-item:hover {
+  background: var(--surface-light, #f5f5f5);
+}
+.ed-latex-conf-item input[type=checkbox] {
+  margin: 0;
+  cursor: pointer;
+}
+.ed-latex-conf-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #ddd);
+  margin-top: 4px;
+}
+
+/* v0.13.7.2.1 — Toggle « Afficher les macros structurelles » dans
+   l'onglet « Tout le paquet ». Placé au bas du panneau de navigation
+   gauche (sous la liste des fichiers). */
+.ed-latex-paquet-toggle-struct {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 8px 8px 6px 8px;
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  border-top: 1px dashed var(--border, #ddd);
+  cursor: pointer;
+  line-height: 1.3;
+}
+.ed-latex-paquet-toggle-struct input[type=checkbox] {
+  margin: 1px 0 0 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ed-latex-paquet-toggle-struct:hover {
+  color: var(--text, #333);
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* v0.13.7.3 — Générateurs (QCM, Liste, Tableau) dans le panneau Outils       */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/* Rangée de boutons générateurs en tête du panneau Outils */
+.ed-latex-generateurs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 12px 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--border, #ddd);
+}
+.ed-latex-generateurs-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 4px;
+}
+.ed-latex-btn-generateur {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--surface-light, #f5f5f5);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text, #333);
+}
+.ed-latex-btn-generateur:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+
+/* Champs de formulaire des mini-modales générateurs */
+.ed-latex-gen-champ {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.ed-latex-gen-champ label {
+  flex: 0 0 200px;
+  color: var(--text, #333);
+}
+.ed-latex-gen-champ input[type=text],
+.ed-latex-gen-champ input[type=number],
+.ed-latex-gen-champ select {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 13px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+}
+.ed-latex-gen-champ input[type=number] {
+  max-width: 80px;
+  flex: 0;
+}
+.ed-latex-gen-details {
+  margin-top: 8px;
+  padding: 6px;
+  background: var(--surface-light, #f8f8f8);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 4px;
+}
+.ed-latex-gen-details summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text, #333);
+}
+.ed-latex-gen-details[open] summary {
+  margin-bottom: 6px;
+}
+.ed-latex-gen-aide-mini {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  font-style: italic;
+  margin: 4px 0 8px 0;
+}
+
+/* Palette \ding pour le générateur de liste */
+.ed-latex-gen-ding-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+.ed-latex-gen-ding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 6px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  cursor: pointer;
+  min-width: 38px;
+  background: var(--bg, white);
+}
+.ed-latex-gen-ding:hover {
+  background: var(--surface-light, #f5f5f5);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-gen-ding input[type=radio] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ed-latex-gen-ding:has(input:checked) {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-gen-ding-apercu {
+  font-size: 16px;
+  line-height: 1;
+}
+.ed-latex-gen-ding-code {
+  font-size: 9px;
+  color: var(--text-muted, #888);
+  margin-top: 2px;
+}
+.ed-latex-gen-ding-libre {
+  min-width: 60px;
+}
+.ed-latex-gen-ding-input {
+  width: 40px;
+  font-size: 11px;
+  padding: 1px 3px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* v0.13.7.4 — Navigateur d'images (mini-modale type 'image')                  */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/* Toolbar du navigateur : recherche + bouton bascule vue + compteur */
+.ed-latex-img-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border, #ddd);
+}
+.ed-latex-img-recherche {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+}
+.ed-latex-img-vue-btns {
+  display: flex;
+  gap: 2px;
+}
+.ed-latex-img-vue-btn {
+  padding: 3px 8px;
+  font-size: 12px;
+  background: var(--surface-light, #f5f5f5);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-muted, #666);
+}
+.ed-latex-img-vue-btn:hover {
+  background: var(--surface, #ececec);
+}
+.ed-latex-img-vue-btn--actif {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+  color: var(--text, #333);
+}
+.ed-latex-img-compteur {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+
+/* Contenu du navigateur — wrapper qui défile si besoin */
+.ed-latex-img-contenu {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+/* Vue liste : un bouton par ligne, plein largeur */
+.ed-latex-img-contenu[data-vue=liste] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ed-latex-img-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg, white);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+.ed-latex-img-ligne:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-img-ligne-nom {
+  flex: 1;
+  font-family: monospace;
+  color: var(--text, #333);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-latex-img-ligne-taille {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+
+/* Vue grille : vignettes avec miniature */
+.ed-latex-img-contenu[data-vue=grille] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  padding: 4px 0;
+}
+.ed-latex-img-vignette {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  background: var(--bg, white);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  gap: 4px;
+}
+.ed-latex-img-vignette:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-img-vignette img {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  background: var(--surface-light, #fafafa);
+  border-radius: 2px;
+}
+.ed-latex-img-vignette-nom {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text, #333);
+  word-break: break-all;
+  line-height: 1.2;
+  /* Tronque à 2 lignes */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Éditeur LaTeX v0.13.7.5 — icônes SVG, générateur de tableau, picker de taille
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Boutons d'outils en mode icône ─────────────────────────────────────── */
+.ed-latex-btn-outil--icone {
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;  /* override .ed-latex-btn-outil qui force monospace */
+}
+.ed-latex-icone {
+  width: 16px;
+  height: 16px;
+  display: block;
+  color: var(--text, #333);
+}
+.ed-latex-btn-outil--icone:hover .ed-latex-icone {
+  color: var(--text, #222);
+}
+
+/* ─── Générateur de tableau ───────────────────────────────────────────────── */
+.ed-latex-tab-colonnes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.ed-latex-tab-colonne {
+  display: grid;
+  grid-template-columns: 60px auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  background: var(--surface-light, #fafafa);
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 3px;
+}
+.ed-latex-tab-colonne-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+}
+.ed-latex-tab-colonne-aligns {
+  display: inline-flex;
+  gap: 2px;
+}
+.ed-latex-tab-align {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px 4px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 3px;
+  background: var(--bg, white);
+  position: relative;
+}
+.ed-latex-tab-align input[type=radio] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ed-latex-tab-align:has(input:checked) {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-tab-align:hover {
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-tab-align-pict {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+.ed-latex-tab-colonne-ratio {
+  display: grid;
+  grid-template-columns: 1fr 40px;
+  align-items: center;
+  gap: 6px;
+}
+.ed-latex-tab-slider {
+  width: 100%;
+  cursor: pointer;
+}
+.ed-latex-tab-ratio-valeur {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-muted, #555);
+  text-align: right;
+}
+.ed-latex-tab-filets {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ed-latex-tab-filet-cb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: normal;
+  cursor: pointer;
+}
+.ed-latex-tab-filet-cb input[type=checkbox] {
+  margin: 0;
+}
+.ed-latex-tab-filet-cb code {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--surface-light, #f0f0f0);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.ed-latex-tab-aide-btn {
+  background: var(--surface-light, #f5f5f5);
+  border: 1px dashed var(--border, #ccc);
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-muted, #555);
+}
+.ed-latex-tab-aide-btn:hover {
+  background: var(--accent, #d0e8ff);
+  border-style: solid;
+  color: var(--text, #333);
+}
+.ed-latex-tab-aide-btn[aria-expanded="true"] {
+  background: var(--surface-light, #eef);
+  border-style: solid;
+}
+.ed-latex-tab-aide {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--surface-light, #fafafa);
+  border-left: 3px solid var(--accent-strong, #88a);
+  border-radius: 2px;
+  font-size: 12px;
+  color: var(--text, #333);
+}
+.ed-latex-tab-aide-intro,
+.ed-latex-tab-aide-fin {
+  margin: 0 0 6px 0;
+  line-height: 1.5;
+}
+.ed-latex-tab-aide-fin {
+  margin: 6px 0 0 0;
+}
+.ed-latex-tab-aide code {
+  font-family: monospace;
+  font-size: 11px;
+  background: var(--bg, white);
+  padding: 1px 4px;
+  border-radius: 2px;
+  border: 1px solid var(--border, #eee);
+}
+.ed-latex-tab-aide-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0;
+  font-size: 11px;
+}
+.ed-latex-tab-aide-table th,
+.ed-latex-tab-aide-table td {
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border, #eee);
+}
+.ed-latex-tab-aide-table th {
+  font-weight: 600;
+  color: var(--text-muted, #555);
+  background: var(--bg, white);
+}
+
+/* ─── Picker de taille de texte ───────────────────────────────────────────── */
+.ed-latex-taille-grille {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);  /* 2 rangées × 5 tuiles */
+  gap: 8px;
+  margin-top: 4px;
+}
+.ed-latex-taille-tuile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 8px;
+  min-height: 80px;
+  background: var(--surface-light, #fafafa);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.1s;
+}
+.ed-latex-taille-tuile:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-taille-apercu {
+  display: block;
+  line-height: 1;
+  color: var(--text, #222);
+  font-family: serif;  /* aperçu typique d'une fonte LaTeX */
+}
+.ed-latex-taille-cmd {
+  display: block;
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--text-muted, #666);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v0.13.7.6 — Slider stylé, asterisques, légende, repositionnement boutons
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Slider de largeur de colonne (générateur tableau) ─────────────────────
+ * Style explicite (rail bleu, poignée ronde) pour visibilité garantie quel
+ * que soit le navigateur. Sans style, le slider natif est parfois rendu en
+ * gris pâle quasi invisible sur certains thèmes/extensions. */
+
+/* La ligne d'une colonne devient une grille 4 colonnes : numéro, alignements,
+ * label « Largeur : », slider+valeur. */
+.ed-latex-tab-colonne {
+  grid-template-columns: 60px auto auto 1fr !important;
+}
+.ed-latex-tab-colonne-largeur-label {
+  font-size: 12px;
+  color: var(--text-muted, #555);
+  white-space: nowrap;
+}
+
+/* Slider : on cache l'apparence native et on redessine. Webkit ET Firefox
+ * doivent être ciblés (sélecteurs spécifiques) sinon l'un des deux retombe
+ * sur l'apparence native. */
+.ed-latex-tab-slider {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+/* Rail (track) */
+.ed-latex-tab-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  background: #d0d4dc;
+  border-radius: 3px;
+}
+.ed-latex-tab-slider::-moz-range-track {
+  height: 6px;
+  background: #d0d4dc;
+  border-radius: 3px;
+}
+.ed-latex-tab-slider::-moz-range-progress {
+  height: 6px;
+  background: #4a90e2;
+  border-radius: 3px;
+}
+/* Poignée (thumb) */
+.ed-latex-tab-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2c6cb0;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  margin-top: -5px; /* recentrer la poignée verticalement sur le rail */
+  cursor: pointer;
+}
+.ed-latex-tab-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2c6cb0;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.ed-latex-tab-slider:hover::-webkit-slider-thumb {
+  background: #1f5a99;
+}
+.ed-latex-tab-slider:hover::-moz-range-thumb {
+  background: #1f5a99;
+}
+.ed-latex-tab-slider:focus {
+  outline: none;
+}
+.ed-latex-tab-slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+}
+.ed-latex-tab-slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+}
+
+/* ─── Asterisques rouges pour champs obligatoires ──────────────────────── */
+.atl-label-obligatoire {
+  color: #d32f2f;
+  font-weight: 700;
+  margin-left: 2px;
+}
+.atl-legende-obligatoire {
+  margin-top: 14px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--text-muted, #666);
+  border-top: 1px dashed var(--border, #e0e0e0);
+  font-style: italic;
+}
+.atl-legende-obligatoire .atl-label-obligatoire {
+  font-style: normal;
+}
+
+/* ─── Bouton ✎ Éditer manuel (posé par les ateliers, hors scanner) ────────
+ * Style aligné avec .btn-ed-latex existant mais classe différente pour
+ * éviter que le scanner ne le déplace. */
+.btn-ed-latex-manuel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border, #ccc);
+  background: var(--surface-light, #f5f5f5);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text, #333);
+  margin-left: 6px;
+  font-family: inherit;
+}
+.btn-ed-latex-manuel:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.btn-ed-latex-manuel--compact {
+  padding: 1px 5px;
+  font-size: 10px;
+}
+
+/* ─── Ateliers Notion/Méthode : bouton ✎ dans les actions d'item courtes ──
+ * Le bouton est posé directement dans .atl-section-item-actions à côté
+ * des flèches monter/descendre/supprimer. */
+.atl-section-item-actions .btn-ed-latex-manuel {
+  margin-left: 0;
+  padding: 2px 6px;
+}
+
+/* ─── Atelier Fiche : bouton ✎ dans la rangée du haut, à gauche du × ────── */
+.atl-fiche-section .btn-ed-latex-manuel {
+  margin-left: 4px;
+}
+
+/* ─── Atelier Carte : bouton ✎ à droite du titre du cadre Recto/Verso ──── */
+.atl-cadre-titre-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.atl-cadre-titre-row .atl-cadre-titre {
+  margin: 0;
+}
+
+/* ─── Atelier Exercice : header repliable Variables, bouton ✎ à droite ─── */
+.atl-collapsible-header .btn-ed-latex-manuel {
+  margin-left: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * v0.13.7.6.1 — Stepper [−] ×N [+] (remplace slider) + alignements compacts
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Le slider <input type=range> de v0.13.7.5/7.6 était invisible sur
+ * certains navigateurs/thèmes (Firefox sur PC pro Windows), même avec
+ * les pseudo-éléments webkit/moz stylés explicitement. On le remplace
+ * par un stepper avec deux boutons et un compteur monospace, rendu
+ * fidèlement par tous les navigateurs.
+ *
+ * Note : les styles `.ed-latex-tab-slider*` plus haut dans ce fichier
+ * deviennent sans effet (plus aucun <input type=range class="ed-latex-tab-slider">
+ * dans le HTML produit). On les laisse en place pour éviter un gros
+ * diff de suppression ; à nettoyer en v0.14. */
+
+/* Boutons d'alignement à largeur fixe (correction du bug v0.13.7.6 où
+ * ils s'étiraient excessivement et provoquaient une scrollbar horizontale
+ * dans la modale tableau). */
+.ed-latex-tab-align {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+/* Stepper de largeur de colonne : remplace le slider invisible.
+ * Conteneur grid (bouton− | valeur | bouton+) avec gap fin. */
+.ed-latex-tab-colonne-ratio {
+  display: grid !important;
+  grid-template-columns: 24px 48px 24px !important;
+  align-items: center;
+  gap: 4px;
+}
+
+.ed-latex-tab-stepper-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid var(--border, #bbb);
+  background: var(--bg, #ffffff);
+  color: var(--text, #222);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ed-latex-tab-stepper-btn:hover {
+  background: var(--accent, #d0e8ff);
+  border-color: var(--accent-strong, #88a);
+}
+.ed-latex-tab-stepper-btn:active {
+  background: var(--accent-strong, #b0c8e0);
+}
+
+/* Affichage de la valeur courante du ratio : monospace, centrée,
+ * compteur visuellement compact. */
+.ed-latex-tab-ratio-valeur {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #333);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── v0.16.9 — État validable de la séquence-niveau (atelier d'assemblage) ── */
+/* Verrou « séquence validée = lecture seule » : on neutralise visuellement
+   et fonctionnellement les contrôles de STRUCTURE du panneau central
+   (boutons d'ajout/suppression, poignées de drag, zones de drop, chips ✕).
+   Les champs de saisie de l'objectif ouvert sont, eux, désactivés par
+   _appliquerVerrouLectureSeule (disabled sur le <form>). */
+.asm-verrou-structure .asm-btn-nouvelle-partie,
+.asm-verrou-structure .asm-btn-suppr-partie,
+.asm-verrou-structure .asm-btn-connaitre,
+.asm-verrou-structure .asm-exo-chip-rm,
+.asm-verrou-structure .asm-prec-pill-rm,
+.asm-verrou-structure .asm-prec-btn-ajouter,
+.asm-verrou-structure .asm-obj-btn--danger {
+  display: none !important;
+}
+.asm-verrou-structure .asm-partie-handle,
+.asm-verrou-structure .asm-obj-handle {
+  visibility: hidden;
+}
+/* Neutralise le drag-and-drop des cartes/objectifs/zones quand verrouillé. */
+.asm-verrou-structure .asm-partie,
+.asm-verrou-structure .asm-obj,
+.asm-verrou-structure .asm-exo-chip,
+.asm-verrou-structure .asm-obj-exos-zone,
+.asm-verrou-structure .asm-ra-col {
+  pointer-events: none;
+}
+/* …mais on laisse cliquables les en-têtes d'objectif (pour ouvrir/consulter)
+   et les boutons non destructeurs. */
+.asm-verrou-structure .asm-obj-head,
+.asm-verrou-structure .asm-obj-btn:not(.asm-obj-btn--danger) {
+  pointer-events: auto;
+}
+
+/* ── v0.17.5 — État d'édition des atomes dans le panneau central d'assemblage ──
+   En cours → apparence par défaut (transparent) ; validé → vert pâle.
+   Modèle : pastille d'état des cartes d'automatisme. S'applique aux chips
+   d'exercices, notions, méthodes et fiches placés dans les parties/objectifs. */
+.asm-exo-chip--valide,
+.asm-notion-chip--valide,
+.asm-methode-chip--valide,
+.asm-obj-methode-tag--valide,
+.asm-fiche-chip--valide {
+  background: #e3f3e1;            /* vert pâle */
+  border-color: #b6d8b3;
+}
+/* En cours : pas de règle dédiée → conserve le fond transparent/défaut du chip. */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   v0.18.4 — Onglet Préférences : catégories (titres) + sections repliables.
+   Hiérarchie à 2 niveaux d'affichage : la CATÉGORIE est un simple titre de
+   groupe (non pliable) ; chaque SECTION (.pref-cat) est repliable, repliée
+   par défaut, état mémorisé en localStorage (seqenseigne.pref.cat.<id>...).
+   ───────────────────────────────────────────────────────────────────────── */
+.pref-categorie {
+  margin-bottom: 22px;
+}
+.pref-categorie-titre {
+  margin: 0 0 10px 0;
+  font-size: 11px;
+  font-weight: var(--fw-semibold, 600);
+  color: var(--text-muted, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.pref-cat {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: var(--radius-sm, 4px);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.pref-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: var(--fw-medium, 500);
+  background: var(--surface-light, #f9fafb);
+  cursor: pointer;
+  user-select: none;
+}
+.pref-cat-head::before {
+  content: '▾';
+  font-size: 10px;
+  color: var(--text-muted, #9ca3af);
+  transition: transform var(--t-fast, .15s);
+}
+.pref-cat.collapsed .pref-cat-head::before { transform: rotate(-90deg); }
+.pref-cat.collapsed .pref-cat-body { display: none; }
+.pref-cat-body {
+  padding: 16px 12px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.19.1 — Atelier Progression (refonte en atelier d'assemblage)
+   Bandeau supérieur à 4 sélecteurs + barre latérale « parties de séquence »
+   + calendrier dans le panneau principal. Aligné sur l'atelier Séquence-niveau.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* v0.19.1.2 — Le panneau Progression utilise la même règle de hauteur que
+   tous les autres ateliers (.atl-shell global : calc(100vh - 96px)), sa
+   navigation étant désormais identique (2 barres dans .tab-content). Pas
+   d'override spécifique. */
+
+
+/* Bandeau supérieur du panneau principal Progression : titre à gauche,
+   badge état + boutons à droite (les sélecteurs sont en barre 1). */
+.prog-toolbar { flex-wrap: wrap; }
+.prog-toolbar-title {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  white-space: nowrap;
+}
+
+/* v0.19.1.2 — Sélecteurs contextuels de la barre 1 (#suivi-portee-selecteurs).
+   Style identique aux sélecteurs de l'atelier Référentiel
+   (atelRenderSelecteursPortee) : label inline discret + select compact. */
+.suivi-sel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.suivi-sel select {
+  font-size: 12px;
+  padding: 3px 6px;
+  max-width: 200px;
+}
+.suivi-sel--ref select { max-width: 240px; }
+
+/* Zone principale : calendrier + détail créneau côte à côte */
+.prog-zone {
+  display: flex;
+  gap: 0;
+  height: 100%;
+  align-items: stretch;
+}
+.prog-calendrier {
+  flex: 1 1 auto;
+  min-width: 280px;
+  overflow-y: auto;
+  padding: 8px;
+}
+.prog-detail {
+  flex: 0 0 auto;
+  width: 320px;
+  min-width: 240px;
+  max-width: 70vw;
+  border-left: 1px solid var(--border);
+  padding: 12px;
+  overflow-y: auto;
+  background: var(--surface);
+}
+/* v0.32.9 — Poignée de redimensionnement entre calendrier et détail. */
+.prog-poignee {
+  display: none;
+  flex: 0 0 6px;
+  cursor: col-resize;
+  background: var(--border);
+  transition: background .15s;
+}
+.prog-poignee:hover { background: var(--primary, #4a7); }
+
+
+/* Barre latérale : item de partie = .atl-item du design-system commun
+   (cf. _renderSidebar). On ne conserve ici que le conteneur des badges de
+   semaine (2e ligne de l'item). */
+.prog-partie-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-basis: 100%;
+  margin-top: 2px;
+}

@@ -1,0 +1,172 @@
+{
+  "_meta": {
+    "version": "0.13.7.6.1",
+    "description": "Configuration des barres d'outils pédagogiques pour les 9 contextes de l'éditeur LaTeX. PRINCIPE DE TRI : ne sont exposées ici que les macros que l'enseignant insère DANS son contenu. Les macros structurelles (seqExercice, seqCorrige, seqNotion, seqMethode, seqCadreReponse, seqCarteAuto, seqBoiteContenuFlashcard) sont ajoutées AUTOMATIQUEMENT par l'app au moment du rendu LaTeX et ne doivent PAS apparaître dans la barre d'outils.",
+    "convention_snippet_special": "Un snippet de valeur __NAVIGATEUR_IMAGES__ déclenche l'ouverture de la mini-modale navigateur d'images au lieu d'une insertion classique (v0.13.7.4). Un snippet de valeur __PICKER_TAILLE__ ouvre la mini-modale picker de taille (v0.13.7.5).",
+    "convention_marqueur_selection": "Le caractère • (BULLET, U+2022) dans un snippet marque l'emplacement où le texte sélectionné par l'utilisateur sera inséré. Convention héritée de Texmaker. Si une sélection est active : • est remplacé par la sélection, curseur placé juste après. Sinon : • est retiré et le curseur est positionné à sa place. Pour les snippets multi-lignes (environnements itemize, align, etc.), pas de • : la sélection est écrasée par le snippet (cf. cadrage v0.13.7.3 Q2).",
+    "convention_curseur_classique": "Pour les snippets SANS marqueur •, le curseur se positionne dans le premier {} vide rencontré, ou à la fin du snippet si aucun {} vide n'est présent. Compatibilité héritée v0.13.7.1+.",
+    "convention_icone_v0_13_7_5": "Un item peut porter une clé optionnelle 'icone' avec une valeur reconnue par le dictionnaire ICONES_SVG de editeur_latex.js. Si 'icone' est présent et reconnu, le bouton affiche le pictogramme SVG à la place du 'label' textuel ; le 'tooltip' (s'il est présent) prend la priorité sur 'label' pour l'attribut title. Si 'icone' est absent ou inconnu, c'est l'ancien comportement (label texte). Codes disponibles : bold, italic, mono, underline, sup, sub, taille, center, right, left, smallskip, medskip, bigskip, newline, par, frac, fracSeq, sqrt, mathsExposant, mathsIndice, times, div, leq, geq, neq, pi, degree, ldots, mathinline, mathdisplay, mathcal, mathbb, mathbf, mathrm, itemize, enumerate, item, colItem, colEnum."
+  },
+
+  "contextes": {
+    "variables":         ["xint_definitions", "xint_aleatoire", "xint_conditionnel", "image"],
+    "exo-enonce":        ["maths_inline", "mise_en_forme", "mise_en_page", "completer", "boites_pedago", "annexe", "image"],
+    "exo-corrige":       ["maths_inline", "maths_display", "mise_en_forme", "mise_en_page", "boites_pedago", "image"],
+    "notion-corps":      ["maths_inline", "mise_en_forme", "boites_pedago", "boites_titrees", "mise_en_evidence", "annexe", "image"],
+    "methode-corps":     ["maths_inline", "mise_en_forme", "boites_pedago", "etapes", "boites_titrees", "annexe", "image"],
+    "fiche-section":     ["maths_inline", "mise_en_forme", "completer", "mise_en_evidence", "image"],
+    "carte-recto":       ["maths_inline", "mise_en_forme", "mise_en_page", "image"],
+    "carte-verso":       ["maths_inline", "mise_en_forme", "mise_en_page", "image"],
+    "theme-description": ["mise_en_forme", "mise_en_page", "boites_titrees", "image"]
+  },
+
+  "groupes": {
+    "maths_inline": {
+      "label": "Maths",
+      "items": [
+        {"label": "Math inline",    "icone": "mathinline",  "snippet": "$•$",            "tooltip": "Math inline $…$ (entoure la sélection)"},
+        {"label": "Math affiché",   "icone": "mathdisplay", "snippet": "\\[•\\]",        "tooltip": "Math affiché \\[…\\] (entoure la sélection)"},
+        {"label": "Fraction",       "icone": "frac",        "snippet": "\\frac{•}{}",    "tooltip": "Fraction \\frac (numérateur = sélection)"},
+        {"label": "Fraction seq",   "icone": "fracSeq",     "snippet": "\\seqFrac{•}{}", "tooltip": "Fraction \\seqFrac — style cohérent avec le paquet seqenseigne"},
+        {"label": "Racine carrée",  "icone": "sqrt",        "snippet": "\\sqrt{•}",      "tooltip": "Racine carrée \\sqrt (entoure la sélection)"},
+        {"label": "Exposant",       "icone": "mathsExposant","snippet": "^{•}",          "tooltip": "Exposant ^{…} (entoure la sélection)"},
+        {"label": "Indice",         "icone": "mathsIndice", "snippet": "_{•}",           "tooltip": "Indice _{…} (entoure la sélection)"},
+        {"label": "Multiplication", "icone": "times",       "snippet": "\\times ",       "tooltip": "Multiplication \\times"},
+        {"label": "Division",       "icone": "div",         "snippet": "\\div ",         "tooltip": "Division \\div"},
+        {"label": "Inférieur ou égal", "icone": "leq",      "snippet": "\\leq ",         "tooltip": "Inférieur ou égal \\leq"},
+        {"label": "Supérieur ou égal", "icone": "geq",      "snippet": "\\geq ",         "tooltip": "Supérieur ou égal \\geq"},
+        {"label": "Différent",      "icone": "neq",         "snippet": "\\neq ",         "tooltip": "Différent \\neq"},
+        {"label": "Pi",             "icone": "pi",          "snippet": "\\pi ",          "tooltip": "Lettre grecque pi \\pi"},
+        {"label": "Degré",          "icone": "degree",      "snippet": "^\\circ ",       "tooltip": "Symbole degré ^\\circ"},
+        {"label": "Points de suspension", "icone": "ldots", "snippet": "\\ldots ",       "tooltip": "Points de suspension bas \\ldots (en ligne)"},
+        {"label": "Calligraphique", "icone": "mathcal",     "snippet": "\\mathcal{•}",   "tooltip": "Lettres calligraphiques \\mathcal{…} (à utiliser en mode math)"},
+        {"label": "Ensemble",       "icone": "mathbb",      "snippet": "\\mathbb{•}",    "tooltip": "Lettres ajourées \\mathbb{…} pour les ensembles (ℝ, ℕ, ℤ…) en mode math"},
+        {"label": "Gras maths",     "icone": "mathbf",      "snippet": "\\mathbf{•}",    "tooltip": "Lettres en gras \\mathbf{…} en mode math (vecteurs)"},
+        {"label": "Droit maths",    "icone": "mathrm",      "snippet": "\\mathrm{•}",    "tooltip": "Texte droit \\mathrm{…} en mode math (unités, fonctions ad hoc)"}
+      ]
+    },
+    "maths_display": {
+      "label": "Maths (affichage)",
+      "items": [
+        {"label": "align*",      "snippet": "\\begin{align*}\n   &= \n\\end{align*}", "tooltip": "Alignement multi-lignes (non numéroté)"},
+        {"label": "cases",       "snippet": "\\begin{cases}\n   \\\\\n   \n\\end{cases}", "tooltip": "Système d'équations"}
+      ]
+    },
+    "listes": {
+      "_obsolete_v0_13_7_6": "Groupe retiré en v0.13.7.6 — redondant avec le générateur ☰ Liste qui gère déjà nbCols et les puces \\ding. Le groupe est conservé ici pour traçabilité mais n'est plus référencé dans les contextes, donc plus jamais rendu. À supprimer définitivement en v0.14 (cleanup).",
+      "label": "Listes (obsolète)",
+      "items": []
+    },
+    "mise_en_forme": {
+      "label": "Mise en forme",
+      "items": [
+        {"label": "Gras",       "icone": "bold",      "snippet": "\\textbf{•}",          "tooltip": "Texte en gras \\textbf (entoure la sélection)"},
+        {"label": "Italique",   "icone": "italic",    "snippet": "\\textit{•}",          "tooltip": "Texte en italique \\textit (entoure la sélection)"},
+        {"label": "Monotype",   "icone": "mono",      "snippet": "\\texttt{•}",          "tooltip": "Fonte monotype \\texttt (entoure la sélection)"},
+        {"label": "Souligné",   "icone": "underline", "snippet": "\\underline{•}",       "tooltip": "Souligné \\underline (entoure la sélection)"},
+        {"label": "Exposant",   "icone": "sup",       "snippet": "\\textsuperscript{•}", "tooltip": "En exposant \\textsuperscript (entoure la sélection)"},
+        {"label": "Indice",     "icone": "sub",       "snippet": "\\textsubscript{•}",   "tooltip": "En indice \\textsubscript (entoure la sélection)"},
+        {"label": "Taille",     "icone": "taille",    "snippet": "__PICKER_TAILLE__",    "tooltip": "Choisir une taille de texte (\\tiny, \\small, \\large, \\huge, …)"}
+      ]
+    },
+    "mise_en_page": {
+      "label": "Mise en page",
+      "items": [
+        {"label": "Centré",            "icone": "center",    "snippet": "{\\centering •\\par}",   "tooltip": "Centrer le bloc \\centering (entoure la sélection)"},
+        {"label": "Aligné à droite",   "icone": "right",     "snippet": "{\\raggedleft •\\par}",  "tooltip": "Aligné à droite \\raggedleft (entoure la sélection — attention, raggedleft pousse à droite en LaTeX)"},
+        {"label": "Aligné à gauche",   "icone": "left",      "snippet": "{\\raggedright •\\par}", "tooltip": "Aligné à gauche \\raggedright (entoure la sélection — utile pour annuler une justification)"},
+        {"label": "Petit espace",      "icone": "smallskip", "snippet": "\\smallskip\n",          "tooltip": "Petit espace vertical \\smallskip"},
+        {"label": "Espace moyen",      "icone": "medskip",   "snippet": "\\medskip\n",            "tooltip": "Espace vertical moyen \\medskip"},
+        {"label": "Grand espace",      "icone": "bigskip",   "snippet": "\\bigskip\n",            "tooltip": "Grand espace vertical \\bigskip"},
+        {"label": "Nouvelle ligne",    "icone": "newline",   "snippet": "\\newline\n",            "tooltip": "Saut de ligne forcé \\newline (sans nouveau paragraphe)"},
+        {"label": "Nouveau paragraphe","icone": "par",       "snippet": "\\par\n",                "tooltip": "Nouveau paragraphe \\par"}
+      ]
+    },
+    "completer": {
+      "label": "À compléter",
+      "items": [
+        {"label": "\\acompleter", "snippet": "\\acompleter{•}", "tooltip": "Mot ou expression à compléter (souligné pointillé). Pour fiches : affichage version élève automatique."},
+        {"label": "Pointillés",   "snippet": "\\dotfill ",      "tooltip": "Ligne pointillée à compléter (à utiliser quand un cadre de réponse complet n'est pas voulu)"}
+      ]
+    },
+    "boites_pedago": {
+      "label": "Boîtes pédagogiques",
+      "items": [
+        {"label": "seqDefinition", "snippet": "\\begin{seqDefinition}{}{}\n•\n\\end{seqDefinition}",
+         "tooltip": "Boîte de définition. 1er arg : titre, 2e arg : sous-titre éventuel. Le corps entoure la sélection."},
+        {"label": "seqPropriete",  "snippet": "\\begin{seqPropriete}{}{}\n•\n\\end{seqPropriete}",
+         "tooltip": "Boîte de propriété. 1er arg : titre, 2e arg : sous-titre éventuel. Le corps entoure la sélection."}
+      ]
+    },
+    "boites_titrees": {
+      "label": "Boîtes",
+      "items": [
+        {"label": "boiteTitreGen",      "snippet": "\\begin{boiteTitreGen}{}\n•\n\\end{boiteTitreGen}",
+         "tooltip": "Boîte générale avec titre personnalisé (corps entoure la sélection)"},
+        {"label": "\\seqBoiteJaune",    "snippet": "\\seqBoiteJaune{•}",
+         "tooltip": "Boîte jaune (mise en évidence courte, inline)"},
+        {"label": "\\boiteJauneModere", "snippet": "\\boiteJauneModere{•}",
+         "tooltip": "Boîte jaune (ton modéré)"}
+      ]
+    },
+    "mise_en_evidence": {
+      "label": "Mise en évidence",
+      "items": [
+        {"label": "\\cellVert",   "snippet": "\\cellVert{•}",   "tooltip": "Cellule verticale (à utiliser dans un tableau)"},
+        {"label": "\\acompleter", "snippet": "\\acompleter{•}", "tooltip": "Mot ou expression à compléter (souligné pointillé)"}
+      ]
+    },
+    "etapes": {
+      "label": "Étapes",
+      "items": [
+        {"label": "Étapes numérotées", "snippet": "\\begin{enumerate}\n  \\item \n  \\item \n  \\item \n\\end{enumerate}",
+         "tooltip": "Liste d'étapes 1, 2, 3..."},
+        {"label": "Étape (en gras)",   "snippet": "\\textbf{Étape ~:} ",
+         "tooltip": "Mot 'Étape' en gras suivi d'un titre court"}
+      ]
+    },
+    "annexe": {
+      "label": "Annexe",
+      "items": [
+        {"label": "\\seqAnnexe", "snippet": "\\seqAnnexe{•}",
+         "tooltip": "Renvoie le contenu vers l'annexe en fin de document (entoure la sélection)"}
+      ]
+    },
+    "image": {
+      "label": "Image",
+      "items": [
+        {"label": "🖼 Choisir une image…", "snippet": "__NAVIGATEUR_IMAGES__",
+         "tooltip": "Ouvrir le navigateur d'images (data/images/) pour insérer \\includegraphics{nom.png}"}
+      ]
+    },
+    "xint_definitions": {
+      "label": "Définitions xint",
+      "items": [
+        {"label": "Entier",         "snippet": "\\xintdefiivar  := ;",
+         "tooltip": "Définir une variable entière"},
+        {"label": "Float",          "snippet": "\\xintdeffloatvar  := ;",
+         "tooltip": "Définir une variable flottante"},
+        {"label": "Calcul libre",   "snippet": "\\xintdefvar  := ;",
+         "tooltip": "Définir une variable de calcul libre"}
+      ]
+    },
+    "xint_aleatoire": {
+      "label": "Aléatoire",
+      "items": [
+        {"label": "randrange",     "snippet": "randrange(, )",
+         "tooltip": "Entier aléatoire dans [a, b]"},
+        {"label": "Avec \\xintdef", "snippet": "\\xintdefiivar  := randrange(, );",
+         "tooltip": "Variable entière aléatoire"}
+      ]
+    },
+    "xint_conditionnel": {
+      "label": "Conditionnel",
+      "items": [
+        {"label": "Ternaire xint",  "snippet": "()?{}{}",
+         "tooltip": "Conditionnelle xint : (test)?{si vrai}{si faux}"},
+        {"label": "\\ifnumequal",   "snippet": "\\ifnumequal{}{}{}{}",
+         "tooltip": "Test d'égalité LaTeX : {a}{b}{si égal}{sinon}"}
+      ]
+    }
+  }
+}

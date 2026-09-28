@@ -1,0 +1,3614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>seqenseigne — suivi de progression</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <span class="logo">seqenseigne</span>
+    <nav class="tabs" role="tablist" aria-label="Sections principales">
+      <button class="tab active" data-tab="accueil" role="tab" aria-selected="true">Tableau de bord</button>
+      <button class="tab" data-tab="classe" role="tab" aria-selected="false">Suivi</button>
+      <button class="tab" data-tab="planification" role="tab" aria-selected="false">Planification</button>
+      <button class="tab" data-tab="ateliers" role="tab" aria-selected="false">Conception de référentiel</button>
+      <button class="tab" data-tab="admin" role="tab" aria-selected="false">Administration</button>
+      <button class="tab" data-tab="preferences" role="tab" aria-selected="false">Préférences</button>
+    </nav>
+    <div class="header-actions">
+      <button id="btn-export" class="btn-sm">Exporter</button>
+      <label class="btn-sm" style="cursor:pointer">Importer
+        <input type="file" id="inp-import" accept=".json" style="display:none">
+      </label>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ SUIVI DE CLASSE ════════════════════════════════════════════════════ -->
+<!-- ═══ TABLEAU DE BORD (accueil) ═════════════════════════════════════════════ -->
+<main id="tab-accueil" class="tab-content">
+  <div style="padding:12px 16px;max-width:1200px">
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
+      <h2 style="margin:0">Tableau de bord</h2>
+      <span style="font-size:12px;color:var(--text-secondary)">Vue d'ensemble — suivi et conception</span>
+    </div>
+
+    <!-- Barre d'actions rapides (hors grille de tuiles) -->
+    <div id="tdb-barre-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+         padding:8px 10px;background:var(--surface,#f7f8fa);border:1px solid var(--border);
+         border-radius:8px;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--text-secondary);margin-right:2px">Actions :</span>
+      <button class="btn-sm" onclick="tdbOuvrirParametres()" style="font-size:13px">⚙ Paramètres</button>
+    </div>
+    <div id="tdb-tuiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
+      <!-- Tuile : séances de la semaine -->
+      <div class="card" style="margin:0">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Séances de la semaine
+          <span id="tdb-semaine-dates" style="font-weight:normal;color:#888;font-size:12px"></span></div>
+        <div id="tdb-seances"></div>
+      </div>
+      <!-- Tuile : atomes en cours (conception) -->
+      <div class="card" style="margin:0">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Conception — atomes à finaliser</div>
+        <div id="tdb-atomes"></div>
+      </div>
+      <!-- Tuile : éléments non rattachés (conception) -->
+      <div class="card" style="margin:0">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Conception — éléments non rattachés</div>
+        <div id="tdb-non-rattaches"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<main id="tab-classe" class="tab-content" style="display:none">
+
+  <!-- v0.19.1.2 — Navigation à 2 barres, calquée sur la zone « Conception
+       de référentiel » (tab-ateliers) :
+         Barre 1 : portées (Suivi annuel / Gestion) + sélecteurs contextuels
+                   alignés à droite (#suivi-portee-selecteurs).
+         Barre 2 : sous-ateliers de la portée active (classes .suivi-grp-*).
+       Pilotée par le module suivi* d'app.js (SUIVI_PORTEES / suiviPorteeSwitch
+       / suiviSwitch / suiviRenderSelecteurs). Mémorisation localStorage. -->
+  <div class="toolbar" style="gap:16px;align-items:center;margin-bottom:0;border-bottom:1px solid var(--border);padding:6px 8px;flex-wrap:wrap">
+    <div id="suivi-portee-row" style="display:flex;gap:4px">
+      <!-- v0.33.0 — Portées visibles dans l'onglet « Suivi » (la planification
+           est dans son propre onglet principal). -->
+      <button class="vbtn suivi-portee-suivi" id="suivi-btn-portee-suivi"   onclick="suiviPorteeSwitch('suivi')">Suivi de classe</button>
+      <button class="vbtn suivi-portee-suivi" id="suivi-btn-portee-gestion" onclick="suiviPorteeSwitch('gestion')">Gestion</button>
+    </div>
+    <div id="suivi-portee-selecteurs" style="display:flex;gap:10px;align-items:center;margin-left:auto"></div>
+    <label id="suivi-annee-globale-wrap" class="suivi-sel" style="display:none">Année
+      <select id="suivi-annee-globale" onchange="suiviAnneeGlobaleChange()" title="Année scolaire"></select>
+    </label>
+  </div>
+
+  <!-- Barre 2 : sous-ateliers de la portée -->
+  <div class="toolbar" style="gap:4px;margin-bottom:0;border-bottom:1px solid var(--border);padding:4px 8px;flex-wrap:wrap">
+    <!-- Portée Planification (onglet principal « Planification ») -->
+    <button class="vbtn suivi-grp-planification"        id="suivi-btn-edt"         onclick="suiviSwitch('edt')">EdT hebdo</button>
+    <button class="vbtn suivi-grp-planification"        id="suivi-btn-planif"      onclick="suiviSwitch('planif')">Planification hebdo</button>
+    <button class="vbtn suivi-grp-planification"        id="suivi-btn-indispo"     onclick="suiviSwitch('indispo')">Indisponibilités</button>
+    <button class="vbtn suivi-grp-planification"        id="suivi-btn-mer"         onclick="suiviSwitch('mer')">Mises en route</button>
+    <button class="vbtn suivi-grp-planification"        id="suivi-btn-progmer"     onclick="suiviSwitch('progmer')">Progression de MER</button>
+    <button class="vbtn suivi-grp-planification active" id="suivi-btn-progression" onclick="suiviSwitch('progression')">Progression principale</button>
+    <!-- Portée Suivi de classe -->
+    <button class="vbtn suivi-grp-suivi"       id="suivi-btn-suivi"       onclick="suiviSwitch('suivi')" style="display:none">Suivi de classe</button>
+    <!-- Portée Gestion -->
+    <button class="vbtn suivi-grp-gestion" id="suivi-btn-classe" onclick="suiviSwitch('classe')" style="display:none">Classe</button>
+    <button class="vbtn suivi-grp-gestion" id="suivi-btn-etab"   onclick="suiviSwitch('etab')"   style="display:none">Établissement</button>
+  </div>
+
+  <!-- ── Progression annuelle (v0.19.1 — atelier d'assemblage) ──────────────
+       Refonte v0.19.1.0 : la progression devient un atelier d'assemblage,
+       aligné sur l'atelier Séquence-niveau.
+         - Bandeau supérieur du panneau principal : 4 sélecteurs
+           (année / établissement / niveau / référentiel support).
+         - Barre latérale : TOUTES les parties de séquence du référentiel,
+           tirables-déposables sur le calendrier (DnD en v0.19.1.1). Chaque
+           partie placée porte un badge indiquant ses semaines.
+         - Panneau principal : calendrier semainier (cible de drop) +
+           détail du créneau sélectionné.
+       Toute la logique est portée par window.ATELIER_PROGRESSION
+       (AtelierProgression extends AtelierAssemblage). -->
+  <div id="stab-edt" style="display:none">
+    <div class="card">
+      <div class="card-header" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <h2 style="margin:0">Emploi du temps</h2>
+        <div style="display:none;align-items:center;gap:8px;font-size:13px">
+          <label>Établissement
+            <select id="edt-etab" onchange="edtCharger()" style="font-size:13px;margin-left:4px"></select>
+          </label>
+          <label>Année
+            <input id="edt-annee" style="width:100px;font-size:13px;margin-left:4px" onchange="edtCharger()">
+          </label>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:6px 0 12px">
+        Cliquez sur une case pour saisir un cours. Une case « toutes semaines »
+        (AB) occupe toute la hauteur ; en semaine A ou B, la case se divise en
+        deux (A en haut, B en bas). Seuls les cours en classe entière sont
+        comptés pour les progressions ; les autres usages sont affichés sans
+        être comptés.
+      </p>
+      <div id="edt-grille"></div>
+    </div>
+    <!-- Popover d'édition d'une case -->
+    <div id="edt-popover" style="display:none;position:fixed;z-index:1000;background:#fff;
+         border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);
+         padding:14px;width:280px;font-size:13px"></div>
+  </div>
+
+  <div id="stab-planif" style="display:none">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn-sm" id="planif-btn-prec" onclick="planifSemaine(-1)" style="font-size:13px">‹ Semaine précédente</button>
+        <strong id="planif-semaine-lbl" style="font-size:14px"></strong>
+        <button class="btn-sm" id="planif-btn-suiv" onclick="planifSemaine(1)" style="font-size:13px">Semaine suivante ›</button>
+        <button class="btn-sm" onclick="planifSemaine(0)" style="font-size:12px;margin-left:auto">Cette semaine</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:0 0 8px">
+        Survolez une séance pour un aperçu, cliquez pour le détail (séquence, MER).
+      </p>
+      <div id="planif-grille" style="overflow-x:auto"></div>
+    </div>
+    <!-- Modale de détail d'une séance -->
+    <div id="planif-modale" style="display:none;position:fixed;inset:0;z-index:1200;
+         background:rgba(0,0,0,.3);align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,.25);
+           width:420px;max-width:92vw;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <strong id="planif-modale-titre" style="font-size:15px"></strong>
+          <button class="btn-sm" style="margin-left:auto" onclick="planifFermerModale()">Fermer</button>
+        </div>
+        <div id="planif-modale-corps" style="font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stab-indispo" style="display:none">
+    <div class="card">
+      <div class="card-header" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <h2 style="margin:0">Indisponibilités</h2>
+        <div style="display:none;align-items:center;gap:8px;font-size:13px">
+          <label>Établissement
+            <select id="indispo-etab" onchange="indispoCharger()" style="font-size:13px;margin-left:4px"></select>
+          </label>
+          <label>Année
+            <input id="indispo-annee" style="width:100px;font-size:13px;margin-left:4px" onchange="indispoCharger()">
+          </label>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:6px 0 12px">
+        Périodes où des séances prévues n'ont pas lieu (surveillance d'examen,
+        sortie, journée de cohésion…). Les séances concernées sont retirées du
+        planning, ce qui décale la suite.
+      </p>
+      <div id="indispo-form" style="background:#f8f8f8;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px"></div>
+      <div id="indispo-liste"></div>
+    </div>
+  </div>
+
+  <div id="stab-mer" style="display:none">
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px">Configuration par classe</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Pour chaque classe, indiquez si vous faites des mises en route et selon
+        quel mode (automatismes, progression, ou panaché).
+      </p>
+      <div id="mer-classes-liste"></div>
+    </div>
+
+    <!-- Affectation des séances de MER sur l'EdT de la classe sélectionnée -->
+    <div class="card" id="mer-affect-card" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:600">Affectation des séances (sur l'EdT)</div>
+        <span id="mer-affect-info" style="font-size:12px;color:var(--text-secondary)"></span>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin:0 0 8px">
+        Cliquez une case pour choisir le type de mise en route de ce créneau.
+        « Aucune » neutralise le créneau (pas de MER). L'appli en déduit les
+        dates de chaque type sur l'année.
+      </p>
+      <div id="mer-affect-grille"></div>
+    </div>
+
+    <div class="card" id="mer-auto-card">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:600">Planning des automatismes</div>
+        <span id="mer-planning-info" style="font-size:12px;color:var(--text-secondary)"></span>
+        <a id="mer-planning-dl" href="#" target="_blank"
+           style="font-size:12px;margin-left:auto;display:none">Ouvrir le PDF (A3)</a>
+      </div>
+      <div id="mer-planning-zone" style="min-height:200px;border:1px solid var(--border);border-radius:6px;background:#fafafa">
+        <p style="font-size:13px;color:#999;padding:16px;text-align:center">
+          Sélectionnez, dans la barre du haut, une classe qui fait des
+          automatismes pour afficher son planning.
+        </p>
+      </div>
+    </div>
+
+    <!-- Planning des MER en progression (déplacé depuis « Progression de MER ») -->
+    <div class="card" id="mer-plan-prog-card" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:600">Planning des mises en route (progression)</div>
+        <span id="mer-plan-prog-info" style="font-size:12px;color:var(--text-secondary)"></span>
+        <a id="mer-plan-prog-dl" href="#" target="_blank"
+           style="font-size:12px;margin-left:auto;display:none">Ouvrir le PDF (A3)</a>
+      </div>
+      <div id="mer-plan-prog-zone" style="min-height:200px;border:1px solid var(--border);border-radius:6px;background:#fafafa">
+        <p style="font-size:13px;color:#999;padding:16px;text-align:center">
+          Le planning s'affiche selon les séances marquées « progression » sur l'EdT.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="stab-progmer" style="display:none">
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <!-- Colonne gauche : parties du référentiel MER -->
+      <div style="flex:0 0 320px;max-width:320px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Référentiel MER</div>
+          <select id="progmer-ref" onchange="progMerDefinirRef()" style="width:100%;font-size:13px;margin-bottom:8px">
+            <option value="">— Choisir un référentiel MER validé —</option>
+          </select>
+          <div style="font-size:12px;font-weight:600;margin:8px 0 4px">Parties disponibles</div>
+          <div id="progmer-dispo" style="font-size:12px"></div>
+        </div>
+      </div>
+      <!-- Colonne droite : progression composée + planning -->
+      <div style="flex:1;min-width:0">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <div style="font-size:14px;font-weight:600">Progression de mise en route
+              <span id="progmer-niveau-lbl" style="font-weight:normal;color:#888"></span></div>
+            <span id="progmer-total" style="font-size:12px;color:#888;margin-left:auto"></span>
+          </div>
+          <div id="progmer-composee"></div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+            <div style="font-size:14px;font-weight:600">Aperçu théorique (niveau)</div>
+            <a id="progmer-plan-dl" href="#" target="_blank"
+               style="font-size:12px;margin-left:auto;display:none">Ouvrir le PDF</a>
+          </div>
+          <p style="font-size:12px;color:var(--text-secondary);margin:0 0 6px">
+            Aperçu de la composition (parties et plages de séances), sans dates
+            réelles. Le planning daté d'une classe (avec son EdT et ses
+            indisponibilités) est dans l'onglet « Mises en route ».
+          </p>
+          <span id="progmer-plan-info" style="display:none"></span>
+          <div id="progmer-plan-zone" style="min-height:160px;border:1px solid var(--border);border-radius:6px;background:#fafafa">
+            <p style="font-size:13px;color:#999;padding:16px;text-align:center">
+              Posez des parties pour afficher l'aperçu.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stab-progression" style="display:none">
+
+    <div class="atl-shell">
+
+      <!-- Barre latérale : parties de séquence du référentiel support -->
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title" id="prog-sidebar-titre">Parties de séquence</span>
+          <span id="prog-sidebar-hint"
+                style="font-size:11px;color:var(--text-muted);font-weight:400"></span>
+        </div>
+        <div id="prog-sidebar-body" class="atl-list"></div>
+      </aside>
+
+      <div class="atl-main">
+
+        <!-- Bandeau supérieur : titre à gauche, badge état + boutons à droite.
+             v0.19.1.2 — Les 4 sélecteurs (année/étab/niveau/référentiel) ne
+             sont plus ici : ils sont rendus dans la barre 1 de navigation
+             (#suivi-portee-selecteurs) par suiviRenderSelecteurs, au même
+             endroit et style que les sélecteurs de l'atelier Référentiel.
+             Les <select> conservent leurs IDs (#prog-sel-*) et sont
+             référencés par AtelierProgression ; ils sont créés ici cachés
+             puis déplacés en barre 1 à l'affichage. -->
+        <div class="atl-toolbar prog-toolbar">
+          <span class="prog-toolbar-title">Progression annuelle</span>
+          <span id="prog-etat-badge" class="atome-etat-badge" style="display:none"></span>
+          <button class="btn-sm" id="prog-btn-valider" style="display:none"
+                  onclick="ATELIER_PROGRESSION.changerEtat('valide')">Marquer valide</button>
+          <button class="btn-sm" id="prog-btn-encours" style="display:none"
+                  onclick="ATELIER_PROGRESSION.changerEtat('en_cours')">Remettre en cours</button>
+          <span id="prog-status"
+                style="font-size:12px;color:var(--text-secondary);margin-left:8px" role="status" aria-live="polite"></span>
+        </div>
+
+        <!-- Réservoir caché des sélecteurs internes de l'atelier Progression.
+             v0.21.3 — Niveau et Référentiel ont migré dans le pool unifié du
+             Suivi (#suivi-selecteurs-pool). Il ne reste ici que l'Année et
+             l'Établissement INTERNES, masqués et pilotés par les sélecteurs
+             globaux (Année globale + Établissement global). Conserver les IDs
+             (ATELIER_PROGRESSION les lit). -->
+        <div id="prog-selecteurs-pool" style="display:none">
+          <label class="suivi-sel" data-prog-sel>Année
+            <select id="prog-sel-annee"
+                    onchange="ATELIER_PROGRESSION.onSelecteurChange()"></select>
+          </label>
+          <label class="suivi-sel" data-prog-sel>Étab.
+            <select id="prog-sel-etab"
+                    onchange="onEtabChangeGlobal()"></select>
+          </label>
+        </div>
+
+        <!-- Alerte académie manquante (calendrier indisponible) -->
+        <div id="prog-alerte-etab" style="display:none;padding:10px 14px;background:#fef7e0;border-bottom:1px solid #f9d568">
+          <span style="font-size:12px;color:#744400">
+            L'établissement de cette progression n'a pas d'académie renseignée :
+            le calendrier reste indisponible tant qu'il n'est pas complété.
+          </span>
+          <button class="btn-sm" style="font-size:11px;margin-left:8px"
+                  onclick="ATELIER_PROGRESSION.allerGestionEtabs()">
+            Gérer les établissements
+          </button>
+        </div>
+
+        <!-- État vide / aucune progression -->
+        <div id="prog-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">📅</div>
+          <p id="prog-empty-msg">Choisir une année, un établissement et un niveau.</p>
+        </div>
+
+        <!-- Contenu : calendrier + détail créneau -->
+        <div id="prog-content" style="display:none;flex:1;overflow-y:auto">
+          <!-- v0.21.5 — Bandeau « prévu / réalisé » + sélecteur de classe. -->
+          <div id="prog-vue-bandeau" style="display:flex;align-items:center;gap:12px;
+               flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--border);
+               background:#fafafa">
+            <strong id="prog-vue-titre" style="font-size:13px">Progression annuelle commune prévue</strong>
+            <label style="font-size:13px;margin-left:auto">Vue classe
+              <select id="prog-vue-classe" onchange="ATELIER_PROGRESSION.onVueClasseChange()"
+                      style="font-size:13px;margin-left:4px">
+                <option value="">— Aucune (commune prévue) —</option>
+              </select>
+            </label>
+          </div>
+          <!-- v0.21.5 — Décalages de la classe (visible en vue réalisée). -->
+          <div id="prog-decalages" style="display:none;padding:8px 12px;
+               border-bottom:1px solid var(--border);background:#f5f3fb"></div>
+          <div class="prog-zone">
+            <!-- Calendrier semainier (cible de drop en v0.19.1.1) -->
+            <div id="prog-calendrier" class="prog-calendrier"></div>
+
+            <!-- v0.32.9 — Poignée de redimensionnement (tirer pour ajuster). -->
+            <div id="prog-poignee" class="prog-poignee" title="Cliquer-tirer pour redimensionner"
+                 onmousedown="progPoigneeStart(event)"></div>
+
+            <!-- Détail du créneau sélectionné -->
+            <div id="prog-creneau-form" class="prog-detail" style="display:none">
+              <div class="card">
+                <div style="font-size:13px;font-weight:500;margin-bottom:12px" id="prog-form-titre">Créneau</div>
+                <div class="field-row">
+                  <label style="width:110px">Période</label>
+                  <select id="prog-form-periode" style="flex:1;font-size:13px"
+                          onchange="ATELIER_PROGRESSION.sauvegarderCreneau()">
+                    <option value="">— Non affectée —</option>
+                    <option value="Sem1">Semestre 1</option>
+                    <option value="Sem2">Semestre 2</option>
+                    <option value="FinAnnee">Fin d'année</option>
+                  </select>
+                </div>
+                <div class="field-row">
+                  <label style="width:110px">Début</label>
+                  <input id="prog-form-debut" type="date" style="flex:1"
+                         onchange="ATELIER_PROGRESSION._syncMinFin(); ATELIER_PROGRESSION.sauvegarderCreneau()">
+                </div>
+                <div class="field-row">
+                  <label style="width:110px">Fin</label>
+                  <input id="prog-form-fin" type="date" style="flex:1"
+                         onchange="ATELIER_PROGRESSION.sauvegarderCreneau()">
+                </div>
+                <div style="margin-top:10px;display:flex;gap:8px">
+                  <button class="btn-danger" style="font-size:12px"
+                          onclick="ATELIER_PROGRESSION.supprimerCreneau()">Retirer du calendrier</button>
+                </div>
+              </div>
+              <div class="card" style="margin-top:8px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:8px">Objectifs de ce créneau</div>
+                <div id="prog-objectifs-list" style="font-size:12px;color:var(--text-secondary)">Aucun objectif.</div>
+              </div>
+
+              <!-- v0.32.8 — Documents à distribuer sur ce créneau (saisie) -->
+              <div id="prog-docs-saisie" class="card" style="margin-top:8px">
+                <div style="font-size:12px;font-weight:500;margin-bottom:4px">Documents à distribuer</div>
+                <p style="font-size:11px;color:var(--text-secondary);margin:0 0 8px">
+                  Associez un document à un rang de séance de ce créneau (ex. livret
+                  ou planches de cartes à la 1re séance). Valable pour toutes les
+                  classes du niveau ; les décalages restent gérés par les indisponibilités.
+                </p>
+                <div id="prog-docs-liste" style="margin-bottom:8px;font-size:12px"></div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                  <label style="font-size:12px">Séance n°
+                    <input id="prog-docs-rang" type="number" min="1" value="1"
+                           style="width:52px;font-size:12px;margin-left:4px">
+                  </label>
+                  <select id="prog-docs-select" style="font-size:12px;min-width:240px;max-width:100%"></select>
+                  <button class="btn-sm" onclick="progDocsAjouter()" style="font-size:12px">+ associer</button>
+                  <label style="font-size:11px;color:var(--text-secondary)">
+                    <input type="checkbox" id="prog-docs-suivante" onchange="progDocsRemplirSelect()">
+                    séquence suivante
+                  </label>
+                </div>
+              </div>
+
+              <!-- v0.19.1.4 — Matrices de séances par série (mode historique
+                   'par_serie' uniquement). Masqué en mode 'par_objectif'. -->
+            </div><!-- /prog-creneau-form -->
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /stab-progression -->
+
+  <!-- ── Suivi des séquences ────────────────────────────────────────────── -->
+  <div id="stab-suivi">
+
+  <!-- v0.21.3 — Pool unique des sélecteurs CONTEXTUELS du Suivi annuel,
+       calqué sur la Conception de référentiel (déclaratif). Chaque label porte
+       data-suivi-sel="<type>". suiviRenderSelecteurs les déplace dans la barre 1
+       selon la liste `selecteurs` de l'onglet actif, puis les remet ici. Les
+       <select> conservent leurs IDs/handlers métier (déplacement, pas
+       recréation). L'Année est un sélecteur GLOBAL, géré séparément dans la
+       barre 1 (#suivi-annee-globale). -->
+  <div id="suivi-selecteurs-pool" style="display:none">
+    <label class="suivi-sel" data-suivi-sel="etablissement">Établissement
+      <select id="suivi-etab-global" onchange="suiviEtabGlobalChange()"></select>
+    </label>
+    <label class="suivi-sel" data-suivi-sel="niveau">Niveau
+      <select id="prog-sel-niveau" onchange="onNiveauChangeGlobal()">
+        <option value="N09">N09 — 6e</option>
+        <option value="N10">N10 — 5e</option>
+        <option value="N11" selected>N11 — 4e</option>
+        <option value="N12">N12 — 3e</option>
+      </select>
+    </label>
+    <label class="suivi-sel suivi-sel--ref" data-suivi-sel="referentiel">Référentiel
+      <select id="prog-sel-ref" onchange="ATELIER_PROGRESSION.onReferentielChange()"></select>
+    </label>
+    <label class="suivi-sel" data-suivi-sel="classe">Classe
+      <select id="classe-sel" onchange="onClasseChange()">
+        <option value="">— Choisir une classe —</option>
+      </select>
+    </label>
+    <!-- v0.34.1 — Sélecteur d'année scolaire, déclarable dans le bandeau (ex.
+         Suivi de classe, pour accéder à l'historique). Conserve l'id #annee-sel
+         que certains flux lisent (onAnneeChange). -->
+    <label class="suivi-sel" data-suivi-sel="annee">Année
+      <select id="annee-sel" onchange="onAnneeChange()">
+        <option value="">— Année —</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="toolbar">
+    <select id="seq-sel" onchange="onSeqChange()"></select>
+    <div class="view-btns">
+      <button class="vbtn active" id="btn-vc" onclick="setView('classe')">Vue classe</button>
+      <button class="vbtn" id="btn-ve" onclick="setView('eleve')">Vue élève</button>
+    </div>
+    <button class="btn-sm" onclick="toggleAll(true)">Tout déplier</button>
+    <button class="btn-sm" onclick="toggleAll(false)">Tout replier</button>
+  </div>
+
+  <div class="calc-bar">
+    <button class="btn-calc" onclick="askCalc()">Calculer les niveaux depuis les exercices</button>
+    <div class="confirm-strip" id="confirm-strip">
+      <span>Les niveaux saisis manuellement seront remplacés. Confirmer ?</span>
+      <button class="btn-yes" onclick="doCalc()">Oui, calculer</button>
+      <button class="btn-no" onclick="cancelCalc()">Annuler</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span>Exercices :</span>
+    <span><i class="dot dot-F"></i> F fondamental</span>
+    <span><i class="dot dot-A"></i> A avancé</span>
+    <span><i class="dot dot-E"></i> E — exploration</span>
+    <span class="sep"></span>
+    <span>Niveaux :</span>
+    <span class="badge b-1">1 · Insuf.</span><span class="pts">4 pts</span>
+    <span class="badge b-2">2 · Consol.</span><span class="pts">10 pts</span>
+    <span class="badge b-3">3 · Satisf.</span><span class="pts">16 pts</span>
+    <span class="badge b-4">4 · TB</span><span class="pts">20 pts</span>
+    <span class="badge b-A">A · Absent</span>
+    <span class="badge b-D">D · Disp.</span>
+  </div>
+
+  <div id="no-classe" style="padding:40px;color:#999;text-align:center;font-size:14px">
+    Sélectionnez une classe, ou créez-en une dans l'onglet
+    <strong style="color:#1d5fa8;cursor:pointer"
+      onclick="document.querySelector('[data-tab=classes]').click()">Classes</strong>.
+  </div>
+
+  <div id="suivi-content" style="display:none">
+    <div id="view-classe">
+      <div class="tbl-wrap"><table id="main-tbl"></table></div>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div id="view-eleve" style="display:none">
+      <div class="elv-bar"><select id="elv-sel"></select></div>
+      <div id="elv-detail"></div>
+    </div>
+  </div>
+
+  </div><!-- /stab-suivi -->
+
+  <!-- ── Gestion des classes ────────────────────────────────────────────── -->
+  <div id="stab-parametrage" style="display:none">
+
+  <!-- Bandeau d'invitation : établissements non validés -->
+  <div id="etab-bandeau" class="card" style="display:none;background:#fef7e0;border:1px solid #f9d568;padding:10px 14px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <span id="etab-bandeau-txt" style="font-size:13px"></span>
+      <button class="btn-sm" onclick="gestionAllerEtablissements()">Renseigner</button>
+    </div>
+  </div>
+
+  <!-- v0.19.1.2 — Sous-onglets de Gestion masqués : la navigation Classe /
+       Établissement est désormais portée par la barre 2 (suivi-grp-gestion),
+       qui appelle gestionSousOnglet('classes'/'etabs'). Les boutons restent
+       dans le DOM (togglés par gestionSousOnglet) mais la barre est cachée
+       pour éviter une double navigation. -->
+  <div class="toolbar" style="display:none;gap:4px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:0">
+    <button class="vbtn active" id="gest-btn-classes" onclick="gestionSousOnglet('classes')">Classes</button>
+    <button class="vbtn" id="gest-btn-etabs"    onclick="gestionSousOnglet('etabs')">Établissements</button>
+  </div>
+
+  <!-- Panneau Classes -->
+  <div id="gest-classes">
+  <div class="two-col">
+
+    <div>
+      <div class="card-header">
+        <h2>Classes</h2>
+        <button class="btn-prim" onclick="showCreateClasse()">+ Nouvelle</button>
+      </div>
+      <!-- v0.35.0 (B1) — Filtres établissement/année/niveau retirés d'ici :
+           ils sont désormais dans le bandeau partagé (pool de sélecteurs),
+           communs à Suivi, Planification et Gestion. Cf. suiviRenderSelecteurs. -->
+      <div id="classes-list"></div>
+
+      <div id="form-create" class="card" style="display:none;margin-top:4px">
+        <h3>Nouvelle classe</h3>
+        <div class="field-row"><label>Nom</label><input id="cr-nom" placeholder="4EME3"></div>
+        <div class="field-row"><label>Niveau</label>
+          <select id="cr-niveau">
+            <option value="N09">6ème (N09)</option>
+            <option value="N10">5ème (N10)</option>
+            <option value="N11" selected>4ème (N11)</option>
+            <option value="N12">3ème (N12)</option>
+          </select>
+        </div>
+        <div class="field-row"><label>Année</label><input id="cr-annee" placeholder="2025-2026"></div>
+        <div class="field-row"><label>Établissement</label><input id="cr-etab" placeholder="Collège…"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn-prim" onclick="confirmCreateClasse()">Créer</button>
+          <button class="btn-sm" onclick="hideCreateClasse()">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="classe-detail" style="display:none">
+      <div class="card-header"><h2 id="detail-titre"></h2></div>
+
+      <!-- Cadre unique « Élèves » : import + ajout manuel + liste -->
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px">Élèves</div>
+
+        <!-- Import CSV -->
+        <div class="import-zone" style="padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:500">Importer depuis Pronote (CSV)</span>
+            <label class="btn-prim" style="cursor:pointer;font-size:12px;padding:5px 12px">
+              Choisir le fichier CSV
+              <input type="file" id="inp-csv" accept=".csv" style="display:none" onchange="importCSV()">
+            </label>
+            <span id="import-status" style="font-size:12px" role="status" aria-live="polite"></span>
+          </div>
+          <p style="font-size:11px;color:#999;margin-top:6px">
+            Colonnes utilisées : <code>Nom</code>, <code>Prenom</code>. Les doublons sont ignorés.
+          </p>
+        </div>
+
+        <!-- Ajout manuel -->
+        <div style="padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px">
+          <div style="font-size:13px;font-weight:500;margin-bottom:8px">Ajouter manuellement</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="inp-nom" placeholder="Nom" style="width:140px">
+            <input id="inp-prenom" placeholder="Prénom" style="width:130px">
+            <button class="btn-prim" onclick="addEleve()">Ajouter</button>
+          </div>
+        </div>
+
+        <!-- Liste des élèves -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:13px;font-weight:500" id="nb-eleves"></span>
+            <button class="btn-danger" id="btn-vider" onclick="viderClasse()" style="display:none">Vider</button>
+          </div>
+          <div id="eleves-list"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;text-align:right">
+        <button class="btn-danger" onclick="deleteClasse()">Supprimer cette classe</button>
+      </div>
+    </div>
+
+  </div>
+  </div><!-- /gest-classes -->
+
+  <!-- Panneau Établissements -->
+  <div id="gest-etabs" style="display:none">
+    <div class="card-header">
+      <h2>Établissements</h2>
+    </div>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+      Renseigner l'académie est nécessaire pour afficher les vacances scolaires
+      dans la progression. La validation par UAI remplit automatiquement tous
+      les champs depuis l'annuaire de l'Éducation nationale.
+    </p>
+    <div id="etabs-list"></div>
+  </div>
+
+  </div><!-- /stab-parametrage -->
+
+</main>
+
+<main id="tab-ateliers" class="tab-content" style="display:none">
+
+  <!-- v0.10 : Sous-navigation ateliers à 2 niveaux ──────────────────────
+       Ligne 1 : portée (Séquence / Niveau / Cycle / Généraux)
+                 + sélecteurs contextuels à la portée (alignés à droite)
+       Ligne 2 : ateliers de la portée sélectionnée
+       Les sélecteurs pilotent ATL_FILTRE_NIVEAU/SEQ comme avant.
+       Mémorisation : portée active + sélections par portée en localStorage.
+  -->
+  <div class="toolbar" style="gap:16px;align-items:center;margin-bottom:0;border-bottom:1px solid var(--border);padding:6px 8px;flex-wrap:wrap">
+    <div id="atl-portee-row" style="display:flex;gap:4px">
+      <button class="vbtn active" id="atl-btn-portee-sequence" onclick="atelPorteeSwitch('sequence')">Séquence</button>
+      <button class="vbtn"        id="atl-btn-portee-niveau"   onclick="atelPorteeSwitch('niveau')">Niveau</button>
+      <button class="vbtn"        id="atl-btn-portee-cycle"    onclick="atelPorteeSwitch('cycle')">Cycle</button>
+      <button class="vbtn"        id="atl-btn-portee-generaux" onclick="atelPorteeSwitch('generaux')">Outils généraux</button>
+    </div>
+    <div id="atl-portee-selecteurs" style="display:flex;gap:10px;align-items:center;margin-left:auto"></div>
+  </div>
+
+  <!-- Ligne 2 : ateliers de la portée sélectionnée -->
+  <!-- v0.13.6.6.1 — fond gris retiré : il masquait le contraste du bouton
+       actif (--primary-bg = #e8eef7 sur fond #fafafa = quasi invisible).
+       Le bouton actif ressort maintenant comme dans le bandeau ligne 1. -->
+  <div class="toolbar" style="gap:4px;margin-bottom:0;border-bottom:1px solid var(--border);padding:4px 8px;flex-wrap:wrap">
+    <!-- Portée Séquence -->
+    <button class="vbtn atl-grp-sequence active" id="atl-btn-exercice" onclick="atelSwitch('exercice')">Exercice</button>
+    <button class="vbtn atl-grp-sequence" id="atl-btn-notion"   onclick="atelSwitch('notion')">Notion</button>
+    <button class="vbtn atl-grp-sequence" id="atl-btn-methode"  onclick="atelSwitch('methode')">Méthode</button>
+    <button class="vbtn atl-grp-sequence" id="atl-btn-fiche"    onclick="atelSwitch('fiche')">Fiche de résumé</button>
+    <button class="vbtn atl-grp-sequence" id="atl-btn-carte_automatisme"    onclick="atelSwitch('carte_automatisme')">Carte d'automatisme</button>
+    <button class="vbtn atl-grp-sequence" id="atl-btn-livret"   onclick="atelSwitch('livret')">Séquence</button>
+    <!-- Portée Niveau -->
+    <!-- v0.15.1 — Récap cours, Récap exos et Plans de travail supprimés
+         (remplacés par l'atelier Référentiel > Documents à publier). -->
+    <button class="vbtn atl-grp-niveau"   id="atl-btn-evaluation" onclick="atelSwitch('evaluation')" style="display:none">Évaluation</button>
+    <button class="vbtn atl-grp-niveau"   id="atl-btn-referentiel" onclick="atelSwitch('referentiel')" style="display:none">Référentiel</button>
+    <button class="vbtn atl-grp-niveau"   id="atl-btn-referentiel_externe" onclick="atelSwitch('referentiel_externe')" style="display:none">Référentiel externe</button>
+    <!-- Portée Cycle -->
+    <button class="vbtn atl-grp-cycle"    id="atl-btn-theme"    onclick="atelSwitch('theme')"    style="display:none">Thème</button>
+    <button class="vbtn atl-grp-cycle"    id="atl-btn-seqcycle" onclick="atelSwitch('seqcycle')" style="display:none">Découpage en séquences</button>
+    <!-- Portée Généraux -->
+    <button class="vbtn atl-grp-generaux" id="atl-btn-rdl"      onclick="atelSwitch('rdl')"      style="display:none">Rendu par lot</button>
+    <button class="vbtn atl-grp-generaux" id="atl-btn-recherche" onclick="atelSwitch('recherche')" style="display:none">Recherche</button>
+  </div>
+
+  <!-- ── Atelier Exercice ── -->
+  <div id="atl-exercice" class="atl-panel">
+    <div class="atl-shell">
+
+      <!-- Sidebar liste -->
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Exercices</span>
+          <button class="btn-prim atl-sidebar-btn-creer" onclick="ATELIER_EXERCICE.nouvelItem()">+ Créer</button>
+        </div>
+        <!-- v0.13.4 — La barre de filtre série a été remplacée par les
+             sections repliables F/A/E/EA/Autres dans la liste ci-dessous
+             (cf. atelRenderListe dans app.js). Code mort à nettoyer en
+             v0.14 : ATL_FILT, atelExerciceFiltrer(), classe .exo-filt. -->
+        <!-- v0.10.4 — Filtre par état d'édition -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat="" onclick="atelAtomeFiltrerEtat('exercice', this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours" onclick="atelAtomeFiltrerEtat('exercice', this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide" onclick="atelAtomeFiltrerEtat('exercice', this, 'valide')">Validé</button>
+          <span style="margin:0 4px;color:#ccc">|</span>
+          <button class="exo-etat" title="Atomes non rattachés à un objectif" onclick="atelAtomeFiltrerRattachement('exercice', this)">Non rattachés</button>
+        </div>
+        <div id="atl-exercice-list" class="atl-list"></div>
+      </aside>
+
+      <!-- Zone principale -->
+      <div class="atl-main">
+
+        <!-- Toolbar -->
+        <div class="atl-toolbar">
+          <span id="atl-exercice-toolbar-title" style="font-size:14px;font-weight:500;flex:1">Atelier Exercice</span>
+          <!-- v0.10.6 — Badge "modifié" (modifs non sauvées) -->
+          <span id="atl-exercice-badge-modifie" class="atl-badge-modifie" style="display:none">modifié</span>
+          <!-- v0.10.4 — Badge état + bouton validation -->
+          <span id="atl-exercice-etat-badge" class="atome-etat-badge" style="display:none"></span>
+          <button class="btn-sm" id="atl-exercice-btn-valider"
+                  onclick="ATELIER_EXERCICE.basculerValidation()"
+                  style="display:none"></button>
+          <button class="btn-danger" id="atl-exercice-btn-suppr" onclick="ATELIER_EXERCICE.supprimer()" style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-exercice-btn-save" onclick="ATELIER_EXERCICE.sauvegarder()" style="display:none">Enregistrer</button>
+        </div>
+
+        <!-- Sous-onglets édition / Rendu (v0.6.4 : LaTeX déplacé en bouton toolbar) -->
+        <div class="atl-tabs" id="atl-exercice-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-exercice-tab-btn-edition" onclick="ATELIER_EXERCICE.basculerOnglet('edition')">Édition</button>
+          <button class="atl-tab" id="atl-exercice-tab-btn-rendu" onclick="ATELIER_EXERCICE.basculerOnglet('rendu')">Rendu PDF</button>
+        </div>
+
+        <!-- État vide -->
+        <div id="atl-exercice-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">✏</div>
+          <p>Sélectionner un exercice ou créer un nouveau</p>
+        </div>
+
+        <!-- Formulaire édition -->
+        <div id="atl-exercice-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+
+          <!-- Série -->
+          <div class="atl-field">
+            <label class="atl-label">Série</label>
+            <div class="serie-btns">
+              <button class="serie-btn" id="atl-serie-fondamental" onclick="ATELIER_EXERCICE.changerSerie('fondamental')">Fondamental</button>
+              <button class="serie-btn" id="atl-serie-avancé" onclick="ATELIER_EXERCICE.changerSerie('avancé')">Avancé</button>
+              <button class="serie-btn" id="atl-serie-exploration" onclick="ATELIER_EXERCICE.changerSerie('exploration')">Exploration</button>
+              <button class="serie-btn" id="atl-serie-AP" onclick="ATELIER_EXERCICE.changerSerie('approche')">Activité d'approche</button>
+              <!-- v0.11.2 — Série « Révision » supprimée (cf. sidebar plus haut). -->
+            </div>
+          </div>
+
+          <!-- v0.13.6.12 — Libellé harmonisé « Titre » (sans qualificatif).
+               Le bouton « reprendre titre objectif » est injecté dans
+               .atl-field-titre-row par AtelierEditeur si l'exo a 1:1 obj. -->
+          <div class="atl-field">
+            <div class="atl-field-titre-row" data-slot-reprendre-obj="atl-exercice-titre">
+              <label class="atl-label">Titre<span class="atl-label-obligatoire">*</span></label>
+            </div>
+            <input type="text" id="atl-exercice-titre" placeholder="ex : Calcul de proportions" style="width:100%">
+          </div>
+
+          <!-- v0.10.7 — Zone "Objectifs associés" retirée. La liaison
+               exercice ↔ objectif passe désormais exclusivement par le
+               drop dans l'atelier d'assemblage de la séquence. -->
+
+          <!-- v0.9.2 — Variables propres à l'exercice
+               v0.11.6 — Section repliable, repliée par défaut. Le bouton
+               toggle est l'en-tête lui-même. -->
+          <div class="atl-field atl-collapsible" id="atl-exercice-field-variables">
+            <button type="button"
+                    class="atl-collapsible-header"
+                    onclick="ATELIER_EXERCICE.toggleVariables()">
+              <span class="atl-collapsible-chevron" id="atl-exercice-variables-chevron">▸</span>
+              <span class="atl-label" style="margin:0">Variables</span>
+              <!-- v0.13.7.6 — Bouton ✎ Éditer manuel à la place du texte parenthétique.
+                   stopPropagation pour ne pas déclencher le toggle du header. -->
+              <button type="button" class="btn-ed-latex-manuel"
+                      onclick="event.stopPropagation(); EditeurLatex.ouvrir(document.getElementById('atl-exercice-variables'))"
+                      title="Ouvrir l'éditeur LaTeX">✎ Éditer</button>
+            </button>
+            <div class="atl-collapsible-body" id="atl-exercice-variables-body" style="display:none">
+              <div style="font-size:11px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:6px;line-height:1.5">
+                Définitions inlinées dans le préambule, juste avant l'énoncé&nbsp;:
+                variables aléatoires (<code>\xintdefiivar</code>,
+                <code>\xintdeffloatvar</code>, <code>\xintdefvar</code>),
+                <code>\newcommand</code> locales (par exemple
+                <code>\touche</code>), <code>\newcounter</code>, etc. Ces
+                définitions sont visibles dans l'énoncé <em>et</em> dans le
+                corrigé de cet exercice. Pour partager une définition entre
+                plusieurs exercices, la dupliquer dans chacun.
+              </div>
+              <!-- v0.13.7.6 — data-ed-latex-attache="1" : le scanner doit
+                   ignorer ce textarea, le bouton ✎ est posé manuellement
+                   dans l'en-tête repliable juste au-dessus. -->
+              <textarea id="atl-exercice-variables" rows="6"
+                class="latex-textarea"
+                style="width:100%;font-family:monospace;font-size:12px;resize:vertical"
+                placeholder="\xintdefiivar mavar := randrange(1,10);"
+                data-contexte-latex="variables"
+                data-ed-latex-attache="1"></textarea>
+            </div>
+          </div>
+
+          <!-- v0.11.6 — Cadre « Principal » groupant énoncé, corrigé
+               et le toggle de cadre de réponse principal. -->
+          <div class="atl-cadre" id="atl-exercice-cadre-principal">
+            <div class="atl-cadre-titre">Principal</div>
+
+            <!-- Énoncé -->
+            <div class="atl-field">
+              <label class="atl-label">Énoncé<span class="atl-label-obligatoire">*</span></label>
+              <textarea id="atl-exercice-enonce" class="latex-textarea" rows="8"
+                style="width:100%;font-family:monospace;font-size:12px;resize:vertical"
+                placeholder="Calculer les expressions suivantes." data-contexte-latex="exo-enonce"></textarea>
+            </div>
+
+            <!-- Corrigé -->
+            <div class="atl-field">
+              <label class="atl-label">Corrigé<span class="atl-label-obligatoire">*</span></label>
+              <div style="font-size:11px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:6px">
+                Le corrigé est utilisé dans le document annuel « exercices corrigés ». Il doit toujours être présent.
+              </div>
+              <textarea id="atl-exercice-corrige" class="latex-textarea" rows="8"
+                style="width:100%;font-family:monospace;font-size:12px;resize:vertical"
+                placeholder="Je calcule chaque expression :" data-contexte-latex="exo-corrige"></textarea>
+            </div>
+
+            <!-- Toggle cadre de réponse principal -->
+            <div class="atl-field atl-cadre-rep-row">
+              <label class="atl-cadre-rep-toggle">
+                <input type="checkbox" id="atl-exercice-cadre-rep-principal-actif"
+                       onchange="ATELIER_EXERCICE.toggleCadreReponsePrincipal()">
+                <span>Cadre de réponse</span>
+                <span style="font-weight:400;color:var(--text-muted);font-size:var(--font-xs)">(zone vide laissée à l'élève dans le livret imprimé)</span>
+              </label>
+              <span class="atl-cadre-rep-lignes" id="atl-exercice-cadre-rep-principal-lignes-wrap" style="display:none">
+                <label for="atl-exercice-cadre-rep-principal-lignes" style="font-size:var(--font-sm)">Hauteur :</label>
+                <input type="number" id="atl-exercice-cadre-rep-principal-lignes"
+                       min="1" max="99" value="10" step="1" style="width:60px">
+                <span style="font-size:var(--font-sm);color:var(--text-muted)">lignes</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- v0.11.6 — Cadre « Remédiation » groupant énoncé et corrigé
+               de remédiation, et le toggle de cadre de réponse de
+               remédiation. Visible uniquement pour les exos de série
+               'fondamental' (F) et 'avancé' (A) — cf. mémoire #19 et
+               cadrage v0.11.6 Q2 option β. La visibilité est pilotée
+               par atelExerciceSerie() qui appelle atelExerciceMajVisibiliteRemediation().
+               v0.14.8 — Activation par case à cocher (Q1=b) : dans le périmètre F/A,
+               la case détermine si la remédiation est rédigée. Cochée = champs
+               affichés et obligatoires au passage en `valide`. Décochée =
+               champs vidés à la sauvegarde (cf. Q2=a : pas de champ booléen
+               en base, l'état est dérivé). -->
+          <div class="atl-cadre" id="atl-exercice-cadre-remediation" style="display:none">
+            <div class="atl-cadre-titre">Remédiation</div>
+            <div style="font-size:11px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:10px;line-height:1.5">
+              Section optionnelle. Pour cet exercice, on peut proposer
+              une <strong>remédiation</strong> (énoncé alternatif plus
+              simple + corrigé) destinée aux élèves qui n'auraient pas
+              réussi l'exercice principal. Les exercices de remédiation
+              et leurs corrigés sont regroupés dans deux sections
+              dédiées en fin de livret.
+            </div>
+
+            <!-- v0.14.8 — Case à cocher d'activation -->
+            <div class="atl-field" style="margin-bottom:12px">
+              <label class="atl-cadre-rep-toggle">
+                <input type="checkbox" id="atl-exercice-remed-actif"
+                       onchange="ATELIER_EXERCICE.toggleRemediation()">
+                <span>Rédiger une remédiation pour cet exercice</span>
+              </label>
+            </div>
+
+            <!-- Contenu de la remédiation : visible uniquement si la case est cochée -->
+            <div id="atl-exercice-remed-contenu" style="display:none">
+
+              <!-- Énoncé de remédiation -->
+              <div class="atl-field">
+                <label class="atl-label">
+                  Énoncé de remédiation
+                  <span class="atl-label-obligatoire" title="Obligatoire si la remédiation est cochée">*</span>
+                </label>
+                <textarea id="atl-exercice-remed-enonce" class="latex-textarea" rows="6"
+                  style="width:100%;font-family:monospace;font-size:12px;resize:vertical"
+                  placeholder="Refaire le calcul de base étape par étape." data-contexte-latex="exo-enonce"></textarea>
+              </div>
+
+              <!-- Corrigé de remédiation -->
+              <div class="atl-field">
+                <label class="atl-label">
+                  Corrigé de remédiation
+                  <span class="atl-label-obligatoire" title="Obligatoire si la remédiation est cochée">*</span>
+                </label>
+                <textarea id="atl-exercice-remed-corrige" class="latex-textarea" rows="6"
+                  style="width:100%;font-family:monospace;font-size:12px;resize:vertical"
+                  placeholder="Solution détaillée pas à pas..." data-contexte-latex="exo-corrige"></textarea>
+              </div>
+
+              <!-- Toggle cadre de réponse remédiation -->
+              <div class="atl-field atl-cadre-rep-row">
+                <label class="atl-cadre-rep-toggle">
+                  <input type="checkbox" id="atl-exercice-cadre-rep-remed-actif"
+                         onchange="ATELIER_EXERCICE.toggleCadreReponseRemed()">
+                  <span>Cadre de réponse</span>
+                  <span style="font-weight:400;color:var(--text-muted);font-size:var(--font-xs)">(zone vide après l'énoncé de remédiation)</span>
+                </label>
+                <span class="atl-cadre-rep-lignes" id="atl-exercice-cadre-rep-remed-lignes-wrap" style="display:none">
+                  <label for="atl-exercice-cadre-rep-remed-lignes" style="font-size:var(--font-sm)">Hauteur :</label>
+                  <input type="number" id="atl-exercice-cadre-rep-remed-lignes"
+                         min="1" max="99" value="10" step="1" style="width:60px">
+                  <span style="font-size:var(--font-sm);color:var(--text-muted)">lignes</span>
+                </span>
+              </div>
+
+            </div><!-- /atl-exercice-remed-contenu -->
+          </div>
+
+          <!-- v0.13.7.6 — Légende des champs obligatoires -->
+          <div class="atl-legende-obligatoire">
+            Les champs marqués d'une <span class="atl-label-obligatoire">*</span>
+            sont obligatoires.
+          </div>
+
+        </div><!-- /atl-exercice-form -->
+
+        <!-- Zone Rendu PDF -->
+        <div id="atl-exercice-rendu" style="display:none;flex:1;
+                                          flex-direction:column"><!-- v0.17.0 — Mini-toolbar de rendu générée par AtelierEditeur._assurerToolbarRendu (Compiler + LaTeX généré + statut). -->
+          <div id="atl-exercice-rendu-toolbar"
+               style="padding:8px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;align-items:center;background:var(--bg-secondary)"></div>
+          <!-- Zone iframe pour afficher le PDF compilé -->
+          <iframe id="atl-exercice-pdf-iframe"
+                  style="flex:1;width:100%;border:none;display:none"
+                  title="Aperçu PDF de l'exercice"></iframe>
+          <!-- Zone d'erreur (cachée par défaut) -->
+          <div id="atl-exercice-rendu-erreur"
+               style="display:none;padding:14px;font-size:12px;
+                      color:var(--err);background:var(--err-bg);
+                      border:1px solid var(--err);margin:8px;
+                      border-radius:4px">
+            <!-- Rempli dynamiquement par AtelierEditeur._afficherErreurCompilation -->
+          </div>
+          <!-- Zone placeholder initial -->
+          <!-- v0.14.4 — Spinner visuel pendant la compilation -->
+          <div id="atl-exercice-rendu-loading" class="rendu-loading"
+               style="display:none;flex:1">
+            <div class="rendu-spinner"></div>
+            <p>Compilation en cours…</p>
+          </div>
+          <div id="atl-exercice-rendu-placeholder"
+               style="flex:1;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;
+                      color:var(--text-muted);padding:30px;text-align:center">
+            <div style="font-size:32px;opacity:.3">📄</div>
+            <p style="margin-top:12px;font-size:13px">
+              Cliquez sur <strong>Compiler le rendu</strong> pour
+              générer le PDF de l'exercice.
+            </p>
+          </div>
+        </div>
+
+      </div><!-- /atl-main -->
+    </div><!-- /atl-shell -->
+  </div><!-- /atl-exercice -->
+
+  <!-- ── Atelier Notion ── -->
+  <div id="atl-notion" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Notions</span>
+          <button class="btn-prim atl-sidebar-btn-creer" onclick="ATELIER_NOTION.nouvelItem()">+ Créer</button>
+        </div>
+        <!-- v0.10.4 — Filtre par état d'édition -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat="" onclick="atelAtomeFiltrerEtat('notion', this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours" onclick="atelAtomeFiltrerEtat('notion', this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide" onclick="atelAtomeFiltrerEtat('notion', this, 'valide')">Validé</button>
+          <span style="margin:0 4px;color:#ccc">|</span>
+          <button class="exo-etat" title="Atomes non rattachés à un objectif" onclick="atelAtomeFiltrerRattachement('notion', this)">Non rattachés</button>
+        </div>
+        <div id="atl-notion-list" class="atl-list"></div>
+      </aside>
+
+      <div class="atl-main">
+        <div class="atl-toolbar">
+          <span id="atl-notion-toolbar-title" style="font-size:14px;font-weight:500;flex:1">Atelier Notion</span>
+          <!-- v0.10.6 — Badge "modifié" (modifs non sauvées) -->
+          <span id="atl-notion-badge-modifie" class="atl-badge-modifie" style="display:none">modifié</span>
+          <!-- v0.10.4 — Badge état + bouton validation -->
+          <span id="atl-notion-etat-badge" class="atome-etat-badge" style="display:none"></span>
+          <button class="btn-sm" id="atl-notion-btn-valider"
+                  onclick="ATELIER_NOTION.basculerValidation()"
+                  style="display:none"></button>
+          <button class="btn-danger" id="atl-notion-btn-suppr" onclick="ATELIER_NOTION.supprimer()" style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-notion-btn-save" onclick="ATELIER_NOTION.sauvegarder()" style="display:none">Enregistrer</button>
+        </div>
+        <div class="atl-tabs" id="atl-notion-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-notion-tab-btn-edition" onclick="ATELIER_NOTION.basculerOnglet('edition')">Édition</button>
+          <button class="atl-tab" id="atl-notion-tab-btn-rendu" onclick="ATELIER_NOTION.basculerOnglet('rendu')">Rendu PDF</button>
+        </div>
+
+        <div id="atl-notion-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">◈</div>
+          <p>Sélectionner une notion ou en créer une nouvelle</p>
+        </div>
+
+        <div id="atl-notion-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+
+          <div class="atl-field">
+            <div class="atl-field-titre-row" data-slot-reprendre-obj="atl-notion-titre">
+              <label class="atl-label">Titre<span class="atl-label-obligatoire">*</span></label>
+            </div>
+            <input type="text" id="atl-notion-titre" placeholder="ex : Proportion." style="width:100%">
+          </div>
+
+          <div class="atl-field">
+            <label class="atl-label">Corps<span class="atl-label-obligatoire">*</span></label>
+            <textarea id="atl-notion-corps" class="latex-textarea" rows="6" style="width:100%;font-family:monospace;font-size:12px;resize:vertical" placeholder="On dit que $a$ est proportionnel à $b$ si..." data-contexte-latex="notion-corps"></textarea>
+          </div>
+
+          <!-- Zone Sections (modèle universel à 2 niveaux)
+               Remplace les anciennes zones Exemples/Remarques fixes.
+               Le contenu est entièrement piloté par ATELIER_NOTION.rendreSections()
+               qui lit ATELIER_NOTION.sections et génère les blocs section + items.
+               (v0.13.7.0c : commentaire mis à jour, l'ancienne ref à
+               ATL_NOTION_SECTIONS / atelNotionRenderSections est obsolète.)
+               -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <label class="atl-label" style="margin-bottom:0">Sections</label>
+            <button class="btn-sm" onclick="ATELIER_NOTION.ajouterSection()" style="font-size:11px">+ Ajouter une section</button>
+          </div>
+          <div id="atl-notion-sections-zone" class="atl-sections-zone"></div>
+
+          <!-- v0.13.7.6 — Légende des champs obligatoires -->
+          <div class="atl-legende-obligatoire">
+            Les champs marqués d'une <span class="atl-label-obligatoire">*</span>
+            sont obligatoires.
+          </div>
+
+        </div><!-- /atl-notion-form -->
+
+        <!-- Zone Rendu PDF -->
+        <div id="atl-notion-rendu" style="display:none;flex:1;
+                                          flex-direction:column"><!-- v0.17.0 — Mini-toolbar de rendu générée par AtelierEditeur._assurerToolbarRendu (Compiler + LaTeX généré + statut). -->
+          <div id="atl-notion-rendu-toolbar"
+               style="padding:8px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;align-items:center;background:var(--bg-secondary)"></div>
+          <!-- Zone iframe pour afficher le PDF compilé -->
+          <iframe id="atl-notion-pdf-iframe"
+                  style="flex:1;width:100%;border:none;display:none"
+                  title="Aperçu PDF de la notion"></iframe>
+          <!-- Zone d'erreur (cachée par défaut) -->
+          <div id="atl-notion-rendu-erreur"
+               style="display:none;padding:14px;font-size:12px;
+                      color:var(--err);background:var(--err-bg);
+                      border:1px solid var(--err);margin:8px;
+                      border-radius:4px">
+            <!-- Rempli dynamiquement par AtelierEditeur._afficherErreurCompilation -->
+          </div>
+          <!-- Zone placeholder initial -->
+          <!-- v0.14.4 — Spinner visuel pendant la compilation -->
+          <div id="atl-notion-rendu-loading" class="rendu-loading"
+               style="display:none;flex:1">
+            <div class="rendu-spinner"></div>
+            <p>Compilation en cours…</p>
+          </div>
+          <div id="atl-notion-rendu-placeholder"
+               style="flex:1;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;
+                      color:var(--text-muted);padding:30px;text-align:center">
+            <div style="font-size:32px;opacity:.3">📄</div>
+            <p style="margin-top:12px;font-size:13px">
+              Cliquez sur <strong>Compiler le rendu</strong> pour
+              générer le PDF de la notion.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Atelier Méthode ── -->
+  <div id="atl-methode" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Méthodes</span>
+          <button class="btn-prim atl-sidebar-btn-creer" onclick="ATELIER_METHODE.nouvelItem()">+ Créer</button>
+        </div>
+        <!-- v0.10.4 — Filtre par état d'édition -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat="" onclick="atelAtomeFiltrerEtat('methode', this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours" onclick="atelAtomeFiltrerEtat('methode', this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide" onclick="atelAtomeFiltrerEtat('methode', this, 'valide')">Validé</button>
+          <span style="margin:0 4px;color:#ccc">|</span>
+          <button class="exo-etat" title="Atomes non rattachés à un objectif" onclick="atelAtomeFiltrerRattachement('methode', this)">Non rattachés</button>
+        </div>
+        <div id="atl-methode-list" class="atl-list"></div>
+      </aside>
+
+      <div class="atl-main">
+        <div class="atl-toolbar">
+          <span id="atl-methode-toolbar-title" style="font-size:14px;font-weight:500;flex:1">Atelier Méthode</span>
+          <!-- v0.10.6 — Badge "modifié" (modifs non sauvées) -->
+          <span id="atl-methode-badge-modifie" class="atl-badge-modifie" style="display:none">modifié</span>
+          <!-- v0.10.4 — Badge état + bouton validation -->
+          <span id="atl-methode-etat-badge" class="atome-etat-badge" style="display:none"></span>
+          <button class="btn-sm" id="atl-methode-btn-valider"
+                  onclick="ATELIER_METHODE.basculerValidation()"
+                  style="display:none"></button>
+          <button class="btn-danger" id="atl-methode-btn-suppr" onclick="ATELIER_METHODE.supprimer()" style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-methode-btn-save" onclick="ATELIER_METHODE.sauvegarder()" style="display:none">Enregistrer</button>
+        </div>
+        <div class="atl-tabs" id="atl-methode-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-methode-tab-btn-edition" onclick="ATELIER_METHODE.basculerOnglet('edition')">Édition</button>
+          <button class="atl-tab" id="atl-methode-tab-btn-rendu" onclick="ATELIER_METHODE.basculerOnglet('rendu')">Rendu PDF</button>
+        </div>
+
+        <div id="atl-methode-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">⊞</div>
+          <p>Sélectionner une méthode ou en créer une nouvelle</p>
+        </div>
+
+        <!-- Onglet Édition -->
+        <div id="atl-methode-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+
+          <div class="atl-field">
+            <div class="atl-field-titre-row" data-slot-reprendre-obj="atl-methode-titre">
+              <label class="atl-label">Titre<span class="atl-label-obligatoire">*</span></label>
+            </div>
+            <input type="text" id="atl-methode-titre" placeholder="ex : Calculer un pourcentage de pourcentage." style="width:100%">
+          </div>
+
+          <div class="atl-field">
+            <label class="atl-label">Corps<span class="atl-label-obligatoire">*</span></label>
+            <textarea id="atl-methode-corps" class="latex-textarea" rows="6" style="width:100%;font-family:monospace;font-size:12px;resize:vertical" data-contexte-latex="methode-corps"></textarea>
+          </div>
+
+          <!-- v0.6.4 — Zone Sections (modèle universel à 2 niveaux) -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <label class="atl-label" style="margin-bottom:0">Sections</label>
+            <button class="btn-sm" onclick="ATELIER_METHODE.ajouterSection()" style="font-size:11px">+ Ajouter une section</button>
+          </div>
+          <div id="atl-methode-sections-zone" class="atl-sections-zone"></div>
+
+          <!-- v0.13.7.6 — Légende des champs obligatoires -->
+          <div class="atl-legende-obligatoire">
+            Les champs marqués d'une <span class="atl-label-obligatoire">*</span>
+            sont obligatoires.
+          </div>
+
+        </div><!-- /atl-methode-form -->
+
+        <!-- Onglet LaTeX -->
+        <div id="atl-methode-latex" style="display:none;padding:20px;overflow-y:auto;flex:1"></div>
+
+        <!-- Zone Rendu PDF -->
+        <div id="atl-methode-rendu" style="display:none;flex:1;
+                                          flex-direction:column"><!-- v0.17.0 — Mini-toolbar de rendu générée par AtelierEditeur._assurerToolbarRendu (Compiler + LaTeX généré + statut). -->
+          <div id="atl-methode-rendu-toolbar"
+               style="padding:8px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;align-items:center;background:var(--bg-secondary)"></div>
+          <!-- Zone iframe pour afficher le PDF compilé -->
+          <iframe id="atl-methode-pdf-iframe"
+                  style="flex:1;width:100%;border:none;display:none"
+                  title="Aperçu PDF de la méthode"></iframe>
+          <!-- Zone d'erreur (cachée par défaut) -->
+          <div id="atl-methode-rendu-erreur"
+               style="display:none;padding:14px;font-size:12px;
+                      color:var(--err);background:var(--err-bg);
+                      border:1px solid var(--err);margin:8px;
+                      border-radius:4px">
+            <!-- Rempli dynamiquement par AtelierEditeur._afficherErreurCompilation -->
+          </div>
+          <!-- Zone placeholder initial -->
+          <!-- v0.14.4 — Spinner visuel pendant la compilation -->
+          <div id="atl-methode-rendu-loading" class="rendu-loading"
+               style="display:none;flex:1">
+            <div class="rendu-spinner"></div>
+            <p>Compilation en cours…</p>
+          </div>
+          <div id="atl-methode-rendu-placeholder"
+               style="flex:1;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;
+                      color:var(--text-muted);padding:30px;text-align:center">
+            <div style="font-size:32px;opacity:.3">📄</div>
+            <p style="margin-top:12px;font-size:13px">
+              Cliquez sur <strong>Compiler le rendu</strong> pour
+              générer le PDF de la méthode.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Atelier Fiche de résumé (v0.10.5) ─────────────────────────────── -->
+  <div id="atl-fiche" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Fiches de résumé</span>
+          <button class="btn-prim atl-sidebar-btn-creer"
+                  onclick="ATELIER_FICHE.nouvelItem()">+ Créer</button>
+        </div>
+        <!-- Filtre par état d'édition -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;
+                    border-bottom:1px solid var(--border);font-size:11px;
+                    color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat=""
+                  onclick="atelAtomeFiltrerEtat('fiche_resume', this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours"
+                  onclick="atelAtomeFiltrerEtat('fiche_resume', this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide"
+                  onclick="atelAtomeFiltrerEtat('fiche_resume', this, 'valide')">Validé</button>
+          <span style="margin:0 4px;color:#ccc">|</span>
+          <button class="exo-etat" title="Atomes non rattachés à un objectif" onclick="atelAtomeFiltrerRattachement('fiche_resume', this)">Non rattachés</button>
+        </div>
+        <div id="atl-fiche-list" class="atl-list"></div>
+      </aside>
+
+      <div class="atl-main">
+        <div class="atl-toolbar">
+          <span id="atl-fiche-toolbar-title"
+                style="font-size:14px;font-weight:500;flex:1">Atelier Fiche de résumé</span>
+          <!-- v0.10.6 — Badge "modifié" (modifs non sauvées) -->
+          <span id="atl-fiche-badge-modifie" class="atl-badge-modifie" style="display:none">modifié</span>
+          <span id="atl-fiche-etat-badge" class="atome-etat-badge" style="display:none"></span>
+          <button class="btn-sm" id="atl-fiche-btn-valider"
+                  onclick="ATELIER_FICHE.basculerValidation()"
+                  style="display:none"></button>
+          <button class="btn-danger" id="atl-fiche-btn-suppr"
+                  onclick="ATELIER_FICHE.supprimer()" style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-fiche-btn-save"
+                  onclick="ATELIER_FICHE.sauvegarder()" style="display:none">Enregistrer</button>
+        </div>
+        <!-- v0.11.1 — onglets Édition / Rendu PDF (alignés sur le pattern
+             notion/méthode). Cachés tant qu'aucune fiche n'est chargée. -->
+        <div class="atl-tabs" id="atl-fiche-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-fiche-tab-btn-edition" onclick="ATELIER_FICHE.basculerOnglet('edition')">Édition</button>
+          <button class="atl-tab" id="atl-fiche-tab-btn-rendu" onclick="ATELIER_FICHE.basculerOnglet('rendu')">Rendu PDF</button>
+        </div>
+
+        <div id="atl-fiche-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">📋</div>
+          <p>Sélectionner une fiche ou en créer une nouvelle</p>
+        </div>
+
+        <div id="atl-fiche-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+          <!-- v0.13.6.12 — Libellé harmonisé « Titre » (sans qualificatif). -->
+          <div class="atl-field">
+            <div class="atl-field-titre-row" data-slot-reprendre-obj="atl-fiche-titre">
+              <label class="atl-label">Titre<span class="atl-label-obligatoire">*</span></label>
+            </div>
+            <input type="text" id="atl-fiche-titre"
+                   placeholder="ex : Calculer une proportion" style="width:100%">
+          </div>
+
+          <!-- Sections -->
+          <div class="atl-field">
+            <label class="atl-label">
+              Zones de texte<span class="atl-label-obligatoire">*</span>
+            </label>
+            <div id="atl-fiche-sections"></div>
+            <div style="margin-top:8px">
+              <button class="btn-sm" onclick="ATELIER_FICHE.ajouterSection()">
+                + Ajouter une zone
+              </button>
+            </div>
+          </div>
+
+          <!-- v0.13.7.6 — Légende des champs obligatoires -->
+          <div class="atl-legende-obligatoire">
+            Les champs marqués d'une <span class="atl-label-obligatoire">*</span>
+            sont obligatoires. Au moins une zone de texte doit comporter
+            un titre et un contenu non vides.
+          </div>
+
+        </div><!-- /atl-fiche-form -->
+
+        <!-- v0.14.3 — Zone Rendu PDF (pilotée par AtelierEditeur). -->
+        <div id="atl-fiche-rendu" style="display:none;flex:1;
+                                          flex-direction:column"><!-- v0.17.0 — Mini-toolbar de rendu générée par AtelierEditeur._assurerToolbarRendu (Compiler + LaTeX généré + statut). -->
+          <div id="atl-fiche-rendu-toolbar"
+               style="padding:8px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;align-items:center;background:var(--bg-secondary)"></div>
+          <!-- Zone iframe pour afficher le PDF compilé -->
+          <iframe id="atl-fiche-pdf-iframe"
+                  style="flex:1;width:100%;border:none;display:none"
+                  title="Aperçu PDF de la fiche de résumé"></iframe>
+          <!-- Zone d'erreur (cachée par défaut) -->
+          <div id="atl-fiche-rendu-erreur"
+               style="display:none;padding:14px;font-size:12px;
+                      color:var(--err);background:var(--err-bg);
+                      border:1px solid var(--err);margin:8px;
+                      border-radius:4px">
+            <!-- Rempli dynamiquement par AtelierEditeur._afficherErreurCompilation -->
+          </div>
+          <!-- Zone placeholder initial -->
+          <!-- v0.14.4 — Spinner visuel pendant la compilation -->
+          <div id="atl-fiche-rendu-loading" class="rendu-loading"
+               style="display:none;flex:1">
+            <div class="rendu-spinner"></div>
+            <p>Compilation en cours…</p>
+          </div>
+          <div id="atl-fiche-rendu-placeholder"
+               style="flex:1;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;
+                      color:var(--text-muted);padding:30px;text-align:center">
+            <div style="font-size:32px;opacity:.3">📄</div>
+            <p style="margin-top:12px;font-size:13px">
+              Cliquez sur <strong>Compiler le rendu</strong> pour
+              générer le PDF de la fiche de résumé.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Atelier Séquence (niveau).
+       Historique :
+         - Nettoyage post-R4e4b : suppression de la vue Legacy et du toggle
+           Lecture/Édition (toujours en édition).
+         - v0.12.3.1 : suppression du toggle Assemblage / Édition avancée et
+           du fichier ateliers_seqniv_v2_edit.js (les fonctionnalités
+           essentielles ont été portées dans l'atelier d'assemblage en
+           v0.12.3.0). L'assemblage drag-and-drop est désormais le seul
+           mode d'édition.
+       Les préfixes liv-* / LIV_* sont conservés pour l'instant (renommage
+       liv → seq à prévoir globalement). -->
+  <div id="atl-livret" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <!-- Barre de gauche partagée par l'atelier. Son contenu varie selon
+           l'état d'édition :
+             - objectif fermé : liste des méthodes draggables
+             - objectif ouvert : liste des exos draggables -->
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title" id="liv-atl-sidebar-titre">Méthodes</span>
+          <span id="liv-atl-sidebar-hint"
+                style="font-size:11px;color:var(--text-muted);font-weight:400"></span>
+        </div>
+        <div id="liv-atl-sidebar-body"
+             style="flex:1;overflow-y:auto;padding:6px 8px"></div>
+      </aside>
+
+      <div class="atl-main">
+        <div class="atl-toolbar">
+          <span id="liv-atl-toolbar-title"
+                style="font-size:14px;font-weight:500;flex:1">Atelier Séquence (niveau)</span>
+          <!-- v0.16.9 — Bandeau aligné sur l'atelier Évaluation (badges +
+               boutons identiques aux autres ateliers). -->
+          <!-- Badge "modifié" (visible si saisie de l'objectif ouvert non sauvée) -->
+          <span id="liv-atl-badge-modifie" class="atl-badge-modifie"
+                style="display:none">modifié</span>
+          <!-- Badge état + bouton bascule Valider / Repasser en cours -->
+          <span id="liv-atl-etat-badge" class="atome-etat-badge"
+                style="display:none"></span>
+          <button class="btn-sm" id="liv-atl-btn-valider"
+                  onclick="ATELIER_SEQNIV.basculerEtatSequence()"
+                  style="display:none"></button>
+          <button class="btn-prim" id="liv-atl-btn-save"
+                  onclick="ATELIER_SEQNIV.sauvegarder()"
+                  style="display:none">Enregistrer</button>
+          <span id="liv-atl-status"
+                style="font-size:12px;color:var(--text-secondary);margin-left:10px" role="status" aria-live="polite"></span>
+        </div>
+
+        <!-- Atelier d'assemblage (v0.10.1).
+             v0.11.3 — Découpé en 2 onglets : Édition (l'atelier d'assemblage
+             proprement dit) et Rendu PDF (compilation + iframe). Le rendu
+             PDF n'est PAS affiché côte-à-côte pour cet atelier : un livret
+             entier ne s'inspecte pas en colonne à côté de l'éditeur.
+             v0.12.3.1 — Suppression du conteneur jumeau #liv-atl-content-v2
+             (mode Édition avancée v2) et du toggle de bascule.
+             v0.15.4 — Suppression du cadre « Éléments à inclure » (toggles
+             Cours/Exos/Fiches/…) qui faisait double emploi avec la
+             configuration migrée dans le référentiel. -->
+        <div id="liv-atl-content-assemblage" class="liv-atl-content">
+          <div class="atl-tabs" id="asm-tabs">
+            <button class="atl-tab active" id="asm-tab-btn-edition"
+                    onclick="ATELIER_SEQNIV.basculerOnglet('edition')">
+              Édition
+            </button>
+            <button class="atl-tab" id="asm-tab-btn-rendu"
+                    onclick="ATELIER_SEQNIV.basculerOnglet('rendu')">
+              Rendu PDF
+            </button>
+          </div>
+          <div id="asm-tab-edition" class="asm-tab-pane asm-tab-pane--edition"></div>
+          <div id="asm-tab-rendu" class="asm-tab-pane asm-tab-pane--rendu" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Atelier Progression ── -->
+
+  <!-- ── Atelier Thème (R2) ── -->
+<div id="atl-theme" class="atl-panel" style="display:none">
+  <div class="atl-shell">
+
+    <aside class="atl-sidebar">
+      <div class="atl-sidebar-head">
+        <span class="atl-sidebar-title">Thèmes</span>
+        <button class="btn-prim atl-sidebar-btn-creer"
+                onclick="atelThemeNouveau()">+ Créer</button>
+      </div>
+      <div id="atl-theme-list" class="atl-list"></div>
+    </aside>
+
+    <div class="atl-main">
+      <div class="atl-toolbar">
+        <span id="atl-theme-toolbar-title"
+              style="font-size:14px;font-weight:500;flex:1">Atelier Thème</span>
+        <button class="btn-danger" id="atl-theme-btn-suppr"
+                onclick="atelThemeSupprimer()" style="display:none">Supprimer</button>
+        <button class="btn-prim" id="atl-theme-btn-save"
+                onclick="atelThemeSauvegarder()" style="display:none">Enregistrer</button>
+      </div>
+
+      <div id="atl-theme-empty" class="atl-empty">
+        <div style="font-size:32px;opacity:.3">◈</div>
+        <p>Sélectionner un thème ou en créer un nouveau</p>
+      </div>
+
+      <div id="atl-theme-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+
+        <div class="atl-field">
+          <label class="atl-label">Code <span
+                 style="font-weight:400;color:var(--text-muted)">(A, B, C...)</span></label>
+          <input type="text" id="atl-theme-code" maxlength="4"
+                 style="width:80px;text-transform:uppercase">
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            Identifiant court unique dans le cycle. Utilisé pour trier les thèmes
+            et dans les codes LaTeX générés.
+          </p>
+        </div>
+
+        <div class="atl-field">
+          <label class="atl-label">Nom</label>
+          <input type="text" id="atl-theme-nom" placeholder="ex : Nombres et Calculs"
+                 style="width:100%">
+        </div>
+
+        <div class="atl-field">
+          <label class="atl-label">Famille de couleurs</label>
+          <div id="atl-theme-couleur-liste"
+               style="display:flex;flex-direction:column;gap:4px;max-width:360px">
+            <!-- peuplé dynamiquement par atelThemeRenderCouleurs() -->
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            Détermine la palette utilisée pour le thème dans les documents PDF.
+          </p>
+        </div>
+
+        <div class="atl-field">
+          <label class="atl-label">Description <span
+                 style="font-weight:400;color:var(--text-muted)">(LaTeX libre)</span></label>
+          <textarea id="atl-theme-description" rows="8"
+                    style="width:100%;font-family:monospace;font-size:12px;resize:vertical"
+                    placeholder="Selon le programme, \og au cycle 4, ... \fg{}" data-contexte-latex="theme-description"></textarea>
+        </div>
+
+        <div class="atl-field" id="atl-theme-info-sequences"
+             style="background:var(--surface-light);padding:10px;border-radius:4px;
+                    font-size:12px;color:var(--text-muted);display:none">
+          <!-- peuplé dynamiquement -->
+        </div>
+
+      </div><!-- /atl-theme-form -->
+
+    </div>
+  </div>
+</div>
+
+  <!-- ── Atelier Séquence (cycle) (R3) ── -->
+<div id="atl-seqcycle" class="atl-panel" style="display:none">
+  <div class="atl-shell">
+
+    <aside class="atl-sidebar">
+      <div class="atl-sidebar-head">
+        <span class="atl-sidebar-title">Séquences (cycle)</span>
+        <button class="btn-prim atl-sidebar-btn-creer"
+                onclick="atelSeqCycleNouveau()">+ Créer</button>
+      </div>
+      <div id="atl-seqcycle-list" class="atl-list"></div>
+    </aside>
+
+    <div class="atl-main">
+      <div class="atl-toolbar">
+        <span id="atl-seqcycle-toolbar-title"
+              style="font-size:14px;font-weight:500;flex:1">Atelier Séquence (cycle)</span>
+        <button class="btn-danger" id="atl-seqcycle-btn-suppr"
+                onclick="atelSeqCycleSupprimer()" style="display:none">Supprimer</button>
+        <button class="btn-prim" id="atl-seqcycle-btn-save"
+                onclick="atelSeqCycleSauvegarder()" style="display:none">Enregistrer</button>
+      </div>
+
+      <div id="atl-seqcycle-empty" class="atl-empty">
+        <div style="font-size:32px;opacity:.3">◈</div>
+        <p>Sélectionner une séquence ou en créer une nouvelle</p>
+      </div>
+
+      <div id="atl-seqcycle-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+
+        <div style="display:flex;gap:12px;margin-bottom:16px">
+          <div class="atl-field" style="flex:0 0 120px;margin-bottom:0">
+            <label class="atl-label">Numéro</label>
+            <input type="number" id="atl-seqcycle-numero" min="1" style="width:100%">
+          </div>
+          <div class="atl-field" style="flex:0 0 120px;margin-bottom:0">
+            <label class="atl-label">Code</label>
+            <input type="text" id="atl-seqcycle-code" maxlength="8"
+                   placeholder="S01" style="width:100%;text-transform:uppercase">
+          </div>
+          <div class="atl-field" style="flex:1;margin-bottom:0">
+            <label class="atl-label">Nom</label>
+            <input type="text" id="atl-seqcycle-nom"
+                   placeholder="ex : Représentations d'un nombre" style="width:100%">
+          </div>
+        </div>
+
+        <div class="atl-field">
+          <label class="atl-label">Thème</label>
+          <select id="atl-seqcycle-theme-sel" style="width:100%">
+            <option value="">— Aucun thème —</option>
+          </select>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            Rattacher la séquence à un thème du cycle (optionnel).
+          </p>
+        </div>
+
+        <div class="atl-field" id="atl-seqcycle-info-atomes"
+             style="background:var(--surface-light);padding:10px;border-radius:4px;
+                    font-size:12px;color:var(--text-muted);display:none">
+          <!-- peuplé dynamiquement -->
+        </div>
+
+      </div><!-- /atl-seqcycle-form -->
+
+    </div>
+  </div>
+</div>
+
+  <!-- ── v0.9 — Atelier Rendu par lot (déplacé depuis Admin > Compilation) ── -->
+  <div id="atl-rdl" class="atl-panel" style="display:none;padding:24px;max-width:980px">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Rendu par lot</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Compile en série tous les atomes (notions, méthodes, exercices,
+        fiches de résumé, cartes d'automatisme) qui correspondent au filtre
+        choisi. Chaque atome est compilé via
+        <code>pdflatex</code>&nbsp;; le PDF est mis en cache, donc relancer
+        un run où rien n'a changé est quasi-instantané.
+      </p>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Les statuts possibles pour chaque atome :
+        <span style="color:var(--success)">Succès</span>,
+        <span style="color:var(--text-secondary)">Cache</span> (PDF déjà à jour),
+        <span style="color:#b58900">Atome vide</span>,
+        <span style="color:var(--danger)">Échec LaTeX</span>,
+        <span style="color:var(--danger)">Erreur infrastructure</span>
+        (pdflatex introuvable, timeout&nbsp;: c'est ce dernier statut qui peut
+        déclencher l'abandon global).
+      </p>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Filtres</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Type</label>
+          <select id="rdl-filtre-type" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Tous</option>
+            <option value="notion">Notions</option>
+            <option value="methode">Méthodes</option>
+            <option value="exercice">Exercices</option>
+            <option value="fiche">Fiches</option>
+            <option value="carte">Cartes</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Niveau</label>
+          <select id="rdl-filtre-niveau" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Tous</option>
+            <option value="N09">N09 (6e)</option>
+            <option value="N10">N10 (5e)</option>
+            <option value="N11">N11 (4e)</option>
+            <option value="N12">N12 (3e)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Séquence</label>
+          <select id="rdl-filtre-sequence" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Toutes</option>
+            <!-- Options S01..S14 injectées au chargement -->
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- v0.18.4 — Les paramètres de compilation (timeouts, biblios tikz/
+         tabularray, seuil d'erreurs) ont migré vers l'onglet Préférences
+         > Outils > Rendu par lot. Le rendu par lot lit les valeurs
+         persistées dans data/configuration.json au lancement. -->
+    <div class="card" style="margin-bottom:12px">
+      <p style="font-size:12px;color:var(--text-secondary);margin:0">
+        Les paramètres de compilation (délais, bibliothèques, seuil
+        d'erreurs) se règlent désormais dans
+        <strong>Préférences › Outils › Rendu par lot</strong>.
+      </p>
+    </div>
+
+    <!-- Boutons -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="compilBatchPreview()" id="rdl-btn-preview">
+          Aperçu (compter)
+        </button>
+        <button class="btn-prim" onclick="compilBatchRun()" id="rdl-btn-run" disabled>
+          Lancer la compilation
+        </button>
+        <button class="btn-sm" onclick="compilBatchAnnuler()" id="rdl-btn-cancel" style="display:none">
+          Annuler
+        </button>
+        <span id="rdl-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+      <p style="font-size:11px;color:var(--text-secondary);margin-top:8px;margin-bottom:0">
+        L'aperçu compte les atomes éligibles. Le bouton « Lancer » s'active
+        après l'aperçu et demande une confirmation. Comptez quelques secondes
+        par atome non encore en cache.
+      </p>
+
+      <!-- Compteurs de l'aperçu -->
+      <div id="rdl-preview-bloc" style="display:none;margin-top:14px;
+           grid-template-columns:repeat(4,1fr);gap:10px;font-size:12px"></div>
+
+      <!-- Barre de progression du run -->
+      <div id="rdl-progress-bloc" style="display:none;margin-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span id="rdl-progress-label">Progression</span>
+          <span id="rdl-progress-counts" style="color:var(--text-secondary)"></span>
+        </div>
+        <div style="height:6px;background:var(--surface-light);border-radius:3px;overflow:hidden">
+          <div id="rdl-progress-bar" style="height:100%;width:0%;background:var(--success);transition:width 0.2s"></div>
+        </div>
+      </div>
+
+      <!-- Lien rapport -->
+      <div id="rdl-rapport-bloc" style="display:none;margin-top:14px;font-size:12px">
+        <a id="rdl-rapport-link" href="#" download style="color:var(--accent,#268bd2)">
+          Télécharger le rapport Markdown
+        </a>
+      </div>
+    </div>
+
+    <!-- Liste défilante des atomes traités -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:500">Atomes traités</div>
+        <div style="font-size:11px;color:var(--text-secondary)">
+          Cliquer sur un atome pour l'ouvrir dans l'atelier.
+        </div>
+      </div>
+      <div id="rdl-liste"
+           style="font-size:12px;font-family:monospace;max-height:480px;
+                  overflow-y:auto;background:var(--surface-light);
+                  padding:6px;border-radius:3px">
+        <div style="padding:10px;color:var(--text-muted);text-align:center;font-style:italic">
+          Aucun atome traité pour le moment.
+        </div>
+      </div>
+    </div>
+  </div><!-- /atl-rdl -->
+
+  <!-- ── v0.18.1 — Atelier Recherche (Outils généraux) ──────────────────────
+       Recherche transversale sur les 5 types d'atomes, tous niveaux et
+       séquences. Filtres type/niveau/séquence/état + champ texte libre
+       (case « expression régulière »). Résultats groupés par type, bouton
+       « Ouvrir » par ligne → compilBatchOuvrirAtelier(type, id, niv, seq). -->
+  <div id="atl-recherche" class="atl-panel" style="display:none;padding:24px;max-width:980px">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Recherche</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Cherche dans tous les atomes (notions, méthodes, exercices, fiches
+        de résumé, cartes d'automatisme), tous niveaux et séquences. La
+        recherche porte sur le titre et l'intégralité du contenu (corps,
+        sections, énoncés, corrigés, recto/verso…). Elle est
+        <strong>sensible aux accents</strong> (« médiane » ne trouve pas
+        « mediane ») et insensible à la casse par défaut.
+      </p>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Laissez le champ texte vide pour explorer simplement par filtres.
+        Clic sur « Ouvrir » : édite l'atome dans son atelier
+        (Ctrl+clic : nouvel onglet — à venir).
+      </p>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Filtres</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Type</label>
+          <select id="rech-filtre-type" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Tous</option>
+            <option value="notion">Notions</option>
+            <option value="methode">Méthodes</option>
+            <option value="exercice">Exercices</option>
+            <option value="fiche">Fiches</option>
+            <option value="carte">Cartes</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Niveau</label>
+          <select id="rech-filtre-niveau" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Tous</option>
+            <option value="N09">N09 (6e)</option>
+            <option value="N10">N10 (5e)</option>
+            <option value="N11">N11 (4e)</option>
+            <option value="N12">N12 (3e)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Séquence</label>
+          <select id="rech-filtre-sequence" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Toutes</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">État</label>
+          <select id="rech-filtre-etat" style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)">
+            <option value="">Tous</option>
+            <option value="en_cours">En cours</option>
+            <option value="valide">Validé</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recherche textuelle -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px">
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">Recherche textuelle</label>
+          <input id="rech-texte" type="text" placeholder="Mot ou expression… (vide = explorer par filtres)"
+                 style="width:100%;padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+        </div>
+        <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:5px;white-space:nowrap;padding-bottom:6px">
+          <input id="rech-regex" type="checkbox"> Expression régulière
+        </label>
+        <button id="rech-btn" class="vbtn vbtn--primary" onclick="rechercheLancer()" style="padding-bottom:7px">Rechercher</button>
+      </div>
+      <div id="rech-erreur" style="display:none;font-size:12px;color:var(--danger);margin-top:8px"></div>
+    </div>
+
+    <!-- Résultats -->
+    <div id="rech-resultats" style="font-size:13px"></div>
+  </div><!-- /atl-recherche -->
+
+  <!-- v0.10 : Placeholders pour ateliers à venir ─────────────────────────
+       Ces panneaux sont structurés pour cohérence visuelle. Le contenu
+       sera implémenté lors de sessions ultérieures.
+  -->
+
+  <!-- v0.15.1 — Les 3 panneaux d'ateliers Récap cours / Récap exos /
+       Plans de travail (anciennement ici) ont été supprimés. Leur
+       fonctionnalité est entièrement reprise par l'atelier Référentiel
+       (catalogue des 9 types de documents publiables — cf. onglet
+       « Documents à publier »). Les services Python correspondants
+       (services/livret_recap_cours.py, livret_recap_exos.py,
+       livret_plans_de_travail.py) sont conservés car réutilisés par
+       referentiels.py, orchestrateur_compilation.py, livret_fiches.py
+       et latex_rendu_atome.py. Seules les routes HTTP frontend ont
+       disparu en v0.15.1 (routes/recap_cours.py, recap_exos.py,
+       plans_de_travail.py supprimées). -->
+
+  <!-- ─────────────────────────────────────────────────────────────────────────
+       Atelier Évaluation (v0.13.5.2.5) — Portée Niveau
+
+       Refonte v0.13.5.2.5 (anciennement .2.4) :
+       - Sidebar alignée sur le pattern atelier Exercice (titre + bouton bleu
+         "+ Créer" + filtre par état Tous/En cours/Validé)
+       - Toolbar alignée sur le pattern atelier Exercice (badges + boutons
+         standardisés : "Valider"/"Repasser en cours", "LaTeX généré",
+         "Supprimer", "Enregistrer")
+       - Sous-onglets Édition / Rendu PDF toujours visibles (PAS de mode
+         côte-à-côte pour cet atelier — une éval entière ne s'inspecte pas
+         en colonne).
+       - Onglet Rendu PDF présent visuellement, fonctionnalité différée
+         à v0.13.5.3 (bouton "Compiler le rendu" affiche un message).
+       ───────────────────────────────────────────────────────────────────── -->
+  <div id="atl-evaluation" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <!-- ─── Sidebar (gauche) : alignée sur le pattern atelier Exercice ─── -->
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Évaluations</span>
+          <button class="btn-prim atl-sidebar-btn-creer"
+                  onclick="atelEvalNouveau()"
+                  title="Créer une nouvelle évaluation pour ce niveau">
+            + Créer
+          </button>
+        </div>
+        <!-- Filtre par état (réutilise le pattern .exo-etat de l'atelier
+             Exercice ; mais la logique est locale puisque la sémantique
+             d'état pour une éval est différente d'un atome). -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;
+                    border-bottom:1px solid var(--border);
+                    font-size:11px;color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat=""
+                  onclick="atelEvalFiltrerEtat(this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours"
+                  onclick="atelEvalFiltrerEtat(this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide"
+                  onclick="atelEvalFiltrerEtat(this, 'valide')">Validé</button>
+        </div>
+        <div id="atl-eval-list" class="atl-list">
+          <!-- Rempli par atelEvalRendreSidebar() -->
+        </div>
+      </aside>
+
+      <!-- ─── Zone principale (droite) : alignée sur le pattern Séquence ─── -->
+      <div class="atl-main">
+
+        <!-- Toolbar : titre + badges + boutons d'action -->
+        <div class="atl-toolbar">
+          <span id="atl-eval-toolbar-title"
+                style="font-size:14px;font-weight:500;flex:1">
+            Atelier Évaluation
+          </span>
+          <!-- Badge "modifié" (visible si modifs non sauvées) -->
+          <span id="atl-eval-badge-modifie" class="atl-badge-modifie"
+                style="display:none">modifié</span>
+          <!-- Badge état + bouton bascule Valider / Repasser en cours -->
+          <span id="atl-eval-etat-badge" class="atome-etat-badge"
+                style="display:none"></span>
+          <button class="btn-sm" id="atl-eval-btn-valider"
+                  onclick="atelEvalBasculerValidation()"
+                  style="display:none"></button>
+          <button class="btn-danger" id="atl-eval-btn-suppr"
+                  onclick="atelEvalSupprimer()"
+                  style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-eval-btn-save"
+                  onclick="atelEvalEnregistrer()"
+                  style="display:none">Enregistrer</button>
+        </div>
+
+        <!-- Sous-onglets : Édition / Rendu PDF (toujours visibles, hors
+             mode split — explicitement exclu pour cet atelier). -->
+        <div class="atl-tabs" id="atl-eval-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-eval-tab-btn-edition"
+                  onclick="atelEvalTab('edition')">Édition</button>
+          <button class="atl-tab" id="atl-eval-tab-btn-rendu"
+                  onclick="atelEvalTab('rendu')">Rendu PDF</button>
+        </div>
+
+        <!-- État vide (aucune éval sélectionnée) -->
+        <div id="atl-eval-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">📝</div>
+          <p>Sélectionner une évaluation ou créer une nouvelle</p>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px">
+            Une évaluation regroupe des exercices avec leur barème,
+            et déclare les objectifs qu'elle couvre.
+          </p>
+        </div>
+
+        <!-- ─── Onglet Édition ─── -->
+        <div id="atl-eval-tab-edition"
+             style="display:none;padding:20px;overflow-y:auto;flex:1">
+          <!-- v0.16.5 (2b-2) — Form englobant : permet à _installerListenerForm
+               (AtelierEditeur) de capter les input/change des champs stables
+               (titre, mode, afficher-barème, langue) et au verrou lecture seule
+               de griser le tout quand l'éval est validée. Les barèmes sont
+               gérés à part (drapeau _baremesModifies, oninput explicite) car
+               attachés à des exos dont la présence relève de la structure. -->
+          <form id="atl-eval-form" onsubmit="return false">
+
+          <!-- Titre éditable -->
+          <div class="atl-field">
+            <label class="atl-label">Titre</label>
+            <input type="text" id="atl-eval-titre"
+                   placeholder="ex : Bilan trimestre 1"
+                   style="width:100%"
+                   oninput="atelEvalMarquerModifie()">
+          </div>
+
+          <!-- Métadonnées : mode + checkbox + langue française -->
+          <div class="atl-field">
+            <div style="display:flex;gap:18px;flex-wrap:wrap;
+                        align-items:center;font-size:13px">
+              <label style="display:flex;gap:6px;align-items:center">
+                Mode de notation :
+                <select id="atl-eval-mode" style="font-size:13px"
+                        oninput="atelEvalMarquerModifie()">
+                  <option value="note">Note seule</option>
+                  <option value="criteres">Critères seuls</option>
+                  <option value="note_criteres">Note + critères</option>
+                  <option value="aucun">Aucun barème</option>
+                </select>
+              </label>
+              <label style="display:flex;gap:6px;align-items:center">
+                <input type="checkbox" id="atl-eval-afficher-bareme"
+                       oninput="atelEvalMarquerModifie()">
+                Afficher le barème dans chaque exo
+              </label>
+              <label style="display:flex;gap:6px;align-items:center">
+                Item « langue française » :
+                <input type="number" id="atl-eval-langue-points"
+                       min="0" step="0.5" placeholder="—"
+                       style="width:60px;font-size:13px"
+                       oninput="atelEvalMajLangueIndic();atelEvalMarquerModifie()">
+                pts
+                <!-- v0.16.3 — Item optionnel : 0 pt = désactivé (non émis dans
+                     le barème auto). Indicateur mis à jour à la saisie. -->
+                <span id="atl-eval-langue-indic"
+                      style="font-size:12px;color:var(--text-muted)"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Bandeau d'erreurs de validation pédagogique -->
+          <div id="atl-eval-erreurs-validation"
+               style="display:none;margin-top:12px;padding:10px 12px;
+                      background:#fef0f0;border:1px solid #f5b8b8;
+                      border-radius:6px;font-size:12px;color:#8b1a1a">
+          </div>
+
+          <!-- ─── Cadre Exercices ─── -->
+          <div class="atl-cadre" style="margin-top:14px">
+            <div class="atl-cadre-titre">Exercices</div>
+            <div id="atl-eval-exos-liste"
+                 style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+            </div>
+
+            <!-- Mini-formulaire d'ajout (UX inchangée v0.13.5.2.4) -->
+            <div style="margin-top:14px;padding-top:12px;
+                        border-top:1px dashed var(--border)">
+              <div style="display:flex;gap:8px;align-items:center;
+                          flex-wrap:wrap;font-size:13px">
+                <strong style="font-size:12px;color:var(--text-muted)">
+                  + Ajouter un exercice :
+                </strong>
+                <select id="atl-eval-add-exo-seq" style="font-size:13px"
+                        onchange="atelEvalFiltrerExosAjoutables()">
+                  <option value="">— Séquence —</option>
+                </select>
+                <select id="atl-eval-add-exo-id"
+                        style="font-size:13px;min-width:320px" disabled>
+                  <option value="">— Exercice —</option>
+                </select>
+                <button class="btn-sm btn-prim" id="atl-eval-add-exo-btn"
+                        onclick="atelEvalAjouterExo()" disabled>
+                  Ajouter
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── Cadre Objectifs couverts ─── -->
+          <div class="atl-cadre" style="margin-top:14px">
+            <div class="atl-cadre-titre">Objectifs couverts (déclarés)</div>
+            <div id="atl-eval-objs-liste"
+                 style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+            </div>
+
+            <div style="margin-top:14px;padding-top:12px;
+                        border-top:1px dashed var(--border)">
+              <div style="display:flex;gap:8px;align-items:center;
+                          flex-wrap:wrap;font-size:13px">
+                <strong style="font-size:12px;color:var(--text-muted)">
+                  + Ajouter un objectif :
+                </strong>
+                <select id="atl-eval-add-obj-id"
+                        style="font-size:13px;min-width:380px">
+                  <option value="">— Objectif —</option>
+                </select>
+                <button class="btn-sm btn-prim"
+                        onclick="atelEvalAjouterObjectif()">
+                  Ajouter
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── Cadre Couverture (matrice objectifs × exos) ─── -->
+          <div class="atl-cadre" style="margin-top:14px"
+               id="atl-eval-couverture-cadre">
+            <div class="atl-cadre-titre">
+              Couverture des objectifs par les exercices
+            </div>
+            <p style="margin:4px 0 10px 0;font-size:11px;color:var(--text-muted)">
+              Cellule pleine = l'exercice est rattaché à cet objectif au niveau
+              pédagogique (table <code>objectif_exos</code>). Une ligne vide
+              signale un objectif déclaré mais non couvert par les exos
+              attachés à cette évaluation.
+            </p>
+            <div id="atl-eval-couverture-zone">
+            </div>
+          </div>
+
+          </form>
+        </div>
+
+        <!-- ─── Onglet Rendu PDF (différé v0.13.5.3) ─── -->
+        <div id="atl-eval-tab-rendu"
+             style="display:none;padding:20px;overflow-y:auto;flex:1">
+          <div class="atl-cadre">
+            <div class="atl-cadre-titre">Rendu PDF de l'évaluation</div>
+            <p style="font-size:13px;margin:10px 0">
+              Compilez l'évaluation en PDF pour l'imprimer ou l'archiver.
+            </p>
+            <!-- v0.17.0 — Mini-toolbar de rendu générée par
+                 AtelierEditeur._assurerToolbarRendu (Compiler + LaTeX généré + statut). -->
+            <div id="atl-eval-rendu-toolbar"
+                 style="display:flex;gap:8px;align-items:center"></div>
+            <!-- v0.16.2 (étape 2a) — Bloc rendu aligné sur la convention de la
+                 base AtelierEditeur : suffixes rendu-status / pdf-iframe /
+                 rendu-erreur / rendu-loading / rendu-placeholder, résolus par
+                 this.$(). L'éval hérite désormais de compilerRendu (donc du
+                 viewer pdf.js v0.16) au lieu d'une copie locale. -->
+            <iframe id="atl-eval-pdf-iframe" class="rendu-pdf-iframe"
+                    title="Aperçu PDF de l'évaluation"
+                    style="display:none;width:100%;height:680px;
+                           border:1px solid var(--border);border-radius:6px;
+                           margin-top:14px"></iframe>
+            <div id="atl-eval-rendu-erreur"
+                 style="display:none;padding:14px;font-size:12px;
+                        color:var(--err);background:var(--err-bg);
+                        border:1px solid var(--err);margin-top:8px;
+                        border-radius:4px">
+              <!-- Rempli par AtelierEditeur._afficherErreurCompilation -->
+            </div>
+            <div id="atl-eval-rendu-loading" class="rendu-loading"
+                 style="display:none;margin-top:14px">
+              <div class="rendu-spinner"></div>
+              <p>Compilation en cours…</p>
+            </div>
+            <div id="atl-eval-rendu-placeholder"
+                 style="margin-top:14px;font-size:12px;color:var(--text-muted)">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Atelier Carte d'automatisme (portée Séquence, v0.13.6.1) ───────────
+       Cartes recto/verso pour rituel Leitner (5 niveaux d'enveloppes,
+       évaluation orale mensuelle). Cf. spec_cartes_automatisme_v0_13_6.md.
+
+       UI v0.13.6.1 : CRUD complet + sous-onglets Édition / Rendu PDF.
+       Le rendu PDF est désactivé en v0.13.6.1 (livré en v0.13.6.2 avec
+       le paquet seqenseigne-core-cartes.dtx).
+       ─────────────────────────────────────────────────────────────────────── -->
+  <div id="atl-carte_automatisme" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <!-- ─── Sidebar : liste des cartes de la séquence ─── -->
+      <aside class="atl-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Cartes</span>
+          <button class="btn-prim atl-sidebar-btn-creer"
+                  onclick="ATELIER_CARTE.nouvelItem()"
+                  title="Créer une nouvelle carte dans cette séquence">
+            + Créer
+          </button>
+        </div>
+        <!-- Filtre par état (aligné sur le pattern Évaluation) -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;
+                    border-bottom:1px solid var(--border);
+                    font-size:11px;color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat=""
+                  onclick="ATELIER_CARTE.filtrerEtat(this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours"
+                  onclick="ATELIER_CARTE.filtrerEtat(this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide"
+                  onclick="ATELIER_CARTE.filtrerEtat(this, 'valide')">Validé</button>
+          <span style="margin:0 4px;color:#ccc">|</span>
+          <button class="exo-etat" title="Atomes non rattachés à un objectif" onclick="atelAtomeFiltrerRattachement('carte', this)">Non rattachés</button>
+        </div>
+        <div id="atl-carte-list" class="atl-list">
+          <!-- Rempli par ATELIER_CARTE.rendreSidebar() -->
+        </div>
+      </aside>
+
+      <!-- ─── Zone principale ─── -->
+      <div class="atl-main">
+
+        <!-- Toolbar -->
+        <div class="atl-toolbar">
+          <span id="atl-carte-toolbar-title"
+                style="font-size:14px;font-weight:500;flex:1">
+            Atelier Carte d'automatisme
+          </span>
+          <span id="atl-carte-badge-modifie" class="atl-badge-modifie"
+                style="display:none">modifié</span>
+          <span id="atl-carte-etat-badge" class="atome-etat-badge"
+                style="display:none"></span>
+          <button class="btn-sm" id="atl-carte-btn-valider"
+                  onclick="ATELIER_CARTE.basculerValidation()"
+                  style="display:none"></button>
+          <button class="btn-danger" id="atl-carte-btn-suppr"
+                  onclick="ATELIER_CARTE.supprimer()"
+                  style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-carte-btn-save"
+                  onclick="ATELIER_CARTE.sauvegarder()"
+                  style="display:none">Enregistrer</button>
+        </div>
+
+        <!-- Sous-onglets : Édition / Rendu PDF -->
+        <div class="atl-tabs" id="atl-carte-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-carte-tab-btn-edition"
+                  onclick="ATELIER_CARTE.basculerOnglet('edition')">Édition</button>
+          <button class="atl-tab" id="atl-carte-tab-btn-rendu"
+                  onclick="ATELIER_CARTE.basculerOnglet('rendu')">Rendu PDF</button>
+        </div>
+
+        <!-- État vide -->
+        <div id="atl-carte-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">🃏</div>
+          <p>Sélectionner une carte ou créer une nouvelle</p>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px">
+            Une carte d'automatisme est un objet recto/verso utilisé en
+            rituel de mémorisation (système Leitner à 5 niveaux). Elle
+            peut être fixe (même contenu pour tous) ou paramétrée
+            (variantes générées à l'impression).
+          </p>
+        </div>
+
+        <!-- Formulaire d'édition -->
+        <div id="atl-carte-form" style="display:none;padding:20px;
+                                          overflow-y:auto;flex:1">
+
+          <!-- Identification -->
+          <div class="atl-cadre" style="margin-bottom:14px">
+            <div class="atl-cadre-titre">Identification</div>
+            <div style="display:grid;grid-template-columns:auto 1fr;
+                        gap:8px 12px;align-items:center;font-size:13px">
+
+              <!-- v0.13.6.14.1 — La ligne « Numéro » est supprimée :
+                   redondante avec l'identifiant affiché dans la sidebar
+                   (CA01, CA02…). Le numéro est fixé par l'application à
+                   la création. Réordonnancement futur prévu par
+                   drag-and-drop dans la sidebar. -->
+
+              <!-- v0.13.6.14 — « Nom (interne) » → « Titre », avec
+                   bouton « ⤵ reprendre titre objectif » injecté à droite
+                   par AtelierEditeur._injecterBoutonReprendreTitre. -->
+              <div class="atl-field-titre-row"
+                   data-slot-reprendre-obj="atl-carte-titre"
+                   style="grid-column:1 / span 2">
+                <label for="atl-carte-titre" class="atl-label"
+                       style="margin-bottom:0">Titre<span class="atl-label-obligatoire">*</span></label>
+              </div>
+              <input type="text" id="atl-carte-titre"
+                     style="grid-column:1 / span 2;width:100%;font-size:13px"
+                     placeholder="ex. Addition de fractions, dénominateurs multiples">
+
+              <label for="atl-carte-type_pedago">Type pédagogique<span class="atl-label-obligatoire">*</span>&nbsp;:</label>
+              <select id="atl-carte-type_pedago"
+                      style="width:auto;font-size:13px">
+                <!-- v0.13.6.1.2 : 5 types unifiés, indépendants du lien.
+                     À charge de l'enseignant de choisir le plus pertinent
+                     (ex. carte "image par rotation" avec figure préfabriquée
+                     peut être typée reconnaissance ou procedure selon le
+                     degré d'aide apporté par la figure). -->
+                <option value="definition">📖 Définition</option>
+                <option value="propriete">📐 Propriété</option>
+                <option value="reconnaissance">🔍 Reconnaissance</option>
+                <option value="calcul">🧮 Calcul</option>
+                <option value="procedure">📋 Procédure</option>
+              </select>
+
+              <label for="atl-carte-type_tech">Type technique<span class="atl-label-obligatoire">*</span>&nbsp;:</label>
+              <select id="atl-carte-type_tech"
+                      onchange="ATELIER_CARTE.changerTypeTech()"
+                      style="width:auto;font-size:13px">
+                <option value="fixe">Fixe (identique pour tous)</option>
+                <option value="parametree">Paramétrée (16 variantes / feuille)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Variables xint (visible seulement si type=parametree).
+               Placé juste après Lien : si la carte est paramétrée, les
+               variables guident l'écriture du recto et du verso. -->
+          <div class="atl-cadre" id="atl-carte-cadre-variables"
+               style="margin-bottom:14px;display:none">
+            <div class="atl-cadre-titre">Variables xint</div>
+            <p style="font-size:11px;color:var(--text-muted);margin:4px 0 6px">
+              Définition des variables aléatoires pour la génération des
+              16 variantes par feuille. Format identique aux exercices
+              paramétrés.
+            </p>
+            <textarea id="atl-carte-variables"
+                      rows="4"
+                      style="width:100%;font-family:'Cascadia Code',monospace;
+                             font-size:12px"
+                      placeholder="ex. : \xintdef a := xintiiRandRange(2, 9);" data-contexte-latex="variables"></textarea>
+          </div>
+
+          <!-- Recto -->
+          <div class="atl-cadre" style="margin-bottom:14px">
+            <div class="atl-cadre-titre-row">
+              <div class="atl-cadre-titre">Recto (question)<span class="atl-label-obligatoire">*</span></div>
+              <!-- v0.13.7.6 — Bouton ✎ Éditer manuel à droite du titre du cadre,
+                   pour cohérence avec les autres ateliers (label + bouton). -->
+              <button type="button" class="btn-ed-latex-manuel"
+                      onclick="EditeurLatex.ouvrir(document.getElementById('atl-carte-recto'))"
+                      title="Ouvrir l'éditeur LaTeX">✎ Éditer</button>
+            </div>
+            <textarea id="atl-carte-recto"
+                      rows="6"
+                      style="width:100%;font-family:'Cascadia Code',monospace;
+                             font-size:12px"
+                      placeholder="ex. : 2 + 3 = ?"
+                      data-contexte-latex="carte-recto"
+                      data-ed-latex-attache="1"></textarea>
+          </div>
+
+          <!-- Verso -->
+          <div class="atl-cadre" style="margin-bottom:14px">
+            <div class="atl-cadre-titre-row">
+              <div class="atl-cadre-titre">Verso (réponse)<span class="atl-label-obligatoire">*</span></div>
+              <button type="button" class="btn-ed-latex-manuel"
+                      onclick="EditeurLatex.ouvrir(document.getElementById('atl-carte-verso'))"
+                      title="Ouvrir l'éditeur LaTeX">✎ Éditer</button>
+            </div>
+            <textarea id="atl-carte-verso"
+                      rows="6"
+                      style="width:100%;font-family:'Cascadia Code',monospace;
+                             font-size:12px"
+                      placeholder="ex. : 5"
+                      data-contexte-latex="carte-verso"
+                      data-ed-latex-attache="1"></textarea>
+          </div>
+
+          <!-- v0.13.7.6 — Légende des champs obligatoires -->
+          <div class="atl-legende-obligatoire">
+            Les champs marqués d'une <span class="atl-label-obligatoire">*</span>
+            sont obligatoires.
+          </div>
+
+        </div><!-- /atl-carte-form -->
+
+        <!-- v0.13.6.2 — Onglet Rendu PDF
+             Affiche le PDF compilé d'une carte (recto + verso = 2 pages A8)
+             dans une iframe. Le bouton « Compiler le rendu » appelle l'API
+             /api/cartes/<id>/rendu-pdf qui passe par services/render_carte
+             puis compilateur_pdf. En cas d'erreur LaTeX, la zone d'erreur
+             affiche les messages renvoyés par l'API. -->
+        <div id="atl-carte-rendu" style="display:none;flex:1;
+                                          flex-direction:column">
+          <!-- v0.17.0 — Mini-toolbar de rendu générée par
+               AtelierEditeur._assurerToolbarRendu (Compiler + LaTeX généré + statut). -->
+          <div id="atl-carte-rendu-toolbar"
+               style="padding:8px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;align-items:center;background:var(--bg-secondary)"></div>
+          <!-- Zone iframe pour afficher le PDF compilé. v0.7+ : on évite
+               de forcer Content-Disposition côté serveur (déjà inline),
+               à charge du navigateur d'afficher le PDF dans l'iframe. -->
+          <iframe id="atl-carte-pdf-iframe"
+                  style="flex:1;width:100%;border:none;display:none"
+                  title="Aperçu PDF de la carte"></iframe>
+          <!-- Zone d'erreur (cachée par défaut) -->
+          <div id="atl-carte-rendu-erreur"
+               style="display:none;padding:14px;font-size:12px;
+                      color:var(--err);background:var(--err-bg);
+                      border:1px solid var(--err);margin:8px;
+                      border-radius:4px">
+            <!-- Rempli dynamiquement par ATELIER_CARTE.compilerRendu() -->
+          </div>
+          <!-- Zone placeholder initial -->
+          <!-- v0.14.4 — Spinner visuel pendant la compilation -->
+          <div id="atl-carte-rendu-loading" class="rendu-loading"
+               style="display:none;flex:1">
+            <div class="rendu-spinner"></div>
+            <p>Compilation en cours…</p>
+          </div>
+          <div id="atl-carte-rendu-placeholder"
+               style="flex:1;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;
+                      color:var(--text-muted);padding:30px;text-align:center">
+            <div style="font-size:32px;opacity:.3">🖨️</div>
+            <p style="margin-top:12px;font-size:13px">
+              Cliquez sur <strong>Compiler le rendu</strong> pour
+              générer le PDF de la carte (recto + verso, format A8).
+            </p>
+            <p style="font-size:11px;margin-top:6px">
+              Le module <code>seqenseigne-carte-automatisme</code> doit
+              être installé côté MiKTeX.
+            </p>
+          </div>
+        </div>
+
+      </div><!-- /atl-main -->
+    </div><!-- /atl-shell -->
+  </div><!-- /atl-carte_automatisme -->
+
+
+  <!-- ── Atelier Référentiel (portée Niveau, v0.13.5.1) ── -->
+  <div id="atl-referentiel" class="atl-panel" style="display:none">
+    <div class="atl-shell">
+
+      <!-- Sidebar : liste des référentiels du niveau -->
+      <aside class="atl-sidebar" id="atl-ref-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Référentiels</span>
+          <button class="btn-sm btn-prim" id="atl-ref-btn-creer"
+                  onclick="atelRefCreerCoquille()" title="Créer un nouveau référentiel pour ce niveau">
+            + Créer
+          </button>
+        </div>
+        <div class="atl-sidebar-body" id="atl-ref-liste">
+          <!-- Rempli dynamiquement par atelRefRendreSidebar() -->
+        </div>
+      </aside>
+
+      <!-- Zone principale -->
+      <section class="atl-main" id="atl-ref-main">
+
+        <!-- v0.13.5.1.1 — Wrapper scrollable : .atl-main hérite de
+             overflow:hidden, on délègue le scroll à ce conteneur pour
+             que l'arbre du niveau (souvent long, 14 séquences × N parties
+             × M objectifs × atomes) soit consultable sans déborder l'écran. -->
+        <div id="atl-ref-scroll" style="flex:1;overflow-y:auto;padding:14px 18px">
+
+          <!-- Bandeau d'invitation quand aucun référentiel sélectionné -->
+          <div id="atl-ref-empty"
+               style="padding:60px 20px;text-align:center;color:var(--text-muted)">
+            <div style="font-size:32px;opacity:.3">📋</div>
+            <p style="margin-top:12px;font-size:13px">
+              Sélectionnez un référentiel à gauche, ou créez-en un nouveau.
+            </p>
+            <p style="font-size:11px;margin-top:6px">
+              Le référentiel fige la structure pédagogique d'un niveau pour
+              une année donnée. La phase « coquille » sert de tableau de
+              bord : où en est-on dans la préparation du niveau ?
+            </p>
+          </div>
+
+          <!-- Détail du référentiel sélectionné -->
+          <div id="atl-ref-detail" style="display:none">
+
+            <!-- En-tête : métadonnées + actions -->
+            <div class="atl-cadre" style="margin-bottom:14px">
+              <div class="atl-cadre-titre">
+                <span id="atl-ref-detail-titre">—</span>
+                <span id="atl-ref-detail-badge" class="atl-ref-badge"></span>
+              </div>
+              <div id="atl-ref-detail-meta" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+              <div id="atl-ref-detail-desc" style="margin-top:8px;font-size:13px"></div>
+              <div class="atl-toolbar" style="margin-top:12px;gap:8px">
+                <button class="btn-sm" id="atl-ref-btn-supprimer"
+                        onclick="atelRefSupprimer()" style="display:none">
+                  Supprimer
+                </button>
+                <!-- v0.15.3 — « Figer » renommé en « Verrouiller » -->
+                <button class="btn-sm btn-prim" id="atl-ref-btn-verrouiller"
+                        onclick="atelRefVerrouiller()" style="display:none">
+                  Verrouiller
+                </button>
+                <!-- v0.15.3 — Nouveau bouton déverrouiller, dispo pour
+                     l'état `verrouille` uniquement. -->
+                <button class="btn-sm" id="atl-ref-btn-deverrouiller"
+                        onclick="atelRefDeverrouiller()" style="display:none"
+                        title="Repasse à l'état validé (le dossier verrouillé est conservé)">
+                  Déverrouiller
+                </button>
+                <button class="btn-sm" id="atl-ref-btn-revalider"
+                        onclick="atelRefRevalider()" style="display:none"
+                        title="Recalcule l'éligibilité à passer en validé">
+                  Revérifier l'éligibilité
+                </button>
+                <span style="margin-left:auto;font-size:12px;color:var(--text-muted)">
+                  <span id="atl-ref-stats-resume">—</span>
+                </span>
+              </div>
+
+              <!-- v0.15.3 — Bloc « Données verrouillées » : trace JSON
+                   navigable + liens vers les PDFs.
+                   Affiché uniquement pour les états `verrouille` et
+                   `utilise`. Alimenté par atelRefMajDonneesVerrouillees. -->
+              <div id="atl-ref-donnees-verrouillees"
+                   style="display:none;margin-top:12px;padding:8px;
+                          border:1px solid var(--border);
+                          border-radius:6px;background:#f8f9fa">
+                <div style="font-weight:600;margin-bottom:8px">
+                  📦 Données verrouillées
+                </div>
+                <div id="atl-ref-donnees-trace"
+                     style="font-size:12px;margin-bottom:8px;
+                            max-height:300px;overflow:auto"></div>
+                <div id="atl-ref-donnees-pdfs"
+                     style="font-size:12px"></div>
+              </div>
+
+              <!-- v0.15.2.8 — Diagnostic d'éligibilité à la validation.
+                   Affiché pour les référentiels en_cours et valide
+                   (cachés pour fige/annule). Alimenté par
+                   atelRefMajDiagValidation. -->
+              <div id="atl-ref-diag-validation"
+                   style="display:none;margin-top:12px;padding:10px 12px;
+                          border-radius:4px;font-size:13px">
+                <span id="atl-ref-diag-validation-libelle"></span>
+                <ul id="atl-ref-diag-validation-raisons"
+                    style="margin:6px 0 0 0;padding-left:20px;
+                           font-size:12px;color:var(--text-muted)"></ul>
+              </div>
+            </div>
+
+            <!-- v0.13.6.4 → restauré v0.15.0.2.a — Bandeau d'onglets
+                 (Tableau de bord / Documents à publier) + 2 panneaux frères
+                 dans `atl-ref-detail`. Le JS atelier_referentiel.js
+                 (`atelRefChangerOnglet`) bascule entre les panneaux et lit
+                 la classe `.atl-ref-onglet` + `data-tab="..."` sur les
+                 boutons. La classe `.atl-tab` héritée du design system
+                 fournit le styling (padding, border-bottom transparent,
+                 hover) qu'utilise le JS comme base avant de poser ses
+                 propres couleurs inline.
+                 v0.15.0.2.a — Ces éléments avaient été perdus dans une
+                 livraison post-v0.13.6.5.1.1 non documentée, rendant
+                 inaccessible le panneau « Documents à publier » qui sert
+                 à spécifier le contenu des documents publiables et tester
+                 leur compilation. Cf. doc/redemarrage_v0_15_0_2_a.md. -->
+            <div class="atl-tabs" style="margin-bottom:14px">
+              <button class="atl-tab atl-ref-onglet" data-tab="dashboard"
+                      onclick="atelRefChangerOnglet('dashboard')">
+                Tableau de bord
+              </button>
+              <button class="atl-tab atl-ref-onglet" data-tab="documents"
+                      onclick="atelRefChangerOnglet('documents')">
+                Documents à publier
+              </button>
+            </div>
+
+            <!-- Panneau « Tableau de bord » : arbre séquence → partie →
+                 objectif → atomes (englobe l'ex-#atl-ref-arbre tel quel,
+                 contenu inchangé). -->
+            <div id="atl-ref-panneau-dashboard">
+              <div id="atl-ref-arbre">
+                <!-- Rempli par atelRefRendreArbre() -->
+              </div>
+            </div>
+
+            <!-- Panneau « Documents à publier » : rempli dynamiquement
+                 par atelRefChargerEtRendreDocuments() + atelRefRendreDocuments()
+                 au premier basculement sur cet onglet. Caché par défaut
+                 (l'onglet « Tableau de bord » est actif au switch de
+                 sélection). -->
+            <div id="atl-ref-panneau-documents" style="display:none">
+              <!-- Rempli par atelRefRendreDocuments() -->
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ─── Référentiel externe (docs conçus hors de l'appli) ─── -->
+  <div id="atl-referentiel_externe" class="atl-panel" style="display:none;padding:16px 20px;max-width:1100px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <h2 style="margin:0;font-size:18px">Référentiels externes</h2>
+      <span style="font-size:12px;color:var(--text-secondary)">
+        Documents conçus hors de l'appli, intégrés tels quels. Structure :
+        séquences → parties (nb de séances) → documents.
+      </span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+      <label style="font-size:13px">Nom du référentiel
+        <input id="rxt-nouveau-nom" placeholder="ex : MER 6e" style="display:block;font-size:13px">
+      </label>
+      <button class="btn-prim" onclick="rxtCreer()" style="font-size:13px">Nouveau référentiel externe (niveau courant)</button>
+      <span id="rxt-status" role="status" aria-live="polite" style="font-size:12px;color:#4a7"></span>
+    </div>
+    <div id="rxt-liste"></div>
+    <div id="rxt-apercu" style="display:none;margin-top:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <strong id="rxt-apercu-nom" style="font-size:13px"></strong>
+        <button class="btn-sm" style="font-size:12px;margin-left:auto"
+          onclick="rxtFermerApercu()">Fermer l'aperçu</button>
+      </div>
+      <iframe id="rxt-apercu-frame" title="Aperçu du document"
+        style="width:100%;height:75vh;border:1px solid var(--border);border-radius:6px"></iframe>
+    </div>
+  </div>
+
+</main>
+<!-- ═══ ADMINISTRATION ═══════════════════════════════════════════════════════ -->
+<main id="tab-admin" class="tab-content" style="display:none">
+
+  <div class="sub-tabs">
+    <button class="sub-tab active" id="admin-importref-btn" onclick="adminSousOnglet('importref')">Import référence</button>
+    <button class="sub-tab" id="admin-importpaquet-btn" onclick="adminSousOnglet('importpaquet')">Import mise en forme</button>
+    <button class="sub-tab" id="admin-images-btn" onclick="adminSousOnglet('images')">Images</button>
+    <button class="sub-tab" id="admin-importfiches-btn" onclick="adminSousOnglet('importfiches')">Import fiches</button>
+    <button class="sub-tab" id="admin-bdd-btn" onclick="adminSousOnglet('bdd')">Base de données</button>
+    <button class="sub-tab" id="admin-importsuivi-btn" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
+  </div>
+
+  <!-- ── Sous-onglet : import .tex ── -->
+  <div id="admin-importref" style="padding:24px;max-width:860px">
+
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Importer des données de référence</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Scanne un dossier de séquences et importe les notions, méthodes, exercices et livrets
+        dans la base de données de l'application.
+      </p>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="field-row">
+        <label style="width:120px;flex-shrink:0">Dossier séquences</label>
+        <input type="text" id="admin-chemin"
+          placeholder="ex : F:\Enseignement\seqenseigne\reference\sequences"
+          style="flex:1;font-family:monospace;font-size:12px">
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:6px">
+        Dossier contenant les sous-dossiers <code>N10/</code>, <code>N11/</code>, <code>N12/</code>
+        (chacun avec <code>notions/</code>, <code>methodes/</code>, <code>exercices/</code>, <code>livrets_de_sequence/</code>).
+      </p>
+      <div class="field-row" style="margin-top:10px">
+        <label style="width:120px;flex-shrink:0">Niveau</label>
+        <select id="admin-niveau" style="width:180px">
+          <option value="tous">Tous les niveaux</option>
+          <option value="N09">N09 — 6ème</option>
+          <option value="N10">N10 — 5ème</option>
+          <option value="N11" selected>N11 — 4ème</option>
+          <option value="N12">N12 — 3ème</option>
+        </select>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn-prim" onclick="adminScanner()" id="admin-btn-scan">
+          Scanner le dossier
+        </button>
+        <span id="admin-scan-status" style="font-size:12px;color:var(--text-secondary);margin-left:12px" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <!-- Résumé du scan -->
+    <div id="admin-resume" style="display:none">
+
+      <!-- Compteurs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px" id="admin-compteurs"></div>
+
+      <!-- Erreurs -->
+      <div id="admin-erreurs-bloc" style="display:none;margin-bottom:14px">
+        <div class="card" style="border-color:#fca5a5">
+          <div style="font-size:13px;font-weight:500;color:var(--danger);margin-bottom:8px">
+            Fichiers incorrects
+          </div>
+          <div id="admin-erreurs-list" style="font-size:12px;font-family:monospace;color:var(--danger)"></div>
+        </div>
+      </div>
+
+      <!-- Tableau des atomes -->
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:500">Détail des atomes trouvés</span>
+          <div style="display:flex;gap:8px;align-items:center;font-size:12px">
+            <span class="badge-import nouveau">Nouveau</span>
+            <span class="badge-import existant">Déjà en base</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="admin-filtres">
+          <button class="exo-filt active" onclick="adminFiltrer(this,'tous')">Tous</button>
+          <button class="exo-filt" onclick="adminFiltrer(this,'notion')">Notions</button>
+          <button class="exo-filt" onclick="adminFiltrer(this,'methode')">Méthodes</button>
+          <button class="exo-filt" onclick="adminFiltrer(this,'exercice')">Exercices</button>
+          <button class="exo-filt" onclick="adminFiltrer(this,'livret')">Livrets</button>
+          <button class="exo-filt" onclick="adminFiltrer(this,'nouveau')">Nouveaux seulement</button>
+          <button class="exo-filt" onclick="adminFiltrer(this,'existant')">Déjà en base</button>
+        </div>
+
+        <div id="admin-atomes-list" style="max-height:360px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Bouton import -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-prim" onclick="adminImporter()" id="admin-btn-import"
+          style="font-size:14px;padding:9px 20px">
+          Importer les nouveaux atomes
+        </button>
+        <span style="font-size:12px;color:var(--text-secondary)" id="admin-import-status" role="status" aria-live="polite"></span>
+      </div>
+
+    </div><!-- /admin-resume -->
+
+  </div><!-- /admin-importref -->
+
+  <!-- ── Sous-onglet : import paquet (mise en forme LaTeX) ── (v0.6.4) -->
+  <div id="admin-importpaquet" style="display:none;padding:24px;max-width:860px">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Importer la mise en forme LaTeX</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Importe en base les paquets, macros et environnements définis dans les fichiers
+        <code>.sty</code> de seqenseigne. Cette mise en forme est utilisée par la chaîne
+        de rendu pour générer un préambule sur mesure pour chaque atome compilé,
+        plutôt que de charger le paquet complet (gain de temps important à la compilation).
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Chemin source</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
+        Chemin vers le dossier qui contient les <code>.sty</code> du paquet seqenseigne.
+        Par défaut : <code>../reference/paquet</code> (relatif au dossier de l'application).
+      </p>
+      <input id="admin-importpaquet-chemin" type="text"
+             value="../reference/paquet"
+             style="width:100%;font-family:monospace;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn-prim" onclick="adminPaquetImport()" id="admin-paquet-btn-import">
+          Lancer l'import
+        </button>
+        <span id="admin-paquet-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+      <pre id="admin-paquet-log" style="margin-top:10px;font-family:monospace;font-size:11px;color:var(--text-secondary);max-height:300px;overflow:auto;display:none;background:var(--surface-light);padding:10px;border-radius:3px"></pre>
+    </div>
+  </div><!-- /admin-importpaquet -->
+
+  <!-- ── Sous-onglet : migration des images ── (v0.7) -->
+  <div id="admin-images" style="display:none;padding:24px;max-width:860px">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Migration des images</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Centralise toutes les images de l'arborescence de référence
+        (<code>reference/sequences/N1?/{exercices,notions,methodes,documents_annuels}/</code>)
+        dans le dossier plat <code>data/images/</code>, en les renommant selon la
+        convention <code>&lt;basename_du_tex&gt;[_&lt;suffixe&gt;].png</code> et en
+        mettant à jour les <code>\includegraphics{...}</code> des <code>.tex</code>.
+        Les <code>.jpg</code> sont convertis en <code>.png</code> au passage.
+      </p>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        L'aperçu (dry-run) est sans effet sur le disque ; il sert à vérifier le
+        plan avant exécution. La migration est idempotente : la relancer après
+        un succès ne fait rien.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Chemin source</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
+        Dossier racine de l'arborescence de référence (typiquement
+        <code>../reference/sequences</code>, relatif au dossier de l'application).
+      </p>
+      <input id="admin-images-chemin" type="text"
+             value="../reference/sequences"
+             style="width:100%;font-family:monospace;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="adminImagesPreview()" id="admin-images-btn-preview">
+          Aperçu (dry-run)
+        </button>
+        <button class="btn-prim" onclick="adminImagesApply()" id="admin-images-btn-apply" disabled>
+          Exécuter la migration
+        </button>
+        <span id="admin-images-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+      <p style="font-size:11px;color:var(--text-secondary);margin-top:8px;margin-bottom:0">
+        Le bouton « Exécuter » est verrouillé tant qu'un aperçu n'a pas été
+        produit. La migration met à jour les <code>.tex</code> sources :
+        prévoyez une sauvegarde si vous souhaitez pouvoir revenir en arrière.
+      </p>
+      <!-- Compteurs de l'aperçu / exécution -->
+      <div id="admin-images-compteurs" style="display:none;margin-top:14px;
+           grid-template-columns:repeat(4,1fr);gap:10px;font-size:12px"></div>
+      <!-- Liste des conflits (visible si > 0) -->
+      <div id="admin-images-conflits-bloc" style="display:none;margin-top:14px">
+        <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:var(--warning,#b58900)">
+          Conflits à arbitrer manuellement :
+        </div>
+        <div id="admin-images-conflits-list"
+             style="font-size:11px;font-family:monospace;color:var(--text-secondary);
+                    max-height:160px;overflow-y:auto;background:var(--surface-light);
+                    padding:8px;border-radius:3px"></div>
+      </div>
+      <!-- Log détaillé -->
+      <pre id="admin-images-log" style="margin-top:10px;font-family:monospace;font-size:11px;color:var(--text-secondary);max-height:360px;overflow:auto;display:none;background:var(--surface-light);padding:10px;border-radius:3px"></pre>
+    </div>
+  </div><!-- /admin-images -->
+
+  <!-- ── v0.10.5.2 — Sous-onglet : Import des fiches de résumé ── -->
+  <div id="admin-importfiches" style="display:none;padding:24px;max-width:860px">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">
+        Importer les fiches de résumé
+      </h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Sélectionnez un fichier <code>.tex</code> au format « Flashcards
+        année complète » et le niveau cible. Les fiches sont créées (ou
+        étendues) pour chaque objectif <code>objectifs_v2</code> trouvé.
+        Si l'objectif n'existe pas en base, la fiche est ignorée et
+        signalée dans le rapport.
+      </p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:6px">
+        <strong>Idempotence</strong> : si une fiche existe déjà pour un
+        objectif donné, les nouvelles zones sont <em>ajoutées</em> à la
+        fin (les zones existantes ne sont pas écrasées). Pour repartir
+        de zéro, supprimer manuellement les fiches existantes au
+        préalable.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="field-row">
+        <label style="width:120px;flex-shrink:0">Niveau cible</label>
+        <select id="admin-importfiches-niveau" style="width:180px">
+          <option value="N09">N09 — 6e</option>
+          <option value="N10">N10 — 5e</option>
+          <option value="N11" selected>N11 — 4e</option>
+          <option value="N12">N12 — 3e</option>
+        </select>
+      </div>
+      <div class="field-row" style="margin-top:10px">
+        <label style="width:120px;flex-shrink:0">Fichier .tex</label>
+        <input type="file" id="admin-importfiches-fichier"
+               accept=".tex,text/plain"
+               style="flex:1;font-size:12px">
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn-prim" id="admin-importfiches-btn-go"
+                onclick="adminImportFichesLancer()">
+          Importer
+        </button>
+        <span id="admin-importfiches-status"
+              style="font-size:12px;color:var(--text-secondary);margin-left:12px" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <!-- Rapport -->
+    <div id="admin-importfiches-rapport" style="display:none">
+      <div class="card">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px">Rapport</div>
+        <div id="admin-importfiches-rapport-contenu" style="font-size:12px"></div>
+      </div>
+    </div>
+  </div><!-- /admin-importfiches -->
+
+  <!-- ── Sous-onglet : Compilation batch (v0.8) ── -->
+
+  <!-- ── Sous-onglet : base de données ── -->
+  <div id="admin-bdd" style="display:none;padding:24px;max-width:860px">
+
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Base de données</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        État de la base, export / import de la base SQLite, et réinitialisation des données.
+      </p>
+    </div>
+
+    <!-- Statut -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:13px;font-weight:500">État actuel</span>
+        <button class="btn-sm" onclick="adminBddStatut()" id="admin-bdd-btn-statut">Actualiser</button>
+      </div>
+      <div id="admin-bdd-statut" style="font-size:13px;color:var(--text-secondary)">
+        Cliquer sur « Actualiser » pour charger l'état.
+      </div>
+    </div>
+
+    <!-- Export / Import SQLite -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Export / Import de la base SQLite</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        La base SQLite est un fichier unique <code>seqenseigne.db</code> contenant toutes les données.
+        Exportez-la pour la sauvegarder ou la transférer vers un autre poste.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-prim" style="font-size:12px" onclick="adminExportSqlite()">
+          ↓ Exporter la base (.db)
+        </button>
+        <button class="btn-sm" style="font-size:12px" onclick="adminImportSqlite()">
+          ↑ Importer une base (.db)
+        </button>
+      </div>
+    </div>
+
+    <!-- v0.10.3 — Auto-import des cycles depuis CSV ─────────────────────── -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">
+        Auto-import des cycles
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Les cycles (C03, C04…) sont normalement importés automatiquement
+        au démarrage à partir des CSV présents dans <code>data/</code>.
+        Ce bloc permet de vérifier l'état et de relancer l'import si
+        nécessaire (idempotent : ne fait rien pour les cycles déjà en BDD).
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn-sm" style="font-size:12px" onclick="adminCyclesAutoImportStatus()">
+          État
+        </button>
+        <button class="btn-prim" style="font-size:12px" onclick="adminCyclesAutoImportRelancer()">
+          Relancer l'auto-import
+        </button>
+      </div>
+      <div id="admin-cycles-autoimport-resultat"
+           style="font-size:12px;color:var(--text-secondary);
+                  font-family:ui-monospace,monospace;
+                  white-space:pre-wrap;max-height:300px;overflow:auto"></div>
+    </div>
+
+    <!-- Réinitialisation -->
+    <div class="card admin-reset-card">
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px;color:var(--danger)">
+        Réinitialisation
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
+        Ces actions sont irréversibles. Les fichiers source <code>.tex</code> et <code>.csv</code>
+        ne sont jamais supprimés.
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div class="admin-reset-row">
+          <div>
+            <div style="font-size:12px;font-weight:500">Données de référence</div>
+            <div style="font-size:11px;color:var(--text-secondary)">
+              Vide notions, méthodes, exercices et livrets importés.
+              Les données de suivi (classes, élèves) sont conservées.
+            </div>
+          </div>
+          <button class="btn-danger admin-reset-btn" onclick="adminBddReset('reference')">
+            Vider la référence
+          </button>
+        </div>
+
+        <div class="admin-reset-row">
+          <div>
+            <div style="font-size:12px;font-weight:500">Mise en forme LaTeX</div>
+            <div style="font-size:11px;color:var(--text-secondary)">
+              Vide la base des paquets, macros et environnements importés
+              depuis les fichiers <code>.sty</code> de seqenseigne.
+            </div>
+          </div>
+          <button class="btn-danger admin-reset-btn" onclick="adminBddReset('paquet')">
+            Vider la mise en forme LaTeX
+          </button>
+        </div>
+
+        <div class="admin-reset-row">
+          <div>
+            <div style="font-size:12px;font-weight:500">Données de suivi</div>
+            <div style="font-size:11px;color:var(--text-secondary)">
+              Vide classes, élèves, suivi par séquence, niveaux et versions.
+              Les atomes pédagogiques sont conservés.
+            </div>
+          </div>
+          <button class="btn-danger admin-reset-btn" onclick="adminBddReset('suivi')">
+            Vider le suivi
+          </button>
+        </div>
+
+        <div class="admin-reset-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--danger)">Tout réinitialiser</div>
+            <div style="font-size:11px;color:var(--text-secondary)">
+              Vide toutes les données de la base (référence + suivi).
+            </div>
+          </div>
+          <button class="btn-danger admin-reset-btn admin-reset-all" onclick="adminBddReset('tout')">
+            Tout vider
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Confirmation inline -->
+      <div id="admin-reset-confirm" style="display:none;margin-top:12px;padding:10px 14px;background:var(--danger-bg);border-radius:var(--radius-sm);border:1px solid #fca5a5">
+        <span id="admin-reset-confirm-msg" style="font-size:12px;color:var(--danger);font-weight:500"></span>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-danger" style="font-size:12px" onclick="adminBddResetConfirmer()">Confirmer</button>
+          <button class="btn-sm" style="font-size:12px" onclick="adminBddResetAnnuler()">Annuler</button>
+        </div>
+      </div>
+      <div id="admin-reset-status" style="font-size:12px;margin-top:8px"></div>
+
+    </div>
+
+  </div><!-- /admin-bdd -->
+
+  <!-- ── Sous-onglet : import suivi (classes historiques) ── -->
+  <div id="admin-importsuivi" style="display:none;padding:24px;max-width:860px">
+
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:15px;font-weight:500;margin-bottom:6px">Importer des données de suivi</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">
+        Importe une classe avec ses élèves, sa progression et ses niveaux de maîtrise depuis
+        les CSV d'un répertoire de suivi. Les anciens codes (I/F/A/E) sont automatiquement
+        convertis vers la nouvelle convention (1/2/3/4).
+      </p>
+    </div>
+
+    <!-- Import progression seule (SequencesDB) -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Importer une progression depuis un SequencesDB</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Construit la progression (créneaux, objectifs, dates) sans créer de classe ni d'élèves.
+        À utiliser en début d'année pour préparer la progression avant l'import des classes.
+      </p>
+      <div class="field-row">
+        <label style="width:160px">Niveau</label>
+        <select id="admin-importsuivi-sdb-niveau" style="width:180px">
+          <option value="N09">6ème (N09)</option>
+          <option value="N10">5ème (N10)</option>
+          <option value="N11" selected>4ème (N11)</option>
+          <option value="N12">3ème (N12)</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label style="width:160px">Chemin SequencesDB</label>
+        <input id="admin-importsuivi-sdb-chemin" style="flex:1;font-family:monospace;font-size:12px"
+          placeholder="ex : F:\…\SequencesDB">
+      </div>
+      <div class="field-row">
+        <label style="width:160px">Établissement</label>
+        <input id="admin-importsuivi-sdb-etablissement" style="flex:1;font-size:12px"
+          placeholder="Collège Les Hautes Ourmes">
+      </div>
+      <div class="field-row">
+        <label style="width:160px">Année scolaire</label>
+        <input id="admin-importsuivi-sdb-annee" style="width:180px" placeholder="2025-2026">
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button class="btn-prim" style="font-size:12px" onclick="adminImporterSequencesDB()">Importer la progression</button>
+        <span id="admin-importsuivi-sdb-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:500;margin-bottom:12px">Paramètres de l'import</div>
+
+      <div class="field-row">
+        <label style="width:160px">Dossier classe</label>
+        <input id="admin-importsuivi-hist-chemin-classe" style="flex:1;font-family:monospace;font-size:12px"
+          placeholder="ex : F:\…3-2024\Collège…e3">
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin:-4px 0 10px 168px">
+        Dossier contenant <code>liste_eleves.csv</code> et les fichiers <code>S0Xsuivi.csv</code>
+        (directement ou dans un sous-dossier <code>Suivi/</code>).
+      </p>
+
+      <div class="field-row">
+        <label style="width:160px">Dossier SequencesDB</label>
+        <input id="admin-importsuivi-hist-chemin-sdb" style="flex:1;font-family:monospace;font-size:12px"
+          placeholder="ex : F:\…3-2024\…\SequencesDB">
+      </div>
+
+      <div class="field-row" style="margin-top:10px">
+        <label style="width:160px">Niveau</label>
+        <select id="admin-importsuivi-hist-niveau" style="width:180px">
+          <option value="N09">6ème (N09)</option>
+          <option value="N10">5ème (N10)</option>
+          <option value="N11" selected>4ème (N11)</option>
+          <option value="N12">3ème (N12)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <label style="width:160px">Année scolaire</label>
+        <input id="admin-importsuivi-hist-annee" placeholder="2023-2024" style="width:180px">
+      </div>
+
+      <div class="field-row">
+        <label style="width:160px">Nom de la classe</label>
+        <input id="admin-importsuivi-hist-nom-classe" placeholder="4e3" style="width:180px">
+      </div>
+
+      <div class="field-row">
+        <label style="width:160px">Établissement</label>
+        <input id="admin-importsuivi-hist-etablissement" placeholder="Collège Les Hautes Ourmes" style="flex:1">
+      </div>
+
+      <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
+        <button class="btn-prim" onclick="adminImporterHistorique()" id="admin-importsuivi-hist-btn-lancer"
+          style="font-size:13px;padding:8px 18px">
+          Lancer l'import
+        </button>
+        <span id="admin-importsuivi-hist-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+
+    <!-- Résultat -->
+    <div id="admin-importsuivi-hist-resultat" style="display:none">
+      <div class="card" id="admin-importsuivi-hist-resultat-card">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px">Résultat de l'import</div>
+        <div id="admin-importsuivi-hist-resultat-contenu" style="font-size:12px"></div>
+      </div>
+    </div>
+
+  </div><!-- /admin-importsuivi -->
+
+</main>
+
+<!-- ═══ PRÉFÉRENCES ═══════════════════════════════════════════════════════ -->
+<main id="tab-preferences" class="tab-content" style="display:none">
+  <div class="preferences-bloc">
+    <h2>Préférences</h2>
+
+    <div class="pref-categorie">
+      <div class="pref-categorie-titre">Ateliers d'édition</div>
+      <div class="pref-cat" data-pref-cat="edition-rendu-pdf">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Rendu PDF</div>
+        <div class="pref-cat-body">
+      <label class="preferences-toggle">
+        <input type="checkbox" id="pref-mode-split" onchange="prefSplitToggle()">
+        <span class="preferences-toggle-texte">
+          <div class="preferences-toggle-titre">Mode côte-à-côte (édition + rendu PDF)</div>
+          <div class="preferences-toggle-desc">
+            Affiche en permanence le panneau d'édition à gauche et le rendu PDF
+            à droite dans les ateliers. Les onglets « Édition » / « Rendu PDF »
+            disparaissent puisque les deux sont visibles simultanément.
+            Le bouton « LaTeX généré » de la toolbar reste disponible pour
+            consulter le code source ponctuellement.
+          </div>
+        </span>
+      </label>
+
+      <!-- v0.14.3 — Auto-compile à l'ouverture du Rendu PDF -->
+      <label class="preferences-toggle" style="margin-top:12px">
+        <input type="checkbox" id="pref-auto-compile" onchange="prefAutoCompileToggle()">
+        <span class="preferences-toggle-texte">
+          <div class="preferences-toggle-titre">
+            Compiler automatiquement à l'ouverture du Rendu PDF
+          </div>
+          <div class="preferences-toggle-desc">
+            Quand on bascule sur l'onglet « Rendu PDF » d'un atome
+            (exercice, notion, méthode, fiche, carte) dont le PDF en
+            cache n'est plus à jour, lance la compilation automatiquement
+            au lieu d'afficher un placeholder. La sauvegarde des
+            modifications éventuelles du formulaire est faite en amont
+            pour garantir que le PDF reflète bien ce qui est saisi.
+            Décocher pour revenir à un déclenchement manuel via le
+            bouton « Compiler le rendu ».
+          </div>
+        </span>
+        </div>
+      </div>
+      <div class="pref-cat" data-pref-cat="edition-editeur-latex">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Éditeur LaTeX</div>
+        <div class="pref-cat-body">
+      <div style="margin-top:18px">
+        <label for="pref-textarea-lignes"
+               style="font-size:13px;font-weight:500;display:block;margin-bottom:4px">
+          Hauteur des zones de saisie LaTeX
+          <span style="font-weight:400;color:var(--text-muted)">
+            (en lignes ; min 5)
+          </span>
+        </label>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">
+          Concerne les textareas des ateliers Notion, Méthode et Exercice
+          (variables, énoncé, corrigé, items de section). Hauteur fixe avec
+          défilement interne quand le contenu déborde — plus prévisible
+          que l'ancien autosize sur les atomes volumineux.
+        </p>
+        <input id="pref-textarea-lignes" type="number" min="5" step="1" value="25"
+               style="width:120px;padding:6px 8px;font-size:12px;
+                      border:1px solid var(--border);border-radius:3px;
+                      background:var(--surface)">
+        <button class="btn-sm" onclick="prefEnregistrerHauteurLatex()"
+                style="margin-left:8px">Enregistrer</button>
+        <span id="pref-textarea-lignes-status"
+              style="margin-left:10px;font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+        <p style="font-size:11px;color:var(--text-secondary);margin-top:6px">
+          La nouvelle hauteur s'applique à la prochaine ouverture d'un atelier.
+        </p>
+      </div>
+        </div>
+      </div>
+      <div class="pref-cat" data-pref-cat="edition-fiches">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Fiches de résumé</div>
+        <div class="pref-cat-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+        Liste des libellés proposés dans le sélecteur « Titre » des zones
+        de fiche de résumé. Vous pouvez ajouter, modifier, supprimer ou
+        réordonner ces valeurs. La saisie libre dans l'atelier est
+        toujours possible — les valeurs hors liste sont conservées dans
+        les fiches mais ne sont pas proposées par défaut.
+      </p>
+      <div id="pref-titres-zone-list" style="margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="text" id="pref-titres-zone-nouveau"
+               placeholder="Nouveau titre (ex : Démonstration)"
+               style="flex:1;font-size:13px"
+               onkeydown="if (event.key==='Enter') prefTitresZoneAjouter()">
+        <button class="btn-prim" onclick="prefTitresZoneAjouter()">
+          Ajouter
+        </button>
+      </div>
+      <div id="pref-titres-zone-status"
+           style="font-size:12px;color:var(--text-secondary);margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pref-categorie">
+      <div class="pref-categorie-titre">Atelier d'assemblage</div>
+      <div class="pref-cat" data-pref-cat="assemblage-sequence">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Séquence</div>
+        <div class="pref-cat-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">
+        Valeurs pré-remplies de l'objectif <em>« Connaître les notions et les
+        méthodes »</em> lorsqu'il est activé via le bouton dédié dans une
+        partie de séquence. Les critères F / A / E correspondent aux séries
+        d'exercices Fondamental / Avancé / Exploration et aux niveaux de
+        maîtrise <em>À consolider / Satisfaisant / Très bon</em>.
+      </p>
+
+      <div class="pref-asm-bloc">
+        <h4>Critères de l'objectif Connaître</h4>
+        <div class="pref-asm-bloc-hint">
+          Modifiables ; les valeurs ci-dessous serviront pour toute nouvelle
+          activation. Les objectifs Connaître déjà créés ne sont pas affectés.
+        </div>
+
+        <div class="pref-asm-row">
+          <label for="pref-asm-nom">Nom de l'objectif</label>
+          <input id="pref-asm-nom" type="text"
+                 value="Connaître les notions et les méthodes">
+        </div>
+        <div class="pref-asm-row">
+          <label for="pref-asm-critF">F — À consolider</label>
+          <textarea id="pref-asm-critF" rows="2">A noté la trace écrite en classe.</textarea>
+        </div>
+        <div class="pref-asm-row">
+          <label for="pref-asm-critA">A — Satisfaisant</label>
+          <textarea id="pref-asm-critA" rows="2">A complété les fiches de résumé.</textarea>
+        </div>
+        <div class="pref-asm-row">
+          <label for="pref-asm-critE">E — Très bon</label>
+          <textarea id="pref-asm-critE" rows="2">Sait résumer le cours à l'oral.</textarea>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <button class="btn-prim" onclick="prefEnregistrerCriteresConnaitre()">
+            Enregistrer
+          </button>
+          <span id="pref-asm-status"
+                style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pref-categorie">
+      <div class="pref-categorie-titre">Progression à la séance</div>
+      <div class="pref-cat" data-pref-cat="seance-types-mise-en-route">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Types de mise en route</div>
+        <div class="pref-cat-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+        Liste des types de mise en route (les 5-10 premières minutes d'une
+        séance : calcul mental, automatismes…). Chaque type a un libellé et une
+        couleur. Vous pouvez ajouter, modifier, supprimer ou réordonner ces
+        valeurs. Cette liste est partagée par tous les niveaux.
+      </p>
+      <div id="pref-mer-list" style="margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="text" id="pref-mer-nouveau"
+               placeholder="Nouveau type (ex : Calcul mental)"
+               style="flex:1;font-size:13px"
+               onkeydown="if (event.key==='Enter') prefMerAjouter()">
+        <input type="color" id="pref-mer-couleur" value="#4a90d9"
+               title="Couleur" style="width:38px;height:32px;padding:2px">
+        <button class="btn-prim" onclick="prefMerAjouter()">Ajouter</button>
+      </div>
+      <div id="pref-mer-status"
+           style="font-size:12px;color:var(--text-secondary);margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pref-categorie">
+      <div class="pref-categorie-titre">Outils</div>
+      <div class="pref-cat" data-pref-cat="outils-rendu-par-lot">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Rendu par lot</div>
+        <div class="pref-cat-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">
+        Paramètres de la compilation par lot (et de la compilation atomique).
+        Persistés dans <code>data/configuration.json</code>. Rarement modifiés.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">
+            Délai max — atome (s)
+          </label>
+          <input id="pref-rdl-timeout-court" type="number" min="1" step="1" value="30"
+                 style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+            Pour chaque atome compilé en isolé ou via un batch.
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">
+            Délai max — document agrégé (s)
+          </label>
+          <input id="pref-rdl-timeout-long" type="number" min="1" step="1" value="300"
+                 style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+            Pour les récap cours, livrets, etc. (~120 atomes).
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">
+            Erreurs infra consécutives avant abandon
+          </label>
+          <input id="pref-rdl-max-erreurs" type="number" min="1" step="1" value="5"
+                 style="width:100%;padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">
+            Seuil d'arrêt d'un batch sur cascade d'échecs infra.
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label for="pref-rdl-tikz-libs"
+               style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">
+          Bibliothèques tikz à charger systématiquement
+          <span style="color:var(--text-secondary);font-weight:400">(séparées par des virgules)</span>
+        </label>
+        <input id="pref-rdl-tikz-libs" type="text"
+               value="babel,shapes.geometric,arrows.meta,positioning,calc"
+               style="width:100%;padding:5px 8px;font-size:12px;font-family:var(--font-mono,monospace);border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+        <p style="font-size:11px;color:var(--text-secondary);margin:4px 0 0">
+          Émet <code>\usetikzlibrary&#123;…&#125;</code> au début du préambule de chaque atome.
+        </p>
+      </div>
+      <div style="margin-top:10px">
+        <label for="pref-rdl-tblr-libs"
+               style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:3px">
+          Bibliothèques tabularray à charger systématiquement
+          <span style="color:var(--text-secondary);font-weight:400">(séparées par des virgules)</span>
+        </label>
+        <input id="pref-rdl-tblr-libs" type="text"
+               value="booktabs,varwidth"
+               style="width:100%;padding:5px 8px;font-size:12px;font-family:var(--font-mono,monospace);border:1px solid var(--border);border-radius:3px;background:var(--surface);box-sizing:border-box">
+        <p style="font-size:11px;color:var(--text-secondary);margin:4px 0 0">
+          Émet <code>\UseTblrLibrary&#123;lib&#125;</code> au début du préambule de chaque atome.
+        </p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+        <button class="btn-prim" onclick="prefEnregistrerParamsCompilation()">Enregistrer</button>
+        <span id="pref-rdl-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pref-categorie">
+      <div class="pref-categorie-titre">Application</div>
+      <div class="pref-cat" data-pref-cat="application-chemins">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Chemins</div>
+        <div class="pref-cat-body">
+        La <strong>racine seqenseigne</strong> est le dossier qui contient les
+        sous-dossiers <code>sequences</code>, <code>reference</code>,
+        <code>outils</code>… Quand elle est définie, les chemins ci-dessous sont
+        déduits automatiquement&nbsp;; cocher la case d'un champ permet de
+        saisir une valeur spécifique qui prime sur la dérivation.
+      </p>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;
+                padding:8px 10px;background:var(--surface-light);border-radius:3px">
+        💡 Cas d'usage&nbsp;: si vous travaillez depuis une clé USB qui est
+        montée en <code>D:</code> à la maison et <code>E:</code> au travail,
+        modifiez uniquement la racine&nbsp;; tous les chemins dérivés suivent.
+      </p>
+
+      <div style="margin-bottom:18px">
+        <label for="pref-chemin-racine"
+               style="font-size:13px;font-weight:500;display:block;margin-bottom:4px">
+          Racine seqenseigne
+        </label>
+        <input id="pref-chemin-racine" type="text"
+               placeholder="ex : D:\Enseignement\seqenseigne"
+               style="width:100%;padding:6px 8px;font-size:12px;font-family:monospace;
+                      border:1px solid var(--border);border-radius:3px;
+                      background:var(--surface);box-sizing:border-box"
+               oninput="prefRecalculerDerives()">
+      </div>
+
+      <!-- Les 4 chemins dérivés. Pattern uniforme :
+           - Une checkbox active l'override
+           - Quand inactive, l'input affiche le dérivé en lecture seule
+           - Quand active, l'input devient éditable et persiste -->
+      <div id="pref-chemins-derives" style="display:flex;flex-direction:column;gap:14px">
+
+        <div class="pref-chemin-row" data-cle="chemin_sources_livrets" data-suffixe="sequences">
+          <label class="preferences-toggle" style="margin-bottom:4px">
+            <input type="checkbox" class="pref-chemin-override"
+                   onchange="prefToggleOverride(this)">
+            <span class="preferences-toggle-texte">
+              <div class="preferences-toggle-titre">Sources des livrets (.tex)</div>
+              <div class="preferences-toggle-desc">
+                Dossier contenant les sources LaTeX des livrets de séquence,
+                utilisé pour le rendu atomique et le rendu par lot.
+              </div>
+            </span>
+          </label>
+          <input type="text" class="pref-chemin-input"
+                 placeholder="(dérivé : <racine>/sequences)"
+                 readonly
+                 style="width:100%;padding:5px 8px;font-size:12px;font-family:monospace;
+                        border:1px solid var(--border);border-radius:3px;
+                        background:var(--surface-light);box-sizing:border-box">
+        </div>
+
+        <div class="pref-chemin-row" data-cle="chemin_pdflatex" data-suffixe="outils/MikTex/texmfs/install/miktex/bin/x64/pdflatex.exe">
+          <label class="preferences-toggle" style="margin-bottom:4px">
+            <input type="checkbox" class="pref-chemin-override"
+                   onchange="prefToggleOverride(this)">
+            <span class="preferences-toggle-texte">
+              <div class="preferences-toggle-titre">Exécutable pdflatex</div>
+              <div class="preferences-toggle-desc">
+                Chemin complet vers <code>pdflatex.exe</code> (MiKTeX portable
+                ou installation système). Si non défini, l'appli tente une
+                détection automatique.
+              </div>
+            </span>
+          </label>
+          <input type="text" class="pref-chemin-input"
+                 placeholder="(dérivé : <racine>/outils/MikTex/.../pdflatex.exe)"
+                 readonly
+                 style="width:100%;padding:5px 8px;font-size:12px;font-family:monospace;
+                        border:1px solid var(--border);border-radius:3px;
+                        background:var(--surface-light);box-sizing:border-box">
+        </div>
+
+        <div class="pref-chemin-row" data-cle="chemin_paquet" data-suffixe="reference/paquet">
+          <label class="preferences-toggle" style="margin-bottom:4px">
+            <input type="checkbox" class="pref-chemin-override"
+                   onchange="prefToggleOverride(this)">
+            <span class="preferences-toggle-texte">
+              <div class="preferences-toggle-titre">Paquet seqenseigne (.sty)</div>
+              <div class="preferences-toggle-desc">
+                Dossier contenant les fichiers <code>.sty</code> du paquet
+                LaTeX seqenseigne. Pré-rempli dans <em>Admin&nbsp;&gt;&nbsp;Import
+                mise en forme</em>.
+              </div>
+            </span>
+          </label>
+          <input type="text" class="pref-chemin-input"
+                 placeholder="(dérivé : <racine>/reference/paquet)"
+                 readonly
+                 style="width:100%;padding:5px 8px;font-size:12px;font-family:monospace;
+                        border:1px solid var(--border);border-radius:3px;
+                        background:var(--surface-light);box-sizing:border-box">
+        </div>
+
+        <div class="pref-chemin-row" data-cle="chemin_reference_sequences" data-suffixe="reference/sequences">
+          <label class="preferences-toggle" style="margin-bottom:4px">
+            <input type="checkbox" class="pref-chemin-override"
+                   onchange="prefToggleOverride(this)">
+            <span class="preferences-toggle-texte">
+              <div class="preferences-toggle-titre">Référence séquences</div>
+              <div class="preferences-toggle-desc">
+                Arborescence de référence des séquences. Pré-rempli dans
+                <em>Admin&nbsp;&gt;&nbsp;Import référence</em> et
+                <em>Admin&nbsp;&gt;&nbsp;Images</em>.
+              </div>
+            </span>
+          </label>
+          <input type="text" class="pref-chemin-input"
+                 placeholder="(dérivé : <racine>/reference/sequences)"
+                 readonly
+                 style="width:100%;padding:5px 8px;font-size:12px;font-family:monospace;
+                        border:1px solid var(--border);border-radius:3px;
+                        background:var(--surface-light);box-sizing:border-box">
+        </div>
+
+      </div><!-- /pref-chemins-derives -->
+
+      <div style="margin-top:18px;display:flex;align-items:center;gap:10px">
+        <button class="btn-prim" onclick="prefEnregistrerChemins()" id="pref-btn-enregistrer">
+          Enregistrer
+        </button>
+        <span id="pref-status" style="font-size:12px;color:var(--text-secondary)" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+
+<!-- v0.6.4 — Vocabulaire normalisé pour les titres de sections d'atomes.
+     Utilisée par les ateliers Notion et Méthode (combobox extensible :
+     l'utilisateur peut soit choisir dans la liste, soit taper un titre libre). -->
+<datalist id="atl-vocab-sections">
+  <option value="Exemples">
+  <option value="Remarques">
+  <option value="Conséquences">
+  <option value="Démonstration">
+  <option value="Démonstration de la réciproque">
+  <option value="Démonstration de la contraposée">
+  <option value="Propriétés">
+</datalist>
+
+
+<!-- v0.6.4 : atelier_commun.js doit être chargé AVANT app.js
+     car app.js peut faire référence à atelierAfficherLatex / atelierAutosizeTous -->
+<script src="/static/atelier_commun.js"></script>
+<!-- v0.13.7.0c — atelier_atome_generique.js (legacy court-circuité) supprimé. -->
+<script src="/static/app.js"></script>
+<!-- v0.13.6.9 chantier A — Redéfinit atelObjLiesEnTags pour le format
+     unifié « obj 02 » / « S03 obj 02 » / « N11 S03 obj 02 ». Doit être
+     chargé APRÈS app.js (la dernière définition de window.atelObjLiesEnTags
+     gagne) et AVANT les ateliers OO qui l'appellent. -->
+<script src="/static/atelier_obj_tags.js"></script>
+<!-- v0.13.6.10 — Hook qui wrappe atelExposerFiltres pour déclencher
+     un rechargement des ateliers OO quand le filtre niveau/séquence change.
+     Doit être chargé APRÈS app.js (utilise atelExposerFiltres). -->
+<script src="/static/atelier_filtres_hook.js"></script>
+<script src="/static/atelier_etat_edition.js"></script>
+<!-- v0.13.7.0c — Système unifié de garde de sortie (modale 3 boutons).
+     Remplace atelier_garde_sortie.js (système snapshot obsolète).
+     Doit être chargé AVANT les ateliers OO (qui s'enregistrent dans
+     son registre window.ATELIER_REGISTRE à leur instanciation). -->
+<script src="/static/atelier_garde.js"></script>
+<script src="/static/ateliers_theme.js"></script>
+<script src="/static/ateliers_seqcycle.js"></script>
+<!-- v0.16.7 — seqniv_pur.js et atelier_seqniv_assemblage.js ont été déplacés
+     plus bas, APRÈS atelier_assemblage.js. L'atelier d'assemblage
+     séquence-niveau est devenu une classe OO
+     (AtelierSeqnivAssemblage extends AtelierAssemblage), donc sa classe
+     parente doit être définie avant lui. seqniv_pur.js (logique pure)
+     reste chargé juste avant atelier_seqniv_assemblage.js qui le capture
+     dans sa constante module _PUR. -->
+<!-- v0.15.1 — Suppression des 3 ateliers Recap cours / Recap exos /
+     Plans de travail. Leurs fonctionnalités sont reprises par l'atelier
+     Référentiel (catalogue des 9 types de documents publiables). Les
+     services Python correspondants (services/livret_recap_cours.py
+     etc.) sont CONSERVÉS car ils sont réutilisés par d'autres modules
+     (referentiels.py, orchestrateur_compilation.py, livret_fiches.py,
+     latex_rendu_atome.py). Seules les routes HTTP `/api/recap-*` et
+     `/api/plans-de-travail/*` sont retirées. -->
+<!-- v0.14.4 — Hiérarchie OO pour les ateliers.
+     Atelier (base) → AtelierEditeur (modif/enregistré + rendu PDF unifié)
+     → {Carte, Notion, Méthode, Fiche, Exercice, Évaluation via Assemblage}.
+     La classe intermédiaire AtelierAtomique a été supprimée en v0.14.4 :
+     sa machinerie de rendu PDF est désormais portée par AtelierEditeur
+     (commune aux 5 ateliers atomiques). Le fichier rendu_atome.js
+     (helpers globaux historiques rendreAtomeTab/Lancer/Toggle/ScrollTo)
+     a aussi été supprimé — toute la logique est dans les méthodes
+     héritées (verifierCacheEtAfficher, compilerRendu, etc.).
+     v0.15 — Ajout d'AtelierAssemblage entre AtelierEditeur et
+     l'évaluation. Le vieux atelier_evaluation.js (procédural) est
+     remplacé par atelier_evaluation_oo.js (qui hérite d'AtelierAssemblage).
+     v0.15.1 — Restauration de l'ordre correct des scripts OO après
+     régression involontaire en v0.15.0.2.a.
+     v0.16.1 — atelier_evaluation.js (mort, non chargé) supprimé du dépôt.
+     Ses symboles window.atelEval* sont réexposés par atelier_evaluation_oo.js. -->
+<script src="/static/atelier.js"></script>
+<script src="/static/atelier_editeur.js"></script>
+<script src="/static/atelier_assemblage.js"></script>
+<!-- v0.16.7 — Atelier d'assemblage séquence-niveau, migré en classe OO
+     (AtelierSeqnivAssemblage extends AtelierAssemblage). Doit être chargé
+     APRÈS atelier_assemblage.js. seqniv_pur.js (logique pure testée sous
+     Vitest) doit précéder atelier_seqniv_assemblage.js. -->
+<script src="/static/seqniv_pur.js"></script>
+<script src="/static/atelier_seqniv_assemblage.js"></script>
+<script src="/static/atelier_carte_automatisme.js"></script>
+<script src="/static/atelier_notion.js"></script>
+<script src="/static/atelier_methode.js"></script>
+<script src="/static/atelier_fiche.js"></script>
+<script src="/static/atelier_exercice.js"></script>
+<script src="/static/atelier_evaluation_oo.js"></script>
+<!-- v0.19.1 — Atelier Progression migré en classe OO
+     (AtelierProgression extends AtelierAssemblage). Doit être chargé APRÈS
+     atelier_assemblage.js (classe parente) ET après app.js (helpers
+     calendrier purs _lundisEntre/_bornesAnneeScolaire/… consommés via
+     window.*, et fonction api()). Expose window.ATELIER_PROGRESSION et
+     window.progInit (appelée par sousOnglet('progression')). -->
+<script src="/static/atelier_progression.js"></script>
+<script src="/static/progression_doc.js"></script>
+<!-- v0.15.1 — Module commun de rendu des erreurs de compilation LaTeX
+     (cibles + lignes fautives + boutons Voir .tex / Voir log). Doit
+     être chargé AVANT atelier_referentiel.js qui l'appelle via
+     compErreursAfficher() pour le panneau « Documents à publier ».
+     Présent sur disque depuis v0.13.6.5.1.1 mais perdu silencieusement
+     du HTML — manquait jusqu'à v0.15.1. -->
+<script src="/static/compilation_erreurs.js"></script>
+<script src="/static/atelier_referentiel.js"></script>
+<!-- v0.14.4 — rendu_atome.js a été supprimé. Toute la logique de rendu
+     PDF est désormais portée par AtelierEditeur (méthodes héritées
+     verifierCacheEtAfficher, compilerRendu, _afficherErreurCompilation,
+     toggleTexBrut, scrollVersLigneTex, voirLatex). -->
+<!-- v0.13.7.1 — Éditeur LaTeX spécialisé sur le paquet seqenseigne.
+     Auto-scan au DOMContentLoaded : équipe tous les textareas avec
+     data-contexte-latex d'un bouton « ✎ Éditer ». -->
+<script src="/static/editeur_latex.js"></script>
+<script src="/static/edt.js"></script>
+<script src="/static/indispo.js"></script>
+<script src="/static/mer.js"></script>
+<script src="/static/tableau_bord.js"></script>
+<script src="/static/planification_hebdo.js"></script>
+<script src="/static/progression_mer.js"></script>
+<script src="/static/referentiel_externe.js"></script>
+
+<!-- v0.13.6.16 — Modale de choix de série pour la création d'exercice.
+     Affichée par AtelierExercice.nouvelItem (qui surcharge le pattern
+     POST-direct unifié pour insérer ce choix interactif). L'utilisateur
+     choisit une série parmi F/A/E/EA, ou annule (Esc / clic en dehors).
+     Le résultat est passé via une Promise gérée par l'atelier. -->
+<div id="atl-exercice-modale-serie" class="atelier-modale-overlay"
+     style="display:none" onclick="ATELIER_EXERCICE._annulerChoixSerie(event)">
+  <div class="atelier-modale" style="max-width:480px"
+       onclick="event.stopPropagation()">
+    <div class="atelier-modale-entete">
+      <h3>Nouvel exercice — choisir la série</h3>
+      <div class="atelier-modale-actions">
+        <button class="btn-sm"
+                onclick="ATELIER_EXERCICE._annulerChoixSerie()"
+                title="Annuler (Echap)">×</button>
+      </div>
+    </div>
+    <div class="atelier-modale-corps" style="padding:16px">
+      <p style="margin:0 0 12px;font-size:13px;color:var(--text-secondary)">
+        Sélectionnez la série de l'exercice à créer :
+      </p>
+      <div class="serie-btns">
+        <button class="serie-btn active-fondamental"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('fondamental')">
+          F — Fondamental
+        </button>
+        <button class="serie-btn active-avancé"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('avancé')">
+          A — Avancé
+        </button>
+        <button class="serie-btn active-exploration"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('exploration')">
+          E — Exploration
+        </button>
+        <button class="serie-btn active-approche"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('approche')">
+          EA — Approche
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
