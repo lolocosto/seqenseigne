@@ -4333,7 +4333,9 @@ textarea.latex-textarea {
   fill: var(--text); pointer-events: none;
 }
 #pc-svg .pc-place .pc-num { fill: #9ca3af; font-size: 12px; }
-#pc-svg .pc-place .pc-cadenas { font-size: 9px; }
+#pc-svg .pc-cadenas {
+  font-size: 8px; text-anchor: middle; dominant-baseline: central; pointer-events: none;
+}
 #pc-svg .pc-occupee { cursor: grab; }
 #pc-svg .pc-occupee rect { fill: #f8fafc; }
 #pc-svg .pc-impose text { font-weight: 700; }

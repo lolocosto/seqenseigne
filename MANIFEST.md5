@@ -1,13 +1,4 @@
-77f93ddbd4b0ae1a38edc17dc353d942  9979  app.py
-f410d782c258159a99b3e4a9520bf06a  4442  doc\ETAT_COURANT.md
-b5e55ed859f9421b343807a535439cd1  10355  doc\ROADMAP.md
-5a7534f810eebb068438c4b79ba139b1  177998  persistence\sqlite_store.py
-846ecce633b3347e9aabcad4c3e81273  142284  static\app.css
-1e346370d433547adcf43a1b6ab0685d  272849  static\app.js
-693f6fa841352f6b21173cff740f85e1  194986  templates\index.html
-7ff6523ef84d893b5ee655c9ab02504c  3303  doc\redemarrage_v0_39_0.md
-1f7f968d0a14d0fcd7adba5e6eb629f6  4319  routes\plans_classe.py
-24efc060ec6c4cc1cbeee1e3801026b4  6077  services\plan_classe_pdf.py
-c4841a0586441b23773c4df08dc55800  15250  services\plans_classe.py
-88547415c145ef2c39b29e4a7f223695  18413  static\plans_classe.js
-1e19ed4080252f1f536b295810b4ab9b  11842  tests\test_v0_39_0_plans_classe.py
+238001a890f8cda427fa60a323f2d653  4442  doc\ETAT_COURANT.md
+c4bf1a7f840f468f864cc38b01413b51  142347  static\app.css
+f71e8bc35c6990936b48db59d7da18a3  19184  static\plans_classe.js
+97f9cb55b47e77d6c89eb8026bd3e030  738  doc\redemarrage_v0_39_1.md

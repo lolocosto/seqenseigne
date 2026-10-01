@@ -1,5 +1,5 @@
 // ============================================================================
-// static/plans_classe.js — v0.39.0
+// static/plans_classe.js — v0.39.0 (v0.39.1 : cadenas)
 // Plans de classe hebdomadaires (Planification › Plans de classe).
 // Backend : /api/plans-classe (GET/PUT/DELETE), /api/plans-classe/salles,
 //           /api/plans-classe/aleatoire (POST), /api/plans-classe/pdf.
@@ -219,17 +219,29 @@ function _pcRendrePlan() {
     const texte = e
       ? `<title>${_pcE(e.prenom)} ${_pcE(e.nom)}</title>`
         + `<text x="${pl.x}" y="${pl.y - 6}">${_pcE(coupe(l1))}</text><text x="${pl.x}" y="${pl.y + 8}">${_pcE(coupe(l2))}</text>`
-        + (occ.statut === 'impose' ? `<text class="pc-cadenas" x="${pl.x + 22}" y="${pl.y - 12}">🔒</text>` : '')
       : `<text class="pc-num" x="${pl.x}" y="${pl.y}">${pl.numero}</text>`;
     return `<g class="${cls.join(' ')}" data-num="${pl.numero}"${occ ? ` data-eleve="${occ.eleve_id}"` : ''}>
       <rect x="${-S.L / 2}" y="${-S.H / 2}" width="${S.L}" height="${S.H}" rx="2"
             transform="translate(${pl.x} ${pl.y}) rotate(${pl.angle || 0})"></rect>${texte}</g>`;
   }).join('');
+  // v0.39.1 — Cadenas des imposés : à l'INTÉRIEUR de la place, dans celui de
+  // ses quatre coins (légèrement rentrés) qui est le plus en haut à droite à
+  // l'écran quelle que soit la rotation, et dessinés APRÈS toutes les places
+  // pour qu'aucune place voisine ne les masque.
+  const coinsInternes = [[1, -1], [1, 1], [-1, -1], [-1, 1]]
+    .map(([u, v]) => [u * (S.L / 2 - 7), v * (S.H / 2 - 7)]);
+  const cadenas = p.places.filter(pl => parNum[pl.numero] && parNum[pl.numero].statut === 'impose')
+    .map(pl => {
+      const [dx, dy] = coinsInternes
+        .map(([u, v]) => S.tournerVecteur(u, v, pl.angle || 0))
+        .reduce((m, c) => (c[0] - c[1] > m[0] - m[1] ? c : m));
+      return `<text class="pc-cadenas" x="${pl.x + dx}" y="${pl.y + dy}">🔒</text>`;
+    }).join('');
   zone.innerHTML = `<svg id="pc-svg" viewBox="${c.x} ${c.y - 30} ${c.w} ${c.h + 30}" preserveAspectRatio="xMidYMin meet"
       role="img" aria-label="Plan de classe, tableau en haut">
       <g class="sal-tableau"><rect x="${xTab}" y="${c.y - 24}" width="${largTab}" height="8" rx="2"></rect>
       <text x="${xTab + largTab / 2}" y="${c.y - 4}">Tableau</text></g>
-      ${places}</svg>`;
+      ${places}<g class="pc-cadenas-calque" aria-hidden="true">${cadenas}</g></svg>`;
 }
 
 function _pcRendreCote() {

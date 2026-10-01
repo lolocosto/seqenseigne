@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.39.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.39.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
