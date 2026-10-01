@@ -240,12 +240,21 @@ def fusionner(store, source_id: str, cible_id: str) -> dict:
             "UPDATE progressions SET etablissement_id = ? WHERE etablissement_id = ?",
             (cible_id, source_id)
         )
+        # v0.37.0 — Les salles suivent l'établissement (refus si un même nom
+        # de salle existe des deux côtés).
+        from services import salles as _salles
+        try:
+            n_salles = _salles.migrer_etablissement(conn, source_id, cible_id)
+        except _salles.DonneesInvalides as e:
+            raise ConflitFusion(str(e), code="conflit_salle",
+                                details={"source_id": source_id})
         conn.execute("DELETE FROM etablissements WHERE id = ?", (source_id,))
 
     # Relire la cible et y ajouter le rapport
     cible = store.lire_etablissement_par_id(cible_id)
     cible["classes_migrees"] = n_classes
     cible["progressions_migrees"] = n_progs
+    cible["salles_migrees"] = n_salles
     return cible
 
 

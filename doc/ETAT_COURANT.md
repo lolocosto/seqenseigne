@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.36.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.37.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -17,7 +17,13 @@
 4. Protocole : reconstruire, auditer, cadrer, coder, tester (pytest + vitest),
    livrer un ZIP delta + MANIFEST md5. Jamais de .db dans une livraison.
 
-## Chantier en cours : planification de la distribution de documents
+## Chantier en cours : salles, plans de salle, plans de classe
+
+Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
+- v0.37.0 livrée : salles + éditeur libre de plan + versions + import TikZ 302.
+- Prochaine étape : v0.38 — EdT versionné, salle et nombre d'AESH par case.
+
+## Chantier précédent : planification de la distribution de documents
 
 - Modèle + service + route : `progression_doc` (v0.32.5).
 - Affichage dans la Planification hebdo : détail de séance → docs prévus (v0.32.6/8).
@@ -47,6 +53,8 @@
   courante, dépendants de la date système → à corriger.
 - `tests_js/deeplink_atelier_defini.test.js` : lit app.js par un chemin absolu
   codé en dur (`/home/claude/extract/...`) → échoue hors de cet environnement.
+- Fusion d'établissements : ne migre ni la grille horaire ni l'EdT (les salles
+  oui, depuis v0.37.0).
 - Palette des niveaux : source unique = variables `--niv-*` du §20 de app.css
   (v0.36.2). Ne pas recréer de palette parallèle.
 

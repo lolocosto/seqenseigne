@@ -35,6 +35,7 @@ from routes.admin          import bp as bp_admin
 from routes.progression    import bp as bp_progression
 from routes.etablissements import bp as bp_etablissements
 from routes.grille_horaire  import bp as bp_grille_horaire
+from routes.salles          import bp as bp_salles
 from routes.edt             import bp as bp_edt
 from routes.projection      import bp as bp_projection
 from routes.affectation     import bp as bp_affectation
@@ -119,7 +120,7 @@ def create_app(data_dir: Path | None = None) -> Flask:
     for bp in (bp_sequences, bp_classes, bp_suivi, bp_versions,
                bp_atomes, bp_scanner, bp_admin, bp_progression,
                bp_etablissements, bp_calendrier,
-               bp_grille_horaire, bp_edt, bp_projection, bp_affectation,
+               bp_grille_horaire, bp_salles, bp_edt, bp_projection, bp_affectation,
                bp_indisponibilites, bp_decalage_progression, bp_leitner,
                bp_referentiel_externe, bp_progression_mer, bp_tableau_bord,
                bp_progression_doc,

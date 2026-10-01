@@ -4211,3 +4211,66 @@ textarea.latex-textarea {
   flex-basis: 100%;
   margin-top: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.37.0 — Salles et éditeur de plan de salle (static/salles.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sal-zone { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.sal-titre { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.sal-aide, .sal-vide { font-size: 11px; color: var(--text-secondary); margin: 0 0 8px; }
+.sal-erreur { font-size: 12px; color: var(--danger); }
+.sal-table { width: auto; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+.sal-table td { padding: 3px 8px 3px 0; vertical-align: middle; }
+.sal-nom { width: 110px; font-size: 12px; font-weight: 500; }
+.sal-nb { color: var(--text-secondary); white-space: nowrap; }
+.sal-actions { display: flex; gap: 4px; }
+.sal-ligne-archivee .sal-nom { color: var(--text-secondary); font-weight: 400; }
+.sal-etat { font-size: 11px; padding: 1px 7px; border-radius: 9px; white-space: nowrap; }
+.sal-etat-utilisee { background: var(--primary-bg); color: var(--primary-dark); }
+.sal-etat-archivee { background: #f1f5f9; color: var(--text-secondary); }
+.sal-danger { color: var(--danger); }
+.sal-ajout { display: flex; gap: 6px; align-items: center; }
+.sal-ajout input { width: 130px; font-size: 12px; }
+
+/* Éditeur plein écran */
+#sal-editeur {
+  position: fixed; inset: 0; z-index: 1000; background: var(--surface);
+  display: flex; flex-direction: column; padding: 12px 18px 0;
+}
+.sal-ed-entete { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sal-ed-entete h2 { font-size: 17px; margin: 0 8px 0 0; }
+.sal-ed-version { font-size: 12px; color: var(--text-secondary); display: flex; gap: 6px; align-items: center; }
+.sal-ed-version select { font-size: 12px; }
+.sal-ed-nouvelle { display: flex; gap: 6px; align-items: center; }
+.sal-ed-nouvelle input { font-size: 12px; }
+.sal-ed-espace { flex: 1; }
+.sal-ed-lecture {
+  margin: 8px 0 0; padding: 6px 10px; font-size: 12px; border-radius: 4px;
+  background: #fff7ed; color: #7c2d12; border-left: 3px solid #f59e0b;
+}
+.sal-ed-outils {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  margin-top: 10px; padding: 6px 0; border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.sal-ed-groupe { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.sal-ed-groupe > button:first-of-type { margin-left: 4px; }
+.sal-ed-compte { margin-left: auto; font-size: 12px; color: var(--text-secondary); }
+.sal-ed-aide { font-size: 11px; color: var(--text-secondary); margin: 6px 0; }
+.sal-ed-zone { flex: 1; min-height: 0; overflow: auto; padding-bottom: 12px; }
+#sal-svg { width: 100%; height: 100%; display: block; touch-action: none; user-select: none; }
+#sal-svg .sal-fond { fill: #fbfaf7; }
+#sal-svg .sal-tableau rect { fill: #3f5f4a; }
+#sal-svg .sal-tableau text {
+  font-size: 13px; fill: var(--text-secondary); text-anchor: middle;
+}
+#sal-svg .sal-place rect {
+  fill: #ffffff; stroke: #4b5563; stroke-width: 1.4; cursor: grab;
+}
+#sal-svg .sal-place.sal-isolee rect { stroke-dasharray: 4 2; }
+#sal-svg .sal-place text {
+  font-size: 13px; fill: var(--text); text-anchor: middle; dominant-baseline: central;
+  pointer-events: none;
+}
+#sal-svg .sal-place.sal-sel rect { fill: var(--primary-bg); stroke: var(--primary); stroke-width: 2.2; }
+#sal-svg .sal-place.sal-sel text { fill: var(--primary-dark); font-weight: 600; }

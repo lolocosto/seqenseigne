@@ -4375,12 +4375,14 @@ function etabCard(e) {
             : ''}
           <button class="btn-sm" style="font-size:12px" onclick="etabEditerShow('${e.id}')">Modifier</button>
           <button class="btn-sm" style="font-size:12px" onclick="grilleHoraireToggle('${e.id}')">Grille horaire</button>
+          <button class="btn-sm" style="font-size:12px" onclick="sallesToggle('${e.id}')">Salles</button>
           ${ETABS_ALL.length > 1
             ? `<button class="btn-sm" style="font-size:12px" onclick="etabFusionnerShow('${e.id}')">Fusionner avec…</button>`
             : ''}
         </div>
       </div>
       <div id="etab-form-${e.id}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
+      <div id="etab-salles-${e.id}" class="sal-zone" style="display:none"></div>
     </div>
   `;
 }

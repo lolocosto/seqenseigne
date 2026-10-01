@@ -1445,6 +1445,16 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.37.0 — Salles et plans de salle versionnés ─────────────────────
+        # Tables `salles`, `salle_versions`, `salle_places` (schéma porté par
+        # services/salles.py). Migration additive, idempotente.
+        try:
+            from services.salles import SCHEMA as _SCHEMA_SALLES
+            conn.executescript(_SCHEMA_SALLES)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:
