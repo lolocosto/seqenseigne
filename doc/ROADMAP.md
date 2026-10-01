@@ -163,3 +163,21 @@ Suivi, Planification et Conception. Aujourd'hui : 3 mécanismes parallèles —
 À faire : fusionner en un seul moteur déclaratif, retirer les filtres en dur de
 la Gestion (les brancher sur le pool partagé). L'étape A (v0.34) a déjà rendu le
 Suivi cohérent avec la Planification (mêmes sélecteurs etab/niveau/classe).
+
+## Plans de classe — suites notées pendant le chantier v0.37–v0.40
+
+- v0.40 (prévu) : sexe à l'import élèves, aléatoire mixte, places AESH.
+- Plans de classe pour les **demi-groupes et groupes** (aujourd'hui seuls les
+  cours en classe entière ouvrent un plan) ; suppose de modéliser
+  l'appartenance des élèves aux groupes.
+- **Préférence** « statut par défaut d'un élève placé » (libre / imposé) :
+  certains collègues imposent tout le plan.
+- Remplacements ponctuels (classe d'un collègue, autre salle).
+- Classe flexible : îlots à destination, places surnuméraires, ressources
+  (casques, culbutos, pédaliers) attribuées à l'élève.
+- Usage au doigt (tablette, responsive) pour le suivi en séance.
+
+## Réorganisation de la navigation (à cadrer)
+
+- Créer un onglet principal **Configuration** regroupant la partie Gestion
+  du Suivi (Classe, Établissement) et l'actuel onglet Administration.

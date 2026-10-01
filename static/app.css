@@ -4297,3 +4297,70 @@ textarea.latex-textarea {
   color: #9a3412; background: #fff7ed; border-radius: 3px; padding: 0 2px;
 }
 .edt-pop-note { font-size: 11px; color: var(--text-secondary); margin: -4px 0 10px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.39.0 — Plans de classe hebdomadaires (static/plans_classe.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pc-entete { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+.pc-entete select { font-size: 13px; margin-left: 4px; }
+.pc-nav { display: flex; align-items: center; gap: 6px; }
+.pc-nav strong { min-width: 150px; text-align: center; }
+.pc-salle { color: var(--text-secondary); }
+.pc-outils {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px;
+  margin: 10px 0 6px; padding: 6px 0; border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.pc-outils a.btn-sm { text-decoration: none; color: inherit; }
+.pc-espace { flex: 1; }
+.pc-source { font-size: 12px; padding: 2px 9px; border-radius: 10px; background: #f1f5f9; color: var(--text-secondary); }
+.pc-source-reconduit { background: #fef3c7; color: #78350f; }
+.pc-lecture { font-size: 12px; color: var(--text-secondary); }
+.pc-avert {
+  margin: 6px 0; padding: 6px 10px; font-size: 12px; border-radius: 4px;
+  background: #fff7ed; color: #7c2d12; border-left: 3px solid #f59e0b;
+}
+.pc-corps { display: flex; gap: 16px; align-items: flex-start; }
+.pc-plan { flex: 1; min-width: 0; }
+.pc-vide { font-size: 13px; color: var(--text-secondary); }
+.pc-cote { width: 230px; flex-shrink: 0; font-size: 13px; }
+#pc-svg { width: 100%; max-height: 78vh; display: block; touch-action: none; user-select: none; }
+#pc-svg .sal-tableau rect { fill: #3f5f4a; }
+#pc-svg .sal-tableau text { font-size: 13px; fill: var(--text-secondary); text-anchor: middle; }
+#pc-svg .pc-place rect { fill: #fff; stroke: #4b5563; stroke-width: 1.3; }
+#pc-svg .pc-place text {
+  font-size: 9.5px; text-anchor: middle; dominant-baseline: central;
+  fill: var(--text); pointer-events: none;
+}
+#pc-svg .pc-place .pc-num { fill: #9ca3af; font-size: 12px; }
+#pc-svg .pc-place .pc-cadenas { font-size: 9px; }
+#pc-svg .pc-occupee { cursor: grab; }
+#pc-svg .pc-occupee rect { fill: #f8fafc; }
+#pc-svg .pc-impose text { font-weight: 700; }
+#pc-svg .pc-a-confirmer rect { fill: #f3f4f6; stroke-dasharray: 4 2; }
+#pc-svg .pc-a-confirmer text { fill: #6b7280; font-style: italic; }
+#pc-svg .pc-cible { cursor: pointer; }
+#pc-svg .pc-cible rect { fill: #f0fdf4; stroke: #16a34a; }
+#pc-svg .pc-sel rect { fill: var(--primary-bg); stroke: var(--primary); stroke-width: 2.4; }
+.pc-fiche {
+  border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+  margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;
+}
+.pc-fiche-nom { font-weight: 600; }
+.pc-impose-lbl { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+.pc-liste-titre { font-weight: 500; margin-bottom: 4px; }
+.pc-liste {
+  min-height: 60px; border: 1px dashed var(--border-medium, #cbd5e1); border-radius: 6px;
+  padding: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start;
+}
+.pc-eleve {
+  padding: 3px 8px; border-radius: 12px; background: #f1f5f9; cursor: grab;
+  font-size: 12px; user-select: none; touch-action: none;
+}
+.pc-eleve.pc-sel { background: var(--primary-bg); color: var(--primary-dark); outline: 2px solid var(--primary); }
+.pc-aide { font-size: 11px; color: var(--text-secondary); margin: 6px 0 0; }
+.pc-legende { display: block; margin-top: 4px; }
+.pc-fantome {
+  position: fixed; z-index: 2000; pointer-events: none; padding: 3px 8px; font-size: 12px;
+  border-radius: 12px; background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}

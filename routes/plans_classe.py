@@ -1,0 +1,117 @@
+"""routes/plans_classe.py — v0.39.0
+
+API des plans de classe hebdomadaires (services/plans_classe.py) et de leur
+impression (services/plan_classe_pdf.py).
+"""
+
+from datetime import date
+from pathlib import Path
+
+from flask import Blueprint, jsonify, request, current_app, Response
+
+from services import plans_classe as svc
+from services import plan_classe_pdf as pdf
+from services.plans_classe import PlanErreur
+from services.salles import SalleErreur
+
+bp = Blueprint("plans_classe", __name__)
+
+
+def _store():
+    return current_app.json_store
+
+
+def _erreur(e):
+    code = getattr(e, "code", "donnees_invalides")
+    statut = 404 if code in ("introuvable", "salle_introuvable",
+                             "version_introuvable") else 400
+    return jsonify({"error": str(e), "code": code}), statut
+
+
+def _args():
+    a = request.args if request.method in ("GET", "DELETE") else (request.get_json() or {})
+    return a.get("classe_id", ""), a.get("salle_id", ""), a.get("lundi") or date.today().isoformat()
+
+
+@bp.route("/api/plans-classe/salles", methods=["GET"])
+def api_salles():
+    classe_id, _, lundi = _args()
+    try:
+        with _store()._conn() as conn:
+            lundi = svc.lundi_iso(lundi)
+            salles = svc.salles_de_la_semaine(conn, classe_id, lundi)
+        return jsonify({"classe_id": classe_id, "lundi": lundi, "salles": salles,
+                        "semaine_courante": svc.lundi_iso(date.today())})
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+
+
+@bp.route("/api/plans-classe", methods=["GET"])
+def api_lire():
+    classe_id, salle_id, lundi = _args()
+    try:
+        with _store()._conn() as conn:
+            return jsonify(svc.lire(conn, classe_id, salle_id, lundi, date.today()))
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+
+
+@bp.route("/api/plans-classe", methods=["PUT"])
+def api_enregistrer():
+    body = request.get_json() or {}
+    classe_id, salle_id, lundi = _args()
+    try:
+        with _store()._conn() as conn:
+            return jsonify(svc.enregistrer(conn, classe_id, salle_id, lundi,
+                                           body.get("placements"), date.today()))
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+
+
+@bp.route("/api/plans-classe", methods=["DELETE"])
+def api_reinitialiser():
+    classe_id, salle_id, lundi = _args()
+    try:
+        with _store()._conn() as conn:
+            return jsonify(svc.reinitialiser(conn, classe_id, salle_id, lundi,
+                                             date.today()))
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+
+
+@bp.route("/api/plans-classe/aleatoire", methods=["POST"])
+def api_aleatoire():
+    classe_id, salle_id, lundi = _args()
+    try:
+        with _store()._conn() as conn:
+            plan = svc.lire(conn, classe_id, salle_id, lundi, date.today())
+            nouveaux = svc.aleatoire(plan["placements"],
+                                     [p["numero"] for p in plan["places"]],
+                                     [e["id"] for e in plan["eleves"]])
+            return jsonify(svc.enregistrer(conn, classe_id, salle_id, lundi,
+                                           nouveaux, date.today()))
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+
+
+@bp.route("/api/plans-classe/pdf", methods=["GET"])
+def api_pdf():
+    """PDF des plans de la semaine : une classe (classe_id) ou toutes les
+    classes qui ont cours dans la salle cette semaine-là."""
+    from services.compilateur_pdf import detecter_pdflatex
+    classe_id, salle_id, lundi = _args()
+    try:
+        with _store()._conn() as conn:
+            if classe_id:
+                plans = [svc.lire(conn, classe_id, salle_id, lundi, date.today())]
+            else:
+                plans = svc.plans_de_la_salle(conn, salle_id, lundi, date.today())
+        contenu = pdf.compiler(pdf.document(plans),
+                               detecter_pdflatex(Path(current_app.root_path)))
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+    except pdf.PdfErreur as e:
+        return jsonify({"error": str(e), "code": "pdf"}), 500
+    nom = f"plans_{svc.lundi_iso(lundi)}.pdf"
+    return Response(contenu, mimetype="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="{nom}"'})

@@ -469,7 +469,7 @@ const SUIVI_PORTEES = {
   // restent dans « Suivi ».
   planification: {
     label: 'Planification',
-    ateliers: ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression'],
+    ateliers: ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans'],
   },
   suivi: {
     label: 'Suivi de classe',
@@ -489,6 +489,7 @@ const SUIVI_ATELIER_PANNEAU = {
   mer:         { panneau: 'mer',         selecteurs: ['etablissement', 'classe'] },
   progmer:     { panneau: 'progmer',     selecteurs: ['etablissement', 'niveau', 'classe'] },
   progression: { panneau: 'progression', selecteurs: ['etablissement', 'niveau', 'referentiel'] },
+  plans:       { panneau: 'plans',       selecteurs: ['etablissement'] },   // v0.39.0
   suivi:       { panneau: 'suivi',       selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
   classe:      { panneau: 'parametrage', gestion: 'classes', selecteurs: ['annee', 'etablissement', 'niveau'] },
   etab:        { panneau: 'parametrage', gestion: 'etabs', selecteurs: ['annee', 'etablissement'] },
@@ -563,7 +564,7 @@ function suiviSwitch(atelier) {
     });
 
     // Afficher le panneau stab-* correspondant
-    ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'suivi', 'parametrage'].forEach(s => {
+    ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans', 'suivi', 'parametrage'].forEach(s => {
       const el = document.getElementById('stab-' + s);
       if (el) el.style.display = (s === def.panneau) ? '' : 'none';
     });
@@ -596,6 +597,9 @@ function suiviSwitch(atelier) {
     }
     if (atelier === 'progmer' && typeof progMerInit === 'function') {
       progMerInit();
+    }
+    if (atelier === 'plans' && typeof pcInit === 'function') {   // v0.39.0
+      pcInit();
     }
   };
   if (typeof atelGardeAvantTransition === 'function') {
@@ -775,6 +779,8 @@ async function suiviRechargerAtelierActif() {
     }
   } else if (a === 'suivi') {
     if (typeof onAnneeChange === 'function') await onAnneeChange();
+  } else if (a === 'plans') {          // v0.39.0
+    if (typeof pcInit === 'function') await pcInit();
   }
 }
 

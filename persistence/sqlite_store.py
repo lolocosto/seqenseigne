@@ -1511,6 +1511,16 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.39.0 — Plans de classe hebdomadaires ───────────────────────────
+        # Tables `plans_classe` et `plan_placements` (schéma porté par
+        # services/plans_classe.py). Migration additive, idempotente.
+        try:
+            from services.plans_classe import SCHEMA as _SCHEMA_PLANS
+            conn.executescript(_SCHEMA_PLANS)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

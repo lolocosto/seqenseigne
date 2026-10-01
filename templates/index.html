@@ -96,6 +96,7 @@
     <button class="vbtn suivi-grp-planification"        id="suivi-btn-mer"         onclick="suiviSwitch('mer')">Mises en route</button>
     <button class="vbtn suivi-grp-planification"        id="suivi-btn-progmer"     onclick="suiviSwitch('progmer')">Progression de MER</button>
     <button class="vbtn suivi-grp-planification active" id="suivi-btn-progression" onclick="suiviSwitch('progression')">Progression principale</button>
+    <button class="vbtn suivi-grp-planification"        id="suivi-btn-plans"       onclick="suiviSwitch('plans')">Plans de classe</button>
     <!-- Portée Suivi de classe -->
     <button class="vbtn suivi-grp-suivi"       id="suivi-btn-suivi"       onclick="suiviSwitch('suivi')" style="display:none">Suivi de classe</button>
     <!-- Portée Gestion -->
@@ -143,6 +144,24 @@
     <div id="edt-popover" style="display:none;position:fixed;z-index:1000;background:#fff;
          border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);
          padding:14px;width:280px;font-size:13px"></div>
+  </div>
+
+  <!-- v0.39.0 — Plans de classe hebdomadaires (static/plans_classe.js) -->
+  <div id="stab-plans" style="display:none">
+    <div class="card">
+      <div class="pc-entete">
+        <h2 style="margin:0">Plan de classe</h2>
+        <label>Classe <select id="pc-classe" onchange="pcChoisirClasse()"></select></label>
+        <span id="pc-semaine-nav" class="pc-nav"></span>
+        <span id="pc-salle-zone"></span>
+      </div>
+      <div id="pc-outils" class="pc-outils"></div>
+      <div id="pc-messages"></div>
+      <div class="pc-corps">
+        <div id="pc-plan" class="pc-plan"></div>
+        <aside id="pc-cote" class="pc-cote"></aside>
+      </div>
+    </div>
   </div>
 
   <div id="stab-planif" style="display:none">
@@ -3549,6 +3568,7 @@
 <script src="/static/edt.js"></script>
 <script src="/static/salles_pur.js"></script>
 <script src="/static/salles.js"></script>
+<script src="/static/plans_classe.js"></script>
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>
