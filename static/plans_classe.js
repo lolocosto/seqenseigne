@@ -1,5 +1,5 @@
 // ============================================================================
-// static/plans_classe.js — v0.39.0 (v0.39.1 : cadenas)
+// static/plans_classe.js — v0.39.0 (v0.39.1 : cadenas ; v0.40.0 : mixte, AESH)
 // Plans de classe hebdomadaires (Planification › Plans de classe).
 // Backend : /api/plans-classe (GET/PUT/DELETE), /api/plans-classe/salles,
 //           /api/plans-classe/aleatoire (POST), /api/plans-classe/pdf.
@@ -14,6 +14,9 @@
 //     l'élève le confirme, « Tout confirmer » confirme toute la classe ;
 //   - chaque action est enregistrée aussitôt (la première crée le plan de la
 //     semaine) ; semaines passées en lecture seule.
+//   - v0.40.0 : places réservées AESH (pastille « AESH » de la colonne de
+//     droite, puis une place libre ; sélection = PC.sel 'aesh:<numéro>' ou
+//     'aesh:new') ; « Aléatoire mixte ».
 // ============================================================================
 
 const PC = {
@@ -170,11 +173,22 @@ function _pcRendreOutils() {
     ${source}
     ${!mod ? '<span class="pc-lecture">Semaine passée : lecture seule</span>' : ''}
     ${nConf ? `<button class="btn-sm btn-prim" onclick="pcToutConfirmer()"${ro}>Tout confirmer (${nConf})</button>` : ''}
-    <button class="btn-sm" onclick="pcAleatoire()"${ro}>Placement aléatoire</button>
+    <button class="btn-sm" onclick="pcAleatoire('pur')"${ro}>Aléatoire</button>
+    <button class="btn-sm" onclick="pcAleatoire('mixte')"${ro} title="Garçons et filles côte à côte autant que possible">Aléatoire mixte</button>
+    ${_pcInfoAesh()}
     ${p.source === 'saisi' ? `<button class="btn-sm" onclick="pcReinitialiser()"${ro}>Annuler le plan de la semaine</button>` : ''}
     <span class="pc-espace"></span>
     <a class="btn-sm" target="_blank" href="/api/plans-classe/pdf?classe_id=${encodeURIComponent(PC.classeId)}&${q}">Imprimer ce plan</a>
     <a class="btn-sm" target="_blank" href="/api/plans-classe/pdf?${q}">Imprimer les plans de la salle</a>`;
+}
+
+function _pcInfoAesh() {
+  const a = PC.plan && PC.plan.aesh;
+  if (!a || !a.besoin) return '';
+  const j = { lun: 'lun', mar: 'mar', mer: 'mer', jeu: 'jeu', ven: 'ven', sam: 'sam' };
+  const det = a.seances.map(x => `${j[x.jour] || x.jour} ${x.creneau_code}${x.semaine !== 'AB' ? ' (' + x.semaine + ')' : ''} : ${x.nb_aesh}`).join(', ');
+  const n = PC.plan.reservations.length;
+  return `<span class="pc-aesh-info${n < a.besoin ? ' pc-aesh-manque' : ''}" title="${_pcE(det)}">AESH : ${n}/${a.besoin} place${a.besoin > 1 ? 's' : ''} réservée${n > 1 ? 's' : ''}</span>`;
 }
 
 function _pcRendreMessages() {
@@ -207,6 +221,13 @@ function _pcRendrePlan() {
     const occ = parNum[pl.numero];
     const e = occ ? noms[occ.eleve_id] : null;
     const cls = ['pc-place'];
+    if (p.reservations.includes(pl.numero)) {
+      const selA = PC.sel === 'aesh:' + pl.numero;
+      return `<g class="pc-place pc-aesh${selA ? ' pc-sel' : ''}" data-num="${pl.numero}" data-aesh="${pl.numero}">
+        <rect x="${-S.L / 2}" y="${-S.H / 2}" width="${S.L}" height="${S.H}" rx="2"
+              transform="translate(${pl.x} ${pl.y}) rotate(${pl.angle || 0})"></rect>
+        <text x="${pl.x}" y="${pl.y}">AESH</text></g>`;
+    }
     if (occ) cls.push('pc-occupee', occ.statut === 'impose' ? 'pc-impose' : 'pc-libre');
     if (occ && !occ.confirme) cls.push('pc-a-confirmer');
     if (occ && PC.sel === occ.eleve_id) cls.push('pc-sel');
@@ -264,7 +285,18 @@ function _pcRendreCote() {
         : '<div class="pc-aide">Cliquez une place pour l\'y installer.</div>'}
       </div>`;
   }
-  z.innerHTML = `${fiche}
+  if (PC.sel && PC.sel.startsWith('aesh:')) {
+    const num = PC.sel.slice(5);
+    fiche = `<div class="pc-fiche"><div class="pc-fiche-nom">Place AESH</div>
+      ${num === 'new' ? '<div class="pc-aide">Cliquez une place libre pour la réserver.</div>'
+        : `<div>Place ${num}</div><div class="pc-aide">Cliquez une autre place libre pour la déplacer.</div>
+           <button class="btn-sm" onclick="pcLibererAesh(${num})"${p.modifiable ? '' : ' disabled'}>Libérer la place</button>`}
+    </div>`;
+  }
+  const aesh = p.modifiable ? `<div class="pc-liste-titre">AESH</div>
+    <div class="pc-aesh-zone"><div class="pc-eleve pc-aesh-pastille${PC.sel === 'aesh:new' ? ' pc-sel' : ''}" data-aesh="new"
+      title="Réserver une place pour un ou une AESH">+ Place AESH</div></div>` : '';
+  z.innerHTML = `${fiche}${aesh}
     <div class="pc-liste-titre">Non placés (${non.length})</div>
     <div id="pc-liste" class="pc-liste" data-liste="1">
       ${non.length ? non.map(e => `<div class="pc-eleve${PC.sel === e.id ? ' pc-sel' : ''}" data-eleve="${e.id}">${_pcE(e.etiquette)}</div>`).join('')
@@ -277,12 +309,13 @@ function _pcRendreCote() {
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
-async function _pcEnregistrer(placements) {
+async function _pcEnregistrer(placements, reservations) {
   if (!PC.plan || !PC.plan.modifiable || PC.occupe) return;
   PC.occupe = true;
   try {
     PC.plan = await _pcApi('/api/plans-classe', { method: 'PUT', body: JSON.stringify({
-      classe_id: PC.classeId, salle_id: PC.salleId, lundi: PC.lundi, placements }) });
+      classe_id: PC.classeId, salle_id: PC.salleId, lundi: PC.lundi, placements,
+      reservations: reservations || PC.plan.reservations }) });
   } catch (e) { _pcToast(e.message, true); }
   PC.occupe = false;
   _pcRendreTout();
@@ -292,8 +325,34 @@ function _pcCopie() {
   return PC.plan.placements.map(p => ({ ...p }));
 }
 
+// v0.40.0 — Réserver (sel 'aesh:new') ou déplacer (sel 'aesh:<n>') une place
+// AESH vers la place libre `num`.
+function pcPlacerAesh(sel, num) {
+  const occupee = PC.plan.placements.some(p => p.numero === num)
+    || PC.plan.reservations.includes(num);
+  PC.sel = null;
+  if (occupee) {
+    _pcToast('Choisissez une place libre pour l\'AESH.', true);
+    _pcRendrePlan(); _pcRendreCote();
+    return;
+  }
+  const res = PC.plan.reservations.filter(n => 'aesh:' + n !== sel);
+  res.push(num);
+  _pcEnregistrer(_pcCopie(), res);
+}
+
+function pcLibererAesh(num) {
+  PC.sel = null;
+  _pcEnregistrer(_pcCopie(), PC.plan.reservations.filter(n => n !== num));
+}
+
 // Place l'élève `eid` à la place `num` (échange si occupée).
 function pcPlacer(eid, num) {
+  if (PC.plan.reservations.includes(num)) {
+    _pcToast('Place réservée à l\'AESH : libérez-la d\'abord.', true);
+    PC.sel = null; _pcRendrePlan(); _pcRendreCote();
+    return;
+  }
   const pl = _pcCopie();
   const moi = pl.find(p => p.eleve_id === eid);
   const autre = pl.find(p => p.numero === num);
@@ -329,13 +388,21 @@ function pcToutConfirmer() {
   _pcEnregistrer(_pcCopie().map(p => ({ ...p, confirme: 1 })));
 }
 
-async function pcAleatoire() {
+async function pcAleatoire(mode) {
   if (!PC.plan || !PC.plan.modifiable) return;
-  if (!confirm('Placer au hasard tous les élèves non imposés ?\n\nLes élèves imposés gardent leur place ; '
-      + 'les autres sont répartis sur les places restantes et deviennent imposés.')) return;
+  let msg = mode === 'mixte'
+    ? 'Placer les élèves non imposés en alternant garçons et filles autant que possible ?'
+    : 'Placer au hasard tous les élèves non imposés ?';
+  msg += '\n\nLes élèves imposés et les places AESH ne bougent pas ; les autres élèves '
+    + 'sont répartis sur les places restantes et deviennent imposés.';
+  if (mode === 'mixte') {
+    const sans = PC.plan.eleves.filter(e => !e.sexe).length;
+    if (sans) msg += `\n\n${sans} élève${sans > 1 ? 's' : ''} sans sexe renseigné (Gestion › Classe).`;
+  }
+  if (!confirm(msg)) return;
   try {
     PC.plan = await _pcApi('/api/plans-classe/aleatoire', { method: 'POST', body: JSON.stringify({
-      classe_id: PC.classeId, salle_id: PC.salleId, lundi: PC.lundi }) });
+      classe_id: PC.classeId, salle_id: PC.salleId, lundi: PC.lundi, mode }) });
   } catch (e) { _pcToast(e.message, true); }
   PC.sel = null;
   _pcRendreTout();
@@ -356,6 +423,21 @@ function _pcClic(cible) {
   if (!PC.plan) return;
   const eid = cible.dataset.eleve || null;
   const num = cible.dataset.num ? +cible.dataset.num : null;
+  // v0.40.0 — Places AESH.
+  if (cible.dataset.aesh) {
+    const cle = 'aesh:' + cible.dataset.aesh;
+    PC.sel = PC.sel === cle ? null : cle;
+    _pcRendrePlan(); _pcRendreCote();
+    return;
+  }
+  if (PC.sel && PC.sel.startsWith('aesh:')) {
+    if (num != null && PC.plan.modifiable) { pcPlacerAesh(PC.sel, num); return; }
+    if (cible.dataset.liste && PC.sel !== 'aesh:new') {
+      pcLibererAesh(+PC.sel.slice(5)); return;
+    }
+    PC.sel = null; _pcRendrePlan(); _pcRendreCote();
+    return;
+  }
   if (eid) {
     const occ = PC.plan.placements.find(p => p.eleve_id === eid);
     // Un élève à confirmer se confirme d'un clic (sauf si on veut l'échanger).
@@ -395,7 +477,7 @@ document.addEventListener('keydown', evt => {
 document.addEventListener('pointerdown', evt => {
   const racine = document.getElementById('stab-plans');
   if (!racine || racine.style.display === 'none' || !racine.contains(evt.target)) return;
-  const cible = evt.target.closest('[data-eleve], [data-num], [data-liste]');
+  const cible = evt.target.closest('[data-aesh], [data-eleve], [data-num], [data-liste]');
   if (!cible) return;
   PC.drag = { cible, x: evt.clientX, y: evt.clientY, bouge: false,
               eid: cible.dataset.eleve || null, fantome: null };

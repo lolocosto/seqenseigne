@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.39.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.40.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -25,7 +25,9 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   changements programmés, aperçu), salle et nombre d'AESH par case.
 - v0.39.0 livrée : plans de classe hebdomadaires (reconduction, imposé/libre,
   aléatoire, impression).
-- Prochaine étape : v0.40 — sexe à l'import, aléatoire mixte, places AESH.
+- v0.40.0 livrée : sexe des élèves (import + saisie), aléatoire mixte,
+  places AESH. Chantier v0.37–v0.40 terminé.
+- Prochaine étape prévue : revue des dettes techniques (liste ci-dessous).
 
 ## Chantier précédent : planification de la distribution de documents
 

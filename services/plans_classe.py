@@ -1,4 +1,4 @@
-"""services/plans_classe.py — v0.39.0
+"""services/plans_classe.py — v0.39.0 (v0.40.0 : mixte, places AESH)
 
 Plans de classe hebdomadaires : quel élève occupe quelle place d'une salle,
 pour une classe et une semaine (cf. doc/cadrage_plans_de_classe.md).
@@ -25,9 +25,18 @@ Règles (validées) :
     (c'est l'enseignant qui décide) et ne touche pas aux imposés existants ;
   - seuls les cours en classe entière ouvrent un plan (salles proposées =
     salles des cases comptées de la classe cette semaine-là).
+
+v0.40.0 :
+  - places réservées AESH (`plan_reservations`), choisies par l'enseignant,
+    reconduites comme des imposés ; besoin de la semaine = maximum du nombre
+    d'AESH des séances de la classe dans cette salle (avertissement s'il en
+    manque) ; l'aléatoire ne les touche jamais ;
+  - aléatoire mixte : maximise le nombre de paires garçon-fille VOISINES
+    (deux places du même îlot qui partagent un côté), imposés conservés.
 """
 
 from __future__ import annotations
+import math
 import random
 import unicodedata
 import uuid
@@ -54,6 +63,17 @@ CREATE TABLE IF NOT EXISTS plan_placements (
     confirme INTEGER NOT NULL DEFAULT 1,
     PRIMARY KEY (plan_id, eleve_id),
     UNIQUE (plan_id, numero)
+);
+"""
+
+
+# v0.40.0 — Places réservées (AESH) d'un plan de classe.
+SCHEMA_RESERVATIONS = """
+CREATE TABLE IF NOT EXISTS plan_reservations (
+    plan_id TEXT    NOT NULL REFERENCES plans_classe(id) ON DELETE CASCADE,
+    numero  INTEGER NOT NULL,
+    type    TEXT    NOT NULL DEFAULT 'aesh',
+    PRIMARY KEY (plan_id, numero)
 );
 """
 
@@ -102,7 +122,7 @@ def eleves_de_la_semaine(conn, classe_id: str, lundi: str) -> list[dict]:
     entrés au plus tard le dimanche, pas sortis avant le lundi."""
     dimanche = (date.fromisoformat(lundi) + timedelta(days=6)).isoformat()
     rows = conn.execute(
-        "SELECT e.id, e.nom, e.prenom FROM eleves e "
+        "SELECT e.id, e.nom, e.prenom, e.sexe FROM eleves e "
         "JOIN eleves_classes ec ON ec.eleve_id = e.id "
         "WHERE ec.classe_id = ? "
         "AND (ec.date_entree IS NULL OR ec.date_entree = '' OR ec.date_entree <= ?) "
@@ -181,6 +201,26 @@ def _dernier_plan_avant(conn, classe_id, salle_id, lundi):
     return (r["id"], r["lundi"]) if r else (None, None)
 
 
+def _reservations(conn, plan_id) -> list[int]:
+    return [r["numero"] for r in conn.execute(
+        "SELECT numero FROM plan_reservations WHERE plan_id=? ORDER BY numero",
+        (plan_id,)).fetchall()]
+
+
+def aesh_de_la_semaine(conn, classe_id: str, salle_id: str, lundi: str) -> dict:
+    """Séances de la classe dans la salle cette semaine avec des AESH :
+    {besoin: max, seances: [{jour, creneau_code, semaine, nb_aesh}]}."""
+    cl = _classe(conn, classe_id)
+    cases = edt_svc.lister(conn, cl["annee"], classe_id=classe_id,
+                           a_la_date=date.fromisoformat(lundi))
+    seances = [{"jour": c["jour"], "creneau_code": c["creneau_code"],
+                "semaine": c["semaine"], "nb_aesh": c["nb_aesh"]}
+               for c in cases if edt_svc.est_compte(c)
+               and c.get("salle_id") == salle_id and c.get("nb_aesh")]
+    return {"besoin": max((x["nb_aesh"] for x in seances), default=0),
+            "seances": seances}
+
+
 def _placements(conn, plan_id) -> list[dict]:
     return [dict(r) for r in conn.execute(
         "SELECT eleve_id, numero, statut, confirme FROM plan_placements "
@@ -202,14 +242,16 @@ def lire(conn, classe_id: str, salle_id: str, lundi, aujourd_hui: date) -> dict:
     source, reconduit_de = "saisi", None
     if pid:
         brut = _placements(conn, pid)
+        reserv = _reservations(conn, pid)
     else:
         prec, reconduit_de = _dernier_plan_avant(conn, classe_id, salle_id, lundi)
         if prec:
             source = "reconduit"
             brut = [{**p, "confirme": 1 if p["statut"] == "impose" else 0}
                     for p in _placements(conn, prec)]
+            reserv = _reservations(conn, prec)
         else:
-            source, brut = "vide", []
+            source, brut, reserv = "vide", [], []
 
     avertissements, placements = [], []
     noms = {e["id"]: e["etiquette"] for e in eleves}
@@ -223,6 +265,20 @@ def lire(conn, classe_id: str, salle_id: str, lundi, aujourd_hui: date) -> dict:
             continue
         placements.append(p)
     places_ids = {p["eleve_id"] for p in placements}
+    reservations = []
+    for n in reserv:
+        if n in numeros:
+            reservations.append(n)
+        else:
+            avertissements.append(
+                f"Place AESH {n} : elle n'existe plus dans cette version de la "
+                f"salle, à replacer.")
+    aesh = aesh_de_la_semaine(conn, classe_id, salle_id, lundi)
+    if len(reservations) < aesh["besoin"]:
+        manque = aesh["besoin"] - len(reservations)
+        avertissements.append(
+            f"AESH : {manque} place{'s' if manque > 1 else ''} à réserver "
+            f"cette semaine.")
     st = statut_semaine(lundi, aujourd_hui)
     return {
         "classe": {"id": cl["id"], "nom": cl["nom"]},
@@ -236,6 +292,9 @@ def lire(conn, classe_id: str, salle_id: str, lundi, aujourd_hui: date) -> dict:
         "eleves": eleves,
         "placements": placements,
         "non_places": [e["id"] for e in eleves if e["id"] not in places_ids],
+        "reservations": reservations,
+        "aesh": aesh,
+        "voisins": voisins(places),
         "avertissements": avertissements,
     }
 
@@ -243,7 +302,7 @@ def lire(conn, classe_id: str, salle_id: str, lundi, aujourd_hui: date) -> dict:
 # ── Écriture ─────────────────────────────────────────────────────────────────
 
 def enregistrer(conn, classe_id: str, salle_id: str, lundi, placements,
-                aujourd_hui: date) -> dict:
+                aujourd_hui: date, reservations=None) -> dict:
     """Remplace le plan de la semaine par `placements`
     ([{eleve_id, numero, statut, confirme}]). Crée le plan de la semaine s'il
     n'existait pas (fin de la reconduction implicite)."""
@@ -278,6 +337,25 @@ def enregistrer(conn, classe_id: str, salle_id: str, lundi, placements,
         vus_n.add(num)
         confirme = 1 if statut == "impose" else (0 if p.get("confirme") in (0, False) else 1)
         propres.append((eid, num, statut, confirme))
+    # v0.40.0 — Places réservées AESH. None = garder celles en vigueur
+    # (saisies ou reconduites) : les anciens appels restent valides.
+    if reservations is None:
+        reservations = lire(conn, classe_id, salle_id, lundi, aujourd_hui)["reservations"]
+    if not isinstance(reservations, list):
+        raise PlanErreur("`reservations` doit être une liste.")
+    res = []
+    for n in reservations:
+        try:
+            n = int(n)
+        except (TypeError, ValueError):
+            raise PlanErreur(f"Place réservée invalide : {n!r}.")
+        if n not in numeros:
+            raise PlanErreur(f"La place {n} n'existe pas dans la salle.")
+        if n in vus_n:
+            raise PlanErreur(f"La place {n} est à la fois réservée AESH et occupée.")
+        if n in res:
+            raise PlanErreur(f"La place {n} est réservée deux fois.")
+        res.append(n)
     pid = _plan_saisi(conn, classe_id, salle_id, lundi)
     if pid is None:
         pid = "pc_" + uuid.uuid4().hex[:12]
@@ -287,6 +365,9 @@ def enregistrer(conn, classe_id: str, salle_id: str, lundi, placements,
     conn.executemany(
         "INSERT INTO plan_placements (plan_id, eleve_id, numero, statut, confirme) "
         "VALUES (?,?,?,?,?)", [(pid, *t) for t in propres])
+    conn.execute("DELETE FROM plan_reservations WHERE plan_id=?", (pid,))
+    conn.executemany("INSERT INTO plan_reservations (plan_id, numero, type) "
+                     "VALUES (?,?, 'aesh')", [(pid, n) for n in res])
     return lire(conn, classe_id, salle_id, lundi, aujourd_hui)
 
 
@@ -299,6 +380,7 @@ def reinitialiser(conn, classe_id: str, salle_id: str, lundi,
     pid = _plan_saisi(conn, classe_id, salle_id, lundi)
     if pid:
         conn.execute("DELETE FROM plan_placements WHERE plan_id=?", (pid,))
+        conn.execute("DELETE FROM plan_reservations WHERE plan_id=?", (pid,))
         conn.execute("DELETE FROM plans_classe WHERE id=?", (pid,))
     return lire(conn, classe_id, salle_id, lundi, aujourd_hui)
 
@@ -306,14 +388,16 @@ def reinitialiser(conn, classe_id: str, salle_id: str, lundi,
 # ── Aléatoire (fonction pure) ────────────────────────────────────────────────
 
 def aleatoire(placements: list[dict], numeros: list[int], eleves: list[str],
-              rng: random.Random | None = None) -> list[dict]:
+              rng: random.Random | None = None,
+              reservees=()) -> list[dict]:
     """Garde les placements imposés ; répartit tous les autres élèves au hasard
     sur les places restantes, en « imposé » (c'est l'enseignant qui place).
+    Les places réservées (AESH) ne sont jamais attribuées.
     S'il y a plus d'élèves que de places, les derniers restent non placés."""
     rng = rng or random.Random()
     gardes = [dict(p) for p in placements if p.get("statut") == "impose"]
     pris_e = {p["eleve_id"] for p in gardes}
-    pris_n = {p["numero"] for p in gardes}
+    pris_n = {p["numero"] for p in gardes} | set(reservees)
     libres_n = [n for n in numeros if n not in pris_n]
     a_placer = [e for e in eleves if e not in pris_e]
     rng.shuffle(libres_n)
@@ -322,6 +406,91 @@ def aleatoire(placements: list[dict], numeros: list[int], eleves: list[str],
         gardes.append({"eleve_id": eid, "numero": num, "statut": "impose",
                        "confirme": 1})
     return sorted(gardes, key=lambda p: p["numero"])
+
+
+# ── v0.40.0 — Voisinage et aléatoire mixte ───────────────────────────────────
+
+_L, _H = 60.0, 40.0
+_TOL = 0.6          # cm : coordonnées arrondies au millimètre près
+
+
+def _coins(p) -> list[tuple[float, float]]:
+    a = math.radians(p.get("angle") or 0)
+    ca, sa = math.cos(a), math.sin(a)
+    return [(p["x"] + u * ca - v * sa, p["y"] + u * sa + v * ca)
+            for u, v in ((-_L / 2, -_H / 2), (_L / 2, -_H / 2),
+                         (_L / 2, _H / 2), (-_L / 2, _H / 2))]
+
+
+def _sur_segment(pt, a, b) -> bool:
+    (px, py), (ax, ay), (bx, by) = pt, a, b
+    abx, aby = bx - ax, by - ay
+    l2 = abx * abx + aby * aby
+    t = ((px - ax) * abx + (py - ay) * aby) / l2
+    marge = _TOL / math.sqrt(l2)
+    if t < -marge or t > 1 + marge:
+        return False
+    return math.hypot(px - (ax + t * abx), py - (ay + t * aby)) < _TOL
+
+
+def partagent_un_cote(p, q) -> bool:
+    """Vrai si les deux places ont un segment de bord commun (pas un simple
+    coin) : au moins deux points distincts d'un bord sur l'autre."""
+    cp, cq = _coins(p), _coins(q)
+    pts = []
+    for poly_a, poly_b in ((cp, cq), (cq, cp)):
+        for v in poly_a:
+            if any(_sur_segment(v, poly_b[i], poly_b[(i + 1) % 4]) for i in range(4)):
+                if all(math.hypot(v[0] - w[0], v[1] - w[1]) > 2 * _TOL for w in pts):
+                    pts.append(v)
+    return len(pts) >= 2
+
+
+def voisins(places: list[dict]) -> list[list[int]]:
+    """Paires de numéros de places voisines : même îlot et un côté commun."""
+    paires = []
+    for i, p in enumerate(places):
+        for q in places[i + 1:]:
+            if p.get("ilot") and p.get("ilot") == q.get("ilot") and partagent_un_cote(p, q):
+                paires.append(sorted([p["numero"], q["numero"]]))
+    return paires
+
+
+def score_mixite(placements: list[dict], paires, sexes: dict) -> int:
+    """Nombre de paires voisines occupées par un garçon et une fille."""
+    par_num = {p["numero"]: sexes.get(p["eleve_id"], "") for p in placements}
+    return sum(1 for a, b in paires
+               if {par_num.get(a, ""), par_num.get(b, "")} == {"M", "F"})
+
+
+def aleatoire_mixte(placements: list[dict], numeros: list[int],
+                    sexes: dict, paires, rng: random.Random | None = None,
+                    reservees=(), essais: int = 300,
+                    ameliorations: int = 3000) -> list[dict]:
+    """Comme `aleatoire`, mais garde le tirage qui maximise le nombre de paires
+    garçon-fille voisines (tirages au hasard puis améliorations par échanges
+    entre élèves non imposés). `sexes` : {eleve_id: 'M'|'F'|''}."""
+    rng = rng or random.Random()
+    eleves = list(sexes)
+    imposes = {p["eleve_id"] for p in placements if p.get("statut") == "impose"}
+    meilleur, best = None, -1
+    for _ in range(max(1, essais)):
+        t = aleatoire(placements, numeros, eleves, rng, reservees)
+        sc = score_mixite(t, paires, sexes)
+        if sc > best:
+            meilleur, best = t, sc
+    mobiles = [i for i, p in enumerate(meilleur) if p["eleve_id"] not in imposes]
+    if len(mobiles) >= 2:
+        for _ in range(ameliorations):
+            i, j = rng.sample(mobiles, 2)
+            a, b = meilleur[i], meilleur[j]
+            a["numero"], b["numero"] = b["numero"], a["numero"]
+            sc = score_mixite(meilleur, paires, sexes)
+            if sc >= best:
+                best = sc
+            else:
+                a["numero"], b["numero"] = b["numero"], a["numero"]
+    return sorted(meilleur, key=lambda p: p["numero"])
 
 
 # ── Impression : plans d'une salle pour une semaine ──────────────────────────

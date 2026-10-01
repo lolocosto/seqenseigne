@@ -1,4 +1,13 @@
-238001a890f8cda427fa60a323f2d653  4442  doc\ETAT_COURANT.md
-c4bf1a7f840f468f864cc38b01413b51  142347  static\app.css
-f71e8bc35c6990936b48db59d7da18a3  19184  static\plans_classe.js
-97f9cb55b47e77d6c89eb8026bd3e030  738  doc\redemarrage_v0_39_1.md
+6f01df761aece33ef39ace37473a4a45  4562  doc\ETAT_COURANT.md
+9f22fa5207ce205d7a60c45fd767a6e0  10472  doc\ROADMAP.md
+fd91332d2c4fcbf2dcc096481249f31c  178586  persistence\sqlite_store.py
+19330ef975779bdb9a671d6aff595383  10324  routes\classes.py
+298970cfcfeb05c7df649999258effd1  4983  routes\plans_classe.py
+7d9c3aaf0175af1cb08f25a56aa2730b  6299  services\plan_classe_pdf.py
+48da695193689d89b0f25752e58d1c45  22725  services\plans_classe.py
+267f7e7eede903275e1d279a78374715  143058  static\app.css
+2fb6cc9cd59cd2b3c923353b4f810212  273810  static\app.js
+f0334f22084fdb843e1a3987e31476e2  23215  static\plans_classe.js
+ea6c14ba6676d6374571138a5c47135a  2980  doc\redemarrage_v0_40_0.md
+0075cc6d565fe47179c4f3fae86a6749  2423  services\eleves_sexe.py
+c293268c9257866fa4967dd82b5c9c0a  9377  tests\test_v0_40_0_mixte_aesh.py

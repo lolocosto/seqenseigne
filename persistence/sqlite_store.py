@@ -1521,6 +1521,18 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.40.0 — Sexe des élèves, places réservées (AESH) ────────────────
+        try:
+            cols_el = {r["name"] for r in conn.execute(
+                "PRAGMA table_info(eleves)").fetchall()}
+            if cols_el and "sexe" not in cols_el:
+                conn.execute("ALTER TABLE eleves ADD COLUMN sexe TEXT NOT NULL DEFAULT ''")
+            from services.plans_classe import SCHEMA_RESERVATIONS as _SCH_RES
+            conn.executescript(_SCH_RES)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:
@@ -1688,7 +1700,7 @@ class SqliteStore:
 
                 # Élèves actifs (date_sortie IS NULL), triés alphabétiquement
                 rows_e = conn.execute("""
-                    SELECT e.id, e.nom, e.prenom FROM eleves e
+                    SELECT e.id, e.nom, e.prenom, e.sexe FROM eleves e
                     JOIN eleves_classes ec ON ec.eleve_id = e.id
                     WHERE ec.classe_id = ? AND ec.date_sortie IS NULL
                     ORDER BY e.nom, e.prenom

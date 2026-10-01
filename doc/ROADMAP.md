@@ -166,7 +166,9 @@ Suivi cohérent avec la Planification (mêmes sélecteurs etab/niveau/classe).
 
 ## Plans de classe — suites notées pendant le chantier v0.37–v0.40
 
-- v0.40 (prévu) : sexe à l'import élèves, aléatoire mixte, places AESH.
+- v0.40.0 (livrée) : sexe à l'import élèves, aléatoire mixte, places AESH.
+- Modéliser les élèves accompagnés par un AESH (placement automatique du
+  binôme) si le besoin se confirme.
 - Plans de classe pour les **demi-groupes et groupes** (aujourd'hui seuls les
   cours en classe entière ouvrent un plan) ; suppose de modéliser
   l'appartenance des élèves aux groupes.

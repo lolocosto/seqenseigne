@@ -63,7 +63,8 @@ def api_enregistrer():
     try:
         with _store()._conn() as conn:
             return jsonify(svc.enregistrer(conn, classe_id, salle_id, lundi,
-                                           body.get("placements"), date.today()))
+                                           body.get("placements"), date.today(),
+                                           reservations=body.get("reservations")))
     except (PlanErreur, SalleErreur) as e:
         return _erreur(e)
 
@@ -81,13 +82,23 @@ def api_reinitialiser():
 
 @bp.route("/api/plans-classe/aleatoire", methods=["POST"])
 def api_aleatoire():
+    """Placement aléatoire ; `mode` = 'pur' (défaut) ou 'mixte' (v0.40.0 :
+    maximise les paires garçon-fille voisines). Places AESH jamais touchées."""
     classe_id, salle_id, lundi = _args()
+    mode = (request.get_json() or {}).get("mode", "pur")
     try:
         with _store()._conn() as conn:
             plan = svc.lire(conn, classe_id, salle_id, lundi, date.today())
-            nouveaux = svc.aleatoire(plan["placements"],
-                                     [p["numero"] for p in plan["places"]],
-                                     [e["id"] for e in plan["eleves"]])
+            numeros = [p["numero"] for p in plan["places"]]
+            if mode == "mixte":
+                nouveaux = svc.aleatoire_mixte(
+                    plan["placements"], numeros,
+                    {e["id"]: e.get("sexe") or "" for e in plan["eleves"]},
+                    plan["voisins"], reservees=plan["reservations"])
+            else:
+                nouveaux = svc.aleatoire(plan["placements"], numeros,
+                                         [e["id"] for e in plan["eleves"]],
+                                         reservees=plan["reservations"])
             return jsonify(svc.enregistrer(conn, classe_id, salle_id, lundi,
                                            nouveaux, date.today()))
     except (PlanErreur, SalleErreur) as e:

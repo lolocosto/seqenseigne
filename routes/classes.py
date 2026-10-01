@@ -200,7 +200,33 @@ def api_eleves_import(cid):
     if "erreur" in resume:
         return jsonify({"error": resume["erreur"]}), 404
     js.ecrire_classes(data)
+    # v0.40.0 — Colonne Sexe (export Pronote) : complète aussi les élèves déjà
+    # présents. Aucune autre colonne n'est lue (date de naissance, projet
+    # d'accompagnement… jamais importés).
+    col_sexe = cols.get("sexe")
+    resume["sexes_mis_a_jour"] = 0
+    if col_sexe and hasattr(js, "_conn"):
+        from services import eleves_sexe
+        with js._conn() as conn:
+            resume["sexes_mis_a_jour"] = eleves_sexe.maj_depuis_import(
+                conn, cid, rows, col_nom, col_prenom, col_sexe)
+        c = next((x for x in js.lire_classes()["classes"] if x["id"] == cid), None)
+        if c:
+            resume["eleves"] = c.get("eleves", [])
     return jsonify(resume)
+
+
+@bp.route("/api/eleves/<eid>/sexe", methods=["PUT"])
+def api_eleve_sexe(eid):
+    """v0.40.0 — Saisie manuelle du sexe d'un élève (M, F ou vide)."""
+    from services import eleves_sexe
+    body = request.get_json() or {}
+    try:
+        with _js()._conn() as conn:
+            s = eleves_sexe.definir(conn, eid, body.get("sexe", ""))
+        return jsonify({"id": eid, "sexe": s})
+    except eleves_sexe.SexeErreur as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @bp.route("/api/classes/<cid>/eleves/<eid>", methods=["DELETE"])

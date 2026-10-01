@@ -62,6 +62,7 @@ def page_tikz(plan: dict) -> str:
     Y = lambda y: -(y - ymin) * s
     noms = {e["id"]: e["etiquette"] for e in plan["eleves"]}
     par_num = {p["numero"]: p for p in plan["placements"]}
+    reservees = set(plan.get("reservations") or [])
     avec_noms = bool(par_num)
     lignes = [f"\\section*{{{titre}}}",
               "\\begin{center}\\begin{tikzpicture}"]
@@ -79,7 +80,9 @@ def page_tikz(plan: dict) -> str:
                       f"({x - lw / 2:.3f},{y - lh / 2:.3f}) rectangle "
                       f"({x + lw / 2:.3f},{y + lh / 2:.3f});")
         pl = par_num.get(p["numero"])
-        if pl:
+        if p["numero"] in reservees:          # v0.40.0 — place AESH
+            lignes.append(f"\\node[font=\\scriptsize\\bfseries] at ({x:.3f},{y:.3f}) {{AESH}};")
+        elif pl:
             nom = noms.get(pl["eleve_id"], "?")
             if " " in nom:
                 prenom, reste = nom.split(" ", 1)

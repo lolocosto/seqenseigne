@@ -1241,8 +1241,23 @@ function renderElevesListFor(c) {
   document.getElementById('nb-eleves').textContent = `${elvs.length} élève${elvs.length > 1 ? 's' : ''}`;
   document.getElementById('btn-vider').style.display = elvs.length ? '' : 'none';
   document.getElementById('eleves-list').innerHTML = elvs.length
-    ? elvs.map((e, i) => `<div class="eleve-item"><span class="eleve-num">${i + 1}</span><span class="nom">${e.nom} ${e.prenom}</span><button class="btn-danger" style="padding:2px 7px;font-size:11px" onclick="deleteEleve('${c.id}','${e.id}','${e.nom} ${e.prenom}')">✕</button></div>`).join('')
+    ? elvs.map((e, i) => `<div class="eleve-item"><span class="eleve-num">${i + 1}</span><span class="nom">${e.nom} ${e.prenom}</span><select class="eleve-sexe" aria-label="Sexe de ${e.prenom}" onchange="definirSexeEleve('${c.id}','${e.id}', this.value)">${['', 'M', 'F'].map(v => `<option value="${v}"${(e.sexe || '') === v ? ' selected' : ''}>${v || '—'}</option>`).join('')}</select><button class="btn-danger" style="padding:2px 7px;font-size:11px" onclick="deleteEleve('${c.id}','${e.id}','${e.nom} ${e.prenom}')">✕</button></div>`).join('')
     : '<p style="color:#999;font-size:12px">Aucun élève.</p>';
+}
+
+// v0.40.0 — Sexe d'un élève (pour l'aléatoire mixte des plans de classe).
+async function definirSexeEleve(cid, eid, sexe) {
+  try {
+    const r = await fetch('/api/eleves/' + eid + '/sexe', { method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sexe }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    [CLASSES_TOUTES || [], CLASSES].forEach(liste => {
+      const c = liste.find(x => x.id === cid);
+      const e = c && (c.eleves || []).find(x => x.id === eid);
+      if (e) e.sexe = d.sexe;
+    });
+  } catch (err) { alert(err.message); }
 }
 
 function renderElevesList(cid) {
@@ -1302,7 +1317,7 @@ async function importCSV() {
   const c=CLASSES.find(x=>x.id===cid);
   if(c)c.eleves=res.eleves;
   if(currentCid===cid){eleves=res.eleves;buildElvSel();render();}
-  status.textContent=`${res.ajouts} ajouté${res.ajouts>1?'s':''}, ${res.ignores} ignoré${res.ignores>1?'s':''}`;
+  status.textContent=`${res.ajouts} ajouté${res.ajouts>1?'s':''}, ${res.ignores} ignoré${res.ignores>1?'s':''}`+(res.sexes_mis_a_jour?`, sexe renseigné pour ${res.sexes_mis_a_jour}`:'');
   status.style.color='#2d6a0a';
   inp.value='';
   renderElevesList(cid);renderClassesList();buildClasseSel();

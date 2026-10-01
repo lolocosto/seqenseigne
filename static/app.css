@@ -4366,3 +4366,13 @@ textarea.latex-textarea {
   position: fixed; z-index: 2000; pointer-events: none; padding: 3px 8px; font-size: 12px;
   border-radius: 12px; background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
+
+/* v0.40.0 — Places AESH, aléatoire mixte, sexe des élèves */
+#pc-svg .pc-aesh rect { fill: #ecfeff; stroke: #0e7490; stroke-width: 1.6; }
+#pc-svg .pc-aesh text { fill: #0e7490; font-weight: 700; }
+#pc-svg .pc-aesh.pc-sel rect { fill: var(--primary-bg); stroke: var(--primary); stroke-width: 2.4; }
+.pc-aesh-zone { margin-bottom: 12px; }
+.pc-aesh-pastille { display: inline-block; background: #ecfeff; color: #0e7490; cursor: pointer; }
+.pc-aesh-info { font-size: 12px; padding: 2px 9px; border-radius: 10px; background: #ecfeff; color: #0e7490; }
+.pc-aesh-info.pc-aesh-manque { background: #fff7ed; color: #9a3412; }
+.eleve-sexe { font-size: 11px; padding: 0 2px; margin-left: auto; margin-right: 6px; }
