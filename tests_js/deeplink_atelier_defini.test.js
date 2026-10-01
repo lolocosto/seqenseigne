@@ -3,7 +3,12 @@
 // chargement). Cette erreur interrompait init() et laissait l'onglet Suivi vide.
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-const APP = readFileSync('/home/claude/extract/appli/static/app.js', 'utf-8');
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+// v0.41.0 — Chemin relatif au fichier de test (le chemin absolu d'origine ne
+// pouvait exister que dans l'environnement où le test avait été écrit).
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const APP = readFileSync(join(__dirname, '..', 'static', 'app.js'), 'utf-8');
 
 describe('deeplink — atelier défini', () => {
   it('_appliquerDeeplink sans ?atelier ne lève pas d’erreur', () => {

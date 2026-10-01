@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.40.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.41.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -27,7 +27,10 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   aléatoire, impression).
 - v0.40.0 livrée : sexe des élèves (import + saisie), aléatoire mixte,
   places AESH. Chantier v0.37–v0.40 terminé.
-- Prochaine étape prévue : revue des dettes techniques (liste ci-dessous).
+- Revue des dettes techniques (v0.41.x) : v0.41.0 livrée (suite de tests au
+  vert, pdf.js versionné). Suivantes : v0.41.1 helper de projection ;
+  v0.41.2 filtre A/B, report MER, sélecteur d'établissement + fusion ;
+  v0.41.3 nettoyage.
 
 ## Chantier précédent : planification de la distribution de documents
 
@@ -53,12 +56,6 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
 
 ## Dettes techniques repérées (préexistantes)
 
-- `tests/test_v0_29_0_verso_miroir.py` : importe une fonction supprimée
-  (refactor), casse la collecte pytest → à supprimer/réécrire.
-- `tests/test_annees_scolaires.py` (2 cas) : attendent « 2025-2026 » comme année
-  courante, dépendants de la date système → à corriger.
-- `tests_js/deeplink_atelier_defini.test.js` : lit app.js par un chemin absolu
-  codé en dur (`/home/claude/extract/...`) → échoue hors de cet environnement.
 - Projection : préparation (grille, indispos, vacances, 1er sept.) dupliquée
   dans 5 routes + services/edt_apercu.py → helper commun à créer.
 - Planification hebdo / tableau de bord : pas de filtre semaine A/B.
@@ -71,6 +68,11 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   (embeddable) n'a pas le dossier courant dans sys.path → amorce sys.path dans
   le script et lancement par chemin (`..\outils\python\python.exe outils\x.py`),
   jamais `python -m` (v0.37.1).
+- Tests ignorés en permanence : `test_paquet_parseur.py::TestIntegration`
+  (5) pointe vers un chemin absolu du paquet LaTeX ; à repointer vers le
+  paquet du projet s'il est voisin d'appli/.
+- push-to-github.html crée des commits additifs : les suppressions
+  (`MANIFEST_SUPPRESSIONS.md`) sont à reporter à la main sur GitHub.
 - Palette des niveaux : source unique = variables `--niv-*` du §20 de app.css
   (v0.36.2). Ne pas recréer de palette parallèle.
 
