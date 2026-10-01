@@ -20,7 +20,8 @@ data/rapports/
 data/images/
 data/referentiels/
 data/referentiels_externes/
-static/vendor/
+# static/vendor/ (pdf.js) est versionné depuis v0.41.0 : un clone neuf doit
+# avoir un viewer PDF fonctionnel. Cohérent avec push-to-github.html.
 log/
 *.pdf
 

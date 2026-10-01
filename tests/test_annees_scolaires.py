@@ -35,8 +35,23 @@ def test_courante_retourne_le_code_du_json(annees_file):
     assert svc.courante(annees_file) == "2025-2026"
 
 
-def test_courante_vide_si_fichier_absent(tmp_path):
-    assert svc.courante(tmp_path / "inexistant.json") == ""
+def test_courante_repli_sur_la_date_si_fichier_absent(tmp_path):
+    """v0.41.0 — Sans fichier, `courante` se replie sur l'année scolaire
+    calculée depuis la date du jour (comportement voulu : une valeur vide
+    laissait l'UI sans présélection). Le test ne code plus l'année en dur."""
+    assert svc.courante(tmp_path / "inexistant.json") == svc.annee_scolaire_de_date()
+
+
+@pytest.mark.parametrize("jour, attendu", [
+    ("2026-09-01", "2026-2027"),   # rentrée : nouvelle année
+    ("2026-12-31", "2026-2027"),
+    ("2027-01-01", "2026-2027"),
+    ("2027-08-31", "2026-2027"),   # fin août : encore l'année précédente
+    ("2027-09-01", "2027-2028"),
+])
+def test_annee_scolaire_de_date_bascule_en_septembre(jour, attendu):
+    from datetime import date
+    assert svc.annee_scolaire_de_date(date.fromisoformat(jour)) == attendu
 
 
 def test_lister_met_les_actives_avant_les_archivees(annees_file):
@@ -85,9 +100,16 @@ def test_route_annees_scolaires_retourne_json(client):
 
 
 def test_route_annees_scolaires_charge_le_fichier_livre(client):
-    """La route charge le JSON livré dans appli/config/."""
+    """La route charge le JSON livré dans appli/config/.
+
+    v0.41.0 — On compare au contenu du fichier livré au lieu de coder une
+    année en dur : le fichier est mis à jour à chaque rentrée, le test ne doit
+    pas se périmer avec lui."""
+    livre = json.loads((Path(__file__).resolve().parent.parent / "config" /
+                        "annees_scolaires.json").read_text(encoding="utf-8"))
     r = client.get("/api/annees-scolaires")
     data = r.get_json()
     codes = [a["code"] for a in data["annees_scolaires"]]
-    assert "2025-2026" in codes
-    assert data["annee_courante"] == "2025-2026"
+    assert data["annee_courante"] == livre["annee_courante"]
+    assert data["annee_courante"] in codes
+    assert sorted(codes) == sorted(a["code"] for a in livre["annees_scolaires"])
