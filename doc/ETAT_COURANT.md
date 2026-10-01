@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.37.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.37.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -55,6 +55,10 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   codé en dur (`/home/claude/extract/...`) → échoue hors de cet environnement.
 - Fusion d'établissements : ne migre ni la grille horaire ni l'EdT (les salles
   oui, depuis v0.37.0).
+- Outils CLI qui importent `services`/`persistence` : le Python portable
+  (embeddable) n'a pas le dossier courant dans sys.path → amorce sys.path dans
+  le script et lancement par chemin (`..\outils\python\python.exe outils\x.py`),
+  jamais `python -m` (v0.37.1).
 - Palette des niveaux : source unique = variables `--niv-*` du §20 de app.css
   (v0.36.2). Ne pas recréer de palette parallèle.
 

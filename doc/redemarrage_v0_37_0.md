@@ -32,7 +32,7 @@ Première livraison du chantier « plans de classe » (cadrage complet :
 - **Import TikZ** : `services/plan_salle_tikz.py` (mini-interpréteur
   tkz-euclide : DefPoints, translation, rotation, DrawPolygon ; 1 unité = 10 cm ;
   îlots = quadrilatères qui se touchent) et outil
-  `python -m outils.importer_plan_salle_tikz plan_salle_302.tex --salle 302 [--etab …] --apply`
+  `..\outils\python\python.exe outils\importer_plan_salle_tikz.py plan_salle_302.tex --salle 302 [--etab …] --apply`
   (dry-run par défaut). Résultat sur la 302 : 33 places, îlots 6-4-4-4-4-4-3-2-2.
 
 ## Conventions

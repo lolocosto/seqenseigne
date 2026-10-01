@@ -1,4 +1,4 @@
-"""outils/importer_plan_salle_tikz.py — v0.37.0
+r"""outils/importer_plan_salle_tikz.py — v0.37.1
 
 Crée une salle à partir d'un plan dessiné en TikZ/tkz-euclide (style de
 `plan_salle_302.tex`) : chaque quadrilatère devient une place, les places qui
@@ -7,11 +7,16 @@ se touchent forment un îlot (cf. services/plan_salle_tikz.py).
 La salle ne doit pas déjà exister dans l'établissement. Par défaut : dry-run
 (affiche ce qui serait créé). Toujours tester sur une copie de la base.
 
-Usage :
-    python -m outils.importer_plan_salle_tikz plan_salle_302.tex --salle 302
-    python -m outils.importer_plan_salle_tikz plan_salle_302.tex --salle 302 --apply
-    python -m outils.importer_plan_salle_tikz plan.tex --salle 302 --etab "Hautes Ourmes" --apply
-    python -m outils.importer_plan_salle_tikz plan.tex --salle 302 --db chemin/seqenseigne.db
+Usage (depuis appli/, avec le Python portable) :
+    ..\outils\python\python.exe outils\importer_plan_salle_tikz.py plan_salle_302.tex --salle 302
+    ..\outils\python\python.exe outils\importer_plan_salle_tikz.py plan_salle_302.tex --salle 302 --apply
+    … --etab "Hautes Ourmes"            (si plusieurs établissements)
+    … --db chemin\seqenseigne.db        (autre base)
+
+v0.37.1 — Lançable par son chemin : le Python portable (distribution
+« embeddable ») n'ajoute pas le dossier courant à sys.path, donc ni
+`python -m outils.…` ni l'import de `services` ne fonctionnaient. On ajoute
+explicitement le dossier appli/ (parent de outils/) au chemin de recherche.
 """
 
 import argparse
@@ -21,8 +26,12 @@ from collections import Counter
 from datetime import date
 from pathlib import Path
 
-from services import salles as svc
-from services.plan_salle_tikz import places_depuis_tikz, PlanTikzErreur
+_APPLI = Path(__file__).resolve().parent.parent
+if str(_APPLI) not in sys.path:
+    sys.path.insert(0, str(_APPLI))
+
+from services import salles as svc  # noqa: E402
+from services.plan_salle_tikz import places_depuis_tikz, PlanTikzErreur  # noqa: E402
 
 DB = Path(__file__).resolve().parent.parent / "data" / "seqenseigne.db"
 

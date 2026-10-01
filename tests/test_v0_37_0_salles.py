@@ -374,3 +374,15 @@ class TestPlanTikz:
             assert s["nom"] == "302" and s["nb_places"] == 33
         with pytest.raises(SystemExit):      # la salle existe déjà
             main([str(FIXTURE_302), "--salle", "302", "--db", db, "--apply"])
+
+
+def test_outil_lancable_par_son_chemin(tmp_path):
+    """v0.37.1 — Le Python portable n'ajoute pas le dossier courant à
+    sys.path : le script doit trouver `services` tout seul, lancé par son
+    chemin depuis un autre dossier, avec -I (mode isolé, sans PYTHONPATH)."""
+    import subprocess, sys as _sys
+    script = Path(__file__).resolve().parent.parent / "outils" / "importer_plan_salle_tikz.py"
+    r = subprocess.run([_sys.executable, "-I", str(script), "--help"],
+                       cwd=tmp_path, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "--salle" in r.stdout
