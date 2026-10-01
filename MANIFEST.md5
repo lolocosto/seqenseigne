@@ -1,5 +1,12 @@
-56a49a4d63d0df2baae0882724d24559  2779  .gitignore
-308990d9a9c0610c8ab9966606616e85  4612  doc\ETAT_COURANT.md
-6eea2f487e9c4567b3f2e5d36d78b59f  4784  tests\test_annees_scolaires.py
-6016263eb00cb071aec659febb78d680  1401  tests_js\deeplink_atelier_defini.test.js
-b3c31f9dde6610056e92cb879ceaea61  2351  doc\redemarrage_v0_41_0.md
+78abde26e1326cd3af1b0451e6bd658f  4676  doc\ETAT_COURANT.md
+9513c4aefe579810879638ba5944c28f  6483  routes\affectation.py
+a6c823ffd10f69760802131a8519b31a  3732  routes\decalage_progression.py
+fb6c139f3838e378e5c22259c59e65c8  5251  routes\leitner.py
+bc3e659cd28445ff5bc7a392792abe3d  10969  routes\progression_mer.py
+af41145f5ef5eba10e11157d8f289d0a  2387  routes\projection.py
+b6e0f1c75a60bae0d384a6a04fb3022e  4244  services\edt_apercu.py
+fbca0185d3e0679a7665885ceb8b2b5b  12021  services\planification_hebdo.py
+b638ea5b248ab7502ceeaeddef7bca24  2312  doc\redemarrage_v0_41_1.md
+420cbb71c48bb216fd22a2eec9e347af  4375  services\contexte_projection.py
+6b16d3e8df3c28d24e5c7e06640d4eb2  68955  tests\fixtures\snapshot_projection_v0_41_1.json
+2327ea5ad59f80d0e50b621ff3f255a8  12246  tests\test_v0_41_1_projection_figee.py

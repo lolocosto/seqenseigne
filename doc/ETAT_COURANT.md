@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.41.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.41.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -28,7 +28,8 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
 - v0.40.0 livrée : sexe des élèves (import + saisie), aléatoire mixte,
   places AESH. Chantier v0.37–v0.40 terminé.
 - Revue des dettes techniques (v0.41.x) : v0.41.0 livrée (suite de tests au
-  vert, pdf.js versionné). Suivantes : v0.41.1 helper de projection ;
+  vert, pdf.js versionné) ; v0.41.1 livrée (préparation de la projection
+  unique : services/contexte_projection.py). Suivantes :
   v0.41.2 filtre A/B, report MER, sélecteur d'établissement + fusion ;
   v0.41.3 nettoyage.
 
@@ -56,8 +57,6 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
 
 ## Dettes techniques repérées (préexistantes)
 
-- Projection : préparation (grille, indispos, vacances, 1er sept.) dupliquée
-  dans 5 routes + services/edt_apercu.py → helper commun à créer.
 - Planification hebdo / tableau de bord : pas de filtre semaine A/B.
 - MER (affectation case par case) : pas de report d'une affectation modifiée
   vers les cases futures issues d'un changement d'EdT déjà programmé.
@@ -73,6 +72,8 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   paquet du projet s'il est voisin d'appli/.
 - push-to-github.html crée des commits additifs : les suppressions
   (`MANIFEST_SUPPRESSIONS.md`) sont à reporter à la main sur GitHub.
+- Projection : toute préparation passe par services/contexte_projection.py
+  (v0.41.1) ; ne pas recopier la séquence calendrier/EdT/grille/indispos.
 - Palette des niveaux : source unique = variables `--niv-*` du §20 de app.css
   (v0.36.2). Ne pas recréer de palette parallèle.
 

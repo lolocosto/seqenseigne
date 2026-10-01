@@ -77,7 +77,7 @@ def api_progression_realisee(classe_id):
     décalages (semaines neutralisées) + la liste des semaines neutralisées et
     leur motif. Le client se contente d'afficher : aucun calcul métier en JS.
     """
-    from services import calendrier_scolaire as cal
+    from services import contexte_projection as ctx
     annee = _annee()
     store = _store()
     with store._conn() as conn:
@@ -97,13 +97,7 @@ def api_progression_realisee(classe_id):
 
     # Vacances de l'année (pour le calcul des semaines de cours).
     academie = row["aca"] or ""
-    vacances = []
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances = cal.vacances(annee, zone, store, academie=academie)
-        except Exception:
-            vacances = []
+    vacances = ctx.calendrier(store, annee, academie, feries=False)["vacances"]
 
     res = svc.calculer_pour_classe(creneaux, decalages, annee, vacances)
     return jsonify({"classe_id": classe_id, "annee": annee,

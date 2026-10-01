@@ -9,11 +9,7 @@ from flask import Blueprint, jsonify, request, current_app
 
 from services import affectation as svc
 from services.affectation import AffectationErreur
-from services import edt as edt_svc
-from services import grille_horaire as gh_svc
-from services import projection_seances as proj
-from services import indisponibilites as ind_svc
-from services import calendrier_scolaire as cal
+from services import contexte_projection as ctx
 from services import annees_scolaires
 
 bp = Blueprint("affectation", __name__)
@@ -143,35 +139,15 @@ def api_planning_affecte(classe_id):
             return jsonify({"error": "classe introuvable"}), 404
         etab_id = row["eid"]
         academie = row["academie"] or ""
-        toutes = edt_svc.lister(conn, annee, classe_id=classe_id)
-        edt_comptees = [c for c in toutes
-                        if edt_svc.est_compte(c)]
-        grille = gh_svc.lister(conn, etab_id) if etab_id else []
-        indispos = ind_svc.lister(conn, annee, etablissement_id=etab_id) if etab_id else []
+        donnees = ctx.donnees_classe(conn, annee, classe_id, etab_id)
         mode = svc.lire_mode(conn, classe_id, annee)
         aff_par_edt = svc.lire_affectations(conn, classe_id, annee)
         motif = svc.lire_motif(conn, classe_id, annee)
         exceptions = svc.dates_exceptions(conn, classe_id, annee)
 
     # Vacances + fériés (réseau/cache hors _conn).
-    vacances = []
-    feries = {}
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances = cal.vacances(annee, zone, store, academie=academie)
-        except Exception:
-            vacances = []
-    try:
-        feries = cal.jours_feries_annee_scolaire(annee, store)
-    except Exception:
-        feries = {}
-    d = int(annee.split("-")[0])
-    date_min = f"{d}-09-01"
-
-    seances = proj.projeter(annee, edt_comptees, grille, vacances, feries,
-                            date_min=date_min, indisponibilites=indispos,
-                            classe_id=classe_id)
+    cal = ctx.calendrier(store, annee, academie)
+    seances = ctx.projeter_donnees(annee, classe_id, donnees, cal)
     affectees = svc.affecter(seances, mode,
                              affectations_par_edt=aff_par_edt,
                              motif=motif, exceptions=exceptions)
