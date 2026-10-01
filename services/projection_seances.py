@@ -133,6 +133,9 @@ def projeter(annee_scolaire: str, edt_classe: list, grille: list,
             "jour": jour,
             "creneau_code": c.get("creneau_code", ""),
             "semaine": c.get("semaine", "AB"),
+            # v0.38.0 — période de validité (EdT versionné).
+            "valide_du": c.get("valide_du") or "",
+            "valide_au": c.get("valide_au") or "",
         })
     # Jours ouvrés = offsets des jours où la classe a au moins une case.
     jours_ouvres = sorted({_JOUR_INDEX[c["jour"]] for c in cases})
@@ -166,8 +169,12 @@ def projeter(annee_scolaire: str, edt_classe: list, grille: list,
             label = "A" if label == "B" else "B"
 
         # Cases applicables cette semaine (semaine == label ou 'AB').
+        # v0.38.0 — … et valables cette semaine-là (EdT versionné).
+        lundi_iso = _iso(lundi)
         applicables = [c for c in cases
-                       if c["semaine"] == label or c["semaine"] == "AB"]
+                       if (c["semaine"] == label or c["semaine"] == "AB")
+                       and (not c["valide_du"] or c["valide_du"] <= lundi_iso)
+                       and (not c["valide_au"] or lundi_iso < c["valide_au"])]
         # Tri par jour puis par ordre du créneau dans la grille.
         def _cle(c):
             g = horaires.get(c["creneau_code"], {})

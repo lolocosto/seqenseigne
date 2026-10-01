@@ -4274,3 +4274,26 @@ textarea.latex-textarea {
 }
 #sal-svg .sal-place.sal-sel rect { fill: var(--primary-bg); stroke: var(--primary); stroke-width: 2.2; }
 #sal-svg .sal-place.sal-sel text { fill: var(--primary-dark); font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.38.0 — EdT versionné (static/edt.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.edt-barre { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
+.edt-nav { display: flex; align-items: center; gap: 6px; }
+.edt-nav strong { min-width: 150px; text-align: center; }
+.edt-etat { font-size: 12px; padding: 2px 9px; border-radius: 10px; white-space: nowrap; }
+.edt-etat-saisie { background: #fef3c7; color: #78350f; }
+.edt-etat-fige { background: var(--primary-bg); color: var(--primary-dark); }
+.edt-salle-partout { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.edt-salle-partout select { font-size: 12px; }
+.edt-changements { margin-top: 12px; font-size: 13px; }
+.edt-changements ul { margin: 4px 0 0; padding-left: 18px; }
+.edt-changements li { margin-bottom: 4px; }
+.edt-ch-titre { font-weight: 500; }
+.edt-aide { font-size: 12px; color: var(--text-secondary); margin: 0; }
+.edt-danger { color: var(--danger); }
+.edt-marque-change {
+  position: absolute; top: 1px; right: 2px; font-size: 9px; font-weight: 600;
+  color: #9a3412; background: #fff7ed; border-radius: 3px; padding: 0 2px;
+}
+.edt-pop-note { font-size: 11px; color: var(--text-secondary); margin: -4px 0 10px; }

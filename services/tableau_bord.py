@@ -140,7 +140,8 @@ def seances_de_la_semaine(conn, store, annee: str,
             "WHERE annee = ?", (annee,)).fetchall()
         for cl in classes:
             cid = cl["id"]
-            edt_cases = edt_svc.lister(c2, annee, classe_id=cid)
+            # v0.38.0 — cases valides cette semaine (EdT versionné).
+            edt_cases = edt_svc.lister(c2, annee, classe_id=cid, a_la_date=lundi)
             comptees = [x for x in edt_cases if edt_svc.est_compte(x)]
             affectations = aff_svc.lire_affectations(c2, cid, annee)
             mer_mode = cl["mer_mode"] or "automatismes"

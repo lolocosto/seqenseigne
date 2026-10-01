@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.37.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.38.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -21,7 +21,9 @@
 
 Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
 - v0.37.0 livrée : salles + éditeur libre de plan + versions + import TikZ 302.
-- Prochaine étape : v0.38 — EdT versionné, salle et nombre d'AESH par case.
+- v0.38.0 livrée : EdT versionné (en saisie / figé, périodes, scission,
+  changements programmés, aperçu), salle et nombre d'AESH par case.
+- Prochaine étape : v0.39 — plans de classe hebdomadaires.
 
 ## Chantier précédent : planification de la distribution de documents
 
@@ -53,6 +55,12 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   courante, dépendants de la date système → à corriger.
 - `tests_js/deeplink_atelier_defini.test.js` : lit app.js par un chemin absolu
   codé en dur (`/home/claude/extract/...`) → échoue hors de cet environnement.
+- Projection : préparation (grille, indispos, vacances, 1er sept.) dupliquée
+  dans 5 routes + services/edt_apercu.py → helper commun à créer.
+- Planification hebdo / tableau de bord : pas de filtre semaine A/B.
+- MER (affectation case par case) : pas de report d'une affectation modifiée
+  vers les cases futures issues d'un changement d'EdT déjà programmé.
+- outils/migrer_edt_groupe_usage.py : obsolète depuis v0.38 (schéma).
 - Fusion d'établissements : ne migre ni la grille horaire ni l'EdT (les salles
   oui, depuis v0.37.0).
 - Outils CLI qui importent `services`/`persistence` : le Python portable

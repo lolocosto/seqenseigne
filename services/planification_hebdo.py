@@ -117,7 +117,9 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
     cases = []
     for cl in classes:
         cid = cl["id"]
-        edt_cases = edt_svc.lister(conn, annee, classe_id=cid)
+        # v0.38.0 — cases valides la semaine affichée (EdT versionné).
+        edt_cases = edt_svc.lister(conn, annee, classe_id=cid,
+                                   a_la_date=date.fromisoformat(sem["lundi"]))
         comptees = [x for x in edt_cases if edt_svc.est_compte(x)]
         affectations = aff_svc.lire_affectations(conn, cid, annee)
         mer_mode = cl["mer_mode"] or "automatismes"

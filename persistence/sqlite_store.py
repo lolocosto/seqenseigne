@@ -1455,6 +1455,62 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.38.0 — EdT versionné : périodes de validité, salle, AESH ───────
+        # Chaque case porte une période [valide_du, valide_au) en lundis ISO
+        # ('' = début / fin d'année). La contrainte UNIQUE historique (annee,
+        # jour, creneau_code, semaine, etablissement_id) interdisait deux
+        # lignes pour une même case à des périodes différentes : on reconstruit
+        # la table sans elle (le non-chevauchement est contrôlé par
+        # services/edt.py). + `edt_etats` : EdT « en saisie » ou « figé » par
+        # (année, établissement).
+        try:
+            cols_edt = {r["name"] for r in conn.execute(
+                "PRAGMA table_info(edt_creneaux)").fetchall()}
+            if cols_edt and "valide_du" not in cols_edt:
+                conn.executescript("""
+                    CREATE TABLE edt_creneaux_v38 (
+                        id               TEXT    PRIMARY KEY,
+                        annee            TEXT    NOT NULL,
+                        jour             TEXT    NOT NULL,
+                        creneau_code     TEXT    NOT NULL,
+                        semaine          TEXT    NOT NULL DEFAULT 'AB',
+                        classe_id        TEXT,
+                        etablissement_id TEXT    NOT NULL,
+                        libelle          TEXT    NOT NULL DEFAULT '',
+                        usage            TEXT    NOT NULL DEFAULT 'cours',
+                        groupe           TEXT    NOT NULL DEFAULT 'classe_entiere',
+                        ordre            INTEGER NOT NULL DEFAULT 0,
+                        valide_du        TEXT    NOT NULL DEFAULT '',
+                        valide_au        TEXT    NOT NULL DEFAULT '',
+                        salle_id         TEXT,
+                        nb_aesh          INTEGER NOT NULL DEFAULT 0
+                    );
+                    INSERT INTO edt_creneaux_v38
+                        (id, annee, jour, creneau_code, semaine, classe_id,
+                         etablissement_id, libelle, usage, groupe, ordre)
+                    SELECT id, annee, jour, creneau_code, semaine, classe_id,
+                           etablissement_id, libelle, usage, groupe, ordre
+                    FROM edt_creneaux;
+                    DROP TABLE edt_creneaux;
+                    ALTER TABLE edt_creneaux_v38 RENAME TO edt_creneaux;
+                """)
+            conn.executescript("""
+                CREATE INDEX IF NOT EXISTS idx_edt_annee_classe
+                    ON edt_creneaux (annee, classe_id);
+                CREATE INDEX IF NOT EXISTS idx_edt_case
+                    ON edt_creneaux (annee, etablissement_id, jour, creneau_code);
+                CREATE TABLE IF NOT EXISTS edt_etats (
+                    annee            TEXT NOT NULL,
+                    etablissement_id TEXT NOT NULL,
+                    etat             TEXT NOT NULL DEFAULT 'en_saisie',
+                    date_figeage     TEXT NOT NULL DEFAULT '',
+                    PRIMARY KEY (annee, etablissement_id)
+                );
+            """)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:
