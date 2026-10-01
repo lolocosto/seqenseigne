@@ -7,11 +7,7 @@ from flask import Blueprint, jsonify, request, current_app, Response
 
 from services import progression_mer as svc
 from services.progression_mer import ProgMerErreur
-from services import edt as edt_svc
-from services import grille_horaire as gh_svc
-from services import projection_seances as proj
-from services import indisponibilites as ind_svc
-from services import calendrier_scolaire as cal
+from services import contexte_projection as ctx
 from services import annees_scolaires
 
 bp = Blueprint("progression_mer", __name__)
@@ -131,32 +127,17 @@ def api_planning(classe_id):
         prog = svc.creer_ou_lire(conn, row["niveau"], annee)
         etab_id = row["eid"]
         academie = row["aca"] or ""
-        toutes = edt_svc.lister(conn, annee, classe_id=classe_id)
-        edt_comptees = [c for c in toutes if edt_svc.est_compte(c)]
-        grille = gh_svc.lister(conn, etab_id) if etab_id else []
-        indispos = ind_svc.lister(conn, annee, etablissement_id=etab_id) \
-            if etab_id else []
+        donnees = ctx.donnees_classe(conn, annee, classe_id, etab_id)
+        grille, indispos = donnees["grille"], donnees["indispos"]
         parties = prog.get("parties", [])
         from services import affectation as aff_svc
         affectations = aff_svc.lire_affectations(conn, classe_id, annee)
         exceptions = aff_svc.dates_exceptions(conn, classe_id, annee)
         mer_mode = row["mer_mode"] or "automatismes"
 
-    vacances, feries = [], {}
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances = cal.vacances(annee, zone, store, academie=academie)
-        except Exception:
-            vacances = []
-    try:
-        feries = cal.jours_feries_annee_scolaire(annee, store)
-    except Exception:
-        feries = {}
-    d = int(annee.split("-")[0])
-    seances = proj.projeter(annee, edt_comptees, grille, vacances, feries,
-                            date_min=f"{d}-09-01", indisponibilites=indispos,
-                            classe_id=classe_id)
+    cal = ctx.calendrier(store, annee, academie)     # hors du _conn
+    vacances, feries = cal["vacances"], cal["feries"]
+    seances = ctx.projeter_donnees(annee, classe_id, donnees, cal)
     # v0.28.0 — En progression MER, ne consommer que les séances affectées
     # « progression » (défaut selon le mode ; panachage = choix par créneau).
     from services import affectation as aff_svc
@@ -195,11 +176,8 @@ def api_planning_pdf(classe_id):
         prog = svc.creer_ou_lire(conn, row["niveau"], annee)
         etab_id = row["eid"]
         academie = row["aca"] or ""
-        toutes = edt_svc.lister(conn, annee, classe_id=classe_id)
-        edt_comptees = [c for c in toutes if edt_svc.est_compte(c)]
-        grille = gh_svc.lister(conn, etab_id) if etab_id else []
-        indispos = ind_svc.lister(conn, annee, etablissement_id=etab_id) \
-            if etab_id else []
+        donnees = ctx.donnees_classe(conn, annee, classe_id, etab_id)
+        grille, indispos = donnees["grille"], donnees["indispos"]
         parties = prog.get("parties", [])
         from services import affectation as aff_svc
         affectations = aff_svc.lire_affectations(conn, classe_id, annee)
@@ -211,21 +189,9 @@ def api_planning_pdf(classe_id):
                              (prog["ref_mer_id"],)).fetchone()
             ref_nom = r["nom"] if r else ""
 
-    vacances, feries = [], {}
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances = cal.vacances(annee, zone, store, academie=academie)
-        except Exception:
-            vacances = []
-    try:
-        feries = cal.jours_feries_annee_scolaire(annee, store)
-    except Exception:
-        feries = {}
-    d = int(annee.split("-")[0])
-    seances = proj.projeter(annee, edt_comptees, grille, vacances, feries,
-                            date_min=f"{d}-09-01", indisponibilites=indispos,
-                            classe_id=classe_id)
+    cal = ctx.calendrier(store, annee, academie)     # hors du _conn
+    vacances, feries = cal["vacances"], cal["feries"]
+    seances = ctx.projeter_donnees(annee, classe_id, donnees, cal)
     # v0.28.0 — Ne consommer que les séances affectées « progression ».
     from services import affectation as aff_svc
     reparties = aff_svc.repartir_mer(seances, mer_mode, affectations, exceptions)

@@ -39,10 +39,14 @@ def generer_id_eleve(existants=None) -> str:
 # ── Opérations sur les classes ─────────────────────────────────────────────────
 
 def creer_classe(classes_data: dict, nom: str, niveau: str,
-                 annee: str, etablissement: str) -> tuple[dict, dict]:
+                 annee: str, etablissement: str,
+                 etablissement_id: str | None = None) -> tuple[dict, dict]:
     """
     Crée une nouvelle classe et l'ajoute à classes_data.
     Retourne (classes_data_modifié, nouvelle_classe).
+
+    v0.41.2 — `etablissement_id` (choisi dans un sélecteur) est prioritaire ;
+    le nom `etablissement` ne sert plus qu'aux imports.
     """
     existants = {c["id"] for c in classes_data.get("classes", [])}
     cid = generer_id_classe(nom, existants)
@@ -53,6 +57,7 @@ def creer_classe(classes_data: dict, nom: str, niveau: str,
         "annee":          annee,
         "etablissement":  etablissement,
         "eleves":         [],
+        **({"etablissement_id": etablissement_id} if etablissement_id else {}),
         "versions_actives":      {},
         "sequences_verouillees": [],
     }

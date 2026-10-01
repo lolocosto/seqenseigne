@@ -47,10 +47,8 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
                   type_mer, indispo} ]
     }
     """
-    from services import edt as edt_svc
-    from services import affectation as aff_svc
     from services import grille_horaire as gh_svc
-    from services import indisponibilites as ind_svc
+    from services import contexte_projection as ctx
 
     sem = semaine_de(annee, lundi_iso)
     dates = sem["jours"]
@@ -69,28 +67,15 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
             creneaux_grille.append(g["code"])
             ordre_creneau[g["code"]] = g.get("ordre", 0)
 
-    indispos = ind_svc.lister(conn, annee, etablissement_id=eid) if eid else []
-
     # v0.32.3 — Statut de chaque jour de la semaine : en vacances (avec le nom
     # de la période) et/ou férié, pour afficher les jours/semaines non
     # travaillés comme tels.
-    from services import calendrier_scolaire as cal
-    vacances_periodes, feries = [], {}
     r_aca = conn.execute(
         "SELECT academie FROM etablissements WHERE id=?", (eid,)).fetchone() \
         if eid else None
     academie = (r_aca["academie"] if r_aca else "") or ""
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances_periodes = cal.vacances(annee, zone, store,
-                                             academie=academie)
-        except Exception:
-            vacances_periodes = []
-    try:
-        feries = cal.jours_feries_annee_scolaire(annee, store)
-    except Exception:
-        feries = {}
+    cal_s = ctx.calendrier(store, annee, academie)
+    vacances_periodes, feries = cal_s["vacances"], cal_s["feries"]
 
     def _vac_du_jour(iso):
         for p in vacances_periodes:
@@ -110,50 +95,19 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
         })
     semaine_vacances = all(ji["vacances"] for ji in jours_info)
 
-    classes = conn.execute(
-        "SELECT id, nom, niveau, mer_active, mer_mode FROM classes "
-        "WHERE annee=?", (annee,)).fetchall()
-
+    # v0.41.2 — Séances de la semaine telles que la projection les voit
+    # (alternance A/B, versions d'EdT, fériés, rentrée, exceptions MER) :
+    # services/contexte_projection.seances_de_la_semaine.
     cases = []
-    for cl in classes:
-        cid = cl["id"]
-        # v0.38.0 — cases valides la semaine affichée (EdT versionné).
-        edt_cases = edt_svc.lister(conn, annee, classe_id=cid,
-                                   a_la_date=date.fromisoformat(sem["lundi"]))
-        comptees = [x for x in edt_cases if edt_svc.est_compte(x)]
-        affectations = aff_svc.lire_affectations(conn, cid, annee)
-        mer_mode = cl["mer_mode"] or "automatismes"
-        mer_on = bool(cl["mer_active"])
-        for case in comptees:
-            j = case.get("jour")
-            if j not in date_par_jour:
-                continue
-            d_iso = date_par_jour[j]
-            # Type MER du créneau.
-            type_mer = None
-            if mer_on:
-                aff = affectations.get(case.get("id"))
-                if aff is None:
-                    aff = ("aucun" if mer_mode == "panache"
-                           else ("progression" if mer_mode == "progression"
-                                 else "automatisme"))
-                if aff == "automatisme":
-                    type_mer = "mer_auto"
-                elif aff == "progression":
-                    type_mer = "mer_prog"
-            # Indisponibilité sur cette séance ?
-            seance = {"date": d_iso, "creneau_code": case.get("creneau_code", "")}
-            indispo = any(
-                ind_svc.concerne_seance(ind, seance, cid, ordre_creneau)
-                for ind in indispos)
-            cases.append({
-                "jour": j, "date": d_iso,
-                "creneau": case.get("creneau_code", ""),
-                "classe_id": cid, "classe": cl["nom"], "niveau": cl["niveau"],
-                "type_mer": type_mer or "principale",
-                "indispo": indispo,
-                "edt_creneau_id": case.get("id"),
-            })
+    for x in ctx.seances_de_la_semaine(conn, store, annee, sem["lundi"]):
+        cases.append({
+            "jour": x["jour"], "date": x["date"], "creneau": x["creneau"],
+            "classe_id": x["classe_id"], "classe": x["classe"],
+            "niveau": x["niveau"],
+            "type_mer": x["type_mer"] or "principale",
+            "indispo": x["indispo"],
+            "edt_creneau_id": x["edt_creneau_id"],
+        })
     cases.sort(key=lambda c: (c["date"], ordre_creneau.get(c["creneau"], 0),
                               c["classe"]))
     return {**sem, "creneaux": creneaux_grille, "cases": cases,
@@ -168,13 +122,9 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
       - Principal : code + nom de séquence, partie (1ère/2ème…), et rang de la
         séance dans la partie.
     """
-    from services import calendrier_scolaire as cal
+    from services import contexte_projection as ctx
     from services import decalage_progression as dec_svc
-    from services import edt as edt_svc
-    from services import grille_horaire as gh_svc
     from services import affectation as aff_svc
-    from services import indisponibilites as ind_svc
-    from services import projection_seances as proj
     from services import leitner
 
     row = conn.execute(
@@ -187,34 +137,17 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
     eid = row["eid"]
     academie = row["aca"] or ""
     # Calendrier commun.
-    vacances, feries = [], {}
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances = cal.vacances(annee, zone, store, academie=academie)
-        except Exception:
-            vacances = []
-    try:
-        feries = cal.jours_feries_annee_scolaire(annee, store)
-    except Exception:
-        feries = {}
-    d0 = int(annee.split("-")[0])
-    date_min = f"{d0}-09-01"
+    cal_s = ctx.calendrier(store, annee, academie)
+    vacances = cal_s["vacances"]
 
     # ── MER : type + enveloppes (si automatismes) ────────────────────────────
     mer_type = None       # 'mer_auto' | 'mer_prog' | None
     mer_enveloppes = []
     if row["mer_active"]:
-        toutes = edt_svc.lister(conn, annee, classe_id=classe_id)
-        edt_comptees = [c for c in toutes if edt_svc.est_compte(c)]
-        grille = gh_svc.lister(conn, eid) if eid else []
-        indispos = ind_svc.lister(conn, annee, etablissement_id=eid) if eid else []
         affectations = aff_svc.lire_affectations(conn, classe_id, annee)
         exceptions = aff_svc.dates_exceptions(conn, classe_id, annee)
         mer_mode = row["mer_mode"] or "automatismes"
-        seances = proj.projeter(annee, edt_comptees, grille, vacances, feries,
-                                date_min=date_min, indisponibilites=indispos,
-                                classe_id=classe_id)
+        seances = ctx.projeter_classe(conn, annee, classe_id, eid, cal_s)
         reparties = aff_svc.repartir_mer(seances, mer_mode, affectations,
                                          exceptions)
         # La séance de MER auto qui correspond à (date, créneau) ?
@@ -261,15 +194,7 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
             # Rang de la séance dans la partie : nb de séances comptées
             # (principale) de la classe depuis le début du créneau jusqu'à
             # cette date incluse. On réutilise l'EdT principal.
-            toutes = edt_svc.lister(conn, annee, classe_id=classe_id)
-            edt_comptees = [c for c in toutes if edt_svc.est_compte(c)]
-            grille = gh_svc.lister(conn, eid) if eid else []
-            indispos = ind_svc.lister(conn, annee, etablissement_id=eid) \
-                if eid else []
-            seances = proj.projeter(annee, edt_comptees, grille, vacances,
-                                    feries, date_min=date_min,
-                                    indisponibilites=indispos,
-                                    classe_id=classe_id)
+            seances = ctx.projeter_classe(conn, annee, classe_id, eid, cal_s)
             deb_cr = creneau_courant.get("date_debut") or ""
             rang = 0
             for s in seances:

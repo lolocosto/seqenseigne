@@ -116,15 +116,26 @@ def api_classes_post():
     if not nom:
         return jsonify({"error": "nom requis"}), 400
     js = _js()
+    etab_id = (body.get("etablissement_id") or "").strip() or None
+    if etab_id:
+        # v0.41.2 — établissement choisi dans le sélecteur : il doit exister.
+        with js._conn() as conn:
+            r = conn.execute("SELECT nom FROM etablissements WHERE id=?",
+                             (etab_id,)).fetchone()
+        if r is None:
+            return jsonify({"error": "établissement inconnu"}), 400
     data, nouvelle = svc.creer_classe(
         js.lire_classes(),
         nom=nom,
         niveau=body.get("niveau", "N10").strip(),
         annee=body.get("annee", "").strip(),
-        etablissement=body.get("etablissement", "").strip(),
+        etablissement=(r["nom"] if etab_id else body.get("etablissement", "").strip()),
+        etablissement_id=etab_id,
     )
     js.ecrire_classes(data)
-    return jsonify(nouvelle)
+    c = next((x for x in js.lire_classes()["classes"] if x["id"] == nouvelle["id"]),
+             nouvelle)
+    return jsonify(c)
 
 
 @bp.route("/api/classes/<cid>", methods=["PUT"])

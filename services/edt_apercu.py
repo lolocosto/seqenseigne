@@ -9,49 +9,27 @@ joue l'opération dans un SAVEPOINT, on recalcule, puis on annule. Les
 vacances et fériés sont récupérés AVANT d'ouvrir la transaction : leur
 récupération peut écrire dans le cache de la base (sinon verrou SQLite).
 
-Les étapes de préparation de la projection (grille, indisponibilités,
-vacances, borne du 1er septembre) reprennent celles de routes/projection.py.
-Dette notée : ce bloc est dupliqué dans plusieurs routes (projection, leitner,
-progression_mer, affectation) et mériterait un helper commun.
+Préparation de la projection : services/contexte_projection.py (v0.41.1).
 """
 
 from __future__ import annotations
 from datetime import date
 
 from services import edt as edt_svc
-from services import grille_horaire as gh_svc
-from services import indisponibilites as ind_svc
-from services import projection_seances as proj
-from services import calendrier_scolaire as cal
+from services import contexte_projection as ctx
 
 OPERATIONS = ("ajouter", "modifier", "supprimer", "appliquer_salle")
 
 
 def _calendrier(store, annee: str, academie: str) -> tuple[list, dict]:
-    vacances, feries = [], {}
-    zone = cal.zone_academie(academie) if academie else None
-    if zone:
-        try:
-            vacances = cal.vacances(annee, zone, store, academie=academie)
-        except Exception:
-            vacances = []
-    try:
-        feries = cal.jours_feries_annee_scolaire(annee, store)
-    except Exception:
-        feries = {}
-    return vacances, feries
+    cal = ctx.calendrier(store, annee, academie)
+    return cal["vacances"], cal["feries"]
 
 
 def _compter(conn, annee, classe_id, etab_id, vacances, feries,
              depuis: str) -> int:
-    cases = [c for c in edt_svc.lister(conn, annee, classe_id=classe_id)
-             if edt_svc.est_compte(c)]
-    grille = gh_svc.lister(conn, etab_id)
-    indispos = ind_svc.lister(conn, annee, etablissement_id=etab_id)
-    d = int(annee.split("-")[0])
-    seances = proj.projeter(annee, cases, grille, vacances, feries,
-                            date_min=f"{d}-09-01", indisponibilites=indispos,
-                            classe_id=classe_id)
+    seances = ctx.projeter_classe(conn, annee, classe_id, etab_id,
+                                  {"vacances": vacances, "feries": feries})
     return sum(1 for s in seances if s["date"] >= depuis)
 
 

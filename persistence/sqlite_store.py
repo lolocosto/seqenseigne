@@ -1755,10 +1755,15 @@ class SqliteStore:
                     nom_etab = c.get("etablissement", "").strip()
                     if not nom_etab:
                         nom_etab = "Non renseigné"
-                    # Chercher ou créer l'établissement
-                    row = conn.execute(
-                        "SELECT id FROM etablissements WHERE nom=?", (nom_etab,)
-                    ).fetchone()
+                    # Chercher ou créer l'établissement. v0.41.2 — nom
+                    # comparé sans tenir compte de la casse ni des espaces
+                    # (« collège  les hautes ourmes » = « Collège les Hautes
+                    # Ourmes ») : évite les doublons d'établissement.
+                    def _cle(n):
+                        return " ".join((n or "").split()).casefold()
+                    row = next((r for r in conn.execute(
+                        "SELECT id, nom FROM etablissements").fetchall()
+                        if _cle(r[1]) == _cle(nom_etab)), None)
                     if row:
                         etab_id = row[0]
                     else:

@@ -1,0 +1,2626 @@
+{
+ "apercu_edt": [
+  {
+   "apres": 39,
+   "avant": 70,
+   "classe_id": "cl",
+   "nom": "4EME3"
+  }
+ ],
+ "planif_hebdo": {
+  "json": {
+   "cases": [
+    {
+     "classe": "4EME3",
+     "classe_id": "cl",
+     "creneau": "M1",
+     "date": "2026-11-30",
+     "edt_creneau_id": "edt:lun:M1:",
+     "indispo": false,
+     "jour": "lun",
+     "niveau": "N11",
+     "type_mer": "mer_auto"
+    },
+    {
+     "classe": "4EME3",
+     "classe_id": "cl",
+     "creneau": "M3",
+     "date": "2026-12-03",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "indispo": true,
+     "jour": "jeu",
+     "niveau": "N11",
+     "type_mer": "principale"
+    },
+    {
+     "classe": "4EME3",
+     "classe_id": "cl",
+     "creneau": "M1",
+     "date": "2026-12-04",
+     "edt_creneau_id": "edt:ven:M1:",
+     "indispo": false,
+     "jour": "ven",
+     "niveau": "N11",
+     "type_mer": "mer_prog"
+    }
+   ],
+   "creneaux": [
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "S1",
+    "S2",
+    "S3",
+    "S4"
+   ],
+   "jours": [
+    "2026-11-30",
+    "2026-12-01",
+    "2026-12-02",
+    "2026-12-03",
+    "2026-12-04"
+   ],
+   "jours_info": [
+    {
+     "date": "2026-11-30",
+     "ferie": null,
+     "jour": "lun",
+     "vacances": null
+    },
+    {
+     "date": "2026-12-01",
+     "ferie": null,
+     "jour": "mar",
+     "vacances": null
+    },
+    {
+     "date": "2026-12-02",
+     "ferie": null,
+     "jour": "mer",
+     "vacances": null
+    },
+    {
+     "date": "2026-12-03",
+     "ferie": null,
+     "jour": "jeu",
+     "vacances": null
+    },
+    {
+     "date": "2026-12-04",
+     "ferie": null,
+     "jour": "ven",
+     "vacances": null
+    }
+   ],
+   "lundi": "2026-11-30",
+   "semaine_vacances": false,
+   "vendredi": "2026-12-04"
+  },
+  "statut": 200
+ },
+ "planif_seance": {
+  "json": {
+   "classe": "4EME3",
+   "classe_id": "cl",
+   "creneau": "M1",
+   "date": "2026-12-07",
+   "docs_a_distribuer": [],
+   "mer_enveloppes": [],
+   "mer_type": null,
+   "nb_partie": 8,
+   "niveau": "N11",
+   "partie": "1re partie",
+   "rang_dans_partie": 3,
+   "sequence_code": "S01",
+   "sequence_nom": ""
+  },
+  "statut": 200
+ },
+ "planif_seance_auto": {
+  "json": {
+   "classe": "4EME3",
+   "classe_id": "cl",
+   "creneau": "M1",
+   "date": "2026-12-14",
+   "docs_a_distribuer": [],
+   "mer_enveloppes": [
+    1,
+    2,
+    3
+   ],
+   "mer_type": "mer_auto",
+   "nb_partie": 8,
+   "niveau": "N11",
+   "partie": "1re partie",
+   "rang_dans_partie": 6,
+   "sequence_code": "S01",
+   "sequence_nom": ""
+  },
+  "statut": 200
+ },
+ "planif_seance_prog": {
+  "json": {
+   "classe": "4EME3",
+   "classe_id": "cl",
+   "creneau": "M1",
+   "date": "2026-12-11",
+   "docs_a_distribuer": [],
+   "mer_enveloppes": [],
+   "mer_type": "mer_prog",
+   "nb_partie": 8,
+   "niveau": "N11",
+   "partie": "1re partie",
+   "rang_dans_partie": 5,
+   "sequence_code": "S01",
+   "sequence_nom": ""
+  },
+  "statut": 200
+ },
+ "planning_affecte": {
+  "json": {
+   "annee": "2026-2027",
+   "classe_id": "cl",
+   "mode": "par_seance",
+   "nb_seances": 82,
+   "seances": [
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-09-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 1,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2026-09-10",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 2,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-09-11",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 3,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-09-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 4,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2026-09-15",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 5,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-09-18",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 6,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-09-21",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 7,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2026-09-24",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 8,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-09-25",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 9,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-09-28",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 10,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2026-09-29",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 11,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-10-02",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 12,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-10-05",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 13,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2026-10-08",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 14,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-10-09",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 15,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-10-12",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 16,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2026-10-13",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 17,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-10-16",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 18,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-11-02",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 19,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2026-11-05",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 20,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-11-06",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 21,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-11-09",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 22,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2026-11-10",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 23,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-11-13",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 24,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-11-16",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 25,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2026-11-19",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 26,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-11-20",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 27,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-11-23",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 28,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2026-11-24",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 29,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-11-27",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 30,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-11-30",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 31,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-12-04",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 32,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M1",
+     "date": "2026-12-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 33,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2026-12-08",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 34,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-12-11",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 35,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2026-12-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 36,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2026-12-17",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 37,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "progression",
+     "creneau_code": "M1",
+     "date": "2026-12-18",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 38,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-01-04",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 39,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-01-05",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 40,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-01-11",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 41,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-01-14",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 42,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-01-18",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 43,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-01-19",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 44,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-01-25",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 45,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-01-28",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 46,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-02-01",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 47,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-02-02",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 48,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-02-22",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 49,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-02-25",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 50,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-03-01",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 51,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-03-02",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 52,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-03-08",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 53,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-03-11",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 54,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-03-15",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 55,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-03-16",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 56,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-03-22",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 57,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-03-25",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 58,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-03-29",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 59,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-03-30",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 60,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-04-05",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 61,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-04-08",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 62,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-04-26",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 63,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-04-27",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 64,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-05-03",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 65,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-05-06",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 66,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-05-10",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 67,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-05-11",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 68,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-05-17",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 69,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-05-20",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 70,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-05-24",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 71,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-05-25",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 72,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-05-31",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 73,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-06-03",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 74,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-06-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 75,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-06-08",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 76,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-06-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 77,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-06-17",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 78,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-06-21",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 79,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M2",
+     "date": "2027-06-22",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 80,
+     "semaine_label": "A"
+    },
+    {
+     "affectation": "automatisme",
+     "creneau_code": "M1",
+     "date": "2027-06-28",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 81,
+     "semaine_label": "B"
+    },
+    {
+     "affectation": "aucun",
+     "creneau_code": "M3",
+     "date": "2027-07-01",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 82,
+     "semaine_label": "B"
+    }
+   ]
+  },
+  "statut": 200
+ },
+ "planning_automatismes": {
+  "json": {
+   "annee": "2026-2027",
+   "classe_id": "cl",
+   "classe_nom": "4EME3",
+   "mer_active": true,
+   "mer_mode": "panache",
+   "nb_enveloppes": 4,
+   "nb_seances": 34,
+   "seances": [
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 1,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 2,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-21",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 3,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-28",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 4,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-05",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 5,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-12",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 6,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-02",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 7,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-09",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 8,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-16",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 9,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-23",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 10,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-30",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 11,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 12,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-04",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 13,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-11",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 14,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-18",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 15,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-25",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 16,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-02-01",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 17,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-02-22",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 18,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-01",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 19,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-08",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 20,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-15",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 21,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-22",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 22,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-29",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 23,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-04-05",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 24,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-04-26",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 25,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-03",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 26,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-10",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 27,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-17",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 28,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-24",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 29,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-31",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 30,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 31,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 32,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-21",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 33,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-28",
+     "edt_creneau_id": "edt:lun:M1:",
+     "enveloppes": [
+      1,
+      2
+     ],
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 34,
+     "semaine_label": "B"
+    }
+   ]
+  },
+  "statut": 200
+ },
+ "planning_mer": {
+  "json": {
+   "annee": "2026-2027",
+   "classe_id": "cl",
+   "classe_nom": "4EME3",
+   "nb_seances": 13,
+   "nb_seances_utilisees": 0,
+   "seances": [
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-11",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 1,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-18",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 2,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-25",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 3,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-02",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 4,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-09",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 5,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-16",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 6,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-06",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 7,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-13",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 8,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-20",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 9,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-27",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 10,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-04",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 11,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-11",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 12,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-18",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "mer_libelle": "",
+     "mer_partie_id": null,
+     "mer_rang_partie": 0,
+     "mer_sequence": "",
+     "numero": 13,
+     "semaine_label": "B"
+    }
+   ]
+  },
+  "statut": 200
+ },
+ "progression_realisee": {
+  "json": {
+   "annee": "2026-2027",
+   "classe_id": "cl",
+   "creneaux": [
+    {
+     "date_debut": "2026-11-30",
+     "date_fin": "2026-12-18",
+     "id": "cr1",
+     "objectifs": [],
+     "objectifs_exos": [],
+     "ordre": 1,
+     "partie": "1re partie",
+     "partie_debut": 1,
+     "partie_fin": 1,
+     "periode": null,
+     "revisions": "",
+     "sequence": "S01"
+    },
+    {
+     "date_debut": "2027-01-04",
+     "date_fin": "2027-02-05",
+     "id": "cr2",
+     "objectifs": [],
+     "objectifs_exos": [],
+     "ordre": 2,
+     "partie": "1re partie",
+     "partie_debut": 1,
+     "partie_fin": 1,
+     "periode": null,
+     "revisions": "",
+     "sequence": "S02"
+    }
+   ],
+   "progression_id": "progressions:0",
+   "semaines_neutralisees": []
+  },
+  "statut": 200
+ },
+ "projection": {
+  "json": {
+   "annee": "2026-2027",
+   "avertissements": [],
+   "classe_id": "cl",
+   "nb_seances": 82,
+   "seances": [
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 1,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2026-09-10",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 2,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-11",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 3,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 4,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2026-09-15",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 5,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-18",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 6,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-21",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 7,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2026-09-24",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 8,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-25",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 9,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-09-28",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 10,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2026-09-29",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 11,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-02",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 12,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-05",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 13,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2026-10-08",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 14,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-09",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 15,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-12",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 16,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2026-10-13",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 17,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-10-16",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 18,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-02",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 19,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2026-11-05",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 20,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-06",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 21,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-09",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 22,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2026-11-10",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 23,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-13",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 24,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-16",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 25,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2026-11-19",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 26,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-20",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 27,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-23",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 28,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2026-11-24",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 29,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-27",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 30,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-11-30",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 31,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-04",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 32,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 33,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2026-12-08",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 34,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-11",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 35,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 36,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2026-12-17",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 37,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2026-12-18",
+     "edt_creneau_id": "edt:ven:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "ven",
+     "numero": 38,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-04",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 39,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-01-05",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 40,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-11",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 41,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-01-14",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 42,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-18",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 43,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-01-19",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 44,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-01-25",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 45,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-01-28",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 46,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-02-01",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 47,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-02-02",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 48,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-02-22",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 49,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-02-25",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 50,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-01",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 51,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-03-02",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 52,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-08",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 53,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-03-11",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 54,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-15",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 55,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-03-16",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 56,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-22",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 57,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-03-25",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 58,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-03-29",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 59,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-03-30",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 60,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-04-05",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 61,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-04-08",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 62,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-04-26",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 63,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-04-27",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 64,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-03",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 65,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-05-06",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 66,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-10",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 67,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-05-11",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 68,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-17",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 69,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-05-20",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 70,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-24",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 71,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-05-25",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 72,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-05-31",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 73,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-06-03",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 74,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-07",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 75,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-06-08",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 76,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-14",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 77,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-06-17",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 78,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-21",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 79,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M2",
+     "date": "2027-06-22",
+     "edt_creneau_id": "edt:mar:M2:",
+     "heure_debut": "09:25",
+     "heure_fin": "10:20",
+     "jour": "mar",
+     "numero": 80,
+     "semaine_label": "A"
+    },
+    {
+     "creneau_code": "M1",
+     "date": "2027-06-28",
+     "edt_creneau_id": "edt:lun:M1:",
+     "heure_debut": "08:25",
+     "heure_fin": "09:20",
+     "jour": "lun",
+     "numero": 81,
+     "semaine_label": "B"
+    },
+    {
+     "creneau_code": "M3",
+     "date": "2027-07-01",
+     "edt_creneau_id": "edt:jeu:M3:",
+     "heure_debut": "10:35",
+     "heure_fin": "11:30",
+     "jour": "jeu",
+     "numero": 82,
+     "semaine_label": "B"
+    }
+   ],
+   "vacances_absentes": false,
+   "zone": "B"
+  },
+  "statut": 200
+ },
+ "tex_planning_automatismes": "\\documentclass[a3paper,landscape,11pt]{article}\\usepackage[utf8]{inputenc}\\usepackage[T1]{fontenc}\\usepackage[french]{babel}\\usepackage{pifont}\\usepackage{amssymb}\\usepackage[margin=1cm]{geometry}\\setlength{\\parindent}{0pt}\\pagestyle{empty}\\begin{document}\\begin{center}{\\LARGE\\textbf{Planning des automatismes (Leitner)}}\\par\\vspace{2pt}{\\large 4EME3 --- ann\\'ee 2026-2027}\\par\\vspace{3pt}{\\small Enveloppes \\`a r\\'eviser : \\ding{192} chaque s\\'eance \\quad \\ding{193} une s\\'eance sur deux \\quad \\ding{194} une sur quatre \\quad \\ding{195} une sur huit \\quad $\\varnothing$ = indisponible}\\end{center}\\vspace{8pt}{\\sloppy\\setlength{\\baselineskip}{34pt}\\noindent \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 07/09 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 14/09 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 21/09 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 28/09 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 05/10 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 12/10 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances de la Toussaint}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n{\\sloppy\\setlength{\\baselineskip}{34pt}\\noindent \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 02/11 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 09/11 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194} \\ding{195}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 16/11 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 23/11 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 30/11 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 14/12 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances de Noël}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n{\\sloppy\\setlength{\\baselineskip}{34pt}\\noindent \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 04/01 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 11/01 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 18/01 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 25/01 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194} \\ding{195}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 01/02 \\textbf{M1}}\\\\[1pt]\\ding{192}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances d'Hiver}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n{\\sloppy\\setlength{\\baselineskip}{34pt}\\noindent \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 22/02 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 01/03 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 08/03 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 15/03 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 22/03 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 29/03 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 05/04 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194} \\ding{195}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances de Printemps}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n{\\sloppy\\setlength{\\baselineskip}{34pt}\\noindent \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 26/04 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 03/05 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 10/05 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 17/05 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 24/05 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 31/05 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 07/06 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 14/06 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193} \\ding{194} \\ding{195}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 21/06 \\textbf{M1}}\\\\[1pt]\\ding{192}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.4cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize lun 28/06 \\textbf{M1}}\\\\[1pt]\\ding{192} \\ding{193}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances d'Été}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\\end{document}",
+ "tex_planning_mer": "\\documentclass[a3paper,landscape,11pt]{article}\\usepackage[utf8]{inputenc}\\usepackage[T1]{fontenc}\\usepackage[french]{babel}\\usepackage{amssymb}\\usepackage[margin=1cm]{geometry}\\setlength{\\parindent}{0pt}\\pagestyle{empty}\\begin{document}\\begin{center}{\\LARGE\\textbf{Planning de progression MER}}\\par\\vspace{2pt}{\\large 4EME3 --- ann\\'ee 2026-2027}\\par\\vspace{3pt}{\\small Sous chaque date : la partie travaill\\'ee (rang dans la partie). $\\varnothing$ = indisponible.}\\end{center}\\vspace{8pt}{\\sloppy\\setlength{\\baselineskip}{40pt}\\noindent \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 11/09 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 18/09 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 25/09 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 02/10 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 09/10 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 16/10 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances de la Toussaint}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n{\\sloppy\\setlength{\\baselineskip}{40pt}\\noindent \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 06/11 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 13/11 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 20/11 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 27/11 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 04/12 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 11/12 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}%\n\\hspace{2mm}\\penalty0 \\parbox[t]{2.7cm}{\\linespread{1}\\selectfont\\centering \\fbox{\\footnotesize ven 18/12 \\textbf{M1}}\\\\[1pt]\\textit{\\footnotesize --}}\\par}\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances de Noël}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances d'Hiver}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances de Printemps}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\n\\par\\medskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\smallskip\\centerline{\\small\\textbf{\\textit{Vacances d'Été}}}\\smallskip\\noindent\\rule{\\linewidth}{0.5pt}\\par\\medskip\\end{document}"
+}
