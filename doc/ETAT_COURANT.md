@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.41.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.41.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -16,22 +16,19 @@
    existent chez l'utilisateur — ne pas conclure « absent » depuis le zip.
 4. Protocole : reconstruire, auditer, cadrer, coder, tester (pytest + vitest),
    livrer un ZIP delta + MANIFEST md5. Jamais de .db dans une livraison.
+5. Le dépôt GitHub (lolocosto/seqenseigne) contient `appli/` à la racine ; il
+   est à jour à chaque livraison poussée : partir d'un `git pull`.
 
-## Chantier en cours : salles, plans de salle, plans de classe
+## Derniers chantiers terminés
 
-Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
-- v0.37.0 livrée : salles + éditeur libre de plan + versions + import TikZ 302.
-- v0.38.0 livrée : EdT versionné (en saisie / figé, périodes, scission,
-  changements programmés, aperçu), salle et nombre d'AESH par case.
-- v0.39.0 livrée : plans de classe hebdomadaires (reconduction, imposé/libre,
-  aléatoire, impression).
-- v0.40.0 livrée : sexe des élèves (import + saisie), aléatoire mixte,
-  places AESH. Chantier v0.37–v0.40 terminé.
-- Revue des dettes techniques (v0.41.x) : v0.41.0 livrée (suite de tests au
-  vert, pdf.js versionné) ; v0.41.1 livrée (préparation de la projection
-  unique : services/contexte_projection.py) ; v0.41.2 livrée (semaine via
-  la projection, report MER, sélecteur d'établissement, fusion). Suivante :
-  v0.41.3 nettoyage.
+- **Plans de classe (v0.37 → v0.40)** — cadrage : `doc/cadrage_plans_de_classe.md`.
+  Salles et éditeur libre de plan (v0.37), EdT versionné avec salle et AESH
+  (v0.38), plans de classe hebdomadaires (v0.39), sexe des élèves, aléatoire
+  mixte, places AESH (v0.40). Suites notées dans `doc/ROADMAP.md`.
+- **Revue des dettes techniques (v0.41.0 → v0.41.3)** : suite de tests au vert
+  et pdf.js versionné (v0.41.0) ; préparation de la projection unique (v0.41.1) ;
+  semaine vue par la projection, report MER, sélecteur d'établissement, fusion
+  encadrée (v0.41.2) ; nettoyage (v0.41.3).
 
 ## Chantier précédent : planification de la distribution de documents
 
@@ -55,24 +52,35 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
 - Suivi « en séance » (observations élèves par pictogrammes, mobile/tablette) —
   gros chantier, cadrage consigné dans reflexion_metier_enseignant_roadmap.md.
 
-## Dettes techniques repérées (préexistantes)
+## Règles à respecter (acquis de la revue des dettes)
 
-- outils/migrer_edt_groupe_usage.py : obsolète depuis v0.38 (schéma).
-- Fusion d'établissements : refusée si la source a un EdT, des
-  indisponibilités ou une grille personnalisée (v0.41.2).
-- Outils CLI qui importent `services`/`persistence` : le Python portable
-  (embeddable) n'a pas le dossier courant dans sys.path → amorce sys.path dans
-  le script et lancement par chemin (`..\outils\python\python.exe outils\x.py`),
-  jamais `python -m` (v0.37.1).
-- Tests ignorés en permanence : `test_paquet_parseur.py::TestIntegration`
-  (5) pointe vers un chemin absolu du paquet LaTeX ; à repointer vers le
-  paquet du projet s'il est voisin d'appli/.
-- push-to-github.html crée des commits additifs : les suppressions
-  (`MANIFEST_SUPPRESSIONS.md`) sont à reporter à la main sur GitHub.
-- Projection : toute préparation passe par services/contexte_projection.py
-  (v0.41.1) ; ne pas recopier la séquence calendrier/EdT/grille/indispos.
-- Palette des niveaux : source unique = variables `--niv-*` du §20 de app.css
-  (v0.36.2). Ne pas recréer de palette parallèle.
+- **Projection** : toute préparation passe par `services/contexte_projection.py`
+  (calendrier hors transaction, `projeter_classe`, `seances_de_la_semaine`) ;
+  ne jamais recopier la séquence calendrier/EdT/grille/indisponibilités.
+- **Palette des niveaux** : source unique = variables `--niv-*` du §20 de
+  `app.css` (v0.36.2).
+- **Libellés LaTeX des niveaux** : `param_niveaux.LIBELLES_NIVEAUX_LATEX`
+  (v0.41.3) ; ne pas recréer de table locale.
+- **Outils CLI** qui importent `services`/`persistence` : amorce `sys.path` dans
+  le script et lancement par chemin
+  (`..\outils\python\python.exe .\outils\x.py`), jamais `python -m` (v0.37.1).
+- **Suppressions** : push-to-github.html crée des commits additifs ; tout
+  fichier listé dans `MANIFEST_SUPPRESSIONS.md` est aussi à supprimer à la main
+  sur GitHub.
+- **Tests figés** : `tests/test_v0_41_1_projection_figee.py` ; ne régénérer la
+  capture que pour un changement de comportement voulu, et le documenter.
+- **Établissements** : création uniquement par sélecteur + « Ajouter un
+  collège » (académie dans la liste connue) ; fusion refusée si la source a un
+  EdT, des indisponibilités ou une grille personnalisée.
+
+## Dettes restantes (mineures)
+
+- `services/tableau_bord.py` (`_NIVEAU_LABEL`) et
+  `services/latex_rendu_atome.py` ont encore leurs propres libellés de niveaux
+  (formes différentes : « 4ème », « 4e », « Quatrième ») ; à rapprocher de
+  `param_niveaux` à l'occasion.
+- `tests/test_paquet_parseur.py::TestIntegration` (5) : cherche le paquet dans
+  `../reference/paquet` ; ignoré sur un clone GitHub (seul `appli/` y est).
 
 ## Points d'attention récurrents
 

@@ -71,13 +71,8 @@ from services.param_niveaux import lire_cycle
 
 # ── Constantes de structure ──────────────────────────────────────────────────
 
-# Libellés des niveaux pour la page de garde.
-LIBELLES_NIVEAUX = {
-    'N09': '6\\ieme{}',
-    'N10': '5\\ieme{}',
-    'N11': '4\\ieme{}',
-    'N12': '3\\ieme{}',
-}
+# Libellés LaTeX des niveaux (page de garde) : constante unique (v0.41.3).
+from services.param_niveaux import LIBELLES_NIVEAUX_LATEX as LIBELLES_NIVEAUX  # noqa: E402
 
 # Mapping serie_code (BDD) → numéro pour seqSerieExos.
 # Les codes BDD sont 'F', 'A', 'E', 'AE'. Le paquet attend :

@@ -45,6 +45,20 @@ class NiveauInconnu(LookupError):
         self.niveau = niveau
 
 
+# v0.41.3 — Libellés LaTeX des niveaux pour les pages de garde des livrets
+# (forme `X\ieme{}`, avec accolades). Était recopié à l'identique dans 7
+# modules (livret_cartes_recap, livret_cartes_planches, livret_recap_exos,
+# livret_fiches, livret_recap_cours, livret_corriges, livret_plans_de_travail).
+# Constante (et non lecture de `param_niveaux`) pour garantir un rendu
+# identique même sur une base où la table n'est pas peuplée.
+LIBELLES_NIVEAUX_LATEX = {
+    'N09': r'6\ieme{}',
+    'N10': r'5\ieme{}',
+    'N11': r'4\ieme{}',
+    'N12': r'3\ieme{}',
+}
+
+
 def lire_attributs(conn: sqlite3.Connection, code: str) -> dict | None:
     """Retourne tous les attributs d'un niveau, ou None si absent.
 
@@ -124,11 +138,9 @@ def lire_nom_court_latex(conn: sqlite3.Connection, code: str) -> str:
 
     Note sur le format de sortie : on produit `'X\\ieme'` (sans `{}`)
     pour rester strictement compatible avec le rendu LaTeX historique
-    de `livret_sequence.py`. Le module `livret_plans_de_travail.py`
-    utilise quant à lui sa propre table `LIBELLES_NIVEAUX_LATEX` avec
-    la forme `'X\\ieme{}'` (avec accolades), qui n'est PAS substituée
-    par cette fonction (sujet de cohérence à traiter séparément si
-    nécessaire).
+    de `livret_sequence.py`. Les autres livrets utilisent la forme
+    `'X\\ieme{}'` (avec accolades) de la constante
+    `LIBELLES_NIVEAUX_LATEX` ci-dessus (v0.41.3).
 
     Fallback : si le niveau n'existe pas dans `param_niveaux`, retourne
     le code lui-même (cohérent avec le fallback de `lire_nom_court`).

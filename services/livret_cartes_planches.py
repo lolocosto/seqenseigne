@@ -58,12 +58,8 @@ from services.render_carte_centralise import rendre_carte_planche
 
 # ── Constantes ──────────────────────────────────────────────────────────────
 
-LIBELLES_NIVEAUX = {
-    'N09': '6\\ieme{}',
-    'N10': '5\\ieme{}',
-    'N11': '4\\ieme{}',
-    'N12': '3\\ieme{}',
-}
+# Libellés LaTeX des niveaux (page de garde) : constante unique (v0.41.3).
+from services.param_niveaux import LIBELLES_NIVEAUX_LATEX as LIBELLES_NIVEAUX  # noqa: E402
 
 # Version du paquet attendue pour la génération de ce livret. Émise en
 # commentaire en tête du .tex pour faciliter le debug.

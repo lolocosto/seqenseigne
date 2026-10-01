@@ -45,12 +45,8 @@ from services.render_carte_centralise import rendre_carte_recap, rendre_ligne_re
 
 # ── Constantes ──────────────────────────────────────────────────────────────
 
-LIBELLES_NIVEAUX = {
-    'N09': '6\\ieme{}',
-    'N10': '5\\ieme{}',
-    'N11': '4\\ieme{}',
-    'N12': '3\\ieme{}',
-}
+# Libellés LaTeX des niveaux (page de garde) : constante unique (v0.41.3).
+from services.param_niveaux import LIBELLES_NIVEAUX_LATEX as LIBELLES_NIVEAUX  # noqa: E402
 
 # 4 colonnes dans l'environnement seqCarteRecap (cf. .dtx ligne 387 :
 # `\begin{tblr}{*{4}{X[c]}}`). Position de la dernière colonne d'une

@@ -47,12 +47,8 @@ from services.paquet_parseur import extraire_utilisations
 from services.param_niveaux import lire_cycle
 
 
-LIBELLES_NIVEAUX = {
-    'N09': '6\\ieme{}',
-    'N10': '5\\ieme{}',
-    'N11': '4\\ieme{}',
-    'N12': '3\\ieme{}',
-}
+# Libellés LaTeX des niveaux (page de garde) : constante unique (v0.41.3).
+from services.param_niveaux import LIBELLES_NIVEAUX_LATEX as LIBELLES_NIVEAUX  # noqa: E402
 
 # Ordre canonique des séries pour l'affichage : R/AE en premier
 # (révisions), puis F (formation), A (entre F et E), E (entraînement).

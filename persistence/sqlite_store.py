@@ -1191,9 +1191,9 @@ class SqliteStore:
 
         # ── v0.20.2 — Séparation groupe / usage dans l'EDT ────────────────────
         # `usage` mélangeait deux notions : à QUI on fait cours (groupe) et CE
-        # qu'on fait (usage). On ajoute une colonne `groupe`. Migration des
-        # données existantes : script outils/migrer_edt_groupe_usage.py (lancé
-        # par l'utilisateur), pas de reventilation automatique ici.
+        # qu'on fait (usage). On ajoute une colonne `groupe`. La reventilation
+        # des données d'alors se faisait par un script ponctuel, supprimé en
+        # v0.41.3 (obsolète depuis le schéma v0.38).
         try:
             cols_edt = {r["name"] for r in conn.execute(
                 "PRAGMA table_info(edt_creneaux)").fetchall()}

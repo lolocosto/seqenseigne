@@ -56,12 +56,8 @@ from services.param_niveaux import lire_cycle
 
 # ── Libellés de niveau pour la page de titre ─────────────────────────────────
 
-LIBELLES_NIVEAUX_LATEX = {
-    'N09': r'6\ieme{}',
-    'N10': r'5\ieme{}',
-    'N11': r'4\ieme{}',
-    'N12': r'3\ieme{}',
-}
+# Libellés LaTeX des niveaux : constante unique (v0.41.3).
+from services.param_niveaux import LIBELLES_NIVEAUX_LATEX  # noqa: E402
 
 
 # ── Récupération des données ─────────────────────────────────────────────────

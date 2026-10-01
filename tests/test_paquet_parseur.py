@@ -440,11 +440,15 @@ class TestIntegration:
     @pytest.fixture
     def paquet_dir(self):
         from pathlib import Path
-        # Chemin depuis le repo de dev ; skip si absent (CI)
-        p = Path('/home/claude/work/paquet/paquet')
-        if not p.exists():
-            pytest.skip(f"Paquet non disponible à {p}")
-        return p
+        # v0.41.3 — Paquet LaTeX du projet, voisin d'appli/ :
+        # seqenseigne/reference/paquet. Ignoré sur un clone GitHub (qui ne
+        # contient que appli/). Le paquet peut être directement dans
+        # reference/paquet ou dans un sous-dossier paquet/.
+        racine = Path(__file__).resolve().parent.parent.parent / "reference" / "paquet"
+        for p in (racine, racine / "paquet"):
+            if (p / "seqenseigne-core.sty").is_file():
+                return p
+        pytest.skip(f"Paquet LaTeX non disponible dans {racine}")
 
     def test_core_sty_parse(self, paquet_dir):
         src = (paquet_dir / 'seqenseigne-core.sty').read_text(encoding='utf-8')
