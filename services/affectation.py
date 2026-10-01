@@ -163,11 +163,55 @@ def lire_affectations(conn, classe_id: str, annee: str) -> dict:
     return {r["edt_creneau_id"]: r["affectation"] for r in rows}
 
 
+def _lire_une(conn, classe_id: str, annee: str, edt_id: str):
+    r = conn.execute("SELECT affectation FROM affectation_seance WHERE "
+                     "classe_id=? AND annee=? AND edt_creneau_id=?",
+                     (classe_id, annee, edt_id)).fetchone()
+    return r["affectation"] if r else None
+
+
+def _ecrire_une(conn, classe_id: str, annee: str, edt_id: str, aff: str) -> None:
+    if aff == "aucun":
+        conn.execute(
+            "DELETE FROM affectation_seance "
+            "WHERE classe_id=? AND annee=? AND edt_creneau_id=?",
+            (classe_id, annee, edt_id))
+    else:
+        conn.execute(
+            "INSERT INTO affectation_seance "
+            "(id, classe_id, annee, edt_creneau_id, affectation) "
+            "VALUES (?,?,?,?,?) "
+            "ON CONFLICT(classe_id, annee, edt_creneau_id) "
+            "DO UPDATE SET affectation=excluded.affectation",
+            (_rowid("aff_"), classe_id, annee, edt_id, aff))
+
+
+def cases_suivantes(conn, classe_id: str, edt_id: str) -> list[str]:
+    """v0.41.2 — Cases d'EdT qui prennent la suite de `edt_id` après un
+    changement d'EdT programmé : même année, établissement, classe, jour et
+    créneau, commençant à la fin (ou après la fin) de la case. Vide si la case
+    n'a pas de fin (`valide_au` vide)."""
+    c = conn.execute("SELECT * FROM edt_creneaux WHERE id=?", (edt_id,)).fetchone()
+    if c is None or not c["valide_au"]:
+        return []
+    return [r["id"] for r in conn.execute(
+        "SELECT id FROM edt_creneaux WHERE annee=? AND etablissement_id=? "
+        "AND classe_id=? AND jour=? AND creneau_code=? AND valide_du >= ? "
+        "ORDER BY valide_du",
+        (c["annee"], c["etablissement_id"], classe_id, c["jour"],
+         c["creneau_code"], c["valide_au"])).fetchall()]
+
+
 def definir_affectations(conn, classe_id: str, annee: str,
                          items: list) -> int:
     """Écrit (upsert) un lot d'affectations. Chaque item :
     {edt_creneau_id, affectation}. Une affectation 'aucun' supprime la ligne
-    (retour à l'état neutre). Retourne le nombre d'items traités."""
+    (retour à l'état neutre). Retourne le nombre d'items traités.
+
+    v0.41.2 — L'affectation se reporte sur les cases futures issues d'un
+    changement d'EdT (`cases_suivantes`) qui avaient ENCORE l'ancienne valeur
+    de la case modifiée : un choix fait exprès pour une période future n'est
+    jamais écrasé."""
     n = 0
     for it in items:
         eid = it.get("edt_creneau_id")
@@ -176,19 +220,15 @@ def definir_affectations(conn, classe_id: str, annee: str,
             continue
         if not affectation_valide(aff):
             raise DonneesInvalides(f"Affectation invalide : {aff!r}.")
-        if aff == "aucun":
-            conn.execute(
-                "DELETE FROM affectation_seance "
-                "WHERE classe_id=? AND annee=? AND edt_creneau_id=?",
-                (classe_id, annee, eid))
-        else:
-            conn.execute(
-                "INSERT INTO affectation_seance "
-                "(id, classe_id, annee, edt_creneau_id, affectation) "
-                "VALUES (?,?,?,?,?) "
-                "ON CONFLICT(classe_id, annee, edt_creneau_id) "
-                "DO UPDATE SET affectation=excluded.affectation",
-                (_rowid("aff_"), classe_id, annee, eid, aff))
+        avant = _lire_une(conn, classe_id, annee, eid)
+        _ecrire_une(conn, classe_id, annee, eid, aff)
+        try:
+            suivantes = cases_suivantes(conn, classe_id, eid)
+        except Exception:
+            suivantes = []          # base sans EdT versionné
+        for sid in suivantes:
+            if _lire_une(conn, classe_id, annee, sid) == avant:
+                _ecrire_une(conn, classe_id, annee, sid, aff)
         n += 1
     return n
 

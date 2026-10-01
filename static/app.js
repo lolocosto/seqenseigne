@@ -1268,18 +1268,83 @@ function renderElevesList(cid) {
   renderElevesListFor(c);
 }
 
-function showCreateClasse(){document.getElementById('form-create').style.display='';document.getElementById('cr-nom').focus();}
+function showCreateClasse(){
+  document.getElementById('form-create').style.display='';
+  crEtabRemplir();   // v0.41.2
+  document.getElementById('cr-nom').focus();
+}
+
+// ── v0.41.2 — Établissement de la nouvelle classe : sélecteur + création ────
+let _ACADEMIES = null;
+
+async function _academies() {
+  if (!_ACADEMIES) {
+    try { _ACADEMIES = (await api('/api/academies')).academies || []; }
+    catch (e) { _ACADEMIES = []; }
+  }
+  return _ACADEMIES;
+}
+
+function _optionsAcademies(liste, choisie) {
+  return '<option value="">— choisir —</option>' + liste.map(a =>
+    `<option value="${escapeHtml(a)}"${a === choisie ? ' selected' : ''}>${escapeHtml(a)}</option>`).join('');
+}
+
+async function crEtabRemplir(choisi) {
+  const sel = document.getElementById('cr-etab');
+  if (!sel) return;
+  let etabs = [];
+  try { etabs = (await api('/api/etablissements')).etablissements || []; } catch (e) {}
+  etabs.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+  const defaut = choisi
+    || (typeof SUIVI_ETAB_ACTIF !== 'undefined' && SUIVI_ETAB_ACTIF)
+    || (etabs[0] && etabs[0].id) || '';
+  sel.innerHTML = etabs.length
+    ? etabs.map(e => `<option value="${e.id}"${e.id === defaut ? ' selected' : ''}>${escapeHtml(e.nom)}</option>`).join('')
+    : '<option value="">Aucun établissement : ajoutez-en un</option>';
+}
+
+async function crEtabNouveauOuvrir() {
+  document.getElementById('cr-etab-nouveau').style.display = '';
+  document.getElementById('cr-etab-err').textContent = '';
+  document.getElementById('cr-etab-acad').innerHTML = _optionsAcademies(await _academies(), '');
+  document.getElementById('cr-etab-nom').focus();
+}
+
+function crEtabNouveauFermer() {
+  document.getElementById('cr-etab-nouveau').style.display = 'none';
+}
+
+async function crEtabNouveauCreer() {
+  const err = document.getElementById('cr-etab-err');
+  const nom = document.getElementById('cr-etab-nom').value.trim();
+  const academie = document.getElementById('cr-etab-acad').value;
+  if (!nom || !academie) { err.textContent = 'Le nom et l\'académie sont obligatoires.'; return; }
+  try {
+    const r = await fetch('/api/etablissements', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nom, academie,
+        ville: document.getElementById('cr-etab-ville').value.trim() }) });
+    const d = await r.json();
+    if (!r.ok) { err.textContent = d.error || 'Erreur'; return; }
+    crEtabNouveauFermer();
+    ['cr-etab-nom', 'cr-etab-ville'].forEach(id => { document.getElementById(id).value = ''; });
+    await crEtabRemplir(d.id);
+    if (typeof chargerEtablissementsEtBandeau === 'function') chargerEtablissementsEtBandeau();
+  } catch (e) { err.textContent = e.message; }
+}
 function hideCreateClasse(){document.getElementById('form-create').style.display='none';}
 
 async function confirmCreateClasse() {
   const nom=document.getElementById('cr-nom').value.trim();
   if(!nom)return;
+  if(!document.getElementById('cr-etab').value){alert('Choisissez ou ajoutez un établissement.');return;}
   try {
     const c=await api('/api/classes',{method:'POST',body:JSON.stringify({
       nom,
       niveau:document.getElementById('cr-niveau').value,
       annee:document.getElementById('cr-annee').value.trim(),
-      etablissement:document.getElementById('cr-etab').value.trim()
+      etablissement_id:document.getElementById('cr-etab').value
     })});
     if(c.error){alert('Erreur : '+c.error);return;}
     CLASSES.push(c);
@@ -4731,7 +4796,7 @@ function etabEditerShow(etabId) {
   zone.innerHTML = `
     <div style="font-size:13px;font-weight:500;margin-bottom:8px">Modifier</div>
     <div class="field-row"><label>Nom</label><input id="ed-nom-${etabId}" value="${escapeHtml(e.nom)}"></div>
-    <div class="field-row"><label>Académie</label><input id="ed-acad-${etabId}" value="${escapeHtml(e.academie || '')}" placeholder="ex: Rennes"></div>
+    <div class="field-row"><label>Académie</label><select id="ed-acad-${etabId}"><option>${escapeHtml(e.academie || '')}</option></select></div>
     <div class="field-row"><label>Ville</label><input id="ed-ville-${etabId}" value="${escapeHtml(e.ville || '')}"></div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn-prim" onclick="etabEditerConfirm('${etabId}')">Enregistrer</button>
@@ -4739,6 +4804,11 @@ function etabEditerShow(etabId) {
     </div>
     <div id="ed-err-${etabId}" style="color:#c33;font-size:12px;margin-top:6px"></div>
   `;
+  // v0.41.2 — Académie choisie dans la liste des académies connues.
+  _academies().then(liste => {
+    const sel = document.getElementById('ed-acad-' + etabId);
+    if (sel) sel.innerHTML = _optionsAcademies(liste, e.academie || '');
+  });
 }
 
 async function etabEditerConfirm(etabId) {

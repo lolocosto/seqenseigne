@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.41.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.41.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -29,8 +29,8 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
   places AESH. Chantier v0.37–v0.40 terminé.
 - Revue des dettes techniques (v0.41.x) : v0.41.0 livrée (suite de tests au
   vert, pdf.js versionné) ; v0.41.1 livrée (préparation de la projection
-  unique : services/contexte_projection.py). Suivantes :
-  v0.41.2 filtre A/B, report MER, sélecteur d'établissement + fusion ;
+  unique : services/contexte_projection.py) ; v0.41.2 livrée (semaine via
+  la projection, report MER, sélecteur d'établissement, fusion). Suivante :
   v0.41.3 nettoyage.
 
 ## Chantier précédent : planification de la distribution de documents
@@ -57,12 +57,9 @@ Cadrage validé : `doc/cadrage_plans_de_classe.md` (v0.37 → v0.40).
 
 ## Dettes techniques repérées (préexistantes)
 
-- Planification hebdo / tableau de bord : pas de filtre semaine A/B.
-- MER (affectation case par case) : pas de report d'une affectation modifiée
-  vers les cases futures issues d'un changement d'EdT déjà programmé.
 - outils/migrer_edt_groupe_usage.py : obsolète depuis v0.38 (schéma).
-- Fusion d'établissements : ne migre ni la grille horaire ni l'EdT (les salles
-  oui, depuis v0.37.0).
+- Fusion d'établissements : refusée si la source a un EdT, des
+  indisponibilités ou une grille personnalisée (v0.41.2).
 - Outils CLI qui importent `services`/`persistence` : le Python portable
   (embeddable) n'a pas le dossier courant dans sys.path → amorce sys.path dans
   le script et lancement par chemin (`..\outils\python\python.exe outils\x.py`),

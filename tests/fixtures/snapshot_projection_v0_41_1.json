@@ -24,24 +24,13 @@
     {
      "classe": "4EME3",
      "classe_id": "cl",
-     "creneau": "M2",
-     "date": "2026-12-01",
-     "edt_creneau_id": "edt:mar:M2:",
-     "indispo": false,
-     "jour": "mar",
-     "niveau": "N11",
-     "type_mer": "mer_auto"
-    },
-    {
-     "classe": "4EME3",
-     "classe_id": "cl",
      "creneau": "M3",
      "date": "2026-12-03",
      "edt_creneau_id": "edt:jeu:M3:",
      "indispo": true,
      "jour": "jeu",
      "niveau": "N11",
-     "type_mer": "mer_auto"
+     "type_mer": "principale"
     },
     {
      "classe": "4EME3",
@@ -1087,7 +1076,7 @@
    "classe_id": "cl",
    "classe_nom": "4EME3",
    "mer_active": true,
-   "mer_mode": "panachage",
+   "mer_mode": "panache",
    "nb_enveloppes": 4,
    "nb_seances": 34,
    "seances": [

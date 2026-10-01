@@ -602,7 +602,20 @@
           </select>
         </div>
         <div class="field-row"><label>Année</label><input id="cr-annee" placeholder="2025-2026"></div>
-        <div class="field-row"><label>Établissement</label><input id="cr-etab" placeholder="Collège…"></div>
+        <div class="field-row"><label>Établissement</label><select id="cr-etab"></select></div>
+        <div class="cr-etab-lien"><button class="btn-lien" type="button" onclick="crEtabNouveauOuvrir()">+ Ajouter un collège</button></div>
+        <!-- v0.41.2 — Création d'un établissement depuis le formulaire de classe
+             (seul moyen ici : plus de saisie libre du nom, cause de doublons). -->
+        <div id="cr-etab-nouveau" class="cr-etab-nouveau" style="display:none">
+          <div class="field-row"><label>Nom</label><input id="cr-etab-nom" placeholder="Collège …"></div>
+          <div class="field-row"><label>Académie</label><select id="cr-etab-acad"></select></div>
+          <div class="field-row"><label>Ville</label><input id="cr-etab-ville" placeholder="(facultatif)"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm btn-prim" type="button" onclick="crEtabNouveauCreer()">Créer le collège</button>
+            <button class="btn-sm" type="button" onclick="crEtabNouveauFermer()">Annuler</button>
+          </div>
+          <div id="cr-etab-err" style="color:#c33;font-size:12px;margin-top:4px"></div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn-prim" onclick="confirmCreateClasse()">Créer</button>
           <button class="btn-sm" onclick="hideCreateClasse()">Annuler</button>

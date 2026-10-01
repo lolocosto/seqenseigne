@@ -96,3 +96,71 @@ def projeter_classe(conn, annee: str, classe_id: str,
     return projeter_donnees(annee, classe_id,
                             donnees_classe(conn, annee, classe_id, etablissement_id),
                             cal)
+
+
+# ── v0.41.2 — Séances d'une semaine (vues hebdomadaires) ─────────────────────
+
+def seances_de_la_semaine(conn, store, annee: str, lundi_iso: str,
+                          classes: list[dict] | None = None) -> list[dict]:
+    """Séances comptées de la semaine du `lundi_iso`, pour toutes les classes
+    de l'année (ou celles de `classes` : lignes {id, nom, niveau, mer_active,
+    mer_mode}), telles que la projection les voit : alternance A/B, versions
+    d'EdT, vacances, fériés, semaine de rentrée ignorée.
+
+    Différence voulue avec la projection : les séances touchées par une
+    indisponibilité sont GARDÉES, marquées `indispo` (les vues hebdomadaires
+    les affichent barrées). Type MER selon `affectation.repartir_mer`
+    (exceptions comprises).
+
+    Retour : [{classe_id, classe, niveau, etablissement_id, date, jour,
+               creneau, edt_creneau_id, libelle, type_mer, indispo}].
+    """
+    from datetime import date, timedelta
+    from services import affectation as aff_svc
+
+    lundi = date.fromisoformat(lundi_iso)
+    dimanche = (lundi + timedelta(days=6)).isoformat()
+    if classes is None:
+        classes = [dict(r) for r in conn.execute(
+            "SELECT id, nom, niveau, mer_active, mer_mode FROM classes "
+            "WHERE annee=?", (annee,)).fetchall()]
+    calendriers: dict[str, dict] = {}
+    sortie = []
+    for cl in classes:
+        cid = cl["id"]
+        infos = infos_classe(conn, cid)
+        if infos is None:
+            continue
+        aca = infos["academie"]
+        if aca not in calendriers:
+            calendriers[aca] = calendrier(store, annee, aca)
+        cal = calendriers[aca]
+        donnees = donnees_classe(conn, annee, cid, infos["etablissement_id"])
+        libelles = {c["id"]: c.get("libelle") or "" for c in donnees["edt_comptees"]}
+        ordre = {g["code"]: g.get("ordre", 0) for g in donnees["grille"]}
+        toutes = proj.projeter(annee, donnees["edt_comptees"], donnees["grille"],
+                               cal["vacances"], cal["feries"],
+                               date_min=date_min(annee), indisponibilites=[],
+                               classe_id=cid)
+        semaine = [s for s in toutes if lundi_iso <= s["date"] <= dimanche]
+        types = {}
+        if cl.get("mer_active"):
+            rep = aff_svc.repartir_mer(
+                semaine, cl.get("mer_mode") or "automatismes",
+                aff_svc.lire_affectations(conn, cid, annee),
+                aff_svc.dates_exceptions(conn, cid, annee))
+            for cle, typ in (("automatisme", "mer_auto"), ("progression", "mer_prog")):
+                for s in rep[cle]:
+                    types[(s["date"], s["creneau_code"])] = typ
+        for s in semaine:
+            sortie.append({
+                "classe_id": cid, "classe": cl["nom"], "niveau": cl.get("niveau"),
+                "etablissement_id": infos["etablissement_id"],
+                "date": s["date"], "jour": s["jour"], "creneau": s["creneau_code"],
+                "edt_creneau_id": s.get("edt_creneau_id"),
+                "libelle": libelles.get(s.get("edt_creneau_id"), ""),
+                "type_mer": types.get((s["date"], s["creneau_code"])),
+                "indispo": any(ind_svc.concerne_seance(ind, s, cid, ordre)
+                               for ind in donnees["indispos"]),
+            })
+    return sortie

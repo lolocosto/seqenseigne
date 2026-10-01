@@ -47,10 +47,7 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
                   type_mer, indispo} ]
     }
     """
-    from services import edt as edt_svc
-    from services import affectation as aff_svc
     from services import grille_horaire as gh_svc
-    from services import indisponibilites as ind_svc
     from services import contexte_projection as ctx
 
     sem = semaine_de(annee, lundi_iso)
@@ -69,8 +66,6 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
         for g in gh_svc.lister(conn, eid):
             creneaux_grille.append(g["code"])
             ordre_creneau[g["code"]] = g.get("ordre", 0)
-
-    indispos = ind_svc.lister(conn, annee, etablissement_id=eid) if eid else []
 
     # v0.32.3 — Statut de chaque jour de la semaine : en vacances (avec le nom
     # de la période) et/ou férié, pour afficher les jours/semaines non
@@ -100,50 +95,19 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
         })
     semaine_vacances = all(ji["vacances"] for ji in jours_info)
 
-    classes = conn.execute(
-        "SELECT id, nom, niveau, mer_active, mer_mode FROM classes "
-        "WHERE annee=?", (annee,)).fetchall()
-
+    # v0.41.2 — Séances de la semaine telles que la projection les voit
+    # (alternance A/B, versions d'EdT, fériés, rentrée, exceptions MER) :
+    # services/contexte_projection.seances_de_la_semaine.
     cases = []
-    for cl in classes:
-        cid = cl["id"]
-        # v0.38.0 — cases valides la semaine affichée (EdT versionné).
-        edt_cases = edt_svc.lister(conn, annee, classe_id=cid,
-                                   a_la_date=date.fromisoformat(sem["lundi"]))
-        comptees = [x for x in edt_cases if edt_svc.est_compte(x)]
-        affectations = aff_svc.lire_affectations(conn, cid, annee)
-        mer_mode = cl["mer_mode"] or "automatismes"
-        mer_on = bool(cl["mer_active"])
-        for case in comptees:
-            j = case.get("jour")
-            if j not in date_par_jour:
-                continue
-            d_iso = date_par_jour[j]
-            # Type MER du créneau.
-            type_mer = None
-            if mer_on:
-                aff = affectations.get(case.get("id"))
-                if aff is None:
-                    aff = ("aucun" if mer_mode == "panache"
-                           else ("progression" if mer_mode == "progression"
-                                 else "automatisme"))
-                if aff == "automatisme":
-                    type_mer = "mer_auto"
-                elif aff == "progression":
-                    type_mer = "mer_prog"
-            # Indisponibilité sur cette séance ?
-            seance = {"date": d_iso, "creneau_code": case.get("creneau_code", "")}
-            indispo = any(
-                ind_svc.concerne_seance(ind, seance, cid, ordre_creneau)
-                for ind in indispos)
-            cases.append({
-                "jour": j, "date": d_iso,
-                "creneau": case.get("creneau_code", ""),
-                "classe_id": cid, "classe": cl["nom"], "niveau": cl["niveau"],
-                "type_mer": type_mer or "principale",
-                "indispo": indispo,
-                "edt_creneau_id": case.get("id"),
-            })
+    for x in ctx.seances_de_la_semaine(conn, store, annee, sem["lundi"]):
+        cases.append({
+            "jour": x["jour"], "date": x["date"], "creneau": x["creneau"],
+            "classe_id": x["classe_id"], "classe": x["classe"],
+            "niveau": x["niveau"],
+            "type_mer": x["type_mer"] or "principale",
+            "indispo": x["indispo"],
+            "edt_creneau_id": x["edt_creneau_id"],
+        })
     cases.sort(key=lambda c: (c["date"], ordre_creneau.get(c["creneau"], 0),
                               c["classe"]))
     return {**sem, "creneaux": creneaux_grille, "cases": cases,

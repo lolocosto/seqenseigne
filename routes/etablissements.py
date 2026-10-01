@@ -33,12 +33,32 @@ def api_lire(eid):
     return jsonify(etab)
 
 
+def _academie_invalide(body):
+    """v0.41.2 — L'académie, si fournie, doit être une académie connue (elle
+    détermine la zone de vacances). Retourne un message d'erreur ou None."""
+    from services import calendrier_scolaire as cal
+    aca = (body.get("academie") or "").strip()
+    if aca and aca not in cal.ACADEMIE_ZONE:
+        return f"Académie inconnue : {aca!r}."
+    return None
+
+
+@bp.route("/api/academies", methods=["GET"])
+def api_academies():
+    """v0.41.2 — Académies connues (celles qui ont une zone de vacances)."""
+    from services import calendrier_scolaire as cal
+    return jsonify({"academies": sorted(cal.ACADEMIE_ZONE.keys())})
+
+
 @bp.route("/api/etablissements", methods=["POST"])
 def api_creer():
     body = request.get_json(silent=True) or {}
     nom = body.get("nom", "").strip()
     if not nom:
         return jsonify({"error": "nom requis"}), 400
+    msg = _academie_invalide(body)
+    if msg:
+        return jsonify({"error": msg}), 400
     etab = svc_etab.creer(
         _store(),
         nom=nom,
@@ -53,6 +73,9 @@ def api_creer():
 @bp.route("/api/etablissements/<eid>", methods=["PATCH"])
 def api_modifier(eid):
     body = request.get_json(silent=True) or {}
+    msg = _academie_invalide(body)
+    if msg:
+        return jsonify({"error": msg}), 400
     etab = svc_etab.mettre_a_jour(_store(), eid, body)
     if not etab:
         return jsonify({"error": f"Établissement {eid} introuvable"}), 404

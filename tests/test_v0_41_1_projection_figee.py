@@ -52,7 +52,7 @@ def _donnees(store):
         gh.peupler_defauts_si_vide(c, "et")
         c.execute("INSERT INTO classes (id, nom, niveau, annee, etablissement_id, "
                   "mer_active, mer_mode) VALUES ('cl', '4EME3', 'N11', ?, 'et', 1, "
-                  "'panachage')", (ANNEE,))
+                  "'panache')", (ANNEE,))   # v0.41.2 : 'panachage' était invalide
         k1 = edt.ajouter(c, ANNEE, "lun", "M1", "et", classe_id="cl", aujourd_hui=AUJ)
         edt.ajouter(c, ANNEE, "mar", "M2", "et", semaine="A", classe_id="cl", aujourd_hui=AUJ)
         edt.ajouter(c, ANNEE, "jeu", "M3", "et", semaine="B", classe_id="cl", aujourd_hui=AUJ)

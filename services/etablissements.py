@@ -157,6 +157,41 @@ def valider_par_uai(store, etab_id: str, uai: str) -> dict:
     return etab
 
 
+def _verifier_source_migrable(conn, source_id: str, source_nom: str) -> None:
+    """v0.41.2 — Refuse la fusion si la source porte des données que la
+    fusion ne migre pas : cases d'EdT, indisponibilités, grille horaire
+    différente de la grille par défaut. Les doublons créés par erreur (depuis
+    le formulaire de classe) n'ont rien de tout cela et fusionnent sans
+    problème."""
+    from services import grille_horaire as gh
+    raisons = []
+    n = conn.execute("SELECT COUNT(*) FROM edt_creneaux WHERE etablissement_id=?",
+                     (source_id,)).fetchone()[0]
+    if n:
+        raisons.append(f"{n} case(s) d'emploi du temps")
+    n = conn.execute("SELECT COUNT(*) FROM indisponibilites WHERE etablissement_id=?",
+                     (source_id,)).fetchone()[0]
+    if n:
+        raisons.append(f"{n} indisponibilité(s)")
+    grille = [(r["code"], r["heure_debut"], r["heure_fin"], r["demi_journee"])
+              for r in conn.execute(
+                  "SELECT code, heure_debut, heure_fin, demi_journee FROM "
+                  "grille_horaire_creneaux WHERE etablissement_id=? ORDER BY code",
+                  (source_id,)).fetchall()]
+    defaut = sorted((d["code"], d["heure_debut"], d["heure_fin"], d["demi_journee"])
+                    for d in gh.defauts())
+    if grille and grille != defaut:
+        raisons.append("une grille horaire personnalisée")
+    if raisons:
+        raise ConflitFusion(
+            f"« {source_nom} » a {', '.join(raisons)} : la fusion ne sait pas "
+            f"les reporter. Les supprimer (ou les recréer dans l'autre "
+            f"établissement) avant de fusionner.",
+            code="source_avec_edt",
+            details={"source_id": source_id, "raisons": raisons},
+        )
+
+
 def fusionner(store, source_id: str, cible_id: str) -> dict:
     """
     Fusionne l'établissement `source` dans `cible`.
@@ -198,6 +233,10 @@ def fusionner(store, source_id: str, cible_id: str) -> dict:
         )
 
     with store.conn() as conn:
+        # v0.41.2 — Données propres à la source que la fusion ne sait pas
+        # migrer : refus explicite plutôt que perte silencieuse.
+        _verifier_source_migrable(conn, source_id, source["nom"])
+
         # Détecter les conflits sur progressions (même niveau+annee)
         conflits = conn.execute("""
             SELECT ps.id   AS source_prog_id,
@@ -240,6 +279,11 @@ def fusionner(store, source_id: str, cible_id: str) -> dict:
             "UPDATE progressions SET etablissement_id = ? WHERE etablissement_id = ?",
             (cible_id, source_id)
         )
+        # v0.41.2 — Grille horaire par défaut de la source : supprimée (la
+        # cible garde la sienne). Une grille modifiée a été refusée plus haut.
+        conn.execute("DELETE FROM grille_horaire_creneaux WHERE etablissement_id=?",
+                     (source_id,))
+        conn.execute("DELETE FROM edt_etats WHERE etablissement_id=?", (source_id,))
         # v0.37.0 — Les salles suivent l'établissement (refus si un même nom
         # de salle existe des deux côtés).
         from services import salles as _salles

@@ -117,16 +117,10 @@ def seances_de_la_semaine(conn, store, annee: str,
     les services déjà en place ; ici on se limite à un agrégat léger basé sur
     l'EdT de la semaine (les plannings détaillés restent dans leurs onglets).
     """
-    from services import edt as edt_svc
-    from services import affectation as aff_svc
-
     ref = jour_reference or date.today()
     lundi = _lundi_de(ref)
     vendredi = lundi + timedelta(days=4)
 
-    # Semaine A ou B ? (réutilise la logique de l'EdT si disponible)
-    # Par simplicité, on liste les créneaux comptés de toutes les classes et on
-    # marque leur type MER selon l'affectation + le mode de la classe.
     jours_codes = ["lun", "mar", "mer", "jeu", "ven"]
     jours = [{"jour": j,
               "date": (lundi + timedelta(days=i)).isoformat(),
@@ -134,40 +128,19 @@ def seances_de_la_semaine(conn, store, annee: str,
              for i, j in enumerate(jours_codes)]
     idx_jour = {j["jour"]: j for j in jours}
 
+    # v0.41.2 — Séances de la semaine telles que la projection les voit
+    # (alternance A/B, versions d'EdT, fériés, rentrée, exceptions MER).
+    from services import contexte_projection as ctx
     with store._conn() as c2:
-        classes = c2.execute(
-            "SELECT id, nom, niveau, mer_active, mer_mode FROM classes "
-            "WHERE annee = ?", (annee,)).fetchall()
-        for cl in classes:
-            cid = cl["id"]
-            # v0.38.0 — cases valides cette semaine (EdT versionné).
-            edt_cases = edt_svc.lister(c2, annee, classe_id=cid, a_la_date=lundi)
-            comptees = [x for x in edt_cases if edt_svc.est_compte(x)]
-            affectations = aff_svc.lire_affectations(c2, cid, annee)
-            mer_mode = cl["mer_mode"] or "automatismes"
-            mer_on = bool(cl["mer_active"])
-            for case in comptees:
-                j = case.get("jour")
-                if j not in idx_jour:
-                    continue
-                # Type MER du créneau (si la classe fait des MER).
-                type_mer = None
-                if mer_on:
-                    aff = affectations.get(case.get("id"))
-                    if aff is None:
-                        aff = ("aucun" if mer_mode == "panache"
-                               else ("progression" if mer_mode == "progression"
-                                     else "automatisme"))
-                    if aff == "automatisme":
-                        type_mer = "mer_auto"
-                    elif aff == "progression":
-                        type_mer = "mer_prog"
-                idx_jour[j]["seances"].append({
-                    "classe": cl["nom"],
-                    "creneau": case.get("creneau_code", ""),
-                    "type": type_mer or "principale",
-                    "libelle": case.get("libelle", "") or "",
-                })
+        for x in ctx.seances_de_la_semaine(c2, store, annee, lundi.isoformat()):
+            if x["jour"] not in idx_jour:
+                continue
+            idx_jour[x["jour"]]["seances"].append({
+                "classe": x["classe"],
+                "creneau": x["creneau"],
+                "type": x["type_mer"] or "principale",
+                "libelle": x["libelle"],
+            })
     # Trier les séances de chaque jour par créneau puis classe.
     for j in jours:
         j["seances"].sort(key=lambda s: (s["creneau"], s["classe"]))
