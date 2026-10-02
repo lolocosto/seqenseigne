@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.42.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.42.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -23,9 +23,13 @@
 
 Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - v0.42.0 livrée : navigation (Paramétrage, Système ; Suivi › Début de
-  séance, Observation, Compétences).
-- Prochaine étape : v0.43 — Début de séance (séance en cours, mise en route
-  affichée, absences sur le plan de classe ou la liste alphabétique).
+  séance, Observation, Compétences). v0.42.1 : sélecteurs (Suivi : Année,
+  Établissement, Niveau, Classe partagée ; Observables : Niveau).
+- Prochaine étape : v0.43 — Début de séance. Décisions : séance en cours =
+  celle dont le créneau contient l'heure, sinon la prochaine de la journée
+  avec la mention « pas encore commencée » ; mise en route affichée au
+  professeur ; absences seules (pas de retards), enregistrées à chaque clic,
+  modifiables après la séance ; plan de classe, sinon liste alphabétique.
 
 ## Derniers chantiers terminés
 

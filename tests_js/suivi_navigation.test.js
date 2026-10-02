@@ -176,6 +176,24 @@ describe('Navigation Suivi — portées', () => {
     expect($('stab-parametrage').style.display).toBe('none');
   });
 
+  it('v0.42.1 — Sélecteurs : Année, Établissement, Niveau, Classe dans tout le Suivi', () => {
+    nav.suiviInit();
+    nav.suiviPorteeSwitch('suivi');
+    for (const a of ['debut', 'observation', 'suivi']) {
+      nav.suiviSwitch(a);
+      const types = [...selZone().querySelectorAll('[data-suivi-sel]')].map(l => l.dataset.suiviSel);
+      expect(types).toEqual(['annee', 'etablissement', 'niveau', 'classe']);
+    }
+  });
+
+  it('v0.42.1 — Observables : Niveau seul', () => {
+    nav.suiviInit();
+    nav.suiviPorteeSwitch('gestion');
+    nav.suiviSwitch('observables');
+    const types = [...selZone().querySelectorAll('[data-suivi-sel]')].map(l => l.dataset.suiviSel);
+    expect(types).toEqual(['niveau']);
+  });
+
   it("l'onglet principal actif suit la portée (v0.42.0)", () => {
     nav.suiviInit();
     nav.suiviPorteeSwitch('gestion');

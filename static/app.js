@@ -499,9 +499,12 @@ const SUIVI_ATELIER_PANNEAU = {
   progression: { panneau: 'progression', selecteurs: ['etablissement', 'niveau', 'referentiel'] },
   plans:       { panneau: 'plans',       selecteurs: ['etablissement'] },   // v0.39.0
   suivi:       { panneau: 'suivi',       selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
-  debut:       { panneau: 'debut',       selecteurs: [] },                  // v0.42.0
-  observation: { panneau: 'observation', selecteurs: [] },                  // v0.42.0
-  observables: { panneau: 'observables', selecteurs: [] },                  // v0.42.0
+  // v0.42.1 — Tous les sous-onglets du Suivi : Année, Établissement, Niveau,
+  // Classe (la classe choisie est partagée entre eux).
+  debut:       { panneau: 'debut',       selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
+  observation: { panneau: 'observation', selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
+  // v0.42.1 — Observables : définis par niveau (indépendants de l'établissement).
+  observables: { panneau: 'observables', selecteurs: ['niveau'] },
   classe:      { panneau: 'parametrage', gestion: 'classes', selecteurs: ['annee', 'etablissement', 'niveau'] },
   etab:        { panneau: 'parametrage', gestion: 'etabs', selecteurs: ['annee', 'etablissement'] },
 };
@@ -800,7 +803,8 @@ async function suiviRechargerAtelierActif() {
         && typeof window.ATELIER_PROGRESSION.onSelecteurChange === 'function') {
       await window.ATELIER_PROGRESSION.onSelecteurChange();
     }
-  } else if (a === 'suivi') {
+  } else if (a === 'suivi' || a === 'debut' || a === 'observation') {
+    // v0.42.1 — Même liste de classes pour les trois sous-onglets du Suivi.
     if (typeof onAnneeChange === 'function') await onAnneeChange();
   } else if (a === 'plans') {          // v0.39.0
     if (typeof pcInit === 'function') await pcInit();
