@@ -143,6 +143,7 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
     # ── MER : type + enveloppes (si automatismes) ────────────────────────────
     mer_type = None       # 'mer_auto' | 'mer_prog' | None
     mer_enveloppes = []
+    mer_rang = 0          # v0.43.0 — rang de la séance dans sa série de MER
     if row["mer_active"]:
         affectations = aff_svc.lire_affectations(conn, classe_id, annee)
         exceptions = aff_svc.dates_exceptions(conn, classe_id, annee)
@@ -156,12 +157,15 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
             if s.get("date") == date_iso and s.get("creneau_code") == creneau:
                 mer_type = "mer_auto"
                 mer_enveloppes = leitner.enveloppes_a_reviser(i)
+                mer_rang = i
                 break
         if mer_type is None:
             prog_seances = reparties["progression"]
-            if any(s.get("date") == date_iso and s.get("creneau_code") == creneau
-                   for s in prog_seances):
-                mer_type = "mer_prog"
+            for i, s in enumerate(prog_seances, start=1):
+                if s.get("date") == date_iso and s.get("creneau_code") == creneau:
+                    mer_type = "mer_prog"
+                    mer_rang = i          # v0.43.0 — n° de séance de MER
+                    break
 
     # ── Principal : séquence (code + nom), partie, rang dans la partie ───────
     seq_code, seq_nom, partie_lib = "", "", ""
@@ -228,6 +232,7 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
         "classe_id": classe_id, "classe": row["nom"], "niveau": row["niveau"],
         "date": date_iso, "creneau": creneau,
         "mer_type": mer_type, "mer_enveloppes": mer_enveloppes,
+        "mer_rang": mer_rang,
         "sequence_code": seq_code, "sequence_nom": seq_nom,
         "partie": partie_lib,
         "rang_dans_partie": rang_dans_partie, "nb_partie": nb_partie,

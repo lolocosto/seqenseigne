@@ -4391,3 +4391,44 @@ textarea.latex-textarea {
 /* v0.42.0 — Onglet Système (barre Administration / Préférences) et panneaux à venir */
 .systeme-barre { gap: 4px; margin-bottom: 0; border-bottom: 1px solid var(--border); padding: 6px 8px; }
 .a-venir p { color: var(--text-secondary); font-size: 13px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.43.0 — Début de séance (static/seance.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sc-entete { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+.sc-entete input, .sc-entete select { font-size: 13px; margin-left: 4px; }
+.sc-titre { margin: 10px 0; font-size: 15px; }
+.sc-statut { font-size: 12px; padding: 2px 9px; border-radius: 10px; margin-left: 6px; }
+.sc-statut-en_cours { background: #dcfce7; color: #14532d; }
+.sc-statut-a_venir { background: #fef3c7; color: #78350f; }
+.sc-statut-terminee { background: #f1f5f9; color: var(--text-secondary); }
+.sc-vide { color: var(--text-secondary); font-size: 13px; }
+.sc-bloc { border-top: 1px solid var(--border); padding: 10px 0; }
+.sc-bloc-titre { font-weight: 600; margin-bottom: 6px; }
+.sc-compte { font-weight: 400; font-size: 13px; color: var(--text-secondary); margin-left: 6px; }
+.sc-mer { font-size: 14px; }
+.sc-sans { color: var(--text-secondary); }
+.sc-aide { font-size: 12px; color: var(--text-secondary); margin: 0 0 8px; }
+.sc-absents { display: flex; gap: 16px; align-items: flex-start; }
+.sc-zone-plan { flex: 1; min-width: 0; }
+.sc-zone-liste { width: 240px; flex-shrink: 0; }
+.sc-liste-titre { font-size: 12px; font-weight: 500; margin-bottom: 4px; color: var(--text-secondary); }
+.sc-liste { display: flex; flex-wrap: wrap; gap: 4px; }
+.sc-zone-plan[style*="none"] + .sc-zone-liste { width: auto; flex: 1; }
+.sc-eleve {
+  padding: 4px 10px; border-radius: 14px; border: 1px solid var(--border);
+  background: #fff; cursor: pointer; font-size: 13px;
+}
+.sc-eleve.sc-absent { background: #fee2e2; border-color: #fca5a5; color: #7f1d1d; text-decoration: line-through; }
+#sc-svg { width: 100%; max-height: 70vh; display: block; user-select: none; }
+#sc-svg .sal-tableau rect { fill: #3f5f4a; }
+#sc-svg .sal-tableau text { font-size: 13px; fill: var(--text-secondary); text-anchor: middle; }
+#sc-svg .sc-place rect { fill: #fff; stroke: #9ca3af; stroke-width: 1.2; }
+#sc-svg .sc-place text { font-size: 9.5px; text-anchor: middle; dominant-baseline: central; fill: var(--text); pointer-events: none; }
+#sc-svg .sc-occupee { cursor: pointer; }
+#sc-svg .sc-occupee rect { stroke: #4b5563; fill: #f8fafc; }
+#sc-svg .sc-occupee:hover rect { fill: var(--primary-bg); }
+#sc-svg .sc-absent rect { fill: #fee2e2; stroke: #dc2626; stroke-width: 2; }
+#sc-svg .sc-absent text { fill: #7f1d1d; text-decoration: line-through; }
+#sc-svg .sc-aesh rect { fill: #ecfeff; stroke: #0e7490; }
+#sc-svg .sc-aesh text { fill: #0e7490; font-weight: 700; }

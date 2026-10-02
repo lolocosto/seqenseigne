@@ -1533,6 +1533,14 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.43.0 — Absences (début de séance) ─────────────────────────────
+        try:
+            from services.seance import SCHEMA as _SCHEMA_SEANCE
+            conn.executescript(_SCHEMA_SEANCE)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

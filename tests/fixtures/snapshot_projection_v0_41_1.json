@@ -107,6 +107,7 @@
    "date": "2026-12-07",
    "docs_a_distribuer": [],
    "mer_enveloppes": [],
+   "mer_rang": 0,
    "mer_type": null,
    "nb_partie": 8,
    "niveau": "N11",
@@ -129,6 +130,7 @@
     2,
     3
    ],
+   "mer_rang": 12,
    "mer_type": "mer_auto",
    "nb_partie": 8,
    "niveau": "N11",
@@ -147,6 +149,7 @@
    "date": "2026-12-11",
    "docs_a_distribuer": [],
    "mer_enveloppes": [],
+   "mer_rang": 12,
    "mer_type": "mer_prog",
    "nb_partie": 8,
    "niveau": "N11",

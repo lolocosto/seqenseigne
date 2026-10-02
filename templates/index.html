@@ -560,11 +560,17 @@
   </div><!-- /stab-suivi -->
 
   <!-- v0.42.0 — Nouveaux panneaux (contenu dans les versions suivantes). -->
+  <!-- v0.43.0 — Début de séance (static/seance.js) -->
   <div id="stab-debut" style="display:none">
-    <div class="card a-venir">
-      <h2>Début de séance</h2>
-      <p>Séance en cours, mise en route, absents, documents à distribuer :
-        arrive en v0.43 et v0.44.</p>
+    <div class="card">
+      <div class="sc-entete">
+        <h2 style="margin:0">Début de séance</h2>
+        <label>Jour <input type="date" id="sc-date" onchange="scChoisirJour()"></label>
+        <span id="sc-choix"></span>
+        <button class="btn-sm" onclick="scSeanceEnCours()">Séance en cours</button>
+      </div>
+      <div id="sc-titre" class="sc-titre"></div>
+      <div id="sc-corps"></div>
     </div>
   </div>
   <div id="stab-observation" style="display:none">
@@ -3615,6 +3621,7 @@
 <script src="/static/salles_pur.js"></script>
 <script src="/static/salles.js"></script>
 <script src="/static/plans_classe.js"></script>
+<script src="/static/seance.js"></script>
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>

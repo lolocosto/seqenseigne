@@ -627,6 +627,9 @@ function suiviSwitch(atelier) {
     if (atelier === 'plans' && typeof pcInit === 'function') {   // v0.39.0
       pcInit();
     }
+    if (atelier === 'debut' && typeof scInit === 'function') {   // v0.43.0
+      scInit();
+    }
   };
   if (typeof atelGardeAvantTransition === 'function') {
     atelGardeAvantTransition(_continuer);
@@ -806,6 +809,7 @@ async function suiviRechargerAtelierActif() {
   } else if (a === 'suivi' || a === 'debut' || a === 'observation') {
     // v0.42.1 — Même liste de classes pour les trois sous-onglets du Suivi.
     if (typeof onAnneeChange === 'function') await onAnneeChange();
+    if (a === 'debut' && typeof scInit === 'function') await scInit();   // v0.43.0
   } else if (a === 'plans') {          // v0.39.0
     if (typeof pcInit === 'function') await pcInit();
   }
@@ -984,6 +988,13 @@ function onNiveauChangeGlobal() {
 
 async function onClasseChange() {
   const cid = document.getElementById('classe-sel').value;
+  // v0.43.0 — Début de séance : séances du jour de la classe choisie.
+  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'debut'
+      && typeof scClasseChangee === 'function') {
+    currentCid = cid || null;
+    scClasseChangee();
+    return;
+  }
   // v0.24.1 — Si l'onglet Mises en route est actif, rafraîchir son planning.
   if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'mer'
       && typeof merAfficherPlanning === 'function') {

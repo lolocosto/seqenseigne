@@ -157,6 +157,8 @@ def seances_de_la_semaine(conn, store, annee: str, lundi_iso: str,
                 "classe_id": cid, "classe": cl["nom"], "niveau": cl.get("niveau"),
                 "etablissement_id": infos["etablissement_id"],
                 "date": s["date"], "jour": s["jour"], "creneau": s["creneau_code"],
+                "heure_debut": s.get("heure_debut", ""),     # v0.43.0
+                "heure_fin": s.get("heure_fin", ""),
                 "edt_creneau_id": s.get("edt_creneau_id"),
                 "libelle": libelles.get(s.get("edt_creneau_id"), ""),
                 "type_mer": types.get((s["date"], s["creneau_code"])),
