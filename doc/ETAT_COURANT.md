@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.43.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.43.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -26,7 +26,8 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   séance, Observation, Compétences). v0.42.1 : sélecteurs (Suivi : Année,
   Établissement, Niveau, Classe partagée ; Observables : Niveau).
 - v0.43.0 livrée : Début de séance (séance en cours / prochaine /
-  dernière, mise en route affichée, absents sur le plan ou la liste).
+  dernière, mise en route affichée, absents sur le plan ou la liste) ;
+  v0.43.1 : séances du jour (toutes classes) toujours affichées.
 - Prochaine étape : v0.44 — documents (prévus et ponctuels, remise à tous,
   rattrapage des absents, reste dû).
 

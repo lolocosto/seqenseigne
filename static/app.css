@@ -4432,3 +4432,15 @@ textarea.latex-textarea {
 #sc-svg .sc-absent text { fill: #7f1d1d; text-decoration: line-through; }
 #sc-svg .sc-aesh rect { fill: #ecfeff; stroke: #0e7490; }
 #sc-svg .sc-aesh text { fill: #0e7490; font-weight: 700; }
+/* v0.43.1 — Séances du jour (toutes classes) */
+.sc-jour-ligne { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
+.sc-jour-lbl { color: var(--text-secondary); }
+.sc-jour { display: flex; gap: 4px; flex-wrap: wrap; }
+.sc-jour-btn {
+  font-size: 12px; padding: 3px 9px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: #fff;
+}
+.sc-jour-btn.sc-st-terminee { color: var(--text-secondary); }
+.sc-jour-btn.sc-st-en_cours { border-color: #16a34a; }
+.sc-jour-btn.actif { background: var(--primary); border-color: var(--primary); color: #fff; }
+.sc-jour-vide { color: var(--text-secondary); }

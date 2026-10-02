@@ -566,9 +566,10 @@
       <div class="sc-entete">
         <h2 style="margin:0">Début de séance</h2>
         <label>Jour <input type="date" id="sc-date" onchange="scChoisirJour()"></label>
-        <span id="sc-choix"></span>
         <button class="btn-sm" onclick="scSeanceEnCours()">Séance en cours</button>
       </div>
+      <!-- v0.43.1 — Séances du jour, toutes classes (toujours visibles). -->
+      <div class="sc-jour-ligne"><span class="sc-jour-lbl">Séances du jour :</span><span id="sc-choix"></span></div>
       <div id="sc-titre" class="sc-titre"></div>
       <div id="sc-corps"></div>
     </div>

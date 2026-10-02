@@ -1,5 +1,5 @@
 // ============================================================================
-// static/seance.js — v0.43.0
+// static/seance.js — v0.43.0 (v0.43.1 : séances du jour toujours affichées)
 // Suivi › Début de séance : séance en cours (ou prochaine, ou dernière du
 // jour), mise en route affichée au professeur, absents notés d'un clic sur le
 // plan de classe de la semaine (sinon liste alphabétique).
@@ -7,14 +7,28 @@
 // Classe : sélecteur partagé du Suivi (#classe-sel).
 // ============================================================================
 
-const SC = { date: null, creneau: null, donnees: null, occupe: false };
+const SC = { date: null, creneau: null, classe: null, donnees: null, occupe: false, jour: [] };
 
 const _SC_JOURS = { lun: 'lundi', mar: 'mardi', mer: 'mercredi', jeu: 'jeudi', ven: 'vendredi', sam: 'samedi' };
 const _SC_STATUT = { en_cours: 'en cours', a_venir: 'pas encore commencée', terminee: 'terminée' };
 
 function _scE(s) { return escapeHtml(String(s == null ? '' : s)); }
 function _scAnnee() { return (typeof ANNEE_ACTIVE !== 'undefined' && ANNEE_ACTIVE) || ''; }
-function _scClasse() { const s = document.getElementById('classe-sel'); return s ? s.value : ''; }
+// v0.43.1 — Classe de la séance affichée : celle choisie dans la liste des
+// séances du jour (même si le sélecteur Classe, filtré par niveau, ne la
+// propose pas), sinon celle du sélecteur.
+function _scClasse() {
+  if (SC.classe) return SC.classe;
+  const s = document.getElementById('classe-sel'); return s ? s.value : '';
+}
+function _scSelectionnerClasse(cid) {
+  SC.classe = cid;
+  const sel = document.getElementById('classe-sel');
+  if (sel && [...sel.options].some(o => o.value === cid)) {
+    sel.value = cid;
+    if (typeof currentCid !== 'undefined') currentCid = cid;
+  }
+}
 function _scAujourdhui() {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -45,12 +59,9 @@ async function scSeanceEnCours() {
   try {
     s = (await _scApi('/api/seance/en-cours?annee=' + encodeURIComponent(_scAnnee()))).seance;
   } catch (e) { /* pas de séance */ }
+  await _scChargerJour();
   if (s) {
-    const sel = document.getElementById('classe-sel');
-    if (sel && [...sel.options].some(o => o.value === s.classe_id)) {
-      sel.value = s.classe_id;
-      if (typeof currentCid !== 'undefined') currentCid = s.classe_id;
-    }
+    _scSelectionnerClasse(s.classe_id);
     SC.creneau = s.creneau;
     await scCharger();
   } else {
@@ -58,10 +69,43 @@ async function scSeanceEnCours() {
   }
 }
 
+// v0.43.1 — Toutes les séances du jour (toutes classes), toujours affichées.
+async function _scChargerJour() {
+  try {
+    SC.jour = (await _scApi(`/api/seance/jour?annee=${encodeURIComponent(_scAnnee())}`
+      + `&date=${SC.date}`)).seances || [];
+  } catch (e) { SC.jour = []; }
+  _scRendreJour();
+}
+
+function _scRendreJour() {
+  const ch = document.getElementById('sc-choix');
+  if (!ch) return;
+  if (!SC.jour.length) {
+    ch.innerHTML = `<span class="sc-jour-vide">Aucun cours le ${_scDateFr(SC.date)}.</span>`;
+    return;
+  }
+  const cid = _scClasse();
+  ch.innerHTML = '<span class="sc-jour">' + SC.jour.map(x => {
+    const actif = x.classe_id === cid && x.creneau === SC.creneau;
+    return `<button class="sc-jour-btn${actif ? ' actif' : ''} sc-st-${x.statut || ''}"
+      onclick="scChoisirSeanceDuJour('${x.classe_id}', '${_scE(x.creneau)}')"
+      title="${_scE(x.heure_debut)}–${_scE(x.heure_fin)}">${_scE(x.creneau)} · ${_scE(x.classe)}</button>`;
+  }).join('') + '</span>';
+}
+
+async function scChoisirSeanceDuJour(cid, creneau) {
+  _scSelectionnerClasse(cid);
+  SC.creneau = creneau;
+  await scCharger();
+}
+
 // Classe ou jour changés : séance en cours / prochaine / dernière de la classe
 // ce jour-là (aujourd'hui), ou la première du jour choisi.
 async function scClasseChangee() {
   SC.creneau = null;
+  const sel = document.getElementById('classe-sel');
+  SC.classe = sel ? sel.value : null;     // le sélecteur reprend la main
   const cid = _scClasse();
   if (!cid) { _scVide('Choisissez une classe.'); return; }
   if (SC.date === _scAujourdhui()) {
@@ -76,6 +120,7 @@ async function scClasseChangee() {
 
 async function scChoisirJour() {
   SC.date = document.getElementById('sc-date').value || _scAujourdhui();
+  await _scChargerJour();
   await scClasseChangee();
 }
 
@@ -88,7 +133,7 @@ function _scVide(msg) {
   SC.donnees = null;
   const t = document.getElementById('sc-titre'); if (t) t.innerHTML = '';
   const c = document.getElementById('sc-corps'); if (c) c.innerHTML = `<p class="sc-vide">${_scE(msg)}</p>`;
-  const ch = document.getElementById('sc-choix'); if (ch) ch.innerHTML = '';
+  _scRendreJour();
 }
 
 async function scCharger() {
@@ -120,19 +165,12 @@ function _scRendre() {
   if (!d) return;
   const s = d.seance;
   // Libellé du sélecteur sans l'établissement entre parenthèses.
-  const nomClasse = ((document.getElementById('classe-sel').selectedOptions[0] || {}).text || '')
-    .replace(/\s*\(.*\)\s*$/, '');
+  const nomClasse = s.classe || '';
   document.getElementById('sc-titre').innerHTML = `
     <strong>${_scE(nomClasse)}</strong> — ${_SC_JOURS[s.jour] || s.jour} ${_scDateFr(s.date)},
     ${_scE(s.creneau)} (${_scE(s.heure_debut)}–${_scE(s.heure_fin)})
     <span class="sc-statut sc-statut-${s.statut}">${_SC_STATUT[s.statut] || ''}</span>`;
-  const ch = document.getElementById('sc-choix');
-  if (ch) {
-    ch.innerHTML = d.seances_du_jour.length > 1
-      ? `<label>Séance <select onchange="scChoisirSeance(this.value)">${d.seances_du_jour.map(x =>
-          `<option value="${_scE(x.creneau)}"${x.creneau === s.creneau ? ' selected' : ''}>${_scE(x.creneau)} (${_scE(x.heure_debut)})</option>`).join('')}</select></label>`
-      : '';
-  }
+  _scRendreJour();
   document.getElementById('sc-corps').innerHTML = `
     <div class="sc-bloc">
       <div class="sc-bloc-titre">Mise en route</div>
