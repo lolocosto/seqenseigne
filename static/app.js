@@ -395,7 +395,9 @@ document.querySelectorAll('.tab').forEach(btn => {
       if (btn.getAttribute('role') === 'tab') btn.setAttribute('aria-selected','true');
       // v0.33.0 — « Planification » et « Suivi » partagent le conteneur
       // tab-classe ; chacun force sa portée (planification vs suivi/gestion).
-      const tabCible = (btn.dataset.tab === 'planification') ? 'classe' : btn.dataset.tab;
+      // v0.42.0 — « Paramétrage » partage aussi tab-classe (portée gestion).
+      const tabCible = (btn.dataset.tab === 'planification' || btn.dataset.tab === 'parametrage')
+        ? 'classe' : btn.dataset.tab;
       const elCible = document.getElementById('tab-' + tabCible);
       if (elCible) elCible.style.display = '';
       if (btn.dataset.tab==='livrets') return; // onglet supprimé
@@ -403,6 +405,15 @@ document.querySelectorAll('.tab').forEach(btn => {
       if (btn.dataset.tab==='ateliers') initAteliers();
       if (btn.dataset.tab==='mer' && typeof merInit === 'function') merInit();
       if (btn.dataset.tab==='admin')    adminSousOnglet('importref');
+      // v0.42.0 — Onglet « Système » : barre Administration / Préférences.
+      if (btn.dataset.tab==='systeme' && typeof systemeSwitch === 'function') {
+        systemeSwitch(_systemeSousOnglet());
+      }
+      // v0.42.0 — Onglet « Paramétrage » : portée gestion du module suivi.
+      if (btn.dataset.tab==='parametrage') {
+        if (typeof suiviInit === 'function') suiviInit();
+        if (typeof suiviPorteeSwitch === 'function') suiviPorteeSwitch('gestion');
+      }
       // v0.33.0 — Onglet « Planification » : monter la nav du suivi puis forcer
       // la portée planification.
       if (btn.dataset.tab==='planification') {
@@ -414,8 +425,9 @@ document.querySelectorAll('.tab').forEach(btn => {
       // sélecteurs contextuels.
       if (btn.dataset.tab==='classe' && typeof suiviInit === 'function') {
         suiviInit();
-        // v0.33.0 — L'onglet « Suivi » montre les portées suivi + gestion.
-        if (SUIVI_PORTEE_ACTIVE === 'planification'
+        // v0.42.0 — L'onglet « Suivi » ne montre plus que la portée suivi
+        // (la gestion est passée dans « Paramétrage »).
+        if (SUIVI_PORTEE_ACTIVE !== 'suivi'
             && typeof suiviPorteeSwitch === 'function') {
           suiviPorteeSwitch('suivi');
         }
@@ -423,17 +435,7 @@ document.querySelectorAll('.tab').forEach(btn => {
       // v0.9 — Recharger les chemins de configuration à chaque entrée dans
       // l'onglet Préférences (au cas où ils auraient été modifiés ailleurs,
       // par exemple par édition directe du configuration.json).
-      if (btn.dataset.tab==='preferences' && typeof prefCheminsCharger === 'function') {
-        prefCheminsCharger();
-        // v0.9.3 — Charger aussi la hauteur des textareas LaTeX
-        if (typeof prefChargerHauteurLatex === 'function') prefChargerHauteurLatex();
-        // v0.10.1 — Charger les critères pré-remplis de l'objectif Connaître
-        if (typeof prefChargerCriteresConnaitre === 'function') prefChargerCriteresConnaitre();
-        // v0.18.4 — Charger les paramètres de compilation (section Outils >
-        // Rendu par lot) et appliquer l'état replié/déplié des sections.
-        if (typeof prefChargerParamsCompilation === 'function') prefChargerParamsCompilation();
-        if (typeof prefCatInitEtats === 'function') prefCatInitEtats();
-      }
+      // (v0.42.0 — Préférences : voir systemeSwitch / _prefInitialiser.)
       // Réinitialiser les sous-onglets de l'onglet classe au sous-onglet "suivi"
       // pour éviter que le panneau paramétrage reste visible au retour
 
@@ -471,15 +473,21 @@ const SUIVI_PORTEES = {
     label: 'Planification',
     ateliers: ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans'],
   },
+  // v0.42.0 — Onglet « Suivi » : Début de séance, Observation, Compétences
+  // (ex-« Suivi de classe »).
   suivi: {
-    label: 'Suivi de classe',
-    ateliers: ['suivi'],
+    label: 'Suivi',
+    ateliers: ['debut', 'observation', 'suivi'],
   },
+  // v0.42.0 — Onglet principal « Paramétrage » (ex-portée Gestion du Suivi).
   gestion: {
-    label: 'Gestion',
-    ateliers: ['classe', 'etab'],
+    label: 'Paramétrage',
+    ateliers: ['classe', 'etab', 'observables'],
   },
 };
+
+// v0.42.0 — Onglet principal correspondant à chaque portée (data-tab).
+const SUIVI_PORTEE_ONGLET = { planification: 'planification', suivi: 'classe', gestion: 'parametrage' };
 
 // atelier → panneau stab-* + éventuel sous-onglet de gestion.
 const SUIVI_ATELIER_PANNEAU = {
@@ -491,6 +499,9 @@ const SUIVI_ATELIER_PANNEAU = {
   progression: { panneau: 'progression', selecteurs: ['etablissement', 'niveau', 'referentiel'] },
   plans:       { panneau: 'plans',       selecteurs: ['etablissement'] },   // v0.39.0
   suivi:       { panneau: 'suivi',       selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
+  debut:       { panneau: 'debut',       selecteurs: [] },                  // v0.42.0
+  observation: { panneau: 'observation', selecteurs: [] },                  // v0.42.0
+  observables: { panneau: 'observables', selecteurs: [] },                  // v0.42.0
   classe:      { panneau: 'parametrage', gestion: 'classes', selecteurs: ['annee', 'etablissement', 'niveau'] },
   etab:        { panneau: 'parametrage', gestion: 'etabs', selecteurs: ['annee', 'etablissement'] },
 };
@@ -523,10 +534,21 @@ function suiviPorteeSwitch(portee, depuisInit = false) {
       const b = document.getElementById('suivi-btn-portee-' + p);
       if (b) b.classList.toggle('active', p === portee);
     });
-    // v0.33.0 — La barre de portées (row) n'a de sens que dans l'onglet
-    // « Suivi » (portées suivi/gestion). En planification, on la masque.
+    // v0.42.0 — Chaque portée a son onglet principal : la rangée de portées
+    // est toujours masquée, et l'onglet principal actif suit la portée (une
+    // bascule par code — sousOnglet, gestionAllerEtablissements… — met donc
+    // aussi le bon onglet en surbrillance).
     const row = document.getElementById('suivi-portee-row');
-    if (row) row.style.display = (portee === 'planification') ? 'none' : 'flex';
+    if (row) row.style.display = 'none';
+    const ongletCible = SUIVI_PORTEE_ONGLET[portee];
+    document.querySelectorAll('.tab[data-tab]').forEach(t => {
+      if (!['planification', 'classe', 'parametrage'].includes(t.dataset.tab)) return;
+      const actif = t.dataset.tab === ongletCible;
+      const tabClasse = document.getElementById('tab-classe');
+      if (tabClasse && tabClasse.style.display === 'none') return;
+      t.classList.toggle('active', actif);
+      if (t.getAttribute('role') === 'tab') t.setAttribute('aria-selected', actif ? 'true' : 'false');
+    });
 
     // Boutons d'atelier (barre 2) : n'afficher que ceux de la portée.
     Object.keys(SUIVI_PORTEES).forEach(p => {
@@ -564,7 +586,8 @@ function suiviSwitch(atelier) {
     });
 
     // Afficher le panneau stab-* correspondant
-    ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans', 'suivi', 'parametrage'].forEach(s => {
+    ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans', 'suivi',
+     'debut', 'observation', 'observables', 'parametrage'].forEach(s => {
       const el = document.getElementById('stab-' + s);
       if (el) el.style.display = (s === def.panneau) ? '' : 'none';
     });
@@ -782,6 +805,43 @@ async function suiviRechargerAtelierActif() {
   } else if (a === 'plans') {          // v0.39.0
     if (typeof pcInit === 'function') await pcInit();
   }
+}
+
+// ── v0.42.0 — Onglet « Système » : Administration / Préférences ────────────
+function _systemeSousOnglet() {
+  let s = null;
+  try { s = localStorage.getItem('systeme-sous-onglet'); } catch (e) {}
+  return (s === 'preferences') ? 'preferences' : 'admin';
+}
+
+function _prefInitialiser() {
+  // v0.9 — Recharger les chemins de configuration à chaque entrée dans les
+  // Préférences (ils peuvent avoir été modifiés ailleurs).
+  if (typeof prefCheminsCharger === 'function') prefCheminsCharger();
+  // v0.9.3 — Hauteur des textareas LaTeX
+  if (typeof prefChargerHauteurLatex === 'function') prefChargerHauteurLatex();
+  // v0.10.1 — Critères pré-remplis de l'objectif Connaître
+  if (typeof prefChargerCriteresConnaitre === 'function') prefChargerCriteresConnaitre();
+  // v0.18.4 — Paramètres de compilation + état replié/déplié des sections.
+  if (typeof prefChargerParamsCompilation === 'function') prefChargerParamsCompilation();
+  if (typeof prefCatInitEtats === 'function') prefCatInitEtats();
+}
+
+function systemeSwitch(sous) {
+  if (sous !== 'admin' && sous !== 'preferences') sous = 'admin';
+  try { localStorage.setItem('systeme-sous-onglet', sous); } catch (e) {}
+  const sys = document.getElementById('tab-systeme');
+  if (sys) sys.style.display = '';
+  const admin = document.getElementById('tab-admin');
+  const pref = document.getElementById('tab-preferences');
+  if (admin) admin.style.display = (sous === 'admin') ? '' : 'none';
+  if (pref) pref.style.display = (sous === 'preferences') ? '' : 'none';
+  ['admin', 'preferences'].forEach(x => {
+    const b = document.getElementById('systeme-btn-' + x);
+    if (b) b.classList.toggle('active', x === sous);
+  });
+  if (sous === 'admin' && typeof adminSousOnglet === 'function') adminSousOnglet('importref');
+  if (sous === 'preferences') _prefInitialiser();
 }
 
 // Point d'entrée à l'ouverture de l'onglet « Suivi de classe ».

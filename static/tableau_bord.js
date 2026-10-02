@@ -92,7 +92,9 @@ async function tdbChargerAtomes() {
 // v0.30.1 — Barre d'actions : ouvre l'onglet Préférences (où vivent les
 // paramètres ; la configuration de la barre pourra y être ajoutée plus tard).
 function tdbOuvrirParametres() {
-  const btn = document.querySelector('[data-tab="preferences"]');
+  // v0.42.0 — Les Préférences sont dans l'onglet « Système ».
+  try { localStorage.setItem('systeme-sous-onglet', 'preferences'); } catch (e) {}
+  const btn = document.querySelector('[data-tab="systeme"]');
   if (btn) btn.click();
 }
 window.tdbOuvrirParametres = tdbOuvrirParametres;

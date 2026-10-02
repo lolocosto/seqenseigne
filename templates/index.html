@@ -16,8 +16,10 @@
       <button class="tab" data-tab="classe" role="tab" aria-selected="false">Suivi</button>
       <button class="tab" data-tab="planification" role="tab" aria-selected="false">Planification</button>
       <button class="tab" data-tab="ateliers" role="tab" aria-selected="false">Conception de référentiel</button>
-      <button class="tab" data-tab="admin" role="tab" aria-selected="false">Administration</button>
-      <button class="tab" data-tab="preferences" role="tab" aria-selected="false">Préférences</button>
+      <!-- v0.42.0 — Paramétrage (pédagogique : classes, établissements, salles,
+           observables) et Système (l'appli : administration, préférences). -->
+      <button class="tab" data-tab="parametrage" role="tab" aria-selected="false">Paramétrage</button>
+      <button class="tab" data-tab="systeme" role="tab" aria-selected="false">Système</button>
     </nav>
     <div class="header-actions">
       <button id="btn-export" class="btn-sm">Exporter</button>
@@ -76,10 +78,9 @@
        / suiviSwitch / suiviRenderSelecteurs). Mémorisation localStorage. -->
   <div class="toolbar" style="gap:16px;align-items:center;margin-bottom:0;border-bottom:1px solid var(--border);padding:6px 8px;flex-wrap:wrap">
     <div id="suivi-portee-row" style="display:flex;gap:4px">
-      <!-- v0.33.0 — Portées visibles dans l'onglet « Suivi » (la planification
-           est dans son propre onglet principal). -->
-      <button class="vbtn suivi-portee-suivi" id="suivi-btn-portee-suivi"   onclick="suiviPorteeSwitch('suivi')">Suivi de classe</button>
-      <button class="vbtn suivi-portee-suivi" id="suivi-btn-portee-gestion" onclick="suiviPorteeSwitch('gestion')">Gestion</button>
+      <!-- v0.42.0 — Chaque portée a désormais son onglet principal
+           (Suivi, Planification, Paramétrage) : plus de boutons de portée.
+           La rangée reste (vide, masquée) pour la compatibilité. -->
     </div>
     <div id="suivi-portee-selecteurs" style="display:flex;gap:10px;align-items:center;margin-left:auto"></div>
     <label id="suivi-annee-globale-wrap" class="suivi-sel" style="display:none">Année
@@ -97,11 +98,14 @@
     <button class="vbtn suivi-grp-planification"        id="suivi-btn-progmer"     onclick="suiviSwitch('progmer')">Progression de MER</button>
     <button class="vbtn suivi-grp-planification active" id="suivi-btn-progression" onclick="suiviSwitch('progression')">Progression principale</button>
     <button class="vbtn suivi-grp-planification"        id="suivi-btn-plans"       onclick="suiviSwitch('plans')">Plans de classe</button>
-    <!-- Portée Suivi de classe -->
-    <button class="vbtn suivi-grp-suivi"       id="suivi-btn-suivi"       onclick="suiviSwitch('suivi')" style="display:none">Suivi de classe</button>
-    <!-- Portée Gestion -->
-    <button class="vbtn suivi-grp-gestion" id="suivi-btn-classe" onclick="suiviSwitch('classe')" style="display:none">Classe</button>
-    <button class="vbtn suivi-grp-gestion" id="suivi-btn-etab"   onclick="suiviSwitch('etab')"   style="display:none">Établissement</button>
+    <!-- Portée Suivi (onglet principal « Suivi ») — v0.42.0 -->
+    <button class="vbtn suivi-grp-suivi" id="suivi-btn-debut"       onclick="suiviSwitch('debut')"       style="display:none">Début de séance</button>
+    <button class="vbtn suivi-grp-suivi" id="suivi-btn-observation" onclick="suiviSwitch('observation')" style="display:none">Observation</button>
+    <button class="vbtn suivi-grp-suivi" id="suivi-btn-suivi"       onclick="suiviSwitch('suivi')"       style="display:none">Compétences</button>
+    <!-- Portée Gestion (onglet principal « Paramétrage ») -->
+    <button class="vbtn suivi-grp-gestion" id="suivi-btn-classe"      onclick="suiviSwitch('classe')"      style="display:none">Classe</button>
+    <button class="vbtn suivi-grp-gestion" id="suivi-btn-etab"        onclick="suiviSwitch('etab')"        style="display:none">Établissement</button>
+    <button class="vbtn suivi-grp-gestion" id="suivi-btn-observables" onclick="suiviSwitch('observables')" style="display:none">Observables</button>
   </div>
 
   <!-- ── Progression annuelle (v0.19.1 — atelier d'assemblage) ──────────────
@@ -539,7 +543,7 @@
   <div id="no-classe" style="padding:40px;color:#999;text-align:center;font-size:14px">
     Sélectionnez une classe, ou créez-en une dans l'onglet
     <strong style="color:#1d5fa8;cursor:pointer"
-      onclick="document.querySelector('[data-tab=classes]').click()">Classes</strong>.
+      onclick="document.querySelector('[data-tab=parametrage]').click()">Paramétrage</strong>.
   </div>
 
   <div id="suivi-content" style="display:none">
@@ -554,6 +558,28 @@
   </div>
 
   </div><!-- /stab-suivi -->
+
+  <!-- v0.42.0 — Nouveaux panneaux (contenu dans les versions suivantes). -->
+  <div id="stab-debut" style="display:none">
+    <div class="card a-venir">
+      <h2>Début de séance</h2>
+      <p>Séance en cours, mise en route, absents, documents à distribuer :
+        arrive en v0.43 et v0.44.</p>
+    </div>
+  </div>
+  <div id="stab-observation" style="display:none">
+    <div class="card a-venir">
+      <h2>Observation</h2>
+      <p>Observation de l'activité des élèves sur le plan de classe : arrive en v0.46.</p>
+    </div>
+  </div>
+  <div id="stab-observables" style="display:none">
+    <div class="card a-venir">
+      <h2>Observables</h2>
+      <p>Comportements à valoriser ou à sanctionner, par niveau, avec exceptions
+        par élève : arrive en v0.45.</p>
+    </div>
+  </div>
 
   <!-- ── Gestion des classes ────────────────────────────────────────────── -->
   <div id="stab-parametrage" style="display:none">
@@ -2565,6 +2591,13 @@
     </div>
   </div>
 
+</main>
+<!-- ═══ SYSTÈME (v0.42.0) : barre Administration / Préférences ══════════════ -->
+<main id="tab-systeme" class="tab-content" style="display:none">
+  <div class="toolbar systeme-barre">
+    <button class="vbtn" id="systeme-btn-admin" onclick="systemeSwitch('admin')">Administration</button>
+    <button class="vbtn" id="systeme-btn-preferences" onclick="systemeSwitch('preferences')">Préférences</button>
+  </div>
 </main>
 <!-- ═══ ADMINISTRATION ═══════════════════════════════════════════════════════ -->
 <main id="tab-admin" class="tab-content" style="display:none">

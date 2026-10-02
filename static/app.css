@@ -4387,3 +4387,7 @@ textarea.latex-textarea {
   margin: 4px 0 10px; padding: 8px 10px; border-radius: 6px;
   background: var(--primary-bg); border: 1px solid #c7d5ea;
 }
+
+/* v0.42.0 — Onglet Système (barre Administration / Préférences) et panneaux à venir */
+.systeme-barre { gap: 4px; margin-bottom: 0; border-bottom: 1px solid var(--border); padding: 6px 8px; }
+.a-venir p { color: var(--text-secondary); font-size: 13px; }

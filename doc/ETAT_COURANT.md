@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.41.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.42.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -18,6 +18,14 @@
    livrer un ZIP delta + MANIFEST md5. Jamais de .db dans une livraison.
 5. Le dépôt GitHub (lolocosto/seqenseigne) contient `appli/` à la racine ; il
    est à jour à chaque livraison poussée : partir d'un `git pull`.
+
+## Chantier en cours : suivi en séance
+
+Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
+- v0.42.0 livrée : navigation (Paramétrage, Système ; Suivi › Début de
+  séance, Observation, Compétences).
+- Prochaine étape : v0.43 — Début de séance (séance en cours, mise en route
+  affichée, absences sur le plan de classe ou la liste alphabétique).
 
 ## Derniers chantiers terminés
 

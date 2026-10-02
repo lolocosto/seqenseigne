@@ -183,3 +183,22 @@ Suivi cohérent avec la Planification (mêmes sélecteurs etab/niveau/classe).
 
 - Créer un onglet principal **Configuration** regroupant la partie Gestion
   du Suivi (Classe, Établissement) et l'actuel onglet Administration.
+
+## Suivi en séance (chantier ouvert oct. 2026)
+
+Découpage validé : v0.42 navigation (Paramétrage, Système ; Suivi › Début de
+séance, Observation, Compétences) ; v0.43 Début de séance (séance en cours,
+mise en route affichée, absences) ; v0.44 documents (prévus et ponctuels —
+administratifs, sorties —, remise, rattrapage des absents, reste dû) ;
+v0.45 observables par niveau (communs ou individuels, périodes, exceptions
+masquer/attribuer) ; v0.46 observation sur le plan de classe ; v0.47 retours
+attendus et travail à faire (fait / rendu).
+
+Notés pour plus tard :
+- Signaler facilement que le prévu d'une séance a été chamboulé (MER non
+  faite, séance raccourcie…) et replanifier en conséquence.
+- Raccourci « séance en cours » depuis le tableau de bord.
+- Processus complet de conservation / purge des données en fin d'année
+  scolaire (absences, observations, sanctions : données de mineurs).
+- Application tablette pour l'enseignant (saisie en classe au doigt).
+- Séances hors cours en classe entière (demi-groupes, remplacements).

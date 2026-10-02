@@ -33,6 +33,17 @@ function extraireBlocNavigation(src) {
 }
 
 const DOM_HTML = `
+  <nav>
+    <button class="tab" data-tab="classe" role="tab"></button>
+    <button class="tab" data-tab="planification" role="tab"></button>
+    <button class="tab" data-tab="parametrage" role="tab"></button>
+  </nav>
+  <main id="tab-classe"></main>
+  <main id="tab-systeme" style="display:none">
+    <button id="systeme-btn-admin"></button><button id="systeme-btn-preferences"></button>
+  </main>
+  <main id="tab-admin" style="display:none"></main>
+  <main id="tab-preferences" style="display:none"></main>
   <div class="toolbar">
     <div id="suivi-portee-row">
       <button class="vbtn active suivi-portee-suivi" id="suivi-btn-portee-suivi"></button>
@@ -43,9 +54,12 @@ const DOM_HTML = `
   <div class="toolbar">
     <button class="vbtn suivi-grp-planification active" id="suivi-btn-progression"></button>
     <button class="vbtn suivi-grp-planification" id="suivi-btn-edt"></button>
+    <button class="vbtn suivi-grp-suivi" id="suivi-btn-debut" style="display:none"></button>
+    <button class="vbtn suivi-grp-suivi" id="suivi-btn-observation" style="display:none"></button>
     <button class="vbtn suivi-grp-suivi" id="suivi-btn-suivi" style="display:none"></button>
     <button class="vbtn suivi-grp-gestion" id="suivi-btn-classe" style="display:none"></button>
     <button class="vbtn suivi-grp-gestion" id="suivi-btn-etab" style="display:none"></button>
+    <button class="vbtn suivi-grp-gestion" id="suivi-btn-observables" style="display:none"></button>
   </div>
   <label id="suivi-annee-globale-wrap" class="suivi-sel" style="display:none">
     <select id="suivi-annee-globale"></select>
@@ -54,6 +68,9 @@ const DOM_HTML = `
   <div id="stab-indispo" style="display:none"></div>
   <div id="stab-progression" style="display:none"></div>
   <div id="stab-suivi" style="display:none"></div>
+  <div id="stab-debut" style="display:none"></div>
+  <div id="stab-observation" style="display:none"></div>
+  <div id="stab-observables" style="display:none"></div>
   <!-- Pool unifié des sélecteurs contextuels (data-suivi-sel="type"). -->
   <div id="suivi-selecteurs-pool" style="display:none">
     <label class="suivi-sel" data-suivi-sel="etablissement" id="lab-etab"><select id="suivi-etab-global"></select></label>
@@ -102,7 +119,7 @@ function chargerNav() {
     ${prelude}
     ${bloc}
     return { suiviPorteeSwitch, suiviSwitch, suiviRenderSelecteurs, suiviInit,
-             sousOnglet, get SUIVI_PORTEE_ACTIVE(){return SUIVI_PORTEE_ACTIVE;},
+             sousOnglet, systemeSwitch, get SUIVI_PORTEE_ACTIVE(){return SUIVI_PORTEE_ACTIVE;},
              get SUIVI_ATELIER_ACTIF(){return SUIVI_ATELIER_ACTIF;} };
   `;
   // 'window' et 'document' viennent de jsdom (globals du test).
@@ -128,20 +145,58 @@ describe('Navigation Suivi — portées', () => {
         || $('stab-edt').style.display === '').toBe(true);
   });
 
-  it('bascule vers Suivi de classe puis Gestion', () => {
+  it('bascule vers Suivi puis Paramétrage (v0.42.0 : un onglet principal par portée)', () => {
     nav.suiviInit();
     nav.suiviPorteeSwitch('suivi');
-    expect($('suivi-btn-portee-suivi').classList.contains('active')).toBe(true);
-    expect($('suivi-portee-row').style.display).toBe('flex');
+    // v0.42.0 — Plus de rangée de portées : chaque portée a son onglet principal.
+    expect($('suivi-portee-row').style.display).toBe('none');
     expect($('suivi-btn-suivi').style.display).toBe('');
+    expect($('suivi-btn-debut').style.display).toBe('');
+    expect($('suivi-btn-observation').style.display).toBe('');
+    // Défaut de la portée suivi : Début de séance.
+    expect(nav.SUIVI_ATELIER_ACTIF).toBe('debut');
+    expect($('stab-debut').style.display).toBe('');
     nav.suiviPorteeSwitch('gestion');
     expect($('suivi-btn-portee-gestion').classList.contains('active')).toBe(true);
     expect($('suivi-btn-progression').style.display).toBe('none');
     expect($('suivi-btn-suivi').style.display).toBe('none');
     expect($('suivi-btn-classe').style.display).toBe('');
     expect($('suivi-btn-etab').style.display).toBe('');
+    expect($('suivi-btn-observables').style.display).toBe('');
+    expect($('suivi-btn-debut').style.display).toBe('none');
     expect($('stab-parametrage').style.display).toBe('');
     expect(nav._appels.gestion).toContain('classes');
+  });
+
+  it('Paramétrage > Observables : panneau dédié (v0.42.0)', () => {
+    nav.suiviInit();
+    nav.suiviPorteeSwitch('gestion');
+    nav.suiviSwitch('observables');
+    expect($('stab-observables').style.display).toBe('');
+    expect($('stab-parametrage').style.display).toBe('none');
+  });
+
+  it("l'onglet principal actif suit la portée (v0.42.0)", () => {
+    nav.suiviInit();
+    nav.suiviPorteeSwitch('gestion');
+    expect(document.querySelector('.tab[data-tab="parametrage"]').classList.contains('active')).toBe(true);
+    expect(document.querySelector('.tab[data-tab="classe"]').classList.contains('active')).toBe(false);
+    nav.suiviPorteeSwitch('planification');
+    expect(document.querySelector('.tab[data-tab="planification"]').classList.contains('active')).toBe(true);
+    nav.suiviPorteeSwitch('suivi');
+    expect(document.querySelector('.tab[data-tab="classe"]').classList.contains('active')).toBe(true);
+  });
+
+  it('Système : bascule Administration / Préférences mémorisée (v0.42.0)', () => {
+    window.adminSousOnglet = () => {};
+    nav.systemeSwitch('preferences');
+    expect($('tab-preferences').style.display).toBe('');
+    expect($('tab-admin').style.display).toBe('none');
+    expect($('systeme-btn-preferences').classList.contains('active')).toBe(true);
+    expect(window.localStorage.getItem('systeme-sous-onglet')).toBe('preferences');
+    nav.systemeSwitch('admin');
+    expect($('tab-admin').style.display).toBe('');
+    expect($('tab-preferences').style.display).toBe('none');
   });
 
   it('Gestion > Établissement appelle gestionSousOnglet(etabs)', () => {
