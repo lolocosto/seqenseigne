@@ -1,5 +1,6 @@
 // ============================================================================
-// static/seance.js — v0.43.0 (v0.43.1 : séances du jour ; v0.44.0 : documents)
+// static/seance.js — v0.43.0 (v0.43.1 : séances du jour ; v0.44.0 : documents ;
+// v0.46.0 : en-tête de séance partagé avec l'Observation, static/observation.js)
 // Suivi › Début de séance : séance en cours (ou prochaine, ou dernière du
 // jour), mise en route affichée au professeur, absents notés d'un clic sur le
 // plan de classe de la semaine (sinon liste alphabétique).
@@ -133,6 +134,7 @@ function _scVide(msg) {
   SC.donnees = null;
   const t = document.getElementById('sc-titre'); if (t) t.innerHTML = '';
   const c = document.getElementById('sc-corps'); if (c) c.innerHTML = `<p class="sc-vide">${_scE(msg)}</p>`;
+  const o = document.getElementById('ov-corps'); if (o) o.innerHTML = `<p class="sc-vide">${_scE(msg)}</p>`;
   _scRendreJour();
 }
 
@@ -158,6 +160,8 @@ async function scCharger() {
       + `&classe_id=${encodeURIComponent(cid)}&date=${SC.date}&creneau=${encodeURIComponent(SC.creneau)}`);
   } catch (e) { _scVide(e.message); return; }
   _scRendre();
+  // v0.46.0 — Même séance pour l'Observation.
+  if (typeof ovCharger === 'function') await ovCharger();
 }
 
 function _scRendre() {

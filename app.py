@@ -39,6 +39,7 @@ from routes.salles          import bp as bp_salles
 from routes.plans_classe    import bp as bp_plans_classe
 from routes.seance          import bp as bp_seance
 from routes.observables     import bp as bp_observables
+from routes.observation     import bp as bp_observation
 from routes.edt             import bp as bp_edt
 from routes.projection      import bp as bp_projection
 from routes.affectation     import bp as bp_affectation
@@ -123,7 +124,7 @@ def create_app(data_dir: Path | None = None) -> Flask:
     for bp in (bp_sequences, bp_classes, bp_suivi, bp_versions,
                bp_atomes, bp_scanner, bp_admin, bp_progression,
                bp_etablissements, bp_calendrier,
-               bp_grille_horaire, bp_salles, bp_plans_classe, bp_seance, bp_observables, bp_edt, bp_projection, bp_affectation,
+               bp_grille_horaire, bp_salles, bp_plans_classe, bp_seance, bp_observables, bp_observation, bp_edt, bp_projection, bp_affectation,
                bp_indisponibilites, bp_decalage_progression, bp_leitner,
                bp_referentiel_externe, bp_progression_mer, bp_tableau_bord,
                bp_progression_doc,

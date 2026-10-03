@@ -4513,3 +4513,43 @@ textarea.latex-textarea {
 .obs-ajout-exc select { font-size: 12px; max-width: 260px; }
 .obs-apercu { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 10px; }
 .obs-apercu select { font-size: 13px; margin-bottom: 8px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.46.0 — En-tête de séance commun, Observation (static/observation.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sc-commun { margin-bottom: 10px; padding-bottom: 6px; }
+.sc-commun .sc-titre { margin-bottom: 0; }
+.ov-corps { display: flex; gap: 16px; align-items: flex-start; }
+.ov-plan { flex: 1; min-width: 0; }
+.ov-cote { width: 300px; flex-shrink: 0; font-size: 13px; position: sticky; top: 8px; }
+#ov-svg { width: 100%; max-height: 74vh; display: block; user-select: none; }
+#ov-svg .sal-tableau rect { fill: #3f5f4a; }
+#ov-svg .sal-tableau text { font-size: 13px; fill: var(--text-secondary); text-anchor: middle; }
+#ov-svg .sc-place rect { fill: #fff; stroke: #9ca3af; stroke-width: 1.2; }
+#ov-svg .sc-place text { font-size: 9.5px; text-anchor: middle; dominant-baseline: central; fill: var(--text); pointer-events: none; }
+#ov-svg .sc-occupee { cursor: pointer; }
+#ov-svg .sc-occupee rect { stroke: #4b5563; fill: #f8fafc; }
+#ov-svg .sc-occupee:hover rect { fill: var(--primary-bg); }
+#ov-svg .ov-sel rect { fill: var(--primary-bg); stroke: var(--primary); stroke-width: 2.4; }
+#ov-svg .ov-absent rect { fill: #f3f4f6; stroke: #d1d5db; stroke-dasharray: 3 2; }
+#ov-svg .ov-absent text { fill: #9ca3af; }
+#ov-svg .sc-aesh rect { fill: #ecfeff; stroke: #0e7490; }
+#ov-svg .sc-aesh text { fill: #0e7490; font-weight: 700; }
+#ov-svg .ov-cpt { font-size: 9px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.ov-plus { color: #15803d; fill: #15803d; font-weight: 600; }
+.ov-moins { color: #b91c1c; fill: #b91c1c; font-weight: 600; }
+.sc-eleve.ov-sel { background: var(--primary-bg); border-color: var(--primary); }
+.ov-inactif { cursor: default; opacity: .6; }
+.ov-eleve-nom { font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; margin-bottom: 8px; }
+.ov-sec-titre { font-size: 12px; margin: 10px 0 4px; font-weight: 600; }
+.ov-obs-liste { display: flex; flex-wrap: wrap; gap: 6px; }
+.ov-obs { padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; border: 1px solid; background: #fff; }
+.ov-obs-valoriser { border-color: #86efac; }
+.ov-obs-valoriser:hover { background: #f0fdf4; }
+.ov-obs-sanctionner { border-color: #fca5a5; }
+.ov-obs-sanctionner:hover { background: #fef2f2; }
+.ov-occ { list-style: none; margin: 0 0 8px; padding: 0; }
+.ov-occ li { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+.ov-heure { color: var(--text-secondary); font-size: 12px; }
+.ov-suppr { color: var(--text-secondary); font-size: 11px; }
+.ov-total { margin-top: 8px; }

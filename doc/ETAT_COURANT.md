@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.45.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.46.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -33,10 +33,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   volée, report, distribution, rattrapage des absents).
 - v0.45.0 livrée : observables par niveau (communs / individuels, périodes,
   exceptions masquer / attribuer avec commentaire, copie, aperçu).
-- Prochaine étape : v0.46 — observation en séance (plan de classe, clic sur
-  un élève → liste effective de ses observables, une occurrence par clic,
-  annuler la dernière, compteurs + / − sur le plan, absents non
-  sélectionnables).
+- v0.46.0 livrée : observation en séance (même séance que le début de
+  séance, plan, liste effective de l'élève, occurrences, compteurs).
+- Prochaine étape : v0.47 — retours attendus et travail à faire (fait /
+  rendu).
 
 ## Derniers chantiers terminés
 

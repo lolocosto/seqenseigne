@@ -1568,6 +1568,14 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.46.0 — Observations en séance ─────────────────────────────────
+        try:
+            from services.observation import SCHEMA as _SCHEMA_OBSV
+            conn.executescript(_SCHEMA_OBSV)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

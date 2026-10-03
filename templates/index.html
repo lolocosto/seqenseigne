@@ -569,24 +569,29 @@
   </div><!-- /stab-suivi -->
 
   <!-- v0.42.0 — Nouveaux panneaux (contenu dans les versions suivantes). -->
-  <!-- v0.43.0 — Début de séance (static/seance.js) -->
-  <div id="stab-debut" style="display:none">
-    <div class="card">
+  <!-- v0.46.0 — En-tête de séance commun à Début de séance et Observation
+       (même séance : jour, séances du jour, titre). static/seance.js -->
+  <div id="sc-commun" style="display:none">
+    <div class="card sc-commun">
       <div class="sc-entete">
-        <h2 style="margin:0">Début de séance</h2>
         <label>Jour <input type="date" id="sc-date" onchange="scChoisirJour()"></label>
         <button class="btn-sm" onclick="scSeanceEnCours()">Séance en cours</button>
       </div>
-      <!-- v0.43.1 — Séances du jour, toutes classes (toujours visibles). -->
       <div class="sc-jour-ligne"><span class="sc-jour-lbl">Séances du jour :</span><span id="sc-choix"></span></div>
       <div id="sc-titre" class="sc-titre"></div>
+    </div>
+  </div>
+
+  <!-- v0.43.0 — Début de séance (static/seance.js) -->
+  <div id="stab-debut" style="display:none">
+    <div class="card">
       <div id="sc-corps"></div>
     </div>
   </div>
+  <!-- v0.46.0 — Observation (static/observation.js) -->
   <div id="stab-observation" style="display:none">
-    <div class="card a-venir">
-      <h2>Observation</h2>
-      <p>Observation de l'activité des élèves sur le plan de classe : arrive en v0.46.</p>
+    <div class="card">
+      <div id="ov-corps"></div>
     </div>
   </div>
   <!-- v0.45.0 — Observables par niveau (static/observables.js) -->
@@ -3644,6 +3649,7 @@
 <script src="/static/plans_classe.js"></script>
 <script src="/static/seance.js"></script>
 <script src="/static/observables.js"></script>
+<script src="/static/observation.js"></script>
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>

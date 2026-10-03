@@ -589,6 +589,9 @@ function suiviSwitch(atelier) {
     });
 
     // Afficher le panneau stab-* correspondant
+    // v0.46.0 — En-tête de séance commun à Début de séance et Observation.
+    const scCommun = document.getElementById('sc-commun');
+    if (scCommun) scCommun.style.display = (atelier === 'debut' || atelier === 'observation') ? '' : 'none';
     ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans', 'suivi',
      'debut', 'observation', 'observables', 'parametrage'].forEach(s => {
       const el = document.getElementById('stab-' + s);
@@ -632,6 +635,9 @@ function suiviSwitch(atelier) {
     }
     if (atelier === 'observables' && typeof obsInit === 'function') {   // v0.45.0
       obsInit();
+    }
+    if (atelier === 'observation' && typeof ovInit === 'function') {   // v0.46.0
+      ovInit();
     }
   };
   if (typeof atelGardeAvantTransition === 'function') {
@@ -813,6 +819,7 @@ async function suiviRechargerAtelierActif() {
     // v0.42.1 — Même liste de classes pour les trois sous-onglets du Suivi.
     if (typeof onAnneeChange === 'function') await onAnneeChange();
     if (a === 'debut' && typeof scInit === 'function') await scInit();   // v0.43.0
+    if (a === 'observation' && typeof scInit === 'function') await scInit();   // v0.46.0
   } else if (a === 'plans') {          // v0.39.0
     if (typeof pcInit === 'function') await pcInit();
   }
@@ -1003,7 +1010,8 @@ function onNiveauChangeGlobal() {
 async function onClasseChange() {
   const cid = document.getElementById('classe-sel').value;
   // v0.43.0 — Début de séance : séances du jour de la classe choisie.
-  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'debut'
+  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
+      && (SUIVI_ATELIER_ACTIF === 'debut' || SUIVI_ATELIER_ACTIF === 'observation')
       && typeof scClasseChangee === 'function') {
     currentCid = cid || null;
     scClasseChangee();
