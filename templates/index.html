@@ -589,11 +589,22 @@
       <p>Observation de l'activité des élèves sur le plan de classe : arrive en v0.46.</p>
     </div>
   </div>
+  <!-- v0.45.0 — Observables par niveau (static/observables.js) -->
   <div id="stab-observables" style="display:none">
-    <div class="card a-venir">
-      <h2>Observables</h2>
-      <p>Comportements à valoriser ou à sanctionner, par niveau, avec exceptions
-        par élève : arrive en v0.45.</p>
+    <div class="card">
+      <div class="obs-entete">
+        <h2 style="margin:0">Observables <span id="obs-niveau" class="obs-niveau"></span></h2>
+        <span id="obs-copier" class="obs-copier"></span>
+      </div>
+      <p class="obs-aide">Comportements observés en séance. Un observable <b>commun</b> vaut pour
+        tous les élèves du niveau (sauf ceux pour qui il est masqué) ; un observable
+        <b>individuel</b> ne vaut que pour les élèves à qui il est attribué.</p>
+      <div class="obs-colonnes">
+        <div class="obs-col" id="obs-col-valoriser"></div>
+        <div class="obs-col" id="obs-col-sanctionner"></div>
+      </div>
+      <div id="obs-detail"></div>
+      <div id="obs-apercu" class="obs-apercu"></div>
     </div>
   </div>
 
@@ -3632,6 +3643,7 @@
 <script src="/static/salles.js"></script>
 <script src="/static/plans_classe.js"></script>
 <script src="/static/seance.js"></script>
+<script src="/static/observables.js"></script>
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>

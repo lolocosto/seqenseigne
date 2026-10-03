@@ -630,6 +630,9 @@ function suiviSwitch(atelier) {
     if (atelier === 'debut' && typeof scInit === 'function') {   // v0.43.0
       scInit();
     }
+    if (atelier === 'observables' && typeof obsInit === 'function') {   // v0.45.0
+      obsInit();
+    }
   };
   if (typeof atelGardeAvantTransition === 'function') {
     atelGardeAvantTransition(_continuer);
@@ -945,7 +948,10 @@ window.suiviClasseFiltresChange = suiviClasseFiltresChange;
 // actif : en Suivi de classe, refiltrer la liste des classes ; sinon, laisser
 // l'atelier Progression gérer.
 function onEtabChangeGlobal() {
-  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'suivi') {
+  // v0.45.0 — Début de séance et Observation ont les mêmes sélecteurs que
+  // Compétences (v0.42.1) : même refiltrage des classes.
+  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
+      && ['suivi', 'debut', 'observation'].includes(SUIVI_ATELIER_ACTIF)) {
     if (typeof suiviClasseFiltresChange === 'function') suiviClasseFiltresChange();
     return;
   }
@@ -965,8 +971,16 @@ window.onEtabChangeGlobal = onEtabChangeGlobal;
 function onNiveauChangeGlobal() {
   // v0.34.0 (étape A) — En Suivi de classe, changer le niveau refiltre la liste
   // des classes.
-  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'suivi') {
+  // v0.45.0 — Début de séance et Observation ont les mêmes sélecteurs que
+  // Compétences (v0.42.1) : même refiltrage des classes.
+  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
+      && ['suivi', 'debut', 'observation'].includes(SUIVI_ATELIER_ACTIF)) {
     if (typeof suiviClasseFiltresChange === 'function') suiviClasseFiltresChange();
+    return;
+  }
+  // v0.45.0 — Observables : définis par niveau.
+  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'observables') {
+    if (typeof obsInit === 'function') obsInit();
     return;
   }
   // v0.35.0 (B1) — En Gestion, changer le niveau refiltre la liste des classes.
