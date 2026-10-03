@@ -4444,3 +4444,10 @@ textarea.latex-textarea {
 .sc-jour-btn.sc-st-en_cours { border-color: #16a34a; }
 .sc-jour-btn.actif { background: var(--primary); border-color: var(--primary); color: #fff; }
 .sc-jour-vide { color: var(--text-secondary); }
+/* v0.43.2 — Début effectif des MER, mise en route non faite */
+.mer-debut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; margin: 4px 0 8px; }
+.mer-debut input { font-size: 13px; margin-left: 4px; }
+.mer-debut-aide { font-size: 11px; color: var(--text-secondary); }
+.sc-nonfaite-ligne { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.sc-nonfaite { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+.sc-nf-comm { font-size: 12px; width: 260px; }

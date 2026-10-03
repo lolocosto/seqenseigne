@@ -1541,6 +1541,17 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.43.2 — Début effectif des mises en route (par classe × année) ──
+        try:
+            cols_ac = {r["name"] for r in conn.execute(
+                "PRAGMA table_info(affectation_config)").fetchall()}
+            if cols_ac and "mer_date_debut" not in cols_ac:
+                conn.execute("ALTER TABLE affectation_config ADD COLUMN "
+                             "mer_date_debut TEXT NOT NULL DEFAULT ''")
+                conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

@@ -141,12 +141,21 @@ def lire(conn, store, annee: str, classe_id: str, date_iso: str, creneau: str,
             plan = {"salle": p["salle"], "places": p["places"],
                     "placements": p["placements"], "reservations": p["reservations"],
                     "source": p["source"]}
+    from services import affectation as aff_svc
+    ex = aff_svc.exception_du_jour(conn, classe_id, annee, date_iso)
+    actif = conn.execute("SELECT mer_active FROM classes WHERE id=?",
+                         (classe_id,)).fetchone()
     return {
         "seance": s,
         "mise_en_route": {
             "type": detail.get("mer_type"),
             "enveloppes": detail.get("mer_enveloppes") or [],
             "rang": detail.get("mer_rang") or 0,
+            # v0.43.2 — Mises en route actives pour la classe ; exception
+            # (« non faite » ou neutralisation prévue) à cette date.
+            "active": bool(actif and actif["mer_active"]),
+            "non_faite": ({"motif": ex["motif"]} if ex else None),
+            "date_debut": aff_svc.lire_date_debut(conn, classe_id, annee),
         },
         "eleves": eleves,
         "plan": plan,
@@ -154,6 +163,17 @@ def lire(conn, store, annee: str, classe_id: str, date_iso: str, creneau: str,
         "seances_du_jour": seances_du_jour(conn, store, annee,
                                            date.fromisoformat(date_iso), classe_id),
     }
+
+
+def marquer_mer_non_faite(conn, store, annee: str, classe_id: str, date_iso: str,
+                          creneau: str, non_faite: bool, commentaire: str = "") -> dict:
+    """v0.43.2 — Case « Mise en route non faite » du début de séance (exception
+    à la date de la séance ; la suite des mises en route se décale)."""
+    from services import affectation as aff_svc
+    _seance(conn, store, annee, classe_id, date_iso, creneau)
+    ex = aff_svc.marquer_non_faite(conn, classe_id, annee, date_iso, non_faite,
+                                   commentaire)
+    return {"non_faite": ({"motif": ex["motif"]} if ex else None)}
 
 
 def definir_absence(conn, store, annee: str, classe_id: str, eleve_id: str,

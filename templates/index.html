@@ -234,6 +234,15 @@
         <div style="font-size:14px;font-weight:600">Affectation des séances (sur l'EdT)</div>
         <span id="mer-affect-info" style="font-size:12px;color:var(--text-secondary)"></span>
       </div>
+      <!-- v0.43.2 — Début effectif des mises en route -->
+      <div class="mer-debut">
+        <label>Début effectif des mises en route
+          <input type="date" id="mer-date-debut" onchange="merDefinirDateDebut(this.value)">
+        </label>
+        <button class="btn-sm" type="button" onclick="merDefinirDateDebut('')">Dès la rentrée</button>
+        <span class="mer-debut-aide">Les séances antérieures ne comptent pas : la séance n° 1 des mises
+          en route est la première à partir de cette date.</span>
+      </div>
       <p style="font-size:12px;color:var(--text-secondary);margin:0 0 8px">
         Cliquez une case pour choisir le type de mise en route de ce créneau.
         « Aucune » neutralise le créneau (pas de MER). L'appli en déduit les

@@ -291,7 +291,91 @@ def supprimer_exception(conn, exception_id: str) -> None:
                  (exception_id,))
 
 
+class Neutralisations(set):
+    """v0.43.2 — Dates sans mise en route : les exceptions explicites ET, si
+    un début effectif des mises en route est fixé, toute date antérieure.
+
+    C'est un `set` des dates d'exception dont le test d'appartenance
+    (`date in neutralisations`) répond aussi « oui » pour une date avant
+    `date_debut`. Tous les consommateurs (`repartir_mer`, `affecter`) font ce
+    test : le début effectif s'applique donc partout (Leitner, progression de
+    MER, planification hebdo, début de séance) sans changer leurs appels.
+    Toujours « vrai » quand un début est fixé (sinon `exc or set()` le
+    perdrait).
+    """
+
+    def __init__(self, dates=(), date_debut: str = ""):
+        super().__init__(dates)
+        self.date_debut = date_debut or ""
+
+    def __contains__(self, d) -> bool:
+        if self.date_debut and isinstance(d, str) and d and d < self.date_debut:
+            return True
+        return super().__contains__(d)
+
+    def __bool__(self) -> bool:
+        return bool(self.date_debut) or super().__len__() > 0
+
+
 def dates_exceptions(conn, classe_id: str, annee: str) -> set:
-    return {r["date"] for r in conn.execute(
-        "SELECT date FROM affectation_exception WHERE classe_id=? AND annee=?",
-        (classe_id, annee)).fetchall()}
+    return Neutralisations(
+        (r["date"] for r in conn.execute(
+            "SELECT date FROM affectation_exception WHERE classe_id=? AND annee=?",
+            (classe_id, annee)).fetchall()),
+        lire_date_debut(conn, classe_id, annee))
+
+
+# ── v0.43.2 — Début effectif des mises en route ──────────────────────────────
+
+def lire_date_debut(conn, classe_id: str, annee: str) -> str:
+    try:
+        r = conn.execute("SELECT mer_date_debut FROM affectation_config "
+                         "WHERE classe_id=? AND annee=?", (classe_id, annee)).fetchone()
+    except Exception:
+        return ""
+    return (r["mer_date_debut"] if r else "") or ""
+
+
+def definir_date_debut(conn, classe_id: str, annee: str, date_debut: str) -> str:
+    """Date ISO (AAAA-MM-JJ) ou '' (pas de début différé)."""
+    from datetime import date as _date
+    d = (date_debut or "").strip()
+    if d:
+        try:
+            d = _date.fromisoformat(d).isoformat()
+        except ValueError:
+            raise DonneesInvalides(f"Date de début invalide : {date_debut!r}.")
+    conn.execute(
+        "INSERT INTO affectation_config (classe_id, annee, mode, mer_date_debut) "
+        "VALUES (?,?, 'par_seance', ?) ON CONFLICT(classe_id, annee) "
+        "DO UPDATE SET mer_date_debut=excluded.mer_date_debut",
+        (classe_id, annee, d))
+    return d
+
+
+# ── v0.43.2 — « Mise en route non faite » (exception à une date) ────────────
+
+def exception_du_jour(conn, classe_id: str, annee: str, date: str) -> dict | None:
+    r = conn.execute("SELECT id, date, motif FROM affectation_exception WHERE "
+                     "classe_id=? AND annee=? AND date=? LIMIT 1",
+                     (classe_id, annee, date)).fetchone()
+    return dict(r) if r else None
+
+
+def marquer_non_faite(conn, classe_id: str, annee: str, date: str,
+                      non_faite: bool, commentaire: str = "") -> dict | None:
+    """Cocher : crée (ou met à jour) l'exception de la date, avec le
+    commentaire comme motif ; décocher : la supprime. La mise en route prévue
+    glisse alors à la séance suivante (la suite se décale). Une exception
+    porte sur la DATE : deux séances le même jour sont concernées ensemble."""
+    ex = exception_du_jour(conn, classe_id, annee, date)
+    if not non_faite:
+        if ex:
+            supprimer_exception(conn, ex["id"])
+        return None
+    motif = (commentaire or "").strip() or "Mise en route non faite"
+    if ex:
+        conn.execute("UPDATE affectation_exception SET motif=? WHERE id=?",
+                     (motif, ex["id"]))
+        return {**ex, "motif": motif}
+    return ajouter_exception(conn, classe_id, annee, date, motif)

@@ -76,6 +76,12 @@ async function merChargerAffectation() {
   } catch (e) { MER_AFF_GRILLE = []; MER_AFF_EDT = []; MER_AFF = {}; }
   const info = document.getElementById('mer-affect-info');
   if (info) info.textContent = c.nom + ' · mode ' + (c.mer_mode || 'automatismes');
+  // v0.43.2 — Début effectif des mises en route.
+  try {
+    const cfg = await api('/api/classes/' + cid + '/affectation-config?annee=' + encodeURIComponent(annee));
+    const inp = document.getElementById('mer-date-debut');
+    if (inp) inp.value = (cfg && cfg.date_debut) || '';
+  } catch (e) {}
   merRenderAffectation(c.mer_mode || 'automatismes');
 }
 
@@ -260,4 +266,21 @@ function _merFramePlanning(zoneId, infoId, dlId, urlBase, c) {
     style="width:100%;height:70vh;border:0;border-radius:6px"></iframe>`;
   afficherPdfDansAppli(document.getElementById(fid), url);
   if (dl) { dl.href = url; dl.style.display = ''; }
+}
+
+
+// v0.43.2 — Début effectif des mises en route (vide = dès la rentrée).
+async function merDefinirDateDebut(valeur) {
+  const cid = _merClasseSel();
+  if (!cid) return;
+  try {
+    const r = await fetch('/api/classes/' + cid + '/affectation-config', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ annee: _merAnnee(), date_debut: valeur || '' }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    const inp = document.getElementById('mer-date-debut');
+    if (inp) inp.value = d.date_debut || '';
+    if (typeof merAfficherPlanning === 'function') merAfficherPlanning();
+  } catch (e) { alert(e.message); }
 }

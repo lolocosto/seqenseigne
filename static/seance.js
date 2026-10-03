@@ -188,6 +188,38 @@ function _scRendre() {
 }
 
 function _scTexteMiseEnRoute(m) {
+  // v0.43.2 — Mise en route non faite (exception à la date de la séance).
+  if (m && m.non_faite) {
+    return `<label class="sc-nonfaite"><input type="checkbox" checked onchange="scMerNonFaite(false)">
+      Mise en route non faite</label>
+      <span class="sc-sans">${_scE(m.non_faite.motif)} — reportée à la séance suivante.</span>`;
+  }
+  const caseNF = (m && m.active && m.type) ? `
+    <div class="sc-nonfaite-ligne">
+      <label class="sc-nonfaite"><input type="checkbox" onchange="scMerNonFaite(true)"> Mise en route non faite</label>
+      <input id="sc-nf-comm" class="sc-nf-comm" placeholder="Commentaire (facultatif)">
+    </div>` : '';
+  if (m && m.active && !m.type && m.date_debut && SC.donnees && SC.donnees.seance.date < m.date_debut) {
+    return `<span class="sc-sans">Mises en route à partir du ${_scDateFr(m.date_debut)}.</span>`;
+  }
+  return _scTexteMerPrevue(m) + caseNF;
+}
+
+async function scMerNonFaite(nonFaite) {
+  const d = SC.donnees;
+  if (!d) return;
+  const comm = document.getElementById('sc-nf-comm');
+  try {
+    await _scApi('/api/seance/mer-non-faite', { method: 'PUT', body: JSON.stringify({
+      annee: _scAnnee(), classe_id: _scClasse(), date: d.seance.date, creneau: d.seance.creneau,
+      non_faite: nonFaite, commentaire: comm ? comm.value : '' }) });
+  } catch (e) {
+    if (typeof showToast === 'function') showToast(e.message, true); else alert(e.message);
+  }
+  await scCharger();     // la mise en route (et la suite) a changé
+}
+
+function _scTexteMerPrevue(m) {
   if (!m || !m.type) return '<span class="sc-sans">Pas de mise en route pour cette séance.</span>';
   if (m.type === 'mer_auto') {
     const env = (m.enveloppes || []).join(', ');

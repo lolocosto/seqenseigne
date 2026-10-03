@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.43.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.43.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -27,9 +27,14 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   Établissement, Niveau, Classe partagée ; Observables : Niveau).
 - v0.43.0 livrée : Début de séance (séance en cours / prochaine /
   dernière, mise en route affichée, absents sur le plan ou la liste) ;
-  v0.43.1 : séances du jour (toutes classes) toujours affichées.
-- Prochaine étape : v0.44 — documents (prévus et ponctuels, remise à tous,
-  rattrapage des absents, reste dû).
+  v0.43.1 : séances du jour (toutes classes) toujours affichées ;
+  v0.43.2 : début effectif des mises en route, case « MER non faite ».
+- Prochaine étape : v0.44 — documents. Décisions : bloc « Documents » du
+  début de séance en deux parties (« Nouveaux documents » de la séance, coche
+  « distribué » ; « À rattraper » par élève présent, coche « donné ») ; un
+  document prévu non coché reste à distribuer et revient à la séance
+  suivante ; pas de documents ponctuels planifiés à l'avance (on ne planifie
+  que ce qui est lié aux progressions) ; pas de vue « professeur principal ».
 
 ## Derniers chantiers terminés
 

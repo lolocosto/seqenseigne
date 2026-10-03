@@ -1,5 +1,12 @@
-6ba3436b7b848a1192168db645bab746  5601  doc\ETAT_COURANT.md
-e2a34494690d369403be4a5b00c2e8b2  147359  static\app.css
-d67eda5070040c628bd3b03d3e68ea57  11146  static\seance.js
-61355d0f44f07c00b96c7b7d4c88f002  198345  templates\index.html
-dd7b4d907eb7be5bdda715c5fd08007e  1016  doc\redemarrage_v0_43_1.md
+0d22cfafdf9a9064d88b499f8e22759c  6041  doc\ETAT_COURANT.md
+a2efd4cba61ada65754e23658838f98d  179818  persistence\sqlite_store.py
+89c7d561c5417aca3ac46469289fbe41  7069  routes\affectation.py
+9ca53e59ba53ff4c5a90736db72bc19e  3331  routes\seance.py
+9c1d1e9bb76d569a74abf4b841148967  16159  services\affectation.py
+7d5b63ca7293427e1f11bc59e5e66a54  8545  services\seance.py
+f116931709a86ca2b989440ed0af48c5  147900  static\app.css
+3591f310824c617d3fa2e633feaf8f58  12737  static\mer.js
+bd9bc6f4c27f066be12d4cbf4d5f62d9  12672  static\seance.js
+baef109d77a947d7f6642506fc2c3039  198891  templates\index.html
+7084380f0d9a23b8f78a9f85aea38590  2929  doc\redemarrage_v0_43_2.md
+a514776f47ee1c3f1885762d99f518be  5835  tests\test_v0_43_2_mer_debut_non_faite.py

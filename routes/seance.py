@@ -80,3 +80,18 @@ def api_absence():
         return jsonify({"absents": liste})
     except SeanceErreur as e:
         return _erreur(e)
+
+
+@bp.route("/api/seance/mer-non-faite", methods=["PUT"])
+def api_mer_non_faite():
+    """v0.43.2 — Mise en route non faite (case + commentaire facultatif)."""
+    b = request.get_json() or {}
+    annee = b.get("annee") or annees_scolaires.courante()
+    try:
+        with _store()._conn() as conn:
+            return jsonify(svc.marquer_mer_non_faite(
+                conn, _store(), annee, b.get("classe_id", ""), b.get("date", ""),
+                b.get("creneau", ""), bool(b.get("non_faite")),
+                b.get("commentaire", "")))
+    except SeanceErreur as e:
+        return _erreur(e)

@@ -35,9 +35,11 @@ def api_lire_config(classe_id):
     with _store()._conn() as conn:
         mode = svc.lire_mode(conn, classe_id, annee)
         motif = svc.lire_motif(conn, classe_id, annee)
+        date_debut = svc.lire_date_debut(conn, classe_id, annee)
     return jsonify({"classe_id": classe_id, "annee": annee, "mode": mode,
                     "motif": motif, "modes": list(svc.MODES),
-                    "reserves": list(svc.RESERVES)})
+                    "reserves": list(svc.RESERVES),
+                    "date_debut": date_debut})
 
 
 @bp.route("/api/classes/<classe_id>/affectation-config", methods=["PUT"])
@@ -46,9 +48,17 @@ def api_definir_config(classe_id):
     annee = body.get("annee") or annees_scolaires.courante()
     try:
         with _store()._conn() as conn:
-            mode = svc.definir_mode(conn, classe_id, annee,
-                                    body.get("mode", "par_seance"))
-        return jsonify({"classe_id": classe_id, "annee": annee, "mode": mode})
+            # v0.43.2 — Le corps peut ne porter que la date de début : le
+            # mode n'est alors pas modifié.
+            if "mode" in body or "date_debut" not in body:
+                svc.definir_mode(conn, classe_id, annee,
+                                 body.get("mode", "par_seance"))
+            if "date_debut" in body:
+                svc.definir_date_debut(conn, classe_id, annee, body.get("date_debut"))
+            mode = svc.lire_mode(conn, classe_id, annee)
+            date_debut = svc.lire_date_debut(conn, classe_id, annee)
+        return jsonify({"classe_id": classe_id, "annee": annee, "mode": mode,
+                        "date_debut": date_debut})
     except AffectationErreur as e:
         return _erreur(e)
 
