@@ -202,3 +202,5 @@ Notés pour plus tard :
   scolaire (absences, observations, sanctions : données de mineurs).
 - Application tablette pour l'enseignant (saisie en classe au doigt).
 - Séances hors cours en classe entière (demi-groupes, remplacements).
+- Documents associés à la progression de MER (câblage de l'association,
+  puis distribution en début de séance comme les documents principaux).

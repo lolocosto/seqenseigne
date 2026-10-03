@@ -1,5 +1,5 @@
 // ============================================================================
-// static/seance.js — v0.43.0 (v0.43.1 : séances du jour toujours affichées)
+// static/seance.js — v0.43.0 (v0.43.1 : séances du jour ; v0.44.0 : documents)
 // Suivi › Début de séance : séance en cours (ou prochaine, ou dernière du
 // jour), mise en route affichée au professeur, absents notés d'un clic sur le
 // plan de classe de la semaine (sinon liste alphabétique).
@@ -183,8 +183,10 @@ function _scRendre() {
         <div id="sc-zone-plan" class="sc-zone-plan"></div>
         <div id="sc-zone-liste" class="sc-zone-liste"></div>
       </div>
-    </div>`;
+    </div>
+    <div class="sc-bloc" id="sc-bloc-docs"></div>`;
   _scRendreAbsents();
+  _scRendreDocuments();
 }
 
 function _scTexteMiseEnRoute(m) {
@@ -293,4 +295,112 @@ async function scBasculer(eid) {
   }
   SC.occupe = false;
   _scRendreAbsents();
+  // Les absents changent la liste « À rattraper » des séances suivantes ;
+  // pour celle-ci, un élève absent n'y figure plus : recharger les documents.
+  await _scRechargerDocuments();
+}
+
+// ── v0.44.0 — Documents ─────────────────────────────────────────────────────
+
+const _SC_CATEG = { pedagogique: 'pédagogique', administratif: 'administratif', sortie: 'sortie' };
+
+async function _scRechargerDocuments() {
+  const d = SC.donnees;
+  if (!d) return;
+  try {
+    const r = await _scApi(`/api/seance?annee=${encodeURIComponent(_scAnnee())}`
+      + `&classe_id=${encodeURIComponent(_scClasse())}&date=${d.seance.date}&creneau=${encodeURIComponent(d.seance.creneau)}`);
+    d.documents = r.documents;
+    d.seance_suivante = r.seance_suivante;
+  } catch (e) {}
+  _scRendreDocuments();
+}
+
+function _scRendreDocuments() {
+  const zone = document.getElementById('sc-bloc-docs');
+  const d = SC.donnees;
+  if (!zone || !d || !d.documents) return;
+  const noms = {}; d.eleves.forEach(e => { noms[e.id] = e; });
+  const nv = d.documents.nouveaux;
+  const ligneDoc = x => `
+    <li class="sc-doc${x.distribue ? ' sc-doc-ok' : ''}">
+      <label><input type="checkbox" ${x.distribue ? 'checked' : ''}
+        onchange="scDistribuer('${x.id}', this.checked)"> ${_scE(x.libelle)}</label>
+      ${x.origine === 'ponctuel' ? `<span class="sc-doc-tag">${_scE(_SC_CATEG[x.categorie] || x.categorie)}</span>` : ''}
+      ${x.reporte ? `<span class="sc-doc-tag sc-doc-report">reporté du ${_scDateFr(x.cible_date)}</span>` : ''}
+      ${x.origine === 'ponctuel' ? `<button class="btn-lien sc-doc-suppr" onclick="scSupprimerDocument('${x.id}')" title="Supprimer ce document ajouté à la volée">supprimer</button>` : ''}
+    </li>`;
+  const suiv = d.seance_suivante;
+  const rat = d.documents.a_rattraper;
+  zone.innerHTML = `
+    <div class="sc-bloc-titre">Documents</div>
+    <div class="sc-docs">
+      <div class="sc-docs-col">
+        <div class="sc-liste-titre">Nouveaux documents (cocher une fois distribués à la classe)</div>
+        ${nv.length ? `<ul class="sc-doc-liste">${nv.map(ligneDoc).join('')}</ul>`
+                    : '<p class="sc-aide">Aucun document prévu pour cette séance.</p>'}
+        <details class="sc-doc-ajout">
+          <summary>+ Ajouter un document</summary>
+          <div class="sc-doc-form">
+            <input id="sc-doc-lib" placeholder="Libellé (ex : mot du professeur principal)">
+            <select id="sc-doc-cat">
+              <option value="administratif">administratif</option>
+              <option value="sortie">sortie</option>
+              <option value="pedagogique">pédagogique</option>
+            </select>
+            <label><input type="radio" name="sc-doc-pour" value="cette" checked> cette séance</label>
+            ${suiv ? `<label><input type="radio" name="sc-doc-pour" value="prochaine"> prochaine séance
+              (${_scDateFr(suiv.date)}, ${_scE(suiv.creneau)})</label>` : ''}
+            <button class="btn-sm btn-prim" onclick="scAjouterDocument()">Ajouter</button>
+          </div>
+        </details>
+      </div>
+      <div class="sc-docs-col">
+        <div class="sc-liste-titre">À rattraper (élèves absents quand le document a été distribué)</div>
+        ${rat.length ? rat.map(r => `
+          <div class="sc-rat">
+            <div class="sc-rat-nom">${_scE((noms[r.eleve_id] || {}).etiquette || r.eleve_id)}</div>
+            <ul class="sc-doc-liste">${r.documents.map(x => `
+              <li class="sc-doc${x.donne ? ' sc-doc-ok' : ''}"><label><input type="checkbox" ${x.donne ? 'checked' : ''}
+                onchange="scDonner('${x.id}', '${r.eleve_id}', this.checked)"> ${_scE(x.libelle)}</label>
+                <span class="sc-doc-tag">du ${_scDateFr(x.distribue_date)}</span></li>`).join('')}
+            </ul>
+          </div>`).join('')
+          : '<p class="sc-aide">Rien à rattraper.</p>'}
+      </div>
+    </div>`;
+}
+
+async function _scDocAction(url, opts) {
+  try { await _scApi(url, opts); }
+  catch (e) { if (typeof showToast === 'function') showToast(e.message, true); else alert(e.message); }
+  await _scRechargerDocuments();
+}
+
+function _scSeanceCourante() {
+  const s = SC.donnees.seance;
+  return { annee: _scAnnee(), classe_id: _scClasse(), date: s.date, creneau: s.creneau };
+}
+
+function scDistribuer(id, distribue) {
+  return _scDocAction(`/api/seance/document/${id}/distribue`, { method: 'PUT',
+    body: JSON.stringify({ ..._scSeanceCourante(), distribue }) });
+}
+
+function scDonner(id, eleveId, donne) {
+  return _scDocAction(`/api/seance/document/${id}/donne`, { method: 'PUT',
+    body: JSON.stringify({ ..._scSeanceCourante(), eleve_id: eleveId, donne }) });
+}
+
+function scAjouterDocument() {
+  const lib = document.getElementById('sc-doc-lib').value.trim();
+  if (!lib) { document.getElementById('sc-doc-lib').focus(); return; }
+  const pour = (document.querySelector('input[name="sc-doc-pour"]:checked') || {}).value || 'cette';
+  return _scDocAction('/api/seance/document', { method: 'POST', body: JSON.stringify({
+    ..._scSeanceCourante(), libelle: lib, categorie: document.getElementById('sc-doc-cat').value, pour }) });
+}
+
+function scSupprimerDocument(id) {
+  if (!confirm('Supprimer ce document ?')) return;
+  return _scDocAction(`/api/seance/document/${id}`, { method: 'DELETE' });
 }

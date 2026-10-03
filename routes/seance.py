@@ -95,3 +95,72 @@ def api_mer_non_faite():
                 b.get("commentaire", "")))
     except SeanceErreur as e:
         return _erreur(e)
+
+
+# ── v0.44.0 — Documents ──────────────────────────────────────────────────────
+
+def _docs():
+    from services import documents_seance
+    return documents_seance
+
+
+@bp.route("/api/seance/document", methods=["POST"])
+def api_document_ajouter():
+    """Document ajouté à la volée : pour cette séance (`pour`='cette') ou pour
+    la séance suivante de la classe (`pour`='prochaine')."""
+    b = request.get_json() or {}
+    annee = b.get("annee") or annees_scolaires.courante()
+    docs = _docs()
+    try:
+        with _store()._conn() as conn:
+            svc._seance(conn, _store(), annee, b.get("classe_id", ""), b.get("date", ""),
+                        b.get("creneau", ""))
+            cible = {"date": b.get("date"), "creneau": b.get("creneau")}
+            if b.get("pour") == "prochaine":
+                cible = svc.seance_suivante(conn, _store(), annee, b.get("classe_id", ""),
+                                            b.get("date", ""), b.get("creneau", ""))
+                if cible is None:
+                    return jsonify({"error": "Pas de séance suivante cette année."}), 400
+            d = docs.ajouter_ponctuel(conn, annee, b.get("classe_id", ""),
+                                      b.get("libelle", ""), b.get("categorie", "pedagogique"),
+                                      cible["date"], cible["creneau"])
+        return jsonify(d), 201
+    except (SeanceErreur, docs.DocumentErreur) as e:
+        return _erreur(e)
+
+
+@bp.route("/api/seance/document/<document_id>", methods=["DELETE"])
+def api_document_supprimer(document_id):
+    docs = _docs()
+    try:
+        with _store()._conn() as conn:
+            docs.supprimer_ponctuel(conn, document_id)
+        return jsonify({"ok": True})
+    except docs.DocumentErreur as e:
+        return _erreur(e)
+
+
+@bp.route("/api/seance/document/<document_id>/distribue", methods=["PUT"])
+def api_document_distribue(document_id):
+    b = request.get_json() or {}
+    docs = _docs()
+    try:
+        with _store()._conn() as conn:
+            docs.marquer_distribue(conn, document_id, b.get("date", ""),
+                                   b.get("creneau", ""), bool(b.get("distribue")))
+        return jsonify({"ok": True})
+    except docs.DocumentErreur as e:
+        return _erreur(e)
+
+
+@bp.route("/api/seance/document/<document_id>/donne", methods=["PUT"])
+def api_document_donne(document_id):
+    b = request.get_json() or {}
+    docs = _docs()
+    try:
+        with _store()._conn() as conn:
+            docs.marquer_donne(conn, document_id, b.get("eleve_id", ""), b.get("date", ""),
+                               b.get("creneau", ""), bool(b.get("donne")))
+        return jsonify({"ok": True})
+    except docs.DocumentErreur as e:
+        return _erreur(e)

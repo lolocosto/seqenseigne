@@ -4451,3 +4451,19 @@ textarea.latex-textarea {
 .sc-nonfaite-ligne { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
 .sc-nonfaite { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
 .sc-nf-comm { font-size: 12px; width: 260px; }
+/* v0.44.0 — Documents de séance */
+.sc-docs { display: flex; gap: 24px; flex-wrap: wrap; }
+.sc-docs-col { flex: 1; min-width: 300px; }
+.sc-doc-liste { list-style: none; margin: 0; padding: 0; }
+.sc-doc { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; }
+.sc-doc label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.sc-doc-ok label { color: var(--text-secondary); }
+.sc-doc-tag { font-size: 11px; padding: 1px 7px; border-radius: 9px; background: #f1f5f9; color: var(--text-secondary); }
+.sc-doc-report { background: #fef3c7; color: #78350f; }
+.sc-doc-suppr { font-size: 11px; color: var(--danger); }
+.sc-doc-ajout { margin-top: 8px; font-size: 13px; }
+.sc-doc-ajout summary { cursor: pointer; color: var(--primary); }
+.sc-doc-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+.sc-doc-form input[type=text], #sc-doc-lib { width: 300px; font-size: 13px; }
+.sc-rat { margin-bottom: 8px; }
+.sc-rat-nom { font-weight: 500; font-size: 13px; }

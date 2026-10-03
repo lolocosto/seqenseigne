@@ -159,10 +159,35 @@ def lire(conn, store, annee: str, classe_id: str, date_iso: str, creneau: str,
         },
         "eleves": eleves,
         "plan": plan,
+        # v0.44.0 — Documents : nouveaux (dont reportés) et à rattraper.
+        "documents": _documents(conn, store, annee, classe_id, date_iso, creneau,
+                                [e["id"] for e in eleves]),
+        "seance_suivante": seance_suivante(conn, store, annee, classe_id,
+                                           date_iso, creneau),
         "absents": absents(conn, classe_id, date_iso, creneau),
         "seances_du_jour": seances_du_jour(conn, store, annee,
                                            date.fromisoformat(date_iso), classe_id),
     }
+
+
+def _documents(conn, store, annee, classe_id, date_iso, creneau, eleves_ids):
+    from services import documents_seance as docs
+    return docs.pour_seance(conn, store, annee, classe_id, date_iso, creneau, eleves_ids)
+
+
+def seance_suivante(conn, store, annee: str, classe_id: str, date_iso: str,
+                    creneau: str) -> dict | None:
+    """v0.44.0 — Prochaine séance (projetée) de la classe après la séance
+    donnée : {date, creneau, heure_debut} ou None."""
+    infos = ctx.infos_classe(conn, classe_id)
+    if infos is None:
+        return None
+    cal = ctx.calendrier(store, annee, infos["academie"])
+    for x in ctx.projeter_classe(conn, annee, classe_id, infos["etablissement_id"], cal):
+        if (x["date"], x["creneau_code"]) > (date_iso, creneau):
+            return {"date": x["date"], "creneau": x["creneau_code"],
+                    "heure_debut": x.get("heure_debut", "")}
+    return None
 
 
 def marquer_mer_non_faite(conn, store, annee: str, classe_id: str, date_iso: str,
