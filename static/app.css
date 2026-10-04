@@ -4593,3 +4593,6 @@ textarea.latex-textarea {
 .ts-sortie textarea { width: 100%; font-family: inherit; font-size: 13px; background: #fff; }
 .obs-act-lib { flex: 1; font-size: 13px; border: none; background: transparent; }
 .obs-inactif { opacity: .55; }
+/* v0.47.2 — Délai de réalisation */
+.tw-delai-nb { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; }
+.tw-form .tw-delai-nb input { flex: none; min-width: 0; width: 56px; font-size: 12px; }

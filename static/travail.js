@@ -65,11 +65,15 @@ function twRendre() {
           <input id="tw-lib" placeholder="Ex. : exercices 12 et 13 p. 40">
           <select id="tw-type"><option value="faire">à faire (vérifié en classe)</option>
             <option value="rendre">à rendre (ramassé)</option></select>
-          <select id="tw-delai">
-            <option value="1">pour la prochaine séance${suiv ? ` (${_scDateFr(suiv.date)})` : ''}</option>
-            <option value="3">dans au moins 3 jours</option>
-            <option value="7">dans au moins 1 semaine</option>
+          <select id="tw-delai-type" onchange="twDelaiType()">
+            <option value="prochaine">à la prochaine séance${suiv ? ` (${_scDateFr(suiv.date)})` : ''}</option>
+            <option value="jours">dans … jour(s)</option>
+            <option value="semaines">dans … semaine(s)</option>
           </select>
+          <span id="tw-delai-nb" class="tw-delai-nb" style="display:none">
+            <input id="tw-delai-n" type="number" min="1" max="60" step="1" value="1">
+            <span id="tw-delai-unite">jour(s)</span>
+          </span>
           <button class="btn-sm btn-prim" onclick="twDonner()">Donner</button>
         </div>
         <p class="sc-aide">Les élèves absents le recevront avec les documents à rattraper du Début de
@@ -140,7 +144,21 @@ function twDonner() {
   if (!lib) { document.getElementById('tw-lib').focus(); return; }
   return _twAction('/api/travail', { method: 'POST', body: JSON.stringify({
     ..._twSeance(), libelle: lib, retour: document.getElementById('tw-type').value,
-    delai_jours: parseInt(document.getElementById('tw-delai').value, 10) }) });
+    delai_jours: _twDelaiJours() }) });
+}
+
+// v0.47.2 — Délai : « à la prochaine séance », « dans x jours », « dans x
+// semaines » (= la prochaine séance au moins x jours / x semaines après).
+function twDelaiType() {
+  const t = document.getElementById('tw-delai-type').value;
+  document.getElementById('tw-delai-nb').style.display = t === 'prochaine' ? 'none' : '';
+  document.getElementById('tw-delai-unite').textContent = t === 'semaines' ? 'semaine(s)' : 'jour(s)';
+}
+
+function _twDelaiJours() {
+  const t = document.getElementById('tw-delai-type').value;
+  const n = Math.max(1, parseInt(document.getElementById('tw-delai-n').value || '1', 10) || 1);
+  return t === 'prochaine' ? 1 : (t === 'semaines' ? 7 * n : n);
 }
 
 function twSupprimer(id) {
