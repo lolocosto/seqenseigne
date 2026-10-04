@@ -101,6 +101,7 @@
     <!-- Portée Suivi (onglet principal « Suivi ») — v0.42.0 -->
     <button class="vbtn suivi-grp-suivi" id="suivi-btn-debut"       onclick="suiviSwitch('debut')"       style="display:none">Début de séance</button>
     <button class="vbtn suivi-grp-suivi" id="suivi-btn-observation" onclick="suiviSwitch('observation')" style="display:none">Observation</button>
+    <button class="vbtn suivi-grp-suivi" id="suivi-btn-travail"     onclick="suiviSwitch('travail')"     style="display:none">Travail</button>
     <button class="vbtn suivi-grp-suivi" id="suivi-btn-suivi"       onclick="suiviSwitch('suivi')"       style="display:none">Compétences</button>
     <!-- Portée Gestion (onglet principal « Paramétrage ») -->
     <button class="vbtn suivi-grp-gestion" id="suivi-btn-classe"      onclick="suiviSwitch('classe')"      style="display:none">Classe</button>
@@ -586,6 +587,12 @@
   <div id="stab-debut" style="display:none">
     <div class="card">
       <div id="sc-corps"></div>
+    </div>
+  </div>
+  <!-- v0.47.0 — Travail à faire / à rendre, retours (static/travail.js) -->
+  <div id="stab-travail" style="display:none">
+    <div class="card">
+      <div id="tw-corps"></div>
     </div>
   </div>
   <!-- v0.46.0 — Observation (static/observation.js) -->
@@ -3650,6 +3657,7 @@
 <script src="/static/seance.js"></script>
 <script src="/static/observables.js"></script>
 <script src="/static/observation.js"></script>
+<script src="/static/travail.js"></script>
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>

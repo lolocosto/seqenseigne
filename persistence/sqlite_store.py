@@ -1576,6 +1576,14 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.47.0 — Travail à faire / à rendre, documents à rapporter ───────
+        try:
+            from services import travail as _travail
+            _travail.migrer(conn)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

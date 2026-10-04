@@ -135,6 +135,7 @@ function _scVide(msg) {
   const t = document.getElementById('sc-titre'); if (t) t.innerHTML = '';
   const c = document.getElementById('sc-corps'); if (c) c.innerHTML = `<p class="sc-vide">${_scE(msg)}</p>`;
   const o = document.getElementById('ov-corps'); if (o) o.innerHTML = `<p class="sc-vide">${_scE(msg)}</p>`;
+  const w = document.getElementById('tw-corps'); if (w) w.innerHTML = `<p class="sc-vide">${_scE(msg)}</p>`;
   _scRendreJour();
 }
 
@@ -160,8 +161,9 @@ async function scCharger() {
       + `&classe_id=${encodeURIComponent(cid)}&date=${SC.date}&creneau=${encodeURIComponent(SC.creneau)}`);
   } catch (e) { _scVide(e.message); return; }
   _scRendre();
-  // v0.46.0 — Même séance pour l'Observation.
+  // v0.46.0 — Même séance pour l'Observation ; v0.47.0 — et le Travail.
   if (typeof ovCharger === 'function') await ovCharger();
+  if (typeof twCharger === 'function') await twCharger();
 }
 
 function _scRendre() {
@@ -332,6 +334,12 @@ function _scRendreDocuments() {
         onchange="scDistribuer('${x.id}', this.checked)"> ${_scE(x.libelle)}</label>
       ${x.origine === 'ponctuel' ? `<span class="sc-doc-tag">${_scE(_SC_CATEG[x.categorie] || x.categorie)}</span>` : ''}
       ${x.reporte ? `<span class="sc-doc-tag sc-doc-report">reporté du ${_scDateFr(x.cible_date)}</span>` : ''}
+      ${x.distribue ? `<select class="sc-doc-retour" title="Retour attendu (suivi dans l'onglet Travail)"
+          onchange="scDocRetour('${x.id}', this.value)">
+          <option value=""${!x.retour ? ' selected' : ''}>pas de retour</option>
+          <option value="3"${x.retour === 'rapporter' && x.delai_jours === 3 ? ' selected' : ''}>à rapporter sous 3 jours</option>
+          <option value="7"${x.retour === 'rapporter' && x.delai_jours !== 3 ? ' selected' : ''}>à rapporter sous 1 semaine</option>
+        </select>` : ''}
       ${x.origine === 'ponctuel' ? `<button class="btn-lien sc-doc-suppr" onclick="scSupprimerDocument('${x.id}')" title="Supprimer ce document ajouté à la volée">supprimer</button>` : ''}
     </li>`;
   const suiv = d.seance_suivante;
@@ -367,7 +375,8 @@ function _scRendreDocuments() {
             <ul class="sc-doc-liste">${r.documents.map(x => `
               <li class="sc-doc${x.donne ? ' sc-doc-ok' : ''}"><label><input type="checkbox" ${x.donne ? 'checked' : ''}
                 onchange="scDonner('${x.id}', '${r.eleve_id}', this.checked)"> ${_scE(x.libelle)}</label>
-                <span class="sc-doc-tag">du ${_scDateFr(x.distribue_date)}</span></li>`).join('')}
+                <span class="sc-doc-tag">du ${_scDateFr(x.distribue_date)}</span>
+                ${x.retour ? `<span class="sc-doc-tag sc-doc-retour-tag">${{ faire: 'travail à faire', rendre: 'travail à rendre', rapporter: 'à rapporter' }[x.retour]}</span>` : ''}</li>`).join('')}
             </ul>
           </div>`).join('')
           : '<p class="sc-aide">Rien à rattraper.</p>'}
@@ -402,6 +411,12 @@ function scAjouterDocument() {
   const pour = (document.querySelector('input[name="sc-doc-pour"]:checked') || {}).value || 'cette';
   return _scDocAction('/api/seance/document', { method: 'POST', body: JSON.stringify({
     ..._scSeanceCourante(), libelle: lib, categorie: document.getElementById('sc-doc-cat').value, pour }) });
+}
+
+// v0.47.0 — Document à rapporter (délai en jours ; '' = pas de retour).
+function scDocRetour(id, valeur) {
+  return _scDocAction(`/api/seance/document/${id}/retour`, { method: 'PUT',
+    body: JSON.stringify({ retour: valeur ? 'rapporter' : '', delai_jours: parseInt(valeur || '0', 10) }) });
 }
 
 function scSupprimerDocument(id) {

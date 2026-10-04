@@ -204,3 +204,17 @@ Notés pour plus tard :
 - Séances hors cours en classe entière (demi-groupes, remplacements).
 - Documents associés à la progression de MER (câblage de l'association,
   puis distribution en début de séance comme les documents principaux).
+
+## Mode d'emploi et conduite assistée (à cadrer après le suivi en séance)
+
+- Mode d'emploi rédigé, en partie intégré aux écrans : infobulles, accès
+  direct aux rubriques d'aide de l'écran et aux rubriques connexes.
+- Deux modes :
+  - **conduite assistée** : l'appli propose les actions selon le moment de
+    l'année (rentrée → construction des progressions ; début de séquence →
+    distribution des documents ; début de séance → appel ; fin de période →
+    préparation du conseil de classe…) et pour la conception des
+    référentiels ;
+  - **expert** : tout en manuel (fonctionnement actuel).
+- Suppose de modéliser le calendrier de l'année (périodes, conseils de
+  classe).

@@ -477,7 +477,7 @@ const SUIVI_PORTEES = {
   // (ex-« Suivi de classe »).
   suivi: {
     label: 'Suivi',
-    ateliers: ['debut', 'observation', 'suivi'],
+    ateliers: ['debut', 'observation', 'travail', 'suivi'],   // v0.47.0 : travail
   },
   // v0.42.0 — Onglet principal « Paramétrage » (ex-portée Gestion du Suivi).
   gestion: {
@@ -503,6 +503,7 @@ const SUIVI_ATELIER_PANNEAU = {
   // Classe (la classe choisie est partagée entre eux).
   debut:       { panneau: 'debut',       selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
   observation: { panneau: 'observation', selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },
+  travail:     { panneau: 'travail',     selecteurs: ['annee', 'etablissement', 'niveau', 'classe'] },   // v0.47.0
   // v0.42.1 — Observables : définis par niveau (indépendants de l'établissement).
   observables: { panneau: 'observables', selecteurs: ['niveau'] },
   classe:      { panneau: 'parametrage', gestion: 'classes', selecteurs: ['annee', 'etablissement', 'niveau'] },
@@ -591,9 +592,9 @@ function suiviSwitch(atelier) {
     // Afficher le panneau stab-* correspondant
     // v0.46.0 — En-tête de séance commun à Début de séance et Observation.
     const scCommun = document.getElementById('sc-commun');
-    if (scCommun) scCommun.style.display = (atelier === 'debut' || atelier === 'observation') ? '' : 'none';
+    if (scCommun) scCommun.style.display = ['debut', 'observation', 'travail'].includes(atelier) ? '' : 'none';
     ['edt', 'planif', 'indispo', 'mer', 'progmer', 'progression', 'plans', 'suivi',
-     'debut', 'observation', 'observables', 'parametrage'].forEach(s => {
+     'debut', 'observation', 'travail', 'observables', 'parametrage'].forEach(s => {
       const el = document.getElementById('stab-' + s);
       if (el) el.style.display = (s === def.panneau) ? '' : 'none';
     });
@@ -638,6 +639,9 @@ function suiviSwitch(atelier) {
     }
     if (atelier === 'observation' && typeof ovInit === 'function') {   // v0.46.0
       ovInit();
+    }
+    if (atelier === 'travail' && typeof twInit === 'function') {   // v0.47.0
+      twInit();
     }
   };
   if (typeof atelGardeAvantTransition === 'function') {
@@ -815,11 +819,11 @@ async function suiviRechargerAtelierActif() {
         && typeof window.ATELIER_PROGRESSION.onSelecteurChange === 'function') {
       await window.ATELIER_PROGRESSION.onSelecteurChange();
     }
-  } else if (a === 'suivi' || a === 'debut' || a === 'observation') {
+  } else if (a === 'suivi' || a === 'debut' || a === 'observation' || a === 'travail') {
     // v0.42.1 — Même liste de classes pour les trois sous-onglets du Suivi.
     if (typeof onAnneeChange === 'function') await onAnneeChange();
     if (a === 'debut' && typeof scInit === 'function') await scInit();   // v0.43.0
-    if (a === 'observation' && typeof scInit === 'function') await scInit();   // v0.46.0
+    if ((a === 'observation' || a === 'travail') && typeof scInit === 'function') await scInit();   // v0.46.0 / v0.47.0
   } else if (a === 'plans') {          // v0.39.0
     if (typeof pcInit === 'function') await pcInit();
   }
@@ -958,7 +962,7 @@ function onEtabChangeGlobal() {
   // v0.45.0 — Début de séance et Observation ont les mêmes sélecteurs que
   // Compétences (v0.42.1) : même refiltrage des classes.
   if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
-      && ['suivi', 'debut', 'observation'].includes(SUIVI_ATELIER_ACTIF)) {
+      && ['suivi', 'debut', 'observation', 'travail'].includes(SUIVI_ATELIER_ACTIF)) {
     if (typeof suiviClasseFiltresChange === 'function') suiviClasseFiltresChange();
     return;
   }
@@ -981,7 +985,7 @@ function onNiveauChangeGlobal() {
   // v0.45.0 — Début de séance et Observation ont les mêmes sélecteurs que
   // Compétences (v0.42.1) : même refiltrage des classes.
   if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
-      && ['suivi', 'debut', 'observation'].includes(SUIVI_ATELIER_ACTIF)) {
+      && ['suivi', 'debut', 'observation', 'travail'].includes(SUIVI_ATELIER_ACTIF)) {
     if (typeof suiviClasseFiltresChange === 'function') suiviClasseFiltresChange();
     return;
   }
@@ -1011,7 +1015,7 @@ async function onClasseChange() {
   const cid = document.getElementById('classe-sel').value;
   // v0.43.0 — Début de séance : séances du jour de la classe choisie.
   if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
-      && (SUIVI_ATELIER_ACTIF === 'debut' || SUIVI_ATELIER_ACTIF === 'observation')
+      && ['debut', 'observation', 'travail'].includes(SUIVI_ATELIER_ACTIF)
       && typeof scClasseChangee === 'function') {
     currentCid = cid || null;
     scClasseChangee();

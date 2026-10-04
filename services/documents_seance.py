@@ -163,6 +163,8 @@ def pour_seance(conn, store, annee: str, classe_id: str, date_iso: str,
         "ORDER BY cible_date, cible_creneau, ordre, libelle", (classe_id, annee)).fetchall()]
     nouveaux = []
     for d in docs:
+        if d.get("origine") == "travail":
+            continue          # v0.47.0 — géré dans Suivi › Travail
         distrib = _cle(d["distribue_date"], d["distribue_creneau"])
         cible = _cle(d["cible_date"], d["cible_creneau"])
         if (d["distribue_date"] and distrib == ici) or (not d["distribue_date"] and cible <= ici):
@@ -192,6 +194,7 @@ def pour_seance(conn, store, annee: str, classe_id: str, date_iso: str,
             if r is None or _cle(*r) == ici:
                 dus.append({"id": d["id"], "libelle": d["libelle"],
                             "categorie": d["categorie"], "origine": d["origine"],
+                            "retour": d.get("retour", ""),
                             "distribue_date": d["distribue_date"],
                             "donne": r is not None})
         if dus:

@@ -4553,3 +4553,27 @@ textarea.latex-textarea {
 .ov-heure { color: var(--text-secondary); font-size: 12px; }
 .ov-suppr { color: var(--text-secondary); font-size: 11px; }
 .ov-total { margin-top: 8px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.47.0 — Suivi › Travail (static/travail.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tw-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+@media (max-width: 1000px) { .tw-grille { grid-template-columns: 1fr; } }
+.tw-bloc { border-top: 1px solid var(--border); padding-top: 8px; font-size: 13px; }
+.tw-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tw-form input { flex: 1; min-width: 220px; font-size: 13px; }
+.tw-form select { font-size: 12px; }
+.tw-liste, .tw-eleves, .tw-retards { list-style: none; margin: 4px 0; padding: 0; }
+.tw-liste li, .tw-eleves li, .tw-retards li { padding: 2px 0; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tw-item { margin-bottom: 10px; }
+.tw-item-titre { font-weight: 500; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tw-clore { margin-left: auto; }
+.tw-tag { font-size: 11px; padding: 1px 7px; border-radius: 9px; background: #f1f5f9; color: var(--text-secondary); }
+.tw-tag-faire { background: #e0f2fe; color: #075985; }
+.tw-tag-rendre { background: #ede9fe; color: #5b21b6; }
+.tw-tag-rapporter { background: #fef3c7; color: #78350f; }
+.tw-tag-retard { background: #fee2e2; color: #991b1b; }
+.tw-retard label { color: #991b1b; }
+.tw-ratt { font-size: 12px; color: var(--text-secondary); }
+.sc-doc-retour { font-size: 11px; }
+.sc-doc-retour-tag { background: #fef3c7; color: #78350f; }
