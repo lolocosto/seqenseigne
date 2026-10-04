@@ -1584,6 +1584,14 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.47.1 — Synthèse Pronote : contenu de séance, activités ─────────
+        try:
+            from services import synthese_seance as _synth
+            _synth.migrer(conn)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

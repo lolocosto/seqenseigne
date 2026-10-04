@@ -171,6 +171,7 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
     seq_code, seq_nom, partie_lib = "", "", ""
     rang_dans_partie = 0
     nb_partie = 0
+    creneau_courant = None
     prog = store.lire_progression_par_triplet(row["niveau"], annee, eid) \
         if eid else None
     if prog:
@@ -236,5 +237,13 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
         "sequence_code": seq_code, "sequence_nom": seq_nom,
         "partie": partie_lib,
         "rang_dans_partie": rang_dans_partie, "nb_partie": nb_partie,
+        # v0.47.1 — créneau de progression (synthèse Pronote : notions et
+        # méthodes de la partie, éléments déjà faits dans le créneau).
+        "creneau_prog": ({"id": creneau_courant.get("id", ""),
+                          "partie_debut": creneau_courant.get("partie_debut", 1),
+                          "partie_fin": creneau_courant.get("partie_fin", 1),
+                          "date_debut": creneau_courant.get("date_debut") or "",
+                          "date_fin": creneau_courant.get("date_fin") or ""}
+                         if prog and creneau_courant else None),
         "docs_a_distribuer": docs_a_distribuer,
     }

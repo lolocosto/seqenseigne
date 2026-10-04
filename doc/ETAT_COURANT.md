@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.47.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.47.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -37,7 +37,8 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   séance, plan, liste effective de l'élève, occurrences, compteurs).
 - v0.47.0 livrée : Suivi › Travail (à faire / à rendre, échéance
   individualisée depuis la remise, à rattraper, documents à rapporter,
-  clôture, retards de la classe).
+  clôture, retards de la classe) ; v0.47.1 : synthèse pour le cahier de
+  textes Pronote.
 - Prochaine étape : v0.48 — « travail à rendre » sur les documents des
   référentiels (principal et MER), délai à l'association, documents de la
   progression de MER.

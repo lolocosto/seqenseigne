@@ -1,5 +1,5 @@
 // ============================================================================
-// static/travail.js — v0.47.0
+// static/travail.js — v0.47.0 (v0.47.1 : synthèse pour le cahier de textes Pronote)
 // Suivi › Travail : même séance que le Début de séance et l'Observation
 // (état SC de static/seance.js, en-tête commun).
 //   - Donner du travail (fin de séance) : à faire / à rendre, échéance
@@ -43,6 +43,7 @@ async function twCharger() {
       + `&classe_id=${encodeURIComponent(q.classe_id)}&date=${q.date}&creneau=${encodeURIComponent(q.creneau)}`);
   } catch (e) { z.innerHTML = `<p class="sc-vide">${_twE(e.message)}</p>`; return; }
   twRendre();
+  if (TS.ouvert) await _tsCharger();     // v0.47.1 — synthèse ouverte : suivre la séance
 }
 
 function twRendre() {
@@ -52,6 +53,12 @@ function twRendre() {
   const suiv = SC.donnees.seance_suivante;
   z.innerHTML = `
     <div class="tw-grille">
+      <section class="tw-bloc tw-pronote">
+        <div class="sc-bloc-titre">Cahier de textes</div>
+        <button class="btn-sm btn-prim" onclick="twSyntheseOuvrir()">Synthèse Pronote</button>
+        <span class="sc-aide">contenu de la séance et travail à faire, à copier dans Pronote</span>
+        <div id="tw-synthese"></div>
+      </section>
       <section class="tw-bloc">
         <div class="sc-bloc-titre">Donner du travail</div>
         <div class="tw-form">
@@ -125,6 +132,7 @@ async function _twAction(url, opts) {
   catch (e) { if (typeof showToast === 'function') showToast(e.message, true); else alert(e.message); }
   TW.occupe = false;
   await twCharger();
+  if (TS.ouvert) await _tsCharger();
 }
 
 function twDonner() {
@@ -153,4 +161,106 @@ function twRendu(id, eleveId, rendu) {
 function twClore(id) {
   if (!confirm('Clore ? Les élèves qui ne l\'ont pas rendu ne seront plus attendus ni en retard.')) return;
   return _twAction(`/api/travail/${id}/clos`, { method: 'PUT', body: JSON.stringify({ clos: true }) });
+}
+
+
+// ── v0.47.1 — Synthèse Pronote ──────────────────────────────────────────────
+
+const TS = { ouvert: false, d: null };
+
+async function twSyntheseOuvrir() {
+  TS.ouvert = !TS.ouvert;
+  if (!TS.ouvert) { document.getElementById('tw-synthese').innerHTML = ''; return; }
+  await _tsCharger();
+}
+
+async function _tsCharger(choix) {
+  const q = _twSeance();
+  try {
+    TS.d = choix
+      ? await _scApi('/api/seance/synthese', { method: 'PUT', body: JSON.stringify({ ...q, choix }) })
+      : await _scApi(`/api/seance/synthese?annee=${encodeURIComponent(q.annee)}&classe_id=${encodeURIComponent(q.classe_id)}`
+          + `&date=${q.date}&creneau=${encodeURIComponent(q.creneau)}`);
+  } catch (e) {
+    document.getElementById('tw-synthese').innerHTML = `<p class="sc-vide">${_twE(e.message)}</p>`;
+    return;
+  }
+  _tsRendre();
+}
+
+function _tsCases(liste, choisis, cle) {
+  return liste.map(x => `<label class="ts-case"><input type="checkbox" ${choisis.includes(x.id) ? 'checked' : ''}
+    onchange="tsBasculer('${cle}', '${x.id}', this.checked)"> ${_twE(x.titre)}</label>`).join('');
+}
+
+function _tsRendre() {
+  const z = document.getElementById('tw-synthese');
+  const d = TS.d;
+  if (!z || !d) return;
+  const bloc = (cle, titre) => {
+    const faits = new Set(d.deja_faits[cle]);
+    const neufs = d.candidats[cle].filter(x => !faits.has(x.id) || d.choix[cle].includes(x.id));
+    const anciens = d.candidats[cle].filter(x => faits.has(x.id) && !d.choix[cle].includes(x.id));
+    if (!d.candidats[cle].length) return '';
+    return `<div class="ts-groupe"><div class="ts-titre">${titre}</div>${_tsCases(neufs, d.choix[cle], cle)}
+      ${anciens.length ? `<details class="ts-faits"><summary>Déjà faits dans ce créneau (${anciens.length})</summary>
+        ${_tsCases(anciens, d.choix[cle], cle)}</details>` : ''}</div>`;
+  };
+  const choisies = d.choix.activites;
+  z.innerHTML = `
+    <div class="ts-panneau">
+      ${d.externe ? '' : `<div class="ts-cours">${bloc('notions', 'Notions')}${bloc('methodes', 'Méthodes')}</div>`}
+      <div class="ts-groupe"><div class="ts-titre">Activités (dans l'ordre de la séance)</div>
+        <div class="ts-choisies">${choisies.length ? choisies.map((a, i) =>
+          `<span class="ts-chip">${i + 1}. ${_twE(a)} <button class="btn-lien" onclick="tsRetirerActivite(${i})">✕</button></span>`).join('')
+          : '<span class="sc-aide">aucune</span>'}</div>
+        <div class="ts-dispo">${d.activites.map((a, k) =>
+          `<button class="btn-sm" onclick="tsAjouterActivite(${k})">+ ${_twE(a.libelle)}</button>`).join('')}</div>
+      </div>
+      <div class="ts-groupe"><div class="ts-titre">${d.externe ? 'Contenu (référentiel externe)' : 'Complément (facultatif)'}</div>
+        <textarea id="ts-libre" rows="2" onchange="tsTexteLibre(this.value)">${_twE(d.choix.texte_libre)}</textarea></div>
+      <div class="ts-sortie">
+        <div><div class="ts-titre">Contenu de la séance <button class="btn-sm" onclick="tsCopier('ts-contenu')">Copier</button></div>
+          <textarea id="ts-contenu" rows="7" readonly>${_twE(d.contenu)}</textarea></div>
+        <div><div class="ts-titre">Travail à faire <button class="btn-sm" onclick="tsCopier('ts-travail')">Copier</button></div>
+          <textarea id="ts-travail" rows="7" readonly>${_twE(d.travail)}</textarea></div>
+      </div>
+    </div>`;
+}
+
+function _tsChoix() { return JSON.parse(JSON.stringify(TS.d.choix)); }
+
+function tsBasculer(cle, id, coche) {
+  const c = _tsChoix();
+  c[cle] = coche ? [...c[cle].filter(x => x !== id), id] : c[cle].filter(x => x !== id);
+  // Garder l'ordre des candidats (ordre de la partie).
+  const ordre = TS.d.candidats[cle].map(x => x.id);
+  c[cle].sort((a, b) => ordre.indexOf(a) - ordre.indexOf(b));
+  return _tsCharger(c);
+}
+
+function tsAjouterActivite(k) {
+  const c = _tsChoix();
+  c.activites.push(TS.d.activites[k].libelle);
+  return _tsCharger(c);
+}
+
+function tsRetirerActivite(i) {
+  const c = _tsChoix();
+  c.activites.splice(i, 1);
+  return _tsCharger(c);
+}
+
+function tsTexteLibre(v) {
+  const c = _tsChoix();
+  c.texte_libre = v;
+  return _tsCharger(c);
+}
+
+async function tsCopier(id) {
+  const t = document.getElementById(id);
+  if (!t) return;
+  try { await navigator.clipboard.writeText(t.value); }
+  catch (e) { t.select(); document.execCommand('copy'); }
+  if (typeof showToast === 'function') showToast('Copié : à coller dans Pronote.');
 }

@@ -81,6 +81,7 @@ function _obsRendre() {
   });
   _obsRendreDetail();
   _obsRendreApercu();
+  obsActivitesCharger();     // v0.47.1
 }
 
 function _obsRendreDetail() {
@@ -218,4 +219,37 @@ async function obsCopier() {
     _obsToast(`${r.copies} observable(s) copié(s).`);
   } catch (e) { _obsToast(e.message, true); }
   await obsCharger();
+}
+
+
+// ── v0.47.1 — Activités de séance (synthèse Pronote) ────────────────────────
+
+async function obsActivitesCharger() {
+  const z = document.getElementById('obs-activites');
+  if (!z) return;
+  let liste = [];
+  try { liste = (await _obsApi('/api/activites-seance')).activites; } catch (e) {}
+  z.innerHTML = `<ul class="obs-liste">${liste.map(a => `
+      <li class="obs-item obs-item-ro${a.actif ? '' : ' obs-inactif'}">
+        <input class="obs-act-lib" value="${_obsE(a.libelle)}" onchange="obsActiviteModifier('${a.id}', {libelle: this.value})">
+        <button class="btn-sm" onclick="obsActiviteModifier('${a.id}', {actif: ${!a.actif}})">${a.actif ? 'Désactiver' : 'Réactiver'}</button>
+      </li>`).join('')}</ul>
+    <div class="obs-ajout"><input id="obs-act-new" placeholder="Nouvelle activité (ex. : travail de groupe)"
+      onkeydown="if(event.key==='Enter') obsActiviteAjouter()">
+      <button class="btn-sm" onclick="obsActiviteAjouter()">Ajouter</button></div>`;
+}
+
+async function obsActiviteAjouter() {
+  const inp = document.getElementById('obs-act-new');
+  const libelle = (inp && inp.value || '').trim();
+  if (!libelle) return;
+  try { await _obsApi('/api/activites-seance', { method: 'POST', body: JSON.stringify({ libelle }) }); }
+  catch (e) { _obsToast(e.message, true); }
+  await obsActivitesCharger();
+}
+
+async function obsActiviteModifier(id, champs) {
+  try { await _obsApi(`/api/activites-seance/${id}`, { method: 'PUT', body: JSON.stringify(champs) }); }
+  catch (e) { _obsToast(e.message, true); }
+  await obsActivitesCharger();
 }

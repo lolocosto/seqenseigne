@@ -261,3 +261,67 @@ def api_document_retour(doc_id):
     b = request.get_json() or {}
     return _tr_action(lambda c, tr: tr.definir_retour(c, doc_id, b.get("retour", ""),
                                                       int(b.get("delai_jours") or 7)))
+
+
+# ── v0.47.1 — Synthèse pour le cahier de textes Pronote ─────────────────────
+
+def _sy():
+    from services import synthese_seance
+    return synthese_seance
+
+
+@bp.route("/api/seance/synthese", methods=["GET"])
+def api_synthese():
+    a = request.args
+    annee = a.get("annee") or annees_scolaires.courante()
+    sy = _sy()
+    try:
+        with _store()._conn() as conn:
+            return jsonify(sy.lire(conn, _store(), annee, a.get("classe_id", ""),
+                                   a.get("date", ""), a.get("creneau", "")))
+    except sy.SyntheseErreur as e:
+        return _erreur(e)
+
+
+@bp.route("/api/seance/synthese", methods=["PUT"])
+def api_synthese_enregistrer():
+    """Enregistre les choix (notions, methodes, activites, texte_libre) et
+    renvoie la synthèse recalculée."""
+    b = request.get_json() or {}
+    annee = b.get("annee") or annees_scolaires.courante()
+    sy = _sy()
+    try:
+        with _store()._conn() as conn:
+            sy.enregistrer_contenu(conn, b.get("classe_id", ""), b.get("date", ""),
+                                   b.get("creneau", ""), b.get("choix") or {})
+            return jsonify(sy.lire(conn, _store(), annee, b.get("classe_id", ""),
+                                   b.get("date", ""), b.get("creneau", "")))
+    except sy.SyntheseErreur as e:
+        return _erreur(e)
+
+
+@bp.route("/api/activites-seance", methods=["GET"])
+def api_activites():
+    with _store()._conn() as conn:
+        return jsonify({"activites": _sy().lister_activites(conn, tout=True)})
+
+
+@bp.route("/api/activites-seance", methods=["POST"])
+def api_activite_ajouter():
+    sy = _sy()
+    try:
+        with _store()._conn() as conn:
+            return jsonify(sy.ajouter_activite(conn, (request.get_json() or {}).get("libelle", ""))), 201
+    except sy.SyntheseErreur as e:
+        return _erreur(e)
+
+
+@bp.route("/api/activites-seance/<aid>", methods=["PUT"])
+def api_activite_modifier(aid):
+    sy = _sy()
+    try:
+        with _store()._conn() as conn:
+            sy.modifier_activite(conn, aid, request.get_json() or {})
+        return jsonify({"ok": True})
+    except sy.SyntheseErreur as e:
+        return _erreur(e)
