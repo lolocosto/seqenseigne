@@ -30,8 +30,12 @@ async function merChargerClasses() {
   try {
     const r = await api('/api/classes?annee=' + encodeURIComponent(annee));
     const classes = (r && (r.classes || r)) || [];
+    // v0.47.4 — Filtre aussi par le niveau (sélecteur ajouté à cet écran).
+    const nivEl = document.getElementById('prog-sel-niveau');
+    const niveau = nivEl ? nivEl.value : '';
     MER_CLASSES = classes.filter(c =>
-      !etabId || c.etablissement === etabId || c.etablissement_id === etabId);
+      (!etabId || c.etablissement === etabId || c.etablissement_id === etabId)
+      && (!niveau || (c.niveau || '') === niveau));
   } catch (e) { MER_CLASSES = []; }
   merRenderClasses();
   merAfficherPlanning();

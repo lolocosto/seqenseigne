@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.47.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.47.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -39,7 +39,8 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   individualisée depuis la remise, à rattraper, documents à rapporter,
   clôture, retards de la classe) ; v0.47.1 : synthèse pour le cahier de
   textes Pronote ; v0.47.2 : délai « prochaine séance / x jours / x semaines » ;
-  v0.47.3 : liste des classes refiltrée dans Progression de MER / Mises en route.
+  v0.47.3–v0.47.4 : liste des classes refiltrée (Progression de MER, Mises en
+  route + sélecteur Niveau, établissement affiché).
 - Prochaine étape : v0.48 — « travail à rendre » sur les documents des
   référentiels (principal et MER), délai à l'association, documents de la
   progression de MER.

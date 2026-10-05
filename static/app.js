@@ -494,7 +494,7 @@ const SUIVI_ATELIER_PANNEAU = {
   edt:         { panneau: 'edt',         selecteurs: ['etablissement'] },
   planif:      { panneau: 'planif',      selecteurs: ['etablissement'] },
   indispo:     { panneau: 'indispo',     selecteurs: ['etablissement'] },
-  mer:         { panneau: 'mer',         selecteurs: ['etablissement', 'classe'] },
+  mer:         { panneau: 'mer',         selecteurs: ['etablissement', 'niveau', 'classe'] },   // v0.47.4 : + niveau
   progmer:     { panneau: 'progmer',     selecteurs: ['etablissement', 'niveau', 'classe'] },
   progression: { panneau: 'progression', selecteurs: ['etablissement', 'niveau', 'referentiel'] },
   plans:       { panneau: 'plans',       selecteurs: ['etablissement'] },   // v0.39.0
@@ -828,6 +828,16 @@ async function suiviRechargerAtelierActif() {
     if ((a === 'observation' || a === 'travail') && typeof scInit === 'function') await scInit();   // v0.46.0 / v0.47.0
   } else if (a === 'plans') {          // v0.39.0
     if (typeof pcInit === 'function') await pcInit();
+  } else if (a === 'mer') {            // v0.47.4
+    const pe = document.getElementById('prog-sel-etab'); if (pe) pe.value = etab;
+    if (typeof loadClasses === 'function') await loadClasses();      // année changée
+    if (typeof _refiltrerClassesSiBesoin === 'function') _refiltrerClassesSiBesoin();
+    if (typeof merChargerClasses === 'function') await merChargerClasses();
+  } else if (a === 'progmer') {        // v0.47.4
+    const pe = document.getElementById('prog-sel-etab'); if (pe) pe.value = etab;
+    if (typeof loadClasses === 'function') await loadClasses();      // année changée
+    if (typeof _refiltrerClassesSiBesoin === 'function') _refiltrerClassesSiBesoin();
+    if (typeof progMerCharger === 'function') await progMerCharger();
   }
 }
 
@@ -925,12 +935,22 @@ function buildClasseSel() {
   const etabSel   = document.getElementById('prog-sel-etab');
   const nivSel    = document.getElementById('prog-sel-niveau');
   const anneeGlob = (typeof ANNEE_ACTIVE !== 'undefined' && ANNEE_ACTIVE) || '';
-  const fEtab = etabSel ? etabSel.value : '';
+  // v0.47.4 — L'établissement affiché est le sélecteur global
+  // (#suivi-etab-global → SUIVI_ETAB_ACTIF) ; #prog-sel-etab (masqué hors
+  // Progression principale) n'est qu'un repli.
+  const fEtab = (typeof SUIVI_ETAB_ACTIF !== 'undefined' && SUIVI_ETAB_ACTIF)
+    || (etabSel ? etabSel.value : '');
   const fNiv  = nivSel ? nivSel.value : '';
   let liste = CLASSES.slice();
   if (fEtab) liste = liste.filter(c => (c.etablissement_id||'') === fEtab
                                      || (c.etablissement||'') === fEtab);
-  if (fNiv)  liste = liste.filter(c => (c.niveau||'') === fNiv);
+  // v0.47.4 — Le filtre Niveau ne s'applique que si l'atelier affiche ce
+  // sélecteur (sinon on filtrerait sur une valeur invisible, impossible à
+  // changer sans passer par un autre onglet).
+  const cfgAt = (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && typeof SUIVI_ATELIER_PANNEAU !== 'undefined')
+    ? SUIVI_ATELIER_PANNEAU[SUIVI_ATELIER_ACTIF] : null;
+  const nivVisible = !cfgAt || (cfgAt.selecteurs || []).includes('niveau');
+  if (fNiv && nivVisible) liste = liste.filter(c => (c.niveau||'') === fNiv);
   if (anneeGlob) liste = liste.filter(c => (c.annee||'') === anneeGlob);
 
   // Afficher l'année si plusieurs années coexistent (désambiguïsation).
@@ -1029,6 +1049,12 @@ function onNiveauChangeGlobal() {
   if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'progmer'
       && typeof progMerCharger === 'function') {
     progMerCharger();
+    return;
+  }
+  // v0.47.4 — Mises en route : le niveau filtre la liste des classes (déjà
+  // refiltrée ci-dessus) ; rafraîchir l'écran pour la classe (ou son absence).
+  if (typeof SUIVI_ATELIER_ACTIF !== 'undefined' && SUIVI_ATELIER_ACTIF === 'mer') {
+    if (typeof merChargerClasses === 'function') merChargerClasses();
     return;
   }
   if (window.ATELIER_PROGRESSION
