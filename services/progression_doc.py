@@ -41,13 +41,64 @@ def lister(conn, prog_kind: str, prog_ref: str,
     return [dict(r) for r in rows]
 
 
+# v0.48.0 — Retour attendu d'un document associé et délai de réalisation.
+RETOURS = ("", "faire", "rendre")
+DELAIS = ("", "prochaine", "jours", "semaines", "fin_creneau")
+
+
+def migrer_v0_48(conn) -> None:
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(progression_doc)")}
+    for nom, decl in (("retour", "TEXT NOT NULL DEFAULT ''"),
+                      ("delai_type", "TEXT NOT NULL DEFAULT ''"),
+                      ("delai_n", "INTEGER NOT NULL DEFAULT 1")):
+        if cols and nom not in cols:
+            conn.execute(f"ALTER TABLE progression_doc ADD COLUMN {nom} {decl}")
+
+
+def _valider_retour(retour: str, delai_type: str, delai_n) -> tuple:
+    retour = retour or ""
+    if retour not in RETOURS:
+        raise ValueError(f"retour invalide : {retour!r}")
+    if not retour:
+        return "", "", 1
+    delai_type = delai_type or "prochaine"
+    if delai_type not in DELAIS[1:]:
+        raise ValueError(f"délai invalide : {delai_type!r}")
+    try:
+        n = max(1, int(delai_n or 1))
+    except (TypeError, ValueError):
+        raise ValueError(f"nombre invalide : {delai_n!r}")
+    return retour, delai_type, n
+
+
+def delai_en_jours(delai_type: str, delai_n: int) -> int:
+    """Délai en jours (prochaine séance = 1) ; 0 pour « fin du créneau »
+    (échéance fixe, calculée à part)."""
+    return {"prochaine": 1, "jours": int(delai_n or 1),
+            "semaines": 7 * int(delai_n or 1)}.get(delai_type, 0)
+
+
+def modifier_retour(conn, assoc_id: str, retour: str, delai_type: str = "",
+                    delai_n: int = 1) -> dict:
+    r = conn.execute("SELECT * FROM progression_doc WHERE id=?", (assoc_id,)).fetchone()
+    if r is None:
+        raise ValueError("Association introuvable.")
+    retour, delai_type, n = _valider_retour(retour, delai_type, delai_n)
+    conn.execute("UPDATE progression_doc SET retour=?, delai_type=?, delai_n=? WHERE id=?",
+                 (retour, delai_type, n, assoc_id))
+    return dict(conn.execute("SELECT * FROM progression_doc WHERE id=?",
+                             (assoc_id,)).fetchone())
+
+
 def ajouter(conn, *, prog_kind: str, prog_ref: str, creneau_ref: str,
             rang_seance: int, doc_source: str, doc_ref: str,
-            doc_libelle: str = "") -> dict:
+            doc_libelle: str = "", retour: str = "", delai_type: str = "",
+            delai_n: int = 1) -> dict:
     if prog_kind not in ("principale", "mer"):
         raise ValueError(f"prog_kind invalide : {prog_kind!r}")
     if doc_source not in ("interne", "externe"):
         raise ValueError(f"doc_source invalide : {doc_source!r}")
+    retour, delai_type, delai_n = _valider_retour(retour, delai_type, delai_n)
     did = _rid()
     n = conn.execute(
         "SELECT COALESCE(MAX(ordre), -1) + 1 FROM progression_doc "
@@ -55,10 +106,10 @@ def ajouter(conn, *, prog_kind: str, prog_ref: str, creneau_ref: str,
         (prog_kind, prog_ref, creneau_ref)).fetchone()[0]
     conn.execute(
         "INSERT INTO progression_doc (id, prog_kind, prog_ref, creneau_ref, "
-        "rang_seance, doc_source, doc_ref, doc_libelle, ordre) "
-        "VALUES (?,?,?,?,?,?,?,?,?)",
+        "rang_seance, doc_source, doc_ref, doc_libelle, ordre, retour, delai_type, "
+        "delai_n) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         (did, prog_kind, prog_ref, creneau_ref, int(rang_seance or 1),
-         doc_source, doc_ref, doc_libelle, n))
+         doc_source, doc_ref, doc_libelle, n, retour, delai_type, delai_n))
     return dict(conn.execute("SELECT * FROM progression_doc WHERE id=?",
                              (did,)).fetchone())
 

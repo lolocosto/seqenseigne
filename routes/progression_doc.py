@@ -45,8 +45,24 @@ def api_ajouter():
                 doc_source=b.get("doc_source", ""),
                 doc_ref=b.get("doc_ref", ""),
                 doc_libelle=b.get("doc_libelle", ""),
+                retour=b.get("retour", ""),
+                delai_type=b.get("delai_type", ""),
+                delai_n=b.get("delai_n", 1),
             )
         return jsonify(a), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.route("/api/progression-doc/<assoc_id>/retour", methods=["PUT"])
+def api_retour(assoc_id):
+    """v0.48.0 — Retour attendu (à faire / à rendre) et délai d'une association."""
+    b = request.get_json() or {}
+    try:
+        with _store()._conn() as conn:
+            a = pd.modifier_retour(conn, assoc_id, b.get("retour", ""),
+                                   b.get("delai_type", ""), b.get("delai_n", 1))
+        return jsonify(a)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 

@@ -1,5 +1,12 @@
-b99fbbbd24ba9ebd855b0c0f7feea87a  6604  doc\ETAT_COURANT.md
-d65ff888285ae7aa60fbd672f38c8bba  285376  static\app.js
-e633f11715aaea6b4ba55495b3544f9f  12978  static\mer.js
-abd164a51a24eae2ff20cca4e1bb66a7  1182  doc\redemarrage_v0_47_3.md
-306116418b918132f5debddb3e5ba708  1416  doc\redemarrage_v0_47_4.md
+e6339b0425129b826b87d58455ab1f59  6922  doc\ETAT_COURANT.md
+1b8acfdf9db66cba921c3e3338f648cf  182011  persistence\sqlite_store.py
+1bd3f9270468fca5e5d073f0667a6aac  3261  routes\progression_doc.py
+2cb4879dc05236584f453fe7a91541ae  13873  services\documents_seance.py
+d16aac9186127d3dea5ea7a9fbfa365d  10820  services\progression_doc.py
+39c0b036c60fe92ac2dfa4a0325ff429  16610  services\travail.py
+b48e625538764664bd4a1ac20475e644  158492  static\app.css
+f95f3ee52f2e48efd952db3377d647b3  11566  static\progression_doc.js
+58bbab09f3b2c006ac80a010f1abae17  14149  static\travail.js
+814bae69e703dd67e1d06f41755e1bba  200614  templates\index.html
+0ef312dd3f0e6d750c4a0d699afa0e26  2403  doc\redemarrage_v0_48_0.md
+e531ea8f4b0c44f7e00447ce21c5ca04  6208  tests\test_v0_48_0_retour_associations.py

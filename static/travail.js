@@ -81,7 +81,8 @@ function twRendre() {
         ${d.donnes_ici.length ? `<ul class="tw-liste">${d.donnes_ici.map(t => `
           <li><span class="tw-tag tw-tag-${t.retour}">${_TW_TYPE[t.retour]}</span> ${_twE(t.libelle)}
             <span class="sc-aide">pour le ${_twEch(t.echeance_classe)}</span>
-            <button class="btn-lien sc-doc-suppr" onclick="twSupprimer('${t.id}')">supprimer</button></li>`).join('')}</ul>` : ''}
+            ${t.origine === 'travail' ? `<button class="btn-lien sc-doc-suppr" onclick="twSupprimer('${t.id}')">supprimer</button>`
+              : '<span class="tw-tag">prévu dans la progression</span>'}</li>`).join('')}</ul>` : ''}
       </section>
 
       <section class="tw-bloc">

@@ -1592,6 +1592,19 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.48.0 — Retour et délai des documents associés ; échéance fixe ──
+        try:
+            from services import progression_doc as _pgd
+            _pgd.migrer_v0_48(conn)
+            cols_sd = {r[1] for r in conn.execute("PRAGMA table_info(seance_documents)")}
+            for nom in ("echeance_date", "echeance_creneau"):
+                if cols_sd and nom not in cols_sd:
+                    conn.execute(f"ALTER TABLE seance_documents ADD COLUMN {nom} "
+                                 "TEXT NOT NULL DEFAULT ''")
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

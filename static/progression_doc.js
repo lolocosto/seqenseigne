@@ -86,6 +86,7 @@ async function progDocsRemplirSelect() {
 }
 
 async function progDocsRenderListe() {
+  progDocsRenderRetourNouveau();      // v0.48.0
   const ctx = _progDocsCtx();
   const zone = document.getElementById('prog-docs-liste');
   if (!ctx || !zone) return;
@@ -101,9 +102,10 @@ async function progDocsRenderListe() {
     return;
   }
   zone.innerHTML = assocs.map(a => `
-    <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 0">
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 0;flex-wrap:wrap">
       <span style="background:#eef;border-radius:3px;padding:1px 6px">séance ${a.rang_seance}</span>
       <span>${escapeHtml(a.doc_libelle || a.doc_ref)}</span>
+      ${_pdRetourControles('pd-' + a.id, a, `progDocsModifierRetour('${a.id}', 'pd-${a.id}')`)}
       <button class="btn-sm" style="margin-left:auto;color:var(--danger);padding:0 6px"
         onclick="progDocsSupprimer('${a.id}')" aria-label="Retirer">×</button>
     </div>`).join('');
@@ -125,6 +127,7 @@ async function progDocsAjouter() {
         creneau_ref: ctx.creneau_ref,
         rang_seance: parseInt(rang.value || '1', 10),
         doc_source: source, doc_ref: doc_ref, doc_libelle: libelle,
+        ..._pdRetourValeurs('pd-nouveau'),
       }),
     });
   } catch (e) {}
@@ -138,6 +141,58 @@ async function progDocsSupprimer(id) {
   await progDocsRenderListe();
 }
 
+// ── v0.48.0 — Retour attendu (à faire / à rendre) et délai de réalisation ──
+
+const _PD_DELAIS = [['prochaine', 'pour la prochaine séance'], ['jours', 'dans … jour(s)'],
+  ['semaines', 'dans … semaine(s)'], ['fin_creneau', 'pour la fin du créneau']];
+
+// Contrôles « retour + délai » ; `pfx` préfixe les id, `onchange` est appelé
+// à chaque modification (vide pour le formulaire d'ajout).
+function _pdRetourControles(pfx, a, onchange) {
+  const r = (a && a.retour) || '', t = (a && a.delai_type) || 'prochaine', n = (a && a.delai_n) || 1;
+  const ch = onchange ? ` onchange="${onchange}"` : '';
+  const nbVisible = r && (t === 'jours' || t === 'semaines');
+  return `<span class="pd-retour-ctl">
+    <select id="${pfx}-retour" title="Retour attendu"${onchange ? ` onchange="_pdMaj('${pfx}'); ${onchange}"` : ` onchange="_pdMaj('${pfx}')"`}>
+      <option value=""${!r ? ' selected' : ''}>sans retour</option>
+      <option value="faire"${r === 'faire' ? ' selected' : ''}>à faire</option>
+      <option value="rendre"${r === 'rendre' ? ' selected' : ''}>à rendre</option>
+    </select>
+    <select id="${pfx}-delai" style="${r ? '' : 'display:none'}"${onchange ? ` onchange="_pdMaj('${pfx}'); ${onchange}"` : ` onchange="_pdMaj('${pfx}')"`}>
+      ${_PD_DELAIS.map(([v, l]) => `<option value="${v}"${v === t ? ' selected' : ''}>${l}</option>`).join('')}
+    </select>
+    <input id="${pfx}-n" type="number" min="1" max="60" value="${n}" style="width:46px;${nbVisible ? '' : 'display:none'}"${ch}>
+  </span>`;
+}
+
+function _pdMaj(pfx) {
+  const r = document.getElementById(pfx + '-retour').value;
+  const t = document.getElementById(pfx + '-delai').value;
+  document.getElementById(pfx + '-delai').style.display = r ? '' : 'none';
+  document.getElementById(pfx + '-n').style.display = (r && (t === 'jours' || t === 'semaines')) ? '' : 'none';
+}
+
+function _pdRetourValeurs(pfx) {
+  const r = document.getElementById(pfx + '-retour');
+  if (!r || !r.value) return { retour: '' };
+  return { retour: r.value, delai_type: document.getElementById(pfx + '-delai').value,
+           delai_n: parseInt(document.getElementById(pfx + '-n').value || '1', 10) || 1 };
+}
+
+async function progDocsModifierRetour(id, pfx) {
+  try {
+    const r = await fetch('/api/progression-doc/' + id + '/retour', { method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(_pdRetourValeurs(pfx)) });
+    if (!r.ok) { const d = await r.json(); alert(d.error || 'Erreur'); }
+  } catch (e) { alert(e.message); }
+}
+
+function progDocsRenderRetourNouveau() {
+  const z = document.getElementById('prog-docs-retour-zone');
+  if (z) z.innerHTML = _pdRetourControles('pd-nouveau', null, '');
+}
+
+window.progDocsModifierRetour = progDocsModifierRetour;
 window.progDocsCharger = progDocsCharger;
 window.progDocsRemplirSelect = progDocsRemplirSelect;
 window.progDocsAjouter = progDocsAjouter;

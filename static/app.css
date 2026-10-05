@@ -4596,3 +4596,6 @@ textarea.latex-textarea {
 /* v0.47.2 — Délai de réalisation */
 .tw-delai-nb { display: inline-flex; gap: 4px; align-items: center; font-size: 12px; }
 .tw-form .tw-delai-nb input { flex: none; min-width: 0; width: 56px; font-size: 12px; }
+/* v0.48.0 — Retour et délai des documents associés (progression) */
+.pd-retour-ctl { display: inline-flex; gap: 4px; align-items: center; }
+.pd-retour-ctl select, .pd-retour-ctl input { font-size: 11px; }

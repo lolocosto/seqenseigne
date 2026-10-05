@@ -135,10 +135,17 @@ def echeances(conn, doc: dict, remis: dict, seances: list[tuple]) -> dict:
     surcharges = {r["eleve_id"]: (r["date"], r["creneau"]) for r in conn.execute(
         "SELECT eleve_id, date, creneau FROM echeances_individuelles WHERE document_id=?",
         (doc["id"],)).fetchall()}
+    fixe = ((doc.get("echeance_date"), doc.get("echeance_creneau"))
+            if doc.get("echeance_date") else None)
     sortie = {}
     for eid, rem in remis.items():
         if eid in surcharges:
             sortie[eid] = surcharges[eid]
+        elif fixe:
+            # v0.48.0 — « fin du créneau » : même échéance pour tous (les
+            # documents sont aussi déposés dans Pronote le jour de la
+            # distribution).
+            sortie[eid] = fixe
         else:
             sortie[eid] = premiere_seance_apres(seances, rem[0], doc["delai_jours"],
                                                 strictement_apres=rem)
@@ -277,9 +284,15 @@ def pour_seance(conn, store, annee: str, classe_id: str, date_iso: str, creneau:
         base = {"id": d["id"], "libelle": d["libelle"], "retour": d["retour"],
                 "origine": d["origine"], "delai_jours": d["delai_jours"],
                 "donne_date": d["distribue_date"], "clos": bool(d["clos"])}
-        if d["origine"] == "travail" and _cle(d["distribue_date"], d["distribue_creneau"]) == ici:
-            donnes_ici.append({**base, "echeance_classe": premiere_seance_apres(
-                seances, date_iso, d["delai_jours"], strictement_apres=ici)})
+        if _cle(d["distribue_date"], d["distribue_creneau"]) == ici and (
+                d["origine"] == "travail" or d["retour"] in ("faire", "rendre")):
+            # v0.48.0 — aussi les documents prévus « à faire / à rendre »
+            # distribués à cette séance (échéance fixe « fin du créneau »
+            # possible) : ils figurent dans la synthèse Pronote.
+            ech_c = ((d["echeance_date"], d["echeance_creneau"]) if d.get("echeance_date")
+                     else premiere_seance_apres(seances, date_iso, d["delai_jours"],
+                                                strictement_apres=ici))
+            donnes_ici.append({**base, "echeance_classe": ech_c})
         if d["retour"] == "faire":
             nf = {s["eleve_id"] for s in st if s["statut"] == "non_fait"
                   and (s["date"], s["creneau"]) == ici}

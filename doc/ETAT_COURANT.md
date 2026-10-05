@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.47.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.48.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -41,9 +41,13 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   textes Pronote ; v0.47.2 : délai « prochaine séance / x jours / x semaines » ;
   v0.47.3–v0.47.4 : liste des classes refiltrée (Progression de MER, Mises en
   route + sélecteur Niveau, établissement affiché).
-- Prochaine étape : v0.48 — « travail à rendre » sur les documents des
-  référentiels (principal et MER), délai à l'association, documents de la
-  progression de MER.
+- v0.48.0 livrée : retour (à faire / à rendre) et délai (dont « fin du
+  créneau ») sur les documents associés à la progression principale ;
+  conversion en travail à la distribution.
+- Prochaine étape : v0.48.1 — progression principale construite sur un
+  référentiel figé interne OU externe (cadrage à présenter) ; puis v0.48.2 —
+  documents externes portant leur séance / retour / délai, placement
+  automatique (une association manuelle le remplace), documents de MER.
 
 ## Derniers chantiers terminés
 

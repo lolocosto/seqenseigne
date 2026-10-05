@@ -79,7 +79,7 @@ def _cle(d: str, c: str) -> tuple:
 
 # ── Documents prévus (progression principale) ────────────────────────────────
 
-def documents_prevus(conn, store, annee: str, classe_id: str) -> list[dict]:
+def documents_prevus(conn, store, annee: str, classe_id: str) -> list[dict]:  # noqa: C901
     """[{cle, libelle, date, creneau}] : chaque association document de la
     progression principale, placée sur sa séance (rang dans la partie)."""
     from services import contexte_projection as ctx
@@ -113,10 +113,19 @@ def documents_prevus(conn, store, annee: str, classe_id: str) -> list[dict]:
             rang = int(a.get("rang_seance") or 0)
             if 1 <= rang <= len(dans):
                 s = dans[rang - 1]
+                # v0.48.0 — Retour attendu (à faire / à rendre) et délai ; « fin
+                # du créneau » = dernière séance du créneau (même date pour tous).
+                retour = a.get("retour") or ""
+                dtype = a.get("delai_type") or ""
+                fin = dans[-1] if (retour and dtype == "fin_creneau") else None
                 sortie.append({"cle": f"{a.get('id')}", "date": s["date"],
                                "creneau": s["creneau_code"],
                                "libelle": a.get("doc_libelle") or a.get("doc_ref") or "Document",
-                               "ordre": int(a.get("ordre") or 0)})
+                               "ordre": int(a.get("ordre") or 0),
+                               "retour": retour,
+                               "delai_jours": pgd.delai_en_jours(dtype, a.get("delai_n") or 1)
+                               if retour else 0,
+                               "echeance": (fin["date"], fin["creneau_code"]) if fin else None})
     return sortie
 
 
@@ -137,12 +146,23 @@ def _materialiser_prevus(conn, store, annee, classe_id, date_iso, creneau) -> No
     for p in documents_prevus(conn, store, annee, classe_id):
         if not (depuis <= p["date"] and _cle(p["date"], p["creneau"]) <= _cle(date_iso, creneau)):
             continue
+        ech = p.get("echeance") or ("", "")
         conn.execute(
             "INSERT OR IGNORE INTO seance_documents (id, classe_id, annee, origine, "
-            "cle_prevu, libelle, categorie, cible_date, cible_creneau, ordre) "
-            "VALUES (?,?,?, 'prevu', ?,?, 'pedagogique', ?,?,?)",
+            "cle_prevu, libelle, categorie, cible_date, cible_creneau, ordre, retour, "
+            "delai_jours, echeance_date, echeance_creneau) "
+            "VALUES (?,?,?, 'prevu', ?,?, 'pedagogique', ?,?,?,?,?,?,?)",
             ("sd_" + uuid.uuid4().hex[:12], classe_id, annee, p["cle"], p["libelle"],
-             p["date"], p["creneau"], p["ordre"]))
+             p["date"], p["creneau"], p["ordre"], p.get("retour", ""),
+             p.get("delai_jours", 0), ech[0], ech[1]))
+        # v0.48.0 — Tant qu'il n'est pas distribué, un document prévu suit les
+        # changements de son association (libellé, retour, délai).
+        conn.execute(
+            "UPDATE seance_documents SET libelle=?, retour=?, delai_jours=?, "
+            "echeance_date=?, echeance_creneau=? WHERE classe_id=? AND annee=? "
+            "AND cle_prevu=? AND distribue_date=''",
+            (p["libelle"], p.get("retour", ""), p.get("delai_jours", 0), ech[0], ech[1],
+             classe_id, annee, p["cle"]))
 
 
 # ── Lecture pour une séance ──────────────────────────────────────────────────
