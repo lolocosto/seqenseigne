@@ -625,6 +625,8 @@ function suiviSwitch(atelier) {
     if (atelier === 'mer' && typeof merInit === 'function') {
       merInit();
     }
+    // v0.47.3 — Liste des classes filtrée selon les critères affichés.
+    if (typeof _refiltrerClassesSiBesoin === 'function') _refiltrerClassesSiBesoin();
     if (atelier === 'progmer' && typeof progMerInit === 'function') {
       progMerInit();
     }
@@ -958,7 +960,30 @@ window.suiviClasseFiltresChange = suiviClasseFiltresChange;
 // v0.34.0 (étape A) — Aiguille le changement d'établissement selon l'atelier
 // actif : en Suivi de classe, refiltrer la liste des classes ; sinon, laisser
 // l'atelier Progression gérer.
+// v0.47.3 — Les ateliers qui ont le sélecteur Classe (Mises en route,
+// Progression de MER…) doivent voir la liste des classes refiltrée quand
+// l'établissement ou le niveau change, et à leur ouverture : sinon elle reste
+// filtrée selon les critères de l'onglet précédent.
+function _atelierAvecSelecteurClasse() {
+  const a = (typeof SUIVI_ATELIER_ACTIF !== 'undefined') ? SUIVI_ATELIER_ACTIF : null;
+  const cfg = a && typeof SUIVI_ATELIER_PANNEAU !== 'undefined' ? SUIVI_ATELIER_PANNEAU[a] : null;
+  return !!(cfg && (cfg.selecteurs || []).includes('classe'));
+}
+
+function _refiltrerClassesSiBesoin() {
+  if (!_atelierAvecSelecteurClasse() || typeof buildClasseSel !== 'function') return;
+  const sel = document.getElementById('classe-sel');
+  const avant = sel ? sel.value : '';
+  buildClasseSel();
+  if (sel && avant && sel.value !== avant) {
+    // La classe choisie ne correspond plus aux critères.
+    sel.value = '';
+    if (typeof currentCid !== 'undefined') currentCid = null;
+  }
+}
+
 function onEtabChangeGlobal() {
+  _refiltrerClassesSiBesoin();
   // v0.45.0 — Début de séance et Observation ont les mêmes sélecteurs que
   // Compétences (v0.42.1) : même refiltrage des classes.
   if (typeof SUIVI_ATELIER_ACTIF !== 'undefined'
@@ -980,6 +1005,7 @@ function onEtabChangeGlobal() {
 window.onEtabChangeGlobal = onEtabChangeGlobal;
 
 function onNiveauChangeGlobal() {
+  _refiltrerClassesSiBesoin();   // v0.47.3
   // v0.34.0 (étape A) — En Suivi de classe, changer le niveau refiltre la liste
   // des classes.
   // v0.45.0 — Début de séance et Observation ont les mêmes sélecteurs que
