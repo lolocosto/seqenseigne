@@ -1,9 +1,1 @@
-14be481e47ad421da1289a77ca7f47db  7358  doc\ETAT_COURANT.md
-73a5195c97745aecd54a35622221546e  12829  doc\ROADMAP.md
-b75528bf5e16eea19e7f1af4e8b28b08  13311  services\livret_fiches.py
-221c9357cf7cb4bb222cc0483501d236  21455  services\orchestrateur_compilation.py
-8e6b1e3de905187ff7126123e3df22b5  12069  services\referentiel_documents.py
-ab7c51afbc508e2699ba1ddc04f4ebf5  35972  services\referentiel_documents_compilation.py
-9398c5aa3b3820ee92dc0cfbda135818  76776  static\atelier_referentiel.js
-42cc85a461a8681de5d3abba2c561ff3  2155  doc\redemarrage_v0_48_1.md
-bfc77103490852f2553311109c06d209  4898  tests\test_v0_48_1_fiches_par_sequence.py
+e3e7e78f92268b8c1b5753de6e4584a3  13751  doc\ROADMAP.md

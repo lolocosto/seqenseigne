@@ -226,3 +226,18 @@ Notés pour plus tard :
   tableau de bord, préférences et administration liées). Objectif : rendre
   l'appli accessible aux collègues qui ne connaissent pas LaTeX ou y sont
   réfractaires (référentiels externes uniquement).
+
+## Changement de salle exceptionnel (hors EdT)
+
+- Besoin : utiliser ponctuellement une autre salle sans changer l'EdT (ex. :
+  salle multimédia, quand elle est disponible, pendant la séquence S14).
+- Dans la planification hebdo : changer la salle d'une séance (ou d'une série
+  de séances) d'une classe, y compris vers une salle **pas encore déclarée**
+  dans le paramétrage de l'établissement → création à la volée du nom de la
+  salle (sans plan) ; pour lui associer un plan de salle, passer par
+  Paramétrage › Établissement › Salles.
+- À cadrer : portée (une séance, plusieurs, « jusqu'à la fin de la
+  séquence ») ; effet sur le plan de classe (plan de la semaine dans la salle
+  de remplacement, ou liste alphabétique si la salle n'a pas de plan) ;
+  affichage dans le Début de séance / l'Observation ; une salle créée à la
+  volée devient-elle « utilisée » (non supprimable) ?
