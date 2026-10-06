@@ -27,6 +27,7 @@ function _rxtStatus(msg, err) {
 }
 
 async function rxtInit() {
+  if (typeof rpeInit === 'function') rpeInit();     // v0.48.2 — principaux externes
   await rxtCharger();
 }
 

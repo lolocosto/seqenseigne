@@ -161,7 +161,11 @@ def api_progression_changer_referentiel(progression_id):
         else None
     if not ref:
         return jsonify({"error": f"Référentiel introuvable : {nouveau_ref}"}), 404
-    if ref.get("etat") not in ("verrouille", "utilise"):
+    # v0.48.2 — Un référentiel principal externe est utilisable dès sa
+    # création (même incomplet), sauf s'il est annulé.
+    externe = (ref.get("source") == "externe")
+    if (externe and ref.get("etat") == "annule") or \
+            (not externe and ref.get("etat") not in ("verrouille", "utilise")):
         return jsonify({
             "error": "Le référentiel choisi n'est pas exploitable "
                      "(il doit être verrouillé ou utilisé)."

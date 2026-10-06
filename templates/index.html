@@ -2616,10 +2616,27 @@
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
       <h2 style="margin:0;font-size:18px">Référentiels externes</h2>
       <span style="font-size:12px;color:var(--text-secondary)">
-        Documents conçus hors de l'appli, intégrés tels quels. Structure :
-        séquences → parties (nb de séances) → documents.
+        Documents conçus hors de l'appli, intégrés tels quels.
       </span>
     </div>
+    <!-- v0.48.2 — Référentiels principaux externes (même structure qu'un
+         référentiel interne figé). static/referentiel_pe.js -->
+    <section class="rpe-section">
+      <div class="rpe-entete">
+        <h3>Principaux</h3>
+        <span class="rpe-aide">Séquences → parties (nb de séances) → objectifs (critères F/A/E) ;
+          fichiers par séquence ou par partie. Utilisables par la progression principale dès leur
+          création ; une séquence commencée ne se modifie plus (libellés et ajout de fichiers
+          seulement).</span>
+      </div>
+      <div class="rpe-creer">
+        <input id="rpe-desc" placeholder="Description facultative (ex. : Manuel X)">
+        <button class="btn-prim" onclick="rpeCreer()">Nouveau référentiel principal externe</button>
+        <span id="rpe-status" class="rpe-status" role="status" aria-live="polite"></span>
+      </div>
+      <div id="rpe-liste"></div>
+    </section>
+    <h3 class="rpe-titre-mer">Mises en route (MER)</h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
       <label style="font-size:13px">Nom du référentiel
         <input id="rxt-nouveau-nom" placeholder="ex : MER 6e" style="display:block;font-size:13px">
@@ -3673,6 +3690,7 @@
 <script src="/static/planification_hebdo.js"></script>
 <script src="/static/progression_mer.js"></script>
 <script src="/static/referentiel_externe.js"></script>
+<script src="/static/referentiel_pe.js"></script>
 
 <!-- v0.13.6.16 — Modale de choix de série pour la création d'exercice.
      Affichée par AtelierExercice.nouvelItem (qui surcharge le pattern

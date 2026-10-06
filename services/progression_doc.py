@@ -143,7 +143,22 @@ def _docs_pour_sequence(conn, niveau: str, annee: str, sequence: str) -> list:
     docs = []
     docs.extend(_docs_internes(conn, niveau, sequence, annuels=False))
     docs.extend(_docs_externes(conn, niveau, annee, sequence, annuels=False))
+    docs.extend(_docs_principal_externe(conn, niveau, annee, sequence))   # v0.48.2
     return docs
+
+
+def _docs_principal_externe(conn, niveau: str, annee: str, sequence: str) -> list:
+    """v0.48.2 — Fichiers déposés dans un référentiel principal externe
+    (structure figée, source externe) pour cette séquence."""
+    from services import referentiel_principal_externe as rpe
+    try:
+        fichiers = rpe.fichiers_de_sequence(conn, niveau, annee, sequence)
+    except Exception:
+        return []
+    return [{"source": "externe", "doc_ref": f["id"],
+             "libelle": f["nom_fichier"] + (f" (partie {f['partie_numero']})"
+                                            if f["partie_numero"] else ""),
+             "categorie": "sequence"} for f in fichiers]
 
 
 def _docs_annuels(conn, niveau: str, annee: str) -> list:
@@ -165,6 +180,7 @@ def _docs_internes(conn, niveau: str, sequence: str, annuels: bool) -> list:
     # Référentiel principal interne du niveau (le plus récent non archivé).
     ref = conn.execute(
         "SELECT id FROM referentiel_niveaux WHERE niveau=? "
+        "AND COALESCE(source, 'interne') <> 'externe' "
         "ORDER BY id DESC LIMIT 1", (niveau,)).fetchone()
     if ref is None:
         return []

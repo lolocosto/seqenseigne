@@ -1605,6 +1605,15 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.48.2 — Référentiels principaux externes (source, type, année ;
+        #    fichiers déposés) ──────────────────────────────────────────────
+        try:
+            from services import referentiel_principal_externe as _rpe
+            _rpe.migrer(conn)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:
@@ -3560,7 +3569,8 @@ class SqliteStore:
             if ref:
                 conn.execute(
                     "UPDATE referentiel_niveaux SET etat='utilise' "
-                    "WHERE id=? AND etat='verrouille'",
+                    "WHERE id=? AND (etat='verrouille' OR (source='externe' "
+                    "AND etat IN ('en_cours', 'valide')))",
                     (ref,),
                 )
 

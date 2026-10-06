@@ -87,8 +87,10 @@ def lister_par_niveau(store, niveau: str) -> list[dict]:
     # majs dans une seule connexion (économise les ouvertures).
     from services.referentiel_validation import maj_etat_lazy
     with store._conn() as conn:
+        # v0.48.2 — Les référentiels externes n'ont pas d'éligibilité calculée.
         rows = conn.execute(
-            "SELECT id, etat FROM referentiel_niveaux WHERE niveau = ?",
+            "SELECT id, etat FROM referentiel_niveaux WHERE niveau = ? "
+            "AND COALESCE(source, 'interne') <> 'externe'",
             (niveau,),
         ).fetchall()
         for r in rows:
@@ -100,7 +102,10 @@ def lister_par_niveau(store, niveau: str) -> list[dict]:
                     # calcul d'éligibilité (par sécurité).
                     pass
 
-    refs = list(store.lister_referentiels(niveau))
+    # v0.48.2 — Référentiels INTERNES seulement (les externes ont leur propre
+    # écran et sont ajoutés explicitement pour la progression, cf. route).
+    refs = [r for r in store.lister_referentiels(niveau)
+            if (r.get("source") or "interne") != "externe"]
     # Tri par version décroissante (versions numériques lexico : '2024' > '2023')
     refs.sort(key=lambda r: r.get("version", ""), reverse=True)
     return [

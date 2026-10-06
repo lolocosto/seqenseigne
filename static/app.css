@@ -4599,3 +4599,42 @@ textarea.latex-textarea {
 /* v0.48.0 — Retour et délai des documents associés (progression) */
 .pd-retour-ctl { display: inline-flex; gap: 4px; align-items: center; }
 .pd-retour-ctl select, .pd-retour-ctl input { font-size: 11px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.48.2 — Référentiels principaux externes (static/referentiel_pe.js)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.rpe-section { margin-bottom: 18px; }
+.rpe-entete { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.rpe-entete h3, .rpe-titre-mer { margin: 6px 0; font-size: 15px; }
+.rpe-aide, .rpe-vide { font-size: 12px; color: var(--text-secondary); }
+.rpe-creer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.rpe-creer input { font-size: 13px; width: 260px; }
+.rpe-status { font-size: 12px; }
+.rpe-ref { margin-bottom: 10px; }
+.rpe-ref-tete { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rpe-desc-ref { font-size: 12px; border: none; border-bottom: 1px dashed var(--border); width: 220px; }
+.rpe-espace { flex: 1; }
+.rpe-badge { font-size: 11px; padding: 1px 7px; border-radius: 10px; background: #fff2c2; color: #976100; }
+.rpe-utilise { background: #d8f0d8; color: #276749; }
+.rpe-verrou { background: #e0e7ff; color: #3730a3; }
+.rpe-danger { color: var(--danger); }
+.rpe-corps { margin-top: 8px; }
+.rpe-seq { border-left: 3px solid var(--primary); padding: 6px 10px; margin: 8px 0; background: #fbfcff; }
+.rpe-commencee { border-left-color: #6366f1; }
+.rpe-seq-tete, .rpe-partie-tete { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.rpe-code { font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+.rpe-nom { font-size: 14px; font-weight: 600; border: none; border-bottom: 1px dashed var(--border); min-width: 280px; background: transparent; }
+.rpe-partie { margin: 6px 0 6px 14px; padding-left: 8px; border-left: 2px solid var(--border); }
+.rpe-nb { width: 56px; font-size: 12px; }
+.rpe-obj { border-collapse: collapse; font-size: 12px; margin: 4px 0; }
+.rpe-obj td { padding: 2px 4px 2px 0; }
+.rpe-obj-nom { width: 240px; font-size: 12px; }
+.rpe-crit { width: 130px; font-size: 11px; }
+.rpe-ajout { display: flex; gap: 6px; align-items: center; margin: 4px 0; font-size: 12px; }
+.rpe-ajout input:not(.rpe-nb) { font-size: 12px; width: 240px; }
+.rpe-sous { font-size: 12px; color: var(--text-secondary); margin: 3px 0; }
+.rpe-fichiers { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.rpe-fichier { background: #f1f5f9; border-radius: 10px; padding: 1px 8px; }
+.rpe-fichier a { color: var(--text); text-decoration: none; }
+.rpe-x { color: var(--text-secondary); font-size: 11px; }
+.rpe-import { color: var(--primary); cursor: pointer; text-decoration: underline; }

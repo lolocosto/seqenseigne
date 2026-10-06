@@ -161,7 +161,7 @@
         try {
           const resp = await api(
             `/api/referentiels?niveau=${encodeURIComponent(niveau)}`
-            + `&etats=verrouille,utilise`);
+            + `&etats=verrouille,utilise&externes=1`);   // v0.48.2 : + externes
           refs = resp.referentiels || [];
           this._refsCache[niveau] = refs;
         } catch (e) { refs = []; }
@@ -173,7 +173,9 @@
       sel.innerHTML = refs.map(r => {
         const lib = r.description ? ` — ${this._esc(r.description)}` : '';
         const etat = r.etat === 'utilise' ? ' (utilisé)' : '';
-        return `<option value="${r.id}">${this._esc(r.id)}${lib}${etat}</option>`;
+        // v0.48.2 — Référentiel principal externe : nom calculé + mention.
+        const nom = r.source === 'externe' ? `${this._esc(r.nom || r.id)} (externe)` : this._esc(r.id);
+        return `<option value="${r.id}">${nom}${lib}${etat}</option>`;
       }).join('');
     }
 

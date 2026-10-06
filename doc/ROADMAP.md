@@ -241,3 +241,11 @@ Notés pour plus tard :
   de remplacement, ou liste alphabétique si la salle n'a pas de plan) ;
   affichage dans le Début de séance / l'Observation ; une salle créée à la
   volée devient-elle « utilisée » (non supprimable) ?
+
+## Référentiel interne de MER (LaTeX)
+
+- Concevoir les documents LaTeX propres aux mises en route : activités de
+  5-10 min en début de séance ; fiches de cours (2 par page), séries de calcul
+  mental (5 questions, score /5), corrigés et tests (/10) séparés — modèles
+  fournis par l'auteur (oct. 2026). Probablement de nouveaux ateliers. Le type
+  « MER » des référentiels internes est ouvert dès v0.48.3.
