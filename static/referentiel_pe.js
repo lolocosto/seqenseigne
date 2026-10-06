@@ -1,5 +1,5 @@
 // ============================================================================
-// static/referentiel_pe.js — v0.48.2
+// static/referentiel_pe.js — v0.48.2 (v0.48.3 : type de chaque fichier)
 // Référentiels PRINCIPAUX externes (Conception de référentiel › Référentiels
 // externes › Principaux) : même structure qu'un référentiel interne figé.
 // Séquences → parties (nb de séances) → objectifs (nb de séances, critères
@@ -9,7 +9,7 @@
 // Backend : /api/referentiels-principaux-externes.
 // ============================================================================
 
-const RPE = { liste: [], ouverts: new Set() };
+const RPE = { liste: [], ouverts: new Set(), types: [] };
 const _RPE_API = '/api/referentiels-principaux-externes';
 
 function _rpeE(s) { return escapeHtml(String(s == null ? '' : s)); }
@@ -33,6 +33,7 @@ async function _rpeApi(url, opts) {
 async function rpeInit() { await rpeCharger(); }
 
 async function rpeCharger() {
+  try { RPE.types = (await _rpeApi('/api/types-documents')).types || []; } catch (e) { RPE.types = []; }
   try {
     const l = (await _rpeApi(`${_RPE_API}?niveau=${encodeURIComponent(_rpeNiveau())}`)).referentiels;
     RPE.liste = [];
@@ -86,15 +87,24 @@ function _rpeRef(r) {
   </div>`;
 }
 
+// v0.48.3 — Un fichier par ligne, avec son type à côté.
 function _rpeFichiers(r, seqCode, partie, fichiers) {
+  const optionsType = (sel) => '<option value="">— type —</option>' + RPE.types.map(t =>
+    `<option value="${t.id}"${t.id === sel ? ' selected' : ''}>${_rpeE(t.libelle)}</option>`).join('')
+    + (sel && !RPE.types.some(t => t.id === sel) ? `<option value="${sel}" selected>(type désactivé)</option>` : '');
   return `<div class="rpe-fichiers">
-    ${fichiers.map(f => `<span class="rpe-fichier">
-      <a href="${_RPE_API}/fichiers/${f.id}" target="_blank" rel="noopener"
+    ${fichiers.map(f => `<div class="rpe-fichier-ligne">
+      <a href="${_RPE_API}/fichiers/${f.id}" target="_blank" rel="noopener" class="rpe-fichier-nom"
          title="${f.affichable ? 'Afficher' : 'Télécharger'}">${f.affichable ? '📄' : '⬇'} ${_rpeE(f.nom_fichier)}</a>
-      <button class="btn-lien rpe-x" onclick="rpeSupprimerFichier('${f.id}')" title="Supprimer">✕</button></span>`).join('')}
+      <select class="rpe-type" onchange="rpeTyperFichier('${f.id}', this.value)">${optionsType(f.type_id)}</select>
+      <button class="btn-lien rpe-x" onclick="rpeSupprimerFichier('${f.id}')" title="Supprimer">✕</button></div>`).join('')}
     <label class="rpe-import">+ fichier(s)<input type="file" multiple style="display:none"
       onchange="rpeImporter('${r.id}', '${seqCode}', ${partie}, this)"></label>
   </div>`;
+}
+
+function rpeTyperFichier(fid, typeId) {
+  return _rpeAction(`${_RPE_API}/fichiers/${fid}/type`, _rpeJ({ m: 'PUT', b: { type_id: typeId } }));
 }
 
 function _rpeSeq(r, s) {
@@ -109,7 +119,7 @@ function _rpeSeq(r, s) {
         <button class="btn-sm" onclick="rpeDeplacerSeq('${r.id}', '${s.code}', 1)">↓</button>
         <button class="btn-lien rpe-x" onclick="rpeSupprimerSeq('${r.id}', '${s.code}')">supprimer</button>`)}
     </div>
-    <div class="rpe-sous">Fichiers de la séquence : ${_rpeFichiers(r, s.code, 0, s.fichiers || [])}</div>
+    <div class="rpe-sous">Fichiers de la séquence${_rpeFichiers(r, s.code, 0, s.fichiers || [])}</div>
     ${(s.parties || []).map(p => `
       <div class="rpe-partie">
         <div class="rpe-partie-tete">Partie ${p.numero} —
@@ -132,7 +142,7 @@ function _rpeSeq(r, s) {
         </tr>`).join('')}</tbody></table>
         ${ctl(`<div class="rpe-ajout"><input id="rpe-obj-${r.id}-${s.code}-${p.numero}" placeholder="Nouvel objectif">
           <button class="btn-sm" onclick="rpeAjouterObj('${r.id}', '${s.code}', ${p.numero})">+ objectif</button></div>`)}
-        <div class="rpe-sous">Fichiers de la partie : ${_rpeFichiers(r, s.code, p.numero, p.fichiers || [])}</div>
+        <div class="rpe-sous">Fichiers de la partie${_rpeFichiers(r, s.code, p.numero, p.fichiers || [])}</div>
       </div>`).join('')}
     ${ctl(`<div class="rpe-ajout"><input type="number" min="0" step="0.5" id="rpe-part-${r.id}-${s.code}" class="rpe-nb" value="4">
       séance(s) <button class="btn-sm" onclick="rpeAjouterPartie('${r.id}', '${s.code}')">+ partie</button></div>`)}
@@ -196,4 +206,40 @@ async function rpeImporter(id, c, partie, input) {
   }
   _rpeStatus(ko ? `${ok} ajouté(s), ${ko} en échec.` : `${ok} fichier(s) ajouté(s).`, !!ko);
   await rpeCharger();
+}
+
+
+// ── v0.48.3 — Types de documents (Système › Préférences) ────────────────────
+
+async function prefTypesDocsCharger() {
+  const z = document.getElementById('pref-typesdocs-liste');
+  if (!z) return;
+  let types = [];
+  try { types = (await _rpeApi('/api/types-documents?tout=1')).types || []; } catch (e) {}
+  z.innerHTML = types.map(t => `<div class="pref-td-ligne${t.actif ? '' : ' pref-td-inactif'}">
+      <input value="${_rpeE(t.libelle)}" onchange="prefTypesDocsModifier('${t.id}', {libelle: this.value})">
+      <button class="btn-sm" onclick="prefTypesDocsDeplacer('${t.id}', -1)" title="Monter">↑</button>
+      <button class="btn-sm" onclick="prefTypesDocsDeplacer('${t.id}', 1)" title="Descendre">↓</button>
+      <button class="btn-sm" onclick="prefTypesDocsModifier('${t.id}', {actif: ${!t.actif}})">${t.actif ? 'Désactiver' : 'Réactiver'}</button>
+    </div>`).join('');
+}
+
+async function _prefTd(url, opts) {
+  const st = document.getElementById('pref-typesdocs-status');
+  try { await _rpeApi(url, opts); if (st) st.textContent = ''; }
+  catch (e) { if (st) st.textContent = e.message; }
+  await prefTypesDocsCharger();
+}
+
+function prefTypesDocsAjouter() {
+  const i = document.getElementById('pref-typesdocs-nouveau');
+  if (!i || !i.value.trim()) return;
+  return _prefTd('/api/types-documents', { method: 'POST', body: JSON.stringify({ libelle: i.value }) })
+    .then(() => { i.value = ''; });
+}
+function prefTypesDocsModifier(id, champs) {
+  return _prefTd('/api/types-documents/' + id, { method: 'PUT', body: JSON.stringify(champs) });
+}
+function prefTypesDocsDeplacer(id, sens) {
+  return _prefTd('/api/types-documents/' + id + '/deplacer', { method: 'POST', body: JSON.stringify({ sens }) });
 }

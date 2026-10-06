@@ -46,7 +46,17 @@ CREATE TABLE IF NOT EXISTS referentiel_fichiers (
     ordre          INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_ref_fichiers ON referentiel_fichiers (referentiel_id, seq_code);
+-- v0.48.3 — Types de documents (liste extensible dans Système › Préférences)
+CREATE TABLE IF NOT EXISTS types_documents (
+    id      TEXT PRIMARY KEY,
+    libelle TEXT NOT NULL,
+    ordre   INTEGER NOT NULL DEFAULT 0,
+    actif   INTEGER NOT NULL DEFAULT 1
+);
 """
+
+TYPES_DEFAUT = ("Livret d'exercices", "Livret de séquence", "Livret de cours",
+                "Évaluation", "Travail personnel", "Activité complémentaire")
 
 
 def migrer(conn) -> None:
@@ -57,6 +67,14 @@ def migrer(conn) -> None:
         if cols and nom not in cols:
             conn.execute(f"ALTER TABLE referentiel_niveaux ADD COLUMN {nom} {decl}")
     conn.executescript(SCHEMA_FICHIERS)
+    # v0.48.3 — type d'un fichier ; types par défaut.
+    cols_f = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_fichiers)")}
+    if "type_id" not in cols_f:
+        conn.execute("ALTER TABLE referentiel_fichiers ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
+    if conn.execute("SELECT COUNT(*) FROM types_documents").fetchone()[0] == 0:
+        for i, lib in enumerate(TYPES_DEFAUT, start=1):
+            conn.execute("INSERT INTO types_documents (id, libelle, ordre) VALUES (?,?,?)",
+                         (_id("tdoc_"), lib, i * 10))
 
 
 class RefExtErreur(Exception):
@@ -190,8 +208,64 @@ def lire(conn, rid: str, aujourd_hui: date | None = None) -> dict:
 
 def _fichiers(conn, rid, seq_code, partie_numero) -> list[dict]:
     return [{**dict(f), "affichable": f["mime"] in MIMES_AFFICHABLES} for f in conn.execute(
-        "SELECT * FROM referentiel_fichiers WHERE referentiel_id=? AND seq_code=? AND "
-        "partie_numero=? ORDER BY ordre, nom_fichier", (rid, seq_code, partie_numero)).fetchall()]
+        "SELECT f.*, COALESCE(t.libelle, '') AS type_libelle FROM referentiel_fichiers f "
+        "LEFT JOIN types_documents t ON t.id=f.type_id WHERE f.referentiel_id=? AND "
+        "f.seq_code=? AND f.partie_numero=? ORDER BY f.ordre, f.nom_fichier",
+        (rid, seq_code, partie_numero)).fetchall()]
+
+
+# ── v0.48.3 — Types de documents ─────────────────────────────────────────────
+
+def lister_types(conn, tout: bool = False) -> list[dict]:
+    q = "SELECT * FROM types_documents" + ("" if tout else " WHERE actif=1") + \
+        " ORDER BY ordre, libelle"
+    return [{**dict(r), "actif": bool(r["actif"])} for r in conn.execute(q).fetchall()]
+
+
+def ajouter_type(conn, libelle: str) -> dict:
+    lib = (libelle or "").strip()
+    if not lib:
+        raise RefExtErreur("Libellé obligatoire.")
+    if any(t["libelle"].casefold() == lib.casefold() for t in lister_types(conn, True)):
+        raise RefExtErreur(f"Le type « {lib} » existe déjà.")
+    n = conn.execute("SELECT COALESCE(MAX(ordre), 0) FROM types_documents").fetchone()[0]
+    tid = _id("tdoc_")
+    conn.execute("INSERT INTO types_documents (id, libelle, ordre) VALUES (?,?,?)",
+                 (tid, lib, n + 10))
+    return dict(conn.execute("SELECT * FROM types_documents WHERE id=?", (tid,)).fetchone())
+
+
+def modifier_type(conn, tid: str, champs: dict) -> None:
+    r = conn.execute("SELECT * FROM types_documents WHERE id=?", (tid,)).fetchone()
+    if r is None:
+        raise RefExtErreur("Type introuvable.", "introuvable")
+    lib = (champs.get("libelle", r["libelle"]) or "").strip()
+    if not lib:
+        raise RefExtErreur("Libellé obligatoire.")
+    conn.execute("UPDATE types_documents SET libelle=?, actif=? WHERE id=?",
+                 (lib, 1 if champs.get("actif", bool(r["actif"])) else 0, tid))
+
+
+def deplacer_type(conn, tid: str, sens: int) -> None:
+    ids = [t["id"] for t in lister_types(conn, True)]
+    if tid not in ids:
+        raise RefExtErreur("Type introuvable.", "introuvable")
+    i = ids.index(tid)
+    j = i + (1 if sens > 0 else -1)
+    if 0 <= j < len(ids):
+        ids[i], ids[j] = ids[j], ids[i]
+        for k, x in enumerate(ids, start=1):
+            conn.execute("UPDATE types_documents SET ordre=? WHERE id=?", (k * 10, x))
+
+
+def typer_fichier(conn, fid: str, type_id: str) -> dict:
+    """Le type se modifie toujours (classement, même séquence commencée)."""
+    lire_fichier(conn, fid)
+    if type_id and conn.execute("SELECT 1 FROM types_documents WHERE id=?",
+                                (type_id,)).fetchone() is None:
+        raise RefExtErreur("Type inconnu.")
+    conn.execute("UPDATE referentiel_fichiers SET type_id=? WHERE id=?", (type_id or "", fid))
+    return lire_fichier(conn, fid)
 
 
 # ── Séquences ────────────────────────────────────────────────────────────────
@@ -473,7 +547,9 @@ def fichiers_de_sequence(conn, niveau: str, annee: str, seq_code: str) -> list[d
     """Fichiers des référentiels principaux externes du niveau et de l'année,
     pour une séquence (pour les documents associables de la progression)."""
     return [dict(r) for r in conn.execute(
-        "SELECT f.*, n.version FROM referentiel_fichiers f JOIN referentiel_niveaux n "
-        "ON n.id=f.referentiel_id WHERE n.source='externe' AND n.niveau=? AND "
+        "SELECT f.*, n.version, COALESCE(t.libelle, '') AS type_libelle "
+        "FROM referentiel_fichiers f JOIN referentiel_niveaux n "
+        "ON n.id=f.referentiel_id LEFT JOIN types_documents t ON t.id=f.type_id "
+        "WHERE n.source='externe' AND n.niveau=? AND "
         "(n.annee=? OR ?='') AND f.seq_code=? ORDER BY f.partie_numero, f.ordre",
         (niveau, annee, annee, seq_code)).fetchall()]

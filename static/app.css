@@ -4638,3 +4638,11 @@ textarea.latex-textarea {
 .rpe-fichier a { color: var(--text); text-decoration: none; }
 .rpe-x { color: var(--text-secondary); font-size: 11px; }
 .rpe-import { color: var(--primary); cursor: pointer; text-decoration: underline; }
+/* v0.48.3 — Fichiers typés (un par ligne) ; types de documents (préférences) */
+.rpe-fichiers { display: block; margin: 2px 0 2px 8px; }
+.rpe-fichier-ligne { display: flex; gap: 8px; align-items: center; padding: 1px 0; }
+.rpe-fichier-nom { color: var(--text); text-decoration: none; min-width: 260px; font-size: 12px; }
+.rpe-type { font-size: 11px; }
+.pref-td-ligne { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+.pref-td-ligne input { flex: 1; font-size: 13px; }
+.pref-td-inactif { opacity: .55; }

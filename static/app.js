@@ -859,6 +859,8 @@ function _prefInitialiser() {
   // v0.18.4 — Paramètres de compilation + état replié/déplié des sections.
   if (typeof prefChargerParamsCompilation === 'function') prefChargerParamsCompilation();
   if (typeof prefCatInitEtats === 'function') prefCatInitEtats();
+  // v0.48.3 — Types de documents des référentiels externes.
+  if (typeof prefTypesDocsCharger === 'function') prefTypesDocsCharger();
 }
 
 function systemeSwitch(sous) {

@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.48.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.48.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -49,9 +49,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - v0.48.2 livrée : référentiel principal externe = référentiel figé de
   source externe (nom calculé, objectifs auto-numérotés, fichiers tous
   formats, utilisable dès sa création, séquence commencée verrouillée).
-- Prochaine étape : v0.48.3 — harmonisation des écrans interne / externe
+- v0.48.3 livrée : types des documents attachés (liste extensible dans
+  Système › Préférences), un fichier par ligne avec son type.
+- Prochaine étape : v0.48.4 — harmonisation des écrans interne / externe
   (liste à gauche, détail à droite, nom calculé, type principal / MER pour
-  tous, internes existants = principal) ; puis v0.48.4 — fichiers externes
+  tous, internes existants = principal) ; puis v0.48.5 — fichiers externes
   portant séance / retour / délai, documents de MER.
 
 ## Derniers chantiers terminés

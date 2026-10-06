@@ -163,3 +163,31 @@ def api_fichier_lire(fid):
 @bp.route(P + "/fichiers/<fid>", methods=["DELETE"])
 def api_fichier_supprimer(fid):
     return _fait(lambda c: svc.supprimer_fichier(c, fid, _data_dir()))
+
+
+@bp.route(P + "/fichiers/<fid>/type", methods=["PUT"])
+def api_fichier_typer(fid):
+    """v0.48.3 — Type d'un fichier (classement dans la séquence)."""
+    return _fait(lambda c: svc.typer_fichier(c, fid, _b().get("type_id", "")))
+
+
+# ── v0.48.3 — Types de documents (Système › Préférences) ────────────────────
+
+@bp.route("/api/types-documents", methods=["GET"])
+def api_types():
+    return _fait(lambda c: {"types": svc.lister_types(c, tout=request.args.get("tout") == "1")})
+
+
+@bp.route("/api/types-documents", methods=["POST"])
+def api_type_ajouter():
+    return _fait(lambda c: svc.ajouter_type(c, _b().get("libelle", "")), 201)
+
+
+@bp.route("/api/types-documents/<tid>", methods=["PUT"])
+def api_type_modifier(tid):
+    return _fait(lambda c: svc.modifier_type(c, tid, _b()))
+
+
+@bp.route("/api/types-documents/<tid>/deplacer", methods=["POST"])
+def api_type_deplacer(tid):
+    return _fait(lambda c: svc.deplacer_type(c, tid, int(_b().get("sens", 1))))

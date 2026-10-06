@@ -3331,6 +3331,28 @@
       </div>
     </div>
 
+    <!-- v0.48.3 — Types des documents attachés aux référentiels externes -->
+    <div class="pref-categorie">
+      <div class="pref-categorie-titre">Référentiels externes</div>
+      <div class="pref-cat" data-pref-cat="referentiels-types-documents">
+        <div class="pref-cat-head" onclick="prefCatBasculer(this)">Types de documents</div>
+        <div class="pref-cat-body">
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
+            Types proposés pour classer les fichiers d'une séquence ou d'une partie (livret
+            d'exercices, évaluation…). Un type désactivé n'est plus proposé mais reste sur les
+            fichiers qui l'ont déjà.
+          </p>
+          <div id="pref-typesdocs-liste" style="margin-bottom:10px"></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="text" id="pref-typesdocs-nouveau" placeholder="Nouveau type (ex : Fiche méthode)"
+                   style="flex:1;font-size:13px" onkeydown="if (event.key==='Enter') prefTypesDocsAjouter()">
+            <button class="btn-prim" onclick="prefTypesDocsAjouter()">Ajouter</button>
+          </div>
+          <div id="pref-typesdocs-status" style="font-size:12px;color:#c33;margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="pref-categorie">
       <div class="pref-categorie-titre">Progression à la séance</div>
       <div class="pref-cat" data-pref-cat="seance-types-mise-en-route">

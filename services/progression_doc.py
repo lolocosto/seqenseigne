@@ -155,9 +155,12 @@ def _docs_principal_externe(conn, niveau: str, annee: str, sequence: str) -> lis
         fichiers = rpe.fichiers_de_sequence(conn, niveau, annee, sequence)
     except Exception:
         return []
+    # v0.48.3 — Le type du fichier préfixe son libellé (« Livret de cours :
+    # cours.pdf »).
     return [{"source": "externe", "doc_ref": f["id"],
-             "libelle": f["nom_fichier"] + (f" (partie {f['partie_numero']})"
-                                            if f["partie_numero"] else ""),
+             "libelle": (f"{f['type_libelle']} : " if f.get("type_libelle") else "")
+                        + f["nom_fichier"] + (f" (partie {f['partie_numero']})"
+                                              if f["partie_numero"] else ""),
              "categorie": "sequence"} for f in fichiers]
 
 
