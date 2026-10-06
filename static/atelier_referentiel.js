@@ -132,8 +132,9 @@ function atelRefItemHtml(r) {
   return `
     <div class="${cls}" onclick="atelRefSelectionner('${r.id}')">
       <div class="atl-item-id" style="display:flex;align-items:center;gap:6px">
-        ${pastille}<span>${r.id}</span>
+        ${pastille}<span>${atelRefEscape(r.nom || r.id)}</span>
       </div>
+      <div style="font-size:10px;color:var(--text-muted)">${r.id}</div>
       ${desc ? `<div class="atl-item-titre">${atelRefEscape(desc)}</div>` : ''}
       ${dateDebut}
     </div>`;
@@ -272,7 +273,7 @@ function atelRefRendreDetail() {
   // Titre + pastille d'état (cohérence avec la sidebar) + libellé texte.
   // Le span#atl-ref-detail-badge sert de conteneur pour pastille + libellé.
   const titre = document.getElementById('atl-ref-detail-titre');
-  if (titre) titre.textContent = r.id;
+  if (titre) titre.textContent = r.nom ? `${r.nom} (${r.id})` : r.id;   // v0.48.4
   const badge = document.getElementById('atl-ref-detail-badge');
   if (badge) {
     badge.style.cssText =
@@ -780,7 +781,7 @@ async function atelRefCreerCoquille() {
   }
   const description = (prompt(
     `Créer un nouveau référentiel pour ${niveau}.\n\n` +
-    `Le nom est calculé automatiquement (année scolaire + niveau + suffixe).\n\n` +
+    `Le nom est calculé automatiquement (niveau, année scolaire, type, lettre si plusieurs).\n\n` +
     `Description (optionnelle, pour vous repérer plus tard) :`,
     ''
   ) || '').trim();
@@ -796,7 +797,9 @@ async function atelRefCreerCoquille() {
     const data = await api('/api/referentiels/coquille', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ niveau, description }),
+      body:    JSON.stringify({ niveau, description,
+                                // v0.48.4 — type (principal / MER)
+                                type_ref: (document.getElementById('atl-ref-type') || {}).value || 'principal' }),
     });
     await atelRefRechargerListe();
     // Sélectionne le nouveau référentiel

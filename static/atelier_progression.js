@@ -161,7 +161,7 @@
         try {
           const resp = await api(
             `/api/referentiels?niveau=${encodeURIComponent(niveau)}`
-            + `&etats=verrouille,utilise&externes=1`);   // v0.48.2 : + externes
+            + `&etats=verrouille,utilise&externes=1&type=principal`);   // v0.48.2 : + externes ; v0.48.4 : principal seulement
           refs = resp.referentiels || [];
           this._refsCache[niveau] = refs;
         } catch (e) { refs = []; }

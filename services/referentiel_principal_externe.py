@@ -67,6 +67,11 @@ def migrer(conn) -> None:
         if cols and nom not in cols:
             conn.execute(f"ALTER TABLE referentiel_niveaux ADD COLUMN {nom} {decl}")
     conn.executescript(SCHEMA_FICHIERS)
+    # v0.48.4 — description des référentiels externes de MER (le nom est
+    # désormais calculé).
+    cols_x = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe)")}
+    if cols_x and "description" not in cols_x:
+        conn.execute("ALTER TABLE referentiel_externe ADD COLUMN description TEXT NOT NULL DEFAULT ''")
     # v0.48.3 — type d'un fichier ; types par défaut.
     cols_f = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_fichiers)")}
     if "type_id" not in cols_f:
@@ -90,9 +95,24 @@ def _id(p: str) -> str:
 # ── Référentiel ──────────────────────────────────────────────────────────────
 
 def nom_calcule(r: dict) -> str:
-    lettre = (r.get("version") or "")[5:]           # 'X2026b' → 'b'
-    niv = NIVEAUX.get(r["niveau"], r["niveau"])
-    return f"{niv} — {r.get('annee') or ''} — Principal{(' ' + lettre) if lettre else ''}"
+    """v0.48.4 — Nom calculé de TOUT référentiel figé (interne ou externe) :
+    « 4e — 2026-2027 — Principal » (ou « MER »), plus la lettre de version
+    (b, c…) si plusieurs. Interne : version '2025b' → année 2025-2026, lettre
+    b ; externe : version 'X2026b', année scolaire stockée."""
+    version = r.get("version") or ""
+    if (r.get("source") or "interne") == "externe":
+        lettre = version[5:]
+        annee = r.get("annee") or ""
+    else:
+        lettre = version[4:]
+        try:
+            y = int(version[:4])
+            annee = f"{y}-{y + 1}"
+        except ValueError:
+            annee = version
+    niv = NIVEAUX.get(r.get("niveau"), r.get("niveau") or "")
+    type_ = "MER" if (r.get("type_ref") or "principal") == "mer" else "Principal"
+    return f"{niv} — {annee} — {type_}{(' ' + lettre) if lettre else ''}"
 
 
 def _lire_ref(conn, rid: str) -> dict:
@@ -103,10 +123,15 @@ def _lire_ref(conn, rid: str) -> dict:
     return dict(r)
 
 
-def lister(conn, niveau: str) -> list[dict]:
-    rows = conn.execute("SELECT * FROM referentiel_niveaux WHERE source='externe' AND "
-                        "type_ref='principal' AND niveau=? AND etat<>'annule' "
-                        "ORDER BY annee DESC, version", (niveau,)).fetchall()
+def lister(conn, niveau: str, type_ref: str | None = "principal") -> list[dict]:
+    """Référentiels externes de la structure figée (principal par défaut)."""
+    q = ("SELECT * FROM referentiel_niveaux WHERE source='externe' AND niveau=? "
+         "AND etat<>'annule'")
+    p = [niveau]
+    if type_ref:
+        q += " AND type_ref=?"
+        p.append(type_ref)
+    rows = conn.execute(q + " ORDER BY annee DESC, version", p).fetchall()
     return [{**dict(r), "nom": nom_calcule(dict(r))} for r in rows]
 
 

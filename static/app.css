@@ -4646,3 +4646,22 @@ textarea.latex-textarea {
 .pref-td-ligne { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
 .pref-td-ligne input { flex: 1; font-size: 13px; }
 .pref-td-inactif { opacity: .55; }
+
+/* v0.48.4 — Référentiels externes : liste à gauche, détail à droite */
+.rxa-cadre { display: flex; gap: 14px; align-items: flex-start; }
+.rxa-sidebar { width: 300px; flex-shrink: 0; }
+.rxa-detail { flex: 1; min-width: 0; }
+.rxa-creer { display: flex; gap: 4px; padding: 6px 8px; flex-wrap: wrap; }
+.rxa-creer select, .rxa-creer input { font-size: 12px; }
+.rxa-creer input { flex: 1; min-width: 120px; }
+.rxa-pastille { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.rxa-type { font-size: 10px; padding: 0 6px; border-radius: 8px; margin-left: auto; }
+.rxa-type-p { background: #e0e7ff; color: #3730a3; }
+.rxa-type-mer { background: #fef3c7; color: #78350f; }
+.rxa-aide { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.atl-ref-type { font-size: 12px; margin-right: 4px; }
+.rxa-item-desc { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0 15px; }
+.rxa-sidebar .asm-item { display: block; }
+.rxa-btn-creer { font-size: 12px; padding: 3px 10px; }
+#atl-ref-sidebar .atl-sidebar-head { flex-wrap: wrap; gap: 4px; }
+#atl-ref-sidebar .atl-ref-type { margin-left: auto; }

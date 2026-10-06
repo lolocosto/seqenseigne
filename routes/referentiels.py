@@ -88,17 +88,23 @@ def api_lister():
     if etats_filtre is not None:
         refs = [r for r in refs if r.get("etat", "") in etats_filtre]
 
+    # v0.48.4 — `type=principal|mer` : filtre par type de référentiel.
+    type_f = request.args.get("type", "").strip()
+    if type_f:
+        refs = [r for r in refs if (r.get("type_ref") or "principal") == type_f]
+
     # v0.48.2 — `externes=1` (progression principale) : ajoute les
     # référentiels principaux externes du niveau, utilisables dès leur
     # création (même incomplets), quel que soit leur état sauf « annulé ».
     if niveau and request.args.get("externes") == "1":
         from services import referentiel_principal_externe as rpe
         with store._conn() as conn:
-            for r in rpe.lister(conn, niveau):
+            for r in rpe.lister(conn, niveau, type_ref=(type_f or None)):
                 refs.append({"id": r["id"], "niveau": r["niveau"], "version": r["version"],
                              "description": r.get("description", ""), "etat": r["etat"],
                              "date_debut": r.get("date_debut"), "date_fin": r.get("date_fin"),
-                             "source": "externe", "nom": r["nom"]})
+                             "source": "externe", "nom": r["nom"],
+                             "type_ref": r.get("type_ref") or "principal"})
 
     return jsonify({"referentiels": refs})
 
@@ -128,7 +134,8 @@ def api_creer_coquille():
 
     with store._conn() as conn:
         try:
-            ref = svc.creer_coquille(conn, niveau, description)
+            ref = svc.creer_coquille(conn, niveau, description,
+                                     type_ref=(body.get("type_ref") or "principal"))
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
         except RuntimeError as e:

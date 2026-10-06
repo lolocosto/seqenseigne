@@ -44,7 +44,8 @@ def api_creer():
     try:
         with _store()._conn() as conn:
             item = svc.creer(conn, niveau=b.get("niveau", ""), annee=annee,
-                             type=b.get("type", "mer"), nom=b.get("nom", ""))
+                             type=b.get("type", "mer"), nom=b.get("nom", ""),
+                             description=b.get("description", ""))
         return jsonify(item), 201
     except RefExterneErreur as e:
         return _err(e)

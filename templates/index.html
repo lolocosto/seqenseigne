@@ -2456,6 +2456,11 @@
       <aside class="atl-sidebar" id="atl-ref-sidebar">
         <div class="atl-sidebar-head">
           <span class="atl-sidebar-title">Référentiels</span>
+          <!-- v0.48.4 — Type du référentiel créé (le nom est calculé). -->
+          <select id="atl-ref-type" class="atl-ref-type" title="Type du référentiel">
+            <option value="principal">Principal</option>
+            <option value="mer">MER</option>
+          </select>
           <button class="btn-sm btn-prim" id="atl-ref-btn-creer"
                   onclick="atelRefCreerCoquille()" title="Créer un nouveau référentiel pour ce niveau">
             + Créer
@@ -2612,39 +2617,32 @@
   </div>
 
   <!-- ─── Référentiel externe (docs conçus hors de l'appli) ─── -->
-  <div id="atl-referentiel_externe" class="atl-panel" style="display:none;padding:16px 20px;max-width:1100px">
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
-      <h2 style="margin:0;font-size:18px">Référentiels externes</h2>
-      <span style="font-size:12px;color:var(--text-secondary)">
-        Documents conçus hors de l'appli, intégrés tels quels.
-      </span>
-    </div>
-    <!-- v0.48.2 — Référentiels principaux externes (même structure qu'un
-         référentiel interne figé). static/referentiel_pe.js -->
-    <section class="rpe-section">
-      <div class="rpe-entete">
-        <h3>Principaux</h3>
-        <span class="rpe-aide">Séquences → parties (nb de séances) → objectifs (critères F/A/E) ;
-          fichiers par séquence ou par partie. Utilisables par la progression principale dès leur
-          création ; une séquence commencée ne se modifie plus (libellés et ajout de fichiers
-          seulement).</span>
-      </div>
-      <div class="rpe-creer">
-        <input id="rpe-desc" placeholder="Description facultative (ex. : Manuel X)">
-        <button class="btn-prim" onclick="rpeCreer()">Nouveau référentiel principal externe</button>
+  <div id="atl-referentiel_externe" class="atl-panel" style="display:none;padding:12px 16px">
+    <!-- v0.48.4 — Même organisation que les référentiels internes : liste à
+         gauche (principaux et MER), détail à droite. static/referentiel_pe.js
+         (principaux, structure figée) + static/referentiel_externe.js (MER). -->
+    <div class="rxa-cadre">
+      <aside class="atl-sidebar rxa-sidebar">
+        <div class="atl-sidebar-head">
+          <span class="atl-sidebar-title">Référentiels externes</span>
+        </div>
+        <div class="rxa-creer">
+          <select id="rxa-type" title="Type du référentiel">
+            <option value="principal">Principal</option>
+            <option value="mer">MER</option>
+          </select>
+          <input id="rxa-desc" placeholder="Description (facultative)">
+          <button class="btn-prim rxa-btn-creer" onclick="rxaCreer()" title="Le nom est calculé : niveau, année, type">+ Créer</button>
+        </div>
+        <div id="rxa-liste"></div>
         <span id="rpe-status" class="rpe-status" role="status" aria-live="polite"></span>
-      </div>
-      <div id="rpe-liste"></div>
-    </section>
-    <h3 class="rpe-titre-mer">Mises en route (MER)</h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
-      <label style="font-size:13px">Nom du référentiel
-        <input id="rxt-nouveau-nom" placeholder="ex : MER 6e" style="display:block;font-size:13px">
-      </label>
-      <button class="btn-prim" onclick="rxtCreer()" style="font-size:13px">Nouveau référentiel externe (niveau courant)</button>
-      <span id="rxt-status" role="status" aria-live="polite" style="font-size:12px;color:#4a7"></span>
-    </div>
-    <div id="rxt-liste"></div>
+        <span id="rxt-status" role="status" aria-live="polite" style="font-size:12px;color:#4a7"></span>
+      </aside>
+      <section class="rxa-detail">
+        <div id="rxa-detail"><p class="rpe-vide">Choisissez un référentiel dans la liste, ou créez-en un.</p></div>
+        <!-- Conteneurs historiques (rendus redirigés vers le détail). -->
+        <div id="rpe-liste" style="display:none"></div>
+        <div id="rxt-liste" style="display:none"></div>
     <div id="rxt-apercu" style="display:none;margin-top:14px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         <strong id="rxt-apercu-nom" style="font-size:13px"></strong>
@@ -2653,6 +2651,8 @@
       </div>
       <iframe id="rxt-apercu-frame" title="Aperçu du document"
         style="width:100%;height:75vh;border:1px solid var(--border);border-radius:6px"></iframe>
+    </div>
+      </section>
     </div>
   </div>
 

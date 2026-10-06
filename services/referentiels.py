@@ -117,9 +117,18 @@ def lister_par_niveau(store, niveau: str) -> list[dict]:
             "etat":        r.get("etat", ""),
             "date_debut":  r.get("date_debut"),
             "date_fin":    r.get("date_fin"),
+            # v0.48.4 — type (principal / MER), source et nom calculé.
+            "type_ref":    r.get("type_ref") or "principal",
+            "source":      r.get("source") or "interne",
+            "nom":         _nom(r),
         }
         for r in refs
     ]
+
+
+def _nom(r: dict) -> str:
+    from services.referentiel_principal_externe import nom_calcule
+    return nom_calcule(r)
 
 
 def recommande(store, niveau: str) -> dict | None:
@@ -230,7 +239,8 @@ def calculer_nom_auto(conn: sqlite3.Connection, niveau: str,
 
 def creer_coquille(conn: sqlite3.Connection, niveau: str,
                     description: str = '',
-                    maintenant: datetime.date | None = None) -> dict:
+                    maintenant: datetime.date | None = None,
+                    type_ref: str = 'principal') -> dict:
     """
     Crée un nouveau référentiel à l'état `en_cours`, sous forme de
     coquille (uniquement la ligne dans `referentiel_niveaux`, aucune
@@ -248,12 +258,16 @@ def creer_coquille(conn: sqlite3.Connection, niveau: str,
     niveau = niveau.strip()
 
     nom = calculer_nom_auto(conn, niveau, maintenant)
+    # v0.48.4 — Type du référentiel : principal (progression principale) ou
+    # MER (progression de mise en route seulement).
+    if type_ref not in ('principal', 'mer'):
+        raise ValueError(f"Type de référentiel invalide : {type_ref!r}")
 
     conn.execute(
         "INSERT INTO referentiel_niveaux "
-        "(id, niveau, version, date_debut, date_fin, description, etat) "
-        "VALUES (?, ?, ?, NULL, NULL, ?, 'en_cours')",
-        (nom["id"], nom["niveau"], nom["version"], description),
+        "(id, niveau, version, date_debut, date_fin, description, etat, type_ref) "
+        "VALUES (?, ?, ?, NULL, NULL, ?, 'en_cours', ?)",
+        (nom["id"], nom["niveau"], nom["version"], description, type_ref),
     )
     conn.commit()
     return {

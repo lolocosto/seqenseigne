@@ -146,7 +146,7 @@ def test_separation_interne_externe(client, app):
     assert ids_internes == ["2026_N11"]
     r = client.get("/api/referentiels?niveau=N11&etats=verrouille,utilise&externes=1").get_json()
     assert [(x["id"], x.get("source")) for x in r["referentiels"]] == \
-        [("2026_N11", None), ("X2026_N11", "externe")]
+        [("2026_N11", "interne"), ("X2026_N11", "externe")]  # v0.48.4 : source toujours renseignée
     assert client.get("/api/referentiels?niveau=N11").get_json()["referentiels"][0]["id"] == "2026_N11"
 
 

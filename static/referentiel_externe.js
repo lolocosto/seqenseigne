@@ -64,6 +64,8 @@ async function rxtCreer() {
 }
 
 function rxtRender() {
+  // v0.48.4 — Liste à gauche / détail à droite (static/referentiel_pe.js).
+  if (typeof rxaRendre === 'function') { rxaRendre(); return; }
   const zone = document.getElementById('rxt-liste');
   if (!zone) return;
   if (!RXT_LISTE.length) {

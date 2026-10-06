@@ -61,17 +61,36 @@ def lister(conn, niveau: str | None = None, annee: str | None = None,
     return [dict(r) for r in conn.execute(q, p).fetchall()]
 
 
+def nom_calcule_mer(conn, niveau: str, annee: str) -> str:
+    """v0.48.4 — « 6e — 2026-2027 — MER » (+ b, c… si plusieurs)."""
+    from services.referentiel_principal_externe import NIVEAUX
+    base = f"{NIVEAUX.get(niveau, niveau)} — {annee} — MER"
+    pris = {r["nom"] for r in conn.execute(
+        "SELECT nom FROM referentiel_externe WHERE niveau=? AND annee=?", (niveau, annee))}
+    if base not in pris:
+        return base
+    return next(f"{base} {c}" for c in "bcdefghijklmnopqrstuvwxyz" if f"{base} {c}" not in pris)
+
+
 def creer(conn, *, niveau: str, annee: str = "", type: str = "mer",
-          nom: str = "") -> dict:
+          nom: str = "", description: str = "") -> dict:
     if type not in TYPES:
         raise DonneesInvalides(f"Type invalide : {type!r}.")
     if not (niveau or "").strip():
         raise DonneesInvalides("Le niveau est obligatoire.")
     rid = _rid("rxt")
+    # v0.48.4 — Nom calculé (niveau, année, type) si aucun nom n'est imposé.
+    nom = (nom or "").strip() or nom_calcule_mer(conn, niveau, annee)
     conn.execute(
         "INSERT INTO referentiel_externe (id, niveau, annee, type, nom, etat) "
         "VALUES (?,?,?,?,?, 'en_cours')",
-        (rid, niveau, annee, type, (nom or "").strip()))
+        (rid, niveau, annee, type, nom))
+    if description:
+        try:
+            conn.execute("UPDATE referentiel_externe SET description=? WHERE id=?",
+                         (description.strip(), rid))
+        except Exception:
+            pass
     return lire(conn, rid)
 
 

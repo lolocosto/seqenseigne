@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.48.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.48.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -51,10 +51,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   formats, utilisable dès sa création, séquence commencée verrouillée).
 - v0.48.3 livrée : types des documents attachés (liste extensible dans
   Système › Préférences), un fichier par ligne avec son type.
-- Prochaine étape : v0.48.4 — harmonisation des écrans interne / externe
-  (liste à gauche, détail à droite, nom calculé, type principal / MER pour
-  tous, internes existants = principal) ; puis v0.48.5 — fichiers externes
-  portant séance / retour / délai, documents de MER.
+- v0.48.4 livrée : nom calculé et type principal / MER pour tous les
+  référentiels ; écran externe en liste / détail.
+- Prochaine étape : v0.48.5 — fichiers externes portant séance / retour /
+  délai (placement automatique, remplacé par une association manuelle),
+  documents de MER.
 
 ## Derniers chantiers terminés
 

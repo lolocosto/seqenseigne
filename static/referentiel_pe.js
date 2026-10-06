@@ -56,6 +56,8 @@ function rpeCreer() {
 }
 
 function rpeRendre() {
+  // v0.48.4 — Liste à gauche / détail à droite.
+  if (typeof rxaRendre === 'function') { rxaRendre(); return; }
   const z = document.getElementById('rpe-liste');
   if (!z) return;
   if (!RPE.liste.length) {
@@ -242,4 +244,74 @@ function prefTypesDocsModifier(id, champs) {
 }
 function prefTypesDocsDeplacer(id, sens) {
   return _prefTd('/api/types-documents/' + id + '/deplacer', { method: 'POST', body: JSON.stringify({ sens }) });
+}
+
+
+// ── v0.48.4 — Écran unifié : liste à gauche (principaux + MER), détail à droite
+
+const RXA = { sel: null };       // 'P:<id>' (principal) ou 'M:<id>' (MER)
+
+function _rxaPastille(etat) {
+  const c = { utilise: '#276749', valide: '#276749', verrouille: '#3730a3' }[etat] || '#976100';
+  return `<span class="rxa-pastille" style="background:${c}"></span>`;
+}
+
+function rxaRendre() {
+  const liste = document.getElementById('rxa-liste');
+  const detail = document.getElementById('rxa-detail');
+  if (!liste || !detail) return;
+  const items = [
+    ...RPE.liste.map(r => ({ cle: 'P:' + r.id, nom: r.nom, desc: r.description, type: 'Principal',
+                             etat: r.utilise ? 'utilise' : r.etat })),
+    ...((typeof RXT_LISTE !== 'undefined') ? RXT_LISTE : []).map(r => ({
+      cle: 'M:' + r.id, nom: r.nom || '(sans nom)', desc: r.description || '', type: 'MER', etat: r.etat })),
+  ];
+  if (RXA.sel && !items.some(i => i.cle === RXA.sel)) RXA.sel = null;
+  if (!RXA.sel && items.length) RXA.sel = items[0].cle;
+  liste.innerHTML = items.length ? items.map(i => `
+    <div class="asm-item asm-item--clickable${i.cle === RXA.sel ? ' active' : ''}" onclick="rxaChoisir('${i.cle}')">
+      <div class="atl-item-id" style="display:flex;align-items:center;gap:6px">
+        ${_rxaPastille(i.etat)}<span>${_rpeE(i.nom)}</span>
+      </div>
+      ${i.desc ? `<div class="rxa-item-desc">${_rpeE(i.desc)}</div>` : ''}
+    </div>`).join('')
+    : '<div style="padding:14px;font-size:12px;color:var(--text-muted)">Aucun référentiel externe pour ce niveau.</div>';
+  if (!RXA.sel) {
+    detail.innerHTML = '<p class="rpe-vide">Choisissez un référentiel dans la liste, ou créez-en un.</p>';
+    return;
+  }
+  const [k, id] = [RXA.sel.slice(0, 1), RXA.sel.slice(2)];
+  if (k === 'P') {
+    const r = RPE.liste.find(x => x.id === id);
+    RPE.ouverts.add(id);
+    detail.innerHTML = r ? `<div class="rxa-aide">Séquences → parties (nb de séances) → objectifs
+      (critères F/A/E) ; fichiers par séquence ou par partie. Une séquence commencée ne se modifie
+      plus (libellés et ajout de fichiers seulement).</div>${_rpeRef(r)}` : '';
+  } else {
+    const r = RXT_LISTE.find(x => x.id === id);
+    detail.innerHTML = (r && typeof rxtRenderRef === 'function') ? rxtRenderRef(r) : '';
+  }
+}
+
+function rxaChoisir(cle) { RXA.sel = cle; rxaRendre(); }
+
+async function rxaCreer() {
+  const type = document.getElementById('rxa-type').value;
+  const desc = document.getElementById('rxa-desc');
+  try {
+    let r;
+    if (type === 'principal') {
+      r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
+        niveau: _rpeNiveau(), annee: _rpeAnnee(), description: desc.value }) });
+      RXA.sel = 'P:' + r.id;
+      await rpeCharger();
+    } else {
+      r = await _rpeApi('/api/referentiels-externes', { method: 'POST', body: JSON.stringify({
+        niveau: _rpeNiveau(), annee: _rpeAnnee(), type: 'mer', description: desc.value }) });
+      RXA.sel = 'M:' + r.id;
+      if (typeof rxtCharger === 'function') await rxtCharger();
+    }
+    desc.value = '';
+    _rpeStatus('Référentiel créé.');
+  } catch (e) { _rpeStatus(e.message, true); }
 }
