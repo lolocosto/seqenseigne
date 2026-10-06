@@ -62,6 +62,8 @@ ORDRE_AFFICHAGE = {t: i + 1 for i, t in enumerate(TYPES_DOCUMENT)}
 ENUMS = {
     'inclure_fiches_resume_en_fin': ('non', 'completes', 'a_completer'),
     'version_fiches':               ('completes', 'a_completer'),
+    # v0.48.1 — Découpage du livret de fiches de résumé.
+    'decoupage_fiches':             ('annuel', 'par_sequence', 'les_deux'),
     'contenu':                      ('cours_seul', 'exercices_seul',
                                      'cours_et_exercices'),
 }
@@ -99,6 +101,7 @@ OPTIONS_PAR_DEFAUT: dict[str, dict[str, Any]] = {
     'livret_fiches': {
         'actif': False,
         'version_fiches': 'completes',
+        'decoupage_fiches': 'annuel',   # v0.48.1 : 'annuel' | 'par_sequence' | 'les_deux'
     },
     'livret_plans': {
         'actif': False,

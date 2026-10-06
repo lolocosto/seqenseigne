@@ -503,6 +503,7 @@ def _produire_livret_fiches(conn, cible, options, tikz, tblr):
         )
     return generer_livret_fiches(
         conn, niveau,
+        sequence=cible.get('sequence'),      # v0.48.1 — livret d'une séquence
         options=options,
         tikz_libraries=tikz,
         tblr_libraries=tblr,

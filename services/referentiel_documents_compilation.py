@@ -218,6 +218,36 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
             })
         return cibles
 
+    if type_document == 'livret_fiches':
+        # v0.48.1 — Découpage : un livret annuel (cible 'unique'), un livret
+        # par séquence ayant des fiches (cible 'N11/S05'), ou les deux.
+        import json as _json
+        r = conn.execute("SELECT options FROM referentiel_documents WHERE id = ?",
+                         (doc_id,)).fetchone()
+        try:
+            opts = _json.loads(r['options']) if r and r['options'] else {}
+        except (TypeError, ValueError):
+            opts = {}
+        decoupage = opts.get('decoupage_fiches') or 'annuel'
+        cibles = []
+        if decoupage in ('annuel', 'les_deux'):
+            cibles.append({'cible_id': 'unique', 'libelle': 'Livret Fiches',
+                           'nom_fichier': 'livret_fiches.pdf', 'niveau': niveau})
+        if decoupage in ('par_sequence', 'les_deux'):
+            for row in conn.execute("""
+                SELECT DISTINCT sequence FROM fiches_resume
+                 WHERE niveau = ? ORDER BY sequence
+            """, (niveau,)).fetchall():
+                seq = row['sequence']
+                cibles.append({
+                    'cible_id':    f"{niveau}/{seq}",
+                    'libelle':     f"Fiches {niveau}/{seq}",
+                    'nom_fichier': f"livret_fiches__{niveau}__{seq}.pdf",
+                    'niveau':      niveau,
+                    'sequence':    seq,
+                })
+        return cibles
+
     if type_document == 'livret_cartes_planches':
         # v0.15.2.5 — uniquement des cibles par séquence.
         #

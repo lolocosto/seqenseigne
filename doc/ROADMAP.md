@@ -218,3 +218,11 @@ Notés pour plus tard :
   - **expert** : tout en manuel (fonctionnement actuel).
 - Suppose de modéliser le calendrier de l'année (périodes, conseils de
   classe).
+
+## Mode « pur externe » (sans LaTeX)
+
+- Préférence « Désactiver la construction de référentiels en LaTeX » : masque
+  toute la partie LaTeX (écrans de conception interne, compilation, tuiles du
+  tableau de bord, préférences et administration liées). Objectif : rendre
+  l'appli accessible aux collègues qui ne connaissent pas LaTeX ou y sont
+  réfractaires (référentiels externes uniquement).

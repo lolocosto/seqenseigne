@@ -1864,6 +1864,12 @@ function atelRefDocumentOptionsHtml(doc, editable) {
                      [['completes', 'complètes'],
                       ['a_completer', 'à compléter']],
                      disabled)}
+      ${_atlRefRadio(doc.id, 'decoupage_fiches', opts.decoupage_fiches || 'annuel',
+                     'Découpage',
+                     [['annuel', 'un livret annuel'],
+                      ['par_sequence', 'un livret par séquence'],
+                      ['les_deux', 'les deux']],
+                     disabled)}
     `;
   } else if (type === 'livret_corriges') {
     inner = `

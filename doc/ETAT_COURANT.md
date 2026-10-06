@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.48.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.48.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -44,10 +44,17 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - v0.48.0 livrée : retour (à faire / à rendre) et délai (dont « fin du
   créneau ») sur les documents associés à la progression principale ;
   conversion en travail à la distribution.
-- Prochaine étape : v0.48.1 — progression principale construite sur un
-  référentiel figé interne OU externe (cadrage à présenter) ; puis v0.48.2 —
-  documents externes portant leur séance / retour / délai, placement
-  automatique (une association manuelle le remplace), documents de MER.
+- v0.48.1 livrée : livret de fiches de résumé par séquence (option
+  « Découpage »).
+- Prochaine étape : v0.48.2 — référentiel externe de même structure qu'un
+  interne figé (séquences, parties avec nb de séances, objectifs et critères ;
+  thèmes facultatifs si simple), utilisable par la progression principale,
+  incomplet accepté, ajouts autorisés en cours d'usage (séquences, parties,
+  documents ; séquence commencée : plus de modification ni suppression, seuls
+  ajouts de documents et corrections de libellés) ; pas de conversion des
+  anciens référentiels externes « principal ». Puis v0.48.3 — documents
+  externes portant leur séance / retour / délai, placement automatique,
+  documents de MER.
 
 ## Derniers chantiers terminés
 

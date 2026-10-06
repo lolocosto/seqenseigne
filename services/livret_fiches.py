@@ -100,6 +100,7 @@ def _lire_fiches_de_sequence(conn: sqlite3.Connection,
 def generer_livret_fiches(conn: sqlite3.Connection,
                             niveau: str,
                             options: dict | None = None,
+                            sequence: str | None = None,
                             tikz_libraries: list[str] | None = None,
                             tblr_libraries: list[str] | None = None) -> str:
     """Génère le source .tex complet du livret de fiches de résumé.
@@ -116,6 +117,9 @@ def generer_livret_fiches(conn: sqlite3.Connection,
     """
     options = options or {}
     version_fiches = options.get('version_fiches', 'a_completer')
+    # v0.48.1 — `sequence` (ex. 'S05') : livret limité aux fiches de cette
+    # séquence (un document par séquence, comme les livrets de séquence).
+    seq_filtre = sequence or None
 
     # 1. Récupérer la structure thèmes → séquences → fiches
     cycle_code = lire_cycle(conn, niveau)
@@ -128,6 +132,8 @@ def generer_livret_fiches(conn: sqlite3.Connection,
         sequences = _lire_sequences_du_theme(conn, theme['id'])
         seqs_avec_fiches = []
         for seq in sequences:
+            if seq_filtre and seq['code'] != seq_filtre:
+                continue
             fiches_ids = _lire_fiches_de_sequence(conn, niveau, seq['code'])
             fiches_corps = []
             for f in fiches_ids:
@@ -229,29 +235,35 @@ def generer_livret_fiches(conn: sqlite3.Connection,
         L.append(r"\renewcommand{\acompleter}[1]{#1}")
         L.append('')
 
-    # 4. Page de garde
-    L.extend(_page_de_garde(niveau, structure, version_fiches))
+    # 4. Page de garde (livret annuel) ou en-tête de séquence (v0.48.1)
+    if seq_filtre:
+        L.extend(_entete_sequence(niveau, structure, version_fiches, seq_filtre))
+    else:
+        L.extend(_page_de_garde(niveau, structure, version_fiches))
 
-    # 5. Table des matières
-    L.append(r'\thispagestyle{empty}')
-    L.append(r'\tableofcontents')
-    L.append(r'\newpage')
-    L.append('')
+        # 5. Table des matières (livret annuel seulement)
+        L.append(r'\thispagestyle{empty}')
+        L.append(r'\tableofcontents')
+        L.append(r'\newpage')
+        L.append('')
 
     # 6. Pour chaque thème, section avec sous-sections par séquence.
     for bloc in structure:
         theme = bloc['theme']
-        L.append(r'\cleardoublepage')
+        if not seq_filtre:
+            L.append(r'\cleardoublepage')
         L.append(f"\\seqSetColorsTheme{{{theme['code_couleur']}}}")
-        L.append(f"\\section{{{_echapper(theme['nom'])}}}")
-        if theme.get('description'):
-            L.append(theme['description'])
+        if not seq_filtre:
+            L.append(f"\\section{{{_echapper(theme['nom'])}}}")
+            if theme.get('description'):
+                L.append(theme['description'])
         L.append('')
 
         for sb in bloc['sequences']:
             seq = sb['sequence']
             L.append(f"\\seqSetCodeSequence{{{seq['code']}}}")
-            L.append(f"\\subsection{{{_echapper(seq['nom'])}}}")
+            if not seq_filtre:
+                L.append(f"\\subsection{{{_echapper(seq['nom'])}}}")
             L.append('')
             for tex in sb['fiches']:
                 L.append(tex)
@@ -289,6 +301,26 @@ def _page_de_garde(niveau: str, structure: list[dict],
     L.append(r'\newpage')
     L.append('')
     return L
+
+
+def _entete_sequence(niveau: str, structure: list[dict], version_fiches: str,
+                     code: str) -> list[str]:
+    """v0.48.1 — En-tête du livret de fiches d'UNE séquence (pas de page de
+    garde ni de table des matières : document court, distribué en début de
+    séquence)."""
+    libelle_niveau = LIBELLES_NIVEAUX.get(niveau, niveau)
+    nom = code
+    for bloc in structure:
+        for sb in bloc['sequences']:
+            if sb['sequence']['code'] == code:
+                nom = sb['sequence']['nom']
+    sous_titre = ('Version complète' if version_fiches == 'completes'
+                  else 'À compléter')
+    return [r'\thispagestyle{empty}', r'\begin{center}',
+            rf'{{\LARGE\bfseries Fiches de résumé}}\\[0.6em]',
+            rf'{{\Large {_echapper(code)} -- {_echapper(nom)}}}\\[0.4em]',
+            rf'{{\large Classe de {libelle_niveau} -- \emph{{{sous_titre}}}}}',
+            r'\end{center}', r'\bigskip', '']
 
 
 # ── Utilitaires ──────────────────────────────────────────────────────────────
