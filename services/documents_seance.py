@@ -92,7 +92,9 @@ def documents_prevus(conn, store, annee: str, classe_id: str) -> list[dict]:  # 
     eid = infos["etablissement_id"]
     prog = store.lire_progression_par_triplet(row["niveau"], annee, eid)
     if not prog:
-        return []
+        # v0.49.1 — Pas de progression principale : les documents de MER
+        # restent placés.
+        return _prevus_mer(conn, store, annee, classe_id, None)
     cal = ctx.calendrier(store, annee, infos["academie"])
     res = dec_svc.calculer_pour_classe(prog.get("creneaux", []),
                                        dec_svc.lister(conn, classe_id, annee),
@@ -127,6 +129,97 @@ def documents_prevus(conn, store, annee: str, classe_id: str) -> list[dict]:  # 
                                if retour else 0,
                                "echeance": (fin["date"], fin["creneau_code"]) if fin else None})
     sortie.extend(_placements_auto(conn, prog, res.get("creneaux", []), seances))
+    sortie.extend(_prevus_mer(conn, store, annee, classe_id, seances))      # v0.49.1
+    return sortie
+
+
+def seances_mer(conn, store, annee: str, classe_id: str, seances: list | None = None):
+    """v0.49.1 — (progression de MER, séances de MER « progression » de la
+    classe enrichies de leur partie) ; None si la classe n'a pas de MER sur un
+    référentiel de la structure figée."""
+    from services import contexte_projection as ctx
+    from services import affectation as aff_svc
+    from services import progression_mer as pm
+    row = conn.execute("SELECT niveau, mer_active, mer_mode FROM classes WHERE id=?",
+                       (classe_id,)).fetchone()
+    if row is None or not row["mer_active"]:
+        return None
+    prog = pm.lire_par_niveau(conn, row["niveau"], annee)
+    if not prog or prog.get("ref_mer_source") != "fige" or not prog.get("ref_mer_id"):
+        return None
+    if seances is None:
+        infos = ctx.infos_classe(conn, classe_id)
+        cal = ctx.calendrier(store, annee, infos["academie"])
+        seances = ctx.projeter_classe(conn, annee, classe_id, infos["etablissement_id"], cal)
+    rep = aff_svc.repartir_mer([dict(s) for s in seances], row["mer_mode"] or "automatismes",
+                               aff_svc.lire_affectations(conn, classe_id, annee),
+                               aff_svc.dates_exceptions(conn, classe_id, annee))
+    prog_s = rep["progression"]
+    for i, s in enumerate(prog_s, start=1):
+        s["numero"] = i
+    pose_vers_partie = {p["id"]: p["partie_id"] for p in prog.get("parties", [])}
+    sortie = []
+    for s in pm.projeter_mer(prog_s, prog.get("parties", [])):
+        if s.get("mer_partie_id"):
+            s["partie_ref"] = pose_vers_partie.get(s["mer_partie_id"])
+            sortie.append(s)
+    return prog, sortie
+
+
+def _prevus_mer(conn, store, annee, classe_id, seances) -> list[dict]:
+    """v0.49.1 — Documents de MER : fichiers d'un référentiel de MER (structure
+    figée) portant leur séance dans la partie (placement automatique à la
+    séance de MER de ce rang dans la partie), et associations manuelles de la
+    progression de MER (par partie et rang), qui remplacent le placement
+    automatique du même fichier."""
+    from services import progression_doc as pgd
+    from services import referentiel_principal_externe as rpe
+    try:
+        r = seances_mer(conn, store, annee, classe_id, seances)
+    except Exception:
+        return []
+    if not r:
+        return []
+    prog, smer = r
+    rid = prog["ref_mer_id"]
+    par_partie: dict[str, list] = {}
+    for s in smer:
+        par_partie.setdefault(s["partie_ref"], []).append(s)
+    manuels = []
+    for pref in par_partie:
+        manuels.extend(pgd.lister(conn, "mer", prog["id"], pref))
+    deja = {a["doc_ref"] for a in manuels}
+    types = {t["id"]: t["libelle"] for t in conn.execute("SELECT id, libelle FROM types_documents")}
+    fichiers = {f["id"]: f for f in conn.execute(
+        "SELECT * FROM referentiel_fichiers WHERE referentiel_id=?", (rid,)).fetchall()}
+
+    def _entree(cle, partie_ref, rang, libelle, retour, dtype, dn, ordre):
+        dans = par_partie.get(partie_ref) or []
+        if not 1 <= rang <= len(dans):
+            return None
+        s = dans[rang - 1]
+        fin = dans[-1] if (retour and dtype in ("fin_partie", "fin_creneau")) else None
+        return {"cle": cle, "date": s["date"], "creneau": s["creneau_code"],
+                "libelle": libelle, "ordre": ordre, "retour": retour,
+                "delai_jours": pgd.delai_en_jours(dtype, dn) if retour else 0,
+                "echeance": (fin["date"], fin["creneau_code"]) if fin else None}
+
+    sortie = []
+    for a in manuels:
+        e = _entree(f"mer:{a['id']}", a["creneau_ref"], int(a.get("rang_seance") or 0),
+                    a.get("doc_libelle") or a.get("doc_ref") or "Document", a.get("retour") or "",
+                    a.get("delai_type") or "", a.get("delai_n") or 1, int(a.get("ordre") or 0))
+        if e:
+            sortie.append(e)
+    for f in rpe.placements_automatiques(conn, rid):
+        if f["id"] in deja:
+            continue
+        pref = f"{rid}|{f['seq_code']}|{f['partie_numero']}"
+        lib = (f"{types[f['type_id']]} : " if types.get(f["type_id"]) else "") + f["nom_fichier"]
+        e = _entree(f"automer:{f['id']}", pref, int(f["seance_n"]), lib, f["retour"] or "",
+                    f["delai_type"] or "", f["delai_n"] or 1, 500)
+        if e:
+            sortie.append(e)
     return sortie
 
 

@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.49.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.49.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -64,11 +64,12 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   que les principaux, codes M01…, libellé de partie, documents annuels,
   alerte « au moins une capacité par partie »), Progression de MER sur la
   source `fige` ; ancien modèle de MER en retrait.
-- Prochaine étape : v0.49.1 — documents de MER (séance, retour, délai dont
-  « fin de la partie de MER », placement automatique, panneau « documents à
-  distribuer » de la Progression de MER). Puis C : onglet unique
-  « Référentiel » (filtres niveau / année / type / source, groupage dans cet
-  ordre) ; puis D.
+- v0.49.1 livrée : documents de MER (séance, retour, délai dont « fin de
+  la partie », placement automatique, panneau « documents » d'une partie
+  dans la Progression de MER).
+- Prochaine étape : C — onglet unique « Référentiel » (filtres niveau /
+  année / type / source ; groupage dans cet ordre pour les filtres sans
+  valeur) ; puis D (découpage progressif du détail interne).
 
 ## Derniers chantiers terminés
 

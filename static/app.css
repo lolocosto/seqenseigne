@@ -4711,3 +4711,6 @@ textarea.latex-textarea {
 .rx-alertes { font-size: 12px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;
   border-radius: 5px; padding: 5px 8px; margin: 6px 0; }
 .rx-alerte-inline { color: #9a3412; font-weight: 400; }
+/* v0.49.1 — Documents d'une partie de MER (Progression de MER) */
+.pm-docs { margin: 4px 0 8px 30px; padding: 6px 10px; border-left: 3px solid #d1c4e9; background: #fbfaff; }
+.pm-remplace .rx-doc-nom { text-decoration: line-through; color: var(--text-secondary); }

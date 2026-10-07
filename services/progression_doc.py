@@ -43,7 +43,9 @@ def lister(conn, prog_kind: str, prog_ref: str,
 
 # v0.48.0 — Retour attendu d'un document associé et délai de réalisation.
 RETOURS = ("", "faire", "rendre")
-DELAIS = ("", "prochaine", "jours", "semaines", "fin_creneau")
+# v0.49.1 — « fin_partie » : fin de la partie de MER (dernière séance de MER
+# de la partie, même échéance pour tous).
+DELAIS = ("", "prochaine", "jours", "semaines", "fin_creneau", "fin_partie")
 
 
 def migrer_v0_48(conn) -> None:

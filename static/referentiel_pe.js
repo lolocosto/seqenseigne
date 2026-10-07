@@ -381,8 +381,12 @@ async function rxaCreer() {
 // progression : static/progression_doc.js).
 function _rpePlacement(f) {
   const pfx = 'rpf-' + f.id;
+  // v0.49.1 — Référentiel de MER : « pour la fin de la partie » au lieu de
+  // « pour la fin du créneau ».
+  const mer = (RPE.liste.find(r => r.id === f.referentiel_id) || {}).type_ref === 'mer';
+  const delais = mer && typeof _PM_DELAIS_MER !== 'undefined' ? _PM_DELAIS_MER : undefined;
   const ctl = (typeof _pdRetourControles === 'function')
-    ? _pdRetourControles(pfx, f, `rpePlacer('${f.id}')`) : '';
+    ? _pdRetourControles(pfx, f, `rpePlacer('${f.id}')`, delais) : '';
   return `<span class="rpe-placement" title="Placement automatique dans la progression principale">
     séance <input type="number" min="0" max="60" id="${pfx}-seance" class="rpe-nb"
       value="${f.seance_n || ''}" placeholder="—" onchange="rpePlacer('${f.id}')">

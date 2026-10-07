@@ -148,7 +148,9 @@ const _PD_DELAIS = [['prochaine', 'pour la prochaine séance'], ['jours', 'dans 
 
 // Contrôles « retour + délai » ; `pfx` préfixe les id, `onchange` est appelé
 // à chaque modification (vide pour le formulaire d'ajout).
-function _pdRetourControles(pfx, a, onchange) {
+function _pdRetourControles(pfx, a, onchange, delais) {
+  // v0.49.1 — `delais` : liste des délais proposés (MER : « fin de la partie »).
+  const liste = delais || _PD_DELAIS;
   const r = (a && a.retour) || '', t = (a && a.delai_type) || 'prochaine', n = (a && a.delai_n) || 1;
   const ch = onchange ? ` onchange="${onchange}"` : '';
   const nbVisible = r && (t === 'jours' || t === 'semaines');
@@ -159,7 +161,7 @@ function _pdRetourControles(pfx, a, onchange) {
       <option value="rendre"${r === 'rendre' ? ' selected' : ''}>à rendre</option>
     </select>
     <select id="${pfx}-delai" style="${r ? '' : 'display:none'}"${onchange ? ` onchange="_pdMaj('${pfx}'); ${onchange}"` : ` onchange="_pdMaj('${pfx}')"`}>
-      ${_PD_DELAIS.map(([v, l]) => `<option value="${v}"${v === t ? ' selected' : ''}>${l}</option>`).join('')}
+      ${liste.map(([v, l]) => `<option value="${v}"${v === t ? ' selected' : ''}>${l}</option>`).join('')}
     </select>
     <input id="${pfx}-n" type="number" min="1" max="60" value="${n}" style="width:46px;${nbVisible ? '' : 'display:none'}"${ch}>
   </span>`;

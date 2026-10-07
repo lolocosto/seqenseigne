@@ -140,9 +140,12 @@ function progMerRenderComposee() {
         onclick="progMerDeplacer('${p.id}','haut')">↑</button>
       <button class="btn-sm" style="font-size:11px" aria-label="Descendre"
         onclick="progMerDeplacer('${p.id}','bas')">↓</button>
+      ${PROGMER.ref_mer_source === 'fige' ? `<button class="btn-sm" style="font-size:11px"
+        title="Documents à distribuer dans cette partie" onclick="progMerDocsBasculer('${p.partie_id}')">📄 documents</button>` : ''}
       <button class="btn-sm" style="font-size:11px;color:var(--danger)" aria-label="Retirer"
         onclick="progMerRetirer('${p.id}')">×</button>
-    </div>`).join('')
+    </div>
+    ${PROGMER_DOCS_OUVERT === p.partie_id ? `<div class="pm-docs" id="pm-docs-zone"><p class="rx-petit">Chargement…</p></div>` : ''}`).join('')
     : '<p style="font-size:13px;color:#999">Aucune partie posée. Ajoutez-en '
       + 'depuis la colonne de gauche.</p>';
 }
@@ -194,4 +197,80 @@ function progMerAfficherPlanning() {
       style="width:100%;height:55vh;border:0;border-radius:6px"></iframe>`;
   afficherPdfDansAppli(document.getElementById('progmer-plan-frame'), url);
   if (dl) { dl.href = url; dl.style.display = ''; }
+}
+
+
+// ── v0.49.1 — Documents à distribuer d'une partie de MER ────────────────────
+// Placement automatique : fichiers de la partie portant leur séance (réglé
+// dans le référentiel). Association manuelle (ici) : remplace le placement
+// automatique du même fichier, ou distribue un document sans séance prévue
+// (documents de la partie, de la séquence ou annuels).
+let PROGMER_DOCS_OUVERT = null;
+const _PM_DELAIS_MER = [['prochaine', 'pour la prochaine séance'], ['jours', 'dans … jour(s)'],
+  ['semaines', 'dans … semaine(s)'], ['fin_partie', 'pour la fin de la partie']];
+
+async function progMerDocsBasculer(partieRef) {
+  PROGMER_DOCS_OUVERT = (PROGMER_DOCS_OUVERT === partieRef) ? null : partieRef;
+  progMerRenderComposee();
+  if (PROGMER_DOCS_OUVERT) await progMerDocsCharger();
+}
+
+async function progMerDocsCharger() {
+  const z = document.getElementById('pm-docs-zone');
+  if (!z || !PROGMER) return;
+  const pref = PROGMER_DOCS_OUVERT;
+  const [rid, seq, num] = pref.split('|');
+  let ref = null, manuels = [];
+  try {
+    ref = await api('/api/referentiels-principaux-externes/' + encodeURIComponent(rid));
+    manuels = (await api('/api/progression-doc?prog_kind=mer&prog_ref=' + encodeURIComponent(PROGMER.id)
+      + '&creneau_ref=' + encodeURIComponent(pref))).associations || [];
+  } catch (e) { z.innerHTML = `<p class="rx-petit">${escapeHtml(e.message)}</p>`; return; }
+  const s = (ref.sequences || []).find(x => x.code === seq) || { parties: [], fichiers: [] };
+  const p = (s.parties || []).find(x => String(x.numero) === num) || { fichiers: [] };
+  const remplaces = new Set(manuels.map(a => a.doc_ref));
+  const auto = (p.fichiers || []).filter(f => f.seance_n > 0);
+  const dispo = [...(p.fichiers || []), ...(s.fichiers || []), ...(ref.documents_annuels || [])];
+  const lib = f => (f.type_libelle ? f.type_libelle + ' : ' : '') + f.nom_fichier;
+  const ctl = (pfx, a, onch) => (typeof _pdRetourControles === 'function')
+    ? _pdRetourControles(pfx, a, onch, _PM_DELAIS_MER) : '';
+  z.innerHTML = `
+    <div class="rx-sous-titre">Placés automatiquement (réglage du référentiel)</div>
+    ${auto.length ? auto.map(f => `<div class="rx-doc-ligne${remplaces.has(f.id) ? ' pm-remplace' : ''}">
+        <span class="rx-doc-nom">${escapeHtml(lib(f))}</span><span class="rx-petit">séance ${f.seance_n}</span>
+        ${remplaces.has(f.id) ? '<span class="rx-petit">— remplacé par une association ci-dessous</span>' : ''}</div>`).join('')
+      : '<div class="rx-petit">Aucun.</div>'}
+    <div class="rx-sous-titre">Associés à la main</div>
+    ${manuels.length ? manuels.map(a => `<div class="rx-doc-ligne">
+        <span class="rx-doc-nom">${escapeHtml(a.doc_libelle || a.doc_ref)}</span>
+        <span class="rx-petit">séance ${a.rang_seance}</span>
+        ${ctl('pm-' + a.id, a, `progDocsModifierRetour('${a.id}', 'pm-${a.id}')`)}
+        <button class="btn-sm rx-suppr" onclick="progMerDocSupprimer('${a.id}')">×</button></div>`).join('')
+      : '<div class="rx-petit">Aucun.</div>'}
+    <div class="rx-ajout">
+      <select id="pm-doc-choix">${dispo.map(f => `<option value="${f.id}">${escapeHtml(lib(f))}</option>`).join('')
+        || '<option value="">(aucun document dans le référentiel)</option>'}</select>
+      séance <input type="number" id="pm-doc-rang" min="1" max="60" value="1" class="rpe-nb">
+      ${ctl('pm-nouveau', null, '')}
+      <button class="btn-sm" onclick="progMerDocAjouter()">+ associer</button>
+    </div>`;
+}
+
+async function progMerDocAjouter() {
+  const sel = document.getElementById('pm-doc-choix');
+  if (!sel || !sel.value) return;
+  const v = (typeof _pdRetourValeurs === 'function') ? _pdRetourValeurs('pm-nouveau') : {};
+  try {
+    await api('/api/progression-doc', { method: 'POST', body: JSON.stringify({
+      prog_kind: 'mer', prog_ref: PROGMER.id, creneau_ref: PROGMER_DOCS_OUVERT,
+      rang_seance: parseInt(document.getElementById('pm-doc-rang').value || '1', 10),
+      doc_source: 'externe', doc_ref: sel.value,
+      doc_libelle: sel.selectedOptions[0] ? sel.selectedOptions[0].text : '', ...v }) });
+  } catch (e) {}
+  await progMerDocsCharger();
+}
+
+async function progMerDocSupprimer(id) {
+  try { await api('/api/progression-doc/' + id, { method: 'DELETE' }); } catch (e) {}
+  await progMerDocsCharger();
 }
