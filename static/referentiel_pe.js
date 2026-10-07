@@ -1,5 +1,6 @@
 // ============================================================================
-// static/referentiel_pe.js — v0.48.2 (v0.48.3 : type de chaque fichier)
+// static/referentiel_pe.js — v0.48.2 (v0.48.3 : type ; v0.48.4 : liste/détail ;
+// v0.48.5 : séance de distribution, retour, délai ; type des documents de MER)
 // Référentiels PRINCIPAUX externes (Conception de référentiel › Référentiels
 // externes › Principaux) : même structure qu'un référentiel interne figé.
 // Séquences → parties (nb de séances) → objectifs (nb de séances, critères
@@ -99,6 +100,7 @@ function _rpeFichiers(r, seqCode, partie, fichiers) {
       <a href="${_RPE_API}/fichiers/${f.id}" target="_blank" rel="noopener" class="rpe-fichier-nom"
          title="${f.affichable ? 'Afficher' : 'Télécharger'}">${f.affichable ? '📄' : '⬇'} ${_rpeE(f.nom_fichier)}</a>
       <select class="rpe-type" onchange="rpeTyperFichier('${f.id}', this.value)">${optionsType(f.type_id)}</select>
+      ${partie ? _rpePlacement(f) : ''}
       <button class="btn-lien rpe-x" onclick="rpeSupprimerFichier('${f.id}')" title="Supprimer">✕</button></div>`).join('')}
     <label class="rpe-import">+ fichier(s)<input type="file" multiple style="display:none"
       onchange="rpeImporter('${r.id}', '${seqCode}', ${partie}, this)"></label>
@@ -313,5 +315,41 @@ async function rxaCreer() {
     }
     desc.value = '';
     _rpeStatus('Référentiel créé.');
+  } catch (e) { _rpeStatus(e.message, true); }
+}
+
+
+// ── v0.48.5 — Placement par défaut d'un fichier de partie ────────────────────
+// Séance de distribution dans la partie (vide = à associer à la main dans la
+// progression), retour attendu et délai (contrôles partagés avec la
+// progression : static/progression_doc.js).
+function _rpePlacement(f) {
+  const pfx = 'rpf-' + f.id;
+  const ctl = (typeof _pdRetourControles === 'function')
+    ? _pdRetourControles(pfx, f, `rpePlacer('${f.id}')`) : '';
+  return `<span class="rpe-placement" title="Placement automatique dans la progression principale">
+    séance <input type="number" min="0" max="60" id="${pfx}-seance" class="rpe-nb"
+      value="${f.seance_n || ''}" placeholder="—" onchange="rpePlacer('${f.id}')">
+    ${ctl}</span>`;
+}
+
+function rpePlacer(fid) {
+  const pfx = 'rpf-' + fid;
+  const v = (typeof _pdRetourValeurs === 'function') ? _pdRetourValeurs(pfx) : { retour: '' };
+  const n = parseInt((document.getElementById(pfx + '-seance') || {}).value || '0', 10) || 0;
+  return _rpeAction(`${_RPE_API}/fichiers/${fid}/placement`, _rpeJ({ m: 'PUT', b: { seance_n: n, ...v } }));
+}
+
+// Type d'un document de référentiel externe de MER (static/referentiel_externe.js).
+function rxtTypeSelect(d) {
+  const opts = '<option value="">— type —</option>' + (RPE.types || []).map(t =>
+    `<option value="${t.id}"${t.id === d.type_id ? ' selected' : ''}>${_rpeE(t.libelle)}</option>`).join('');
+  return `<select class="rpe-type" onchange="rxtTyperDoc('${d.id}', this.value)">${opts}</select>`;
+}
+
+async function rxtTyperDoc(did, typeId) {
+  try {
+    await _rpeApi(`/api/referentiels-externes/docs/${did}/type`, _rpeJ({ m: 'PUT', b: { type_id: typeId } }));
+    if (typeof rxtCharger === 'function') await rxtCharger();
   } catch (e) { _rpeStatus(e.message, true); }
 }

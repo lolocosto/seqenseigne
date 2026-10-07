@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.48.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.48.5** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -53,9 +53,13 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   Système › Préférences), un fichier par ligne avec son type.
 - v0.48.4 livrée : nom calculé et type principal / MER pour tous les
   référentiels ; écran externe en liste / détail.
-- Prochaine étape : v0.48.5 — fichiers externes portant séance / retour /
-  délai (placement automatique, remplacé par une association manuelle),
-  documents de MER.
+- v0.48.5 livrée : fichiers de partie externes portant séance / retour /
+  délai, placement automatique (remplacé par une association manuelle) ;
+  documents de MER typés.
+- Prochaine étape : v0.48.6 — côté MER : séance / retour / délai (dont « fin
+  de la partie de MER ») sur les documents de MER, placement automatique,
+  panneau « documents à distribuer » dans la Progression de MER, documents
+  de MER au même endroit que les autres.
 
 ## Derniers chantiers terminés
 

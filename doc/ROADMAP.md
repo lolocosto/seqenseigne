@@ -218,6 +218,11 @@ Notés pour plus tard :
   - **expert** : tout en manuel (fonctionnement actuel).
 - Suppose de modéliser le calendrier de l'année (périodes, conseils de
   classe).
+- Les **types explicites des documents** (v0.48.3, v0.48.5) servent de
+  déterminant : savoir ce qu'on fait de chaque document dans la progression
+  (distribuer, faire faire, évaluer) sans le deviner d'après son nom ; avec
+  les thèmes, envisager de **proposer une progression** (spiralée, par
+  exemple).
 
 ## Mode « pur externe » (sans LaTeX)
 

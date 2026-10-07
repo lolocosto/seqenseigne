@@ -119,6 +119,7 @@ function rxtRenderDocsAnnuels(ref) {
     return `<span style="font-size:12px;display:inline-flex;align-items:center;gap:4px;
       background:#f4f4f8;border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin:2px 4px 2px 0">
       ${lien}
+      ${typeof rxtTypeSelect === 'function' ? rxtTypeSelect(d) : ''}
       <button class="btn-sm" style="padding:0 3px;color:var(--danger)"
         onclick="rxtSupprimerDoc('${d.id}')" aria-label="Supprimer le document">×</button>
     </span>`;
@@ -172,6 +173,7 @@ function rxtRenderPartie(ref, p) {
     return `<span style="font-size:12px;display:inline-flex;align-items:center;gap:4px;
       background:#f4f4f8;border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin:2px 4px 2px 0">
       ${lien}
+      ${typeof rxtTypeSelect === 'function' ? rxtTypeSelect(d) : ''}
       <button class="btn-sm" style="padding:0 3px;color:var(--danger)"
         onclick="rxtSupprimerDoc('${d.id}')" aria-label="Supprimer le document">×</button>
     </span>`;

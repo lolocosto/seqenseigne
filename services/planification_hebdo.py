@@ -228,6 +228,16 @@ def detail_seance(conn, store, annee: str, classe_id: str, date_iso: str,
                 if int(a.get("rang_seance") or 0) == rang_dans_partie]
         except Exception:
             docs_a_distribuer = []
+        # v0.48.5 — Fichiers externes placés automatiquement à cette séance.
+        try:
+            from services import documents_seance as _ds
+            docs_a_distribuer += [
+                {"libelle": d["libelle"], "doc_source": "externe", "doc_ref": d["cle"]}
+                for d in _ds.documents_prevus(conn, store, annee, classe_id)
+                if d["cle"].startswith("auto:") and d["date"] == date_iso
+                and d["creneau"] == creneau]
+        except Exception:
+            pass
 
     return {
         "classe_id": classe_id, "classe": row["nom"], "niveau": row["niveau"],

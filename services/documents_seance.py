@@ -126,6 +126,64 @@ def documents_prevus(conn, store, annee: str, classe_id: str) -> list[dict]:  # 
                                "delai_jours": pgd.delai_en_jours(dtype, a.get("delai_n") or 1)
                                if retour else 0,
                                "echeance": (fin["date"], fin["creneau_code"]) if fin else None})
+    sortie.extend(_placements_auto(conn, prog, res.get("creneaux", []), seances))
+    return sortie
+
+
+def _placements_auto(conn, prog: dict, creneaux: list, seances: list) -> list[dict]:
+    """v0.48.5 — Fichiers d'un référentiel principal externe portant leur
+    séance de distribution dans la partie : placés à la séance de rang
+    (séances des parties précédentes du créneau) + n du créneau qui couvre
+    leur partie. Une association manuelle du même fichier dans la progression
+    remplace ce placement."""
+    from services import progression_doc as pgd
+    from services import referentiel_principal_externe as rpe
+    rid = prog.get("referentiel_id") or ""
+    if not rid:
+        return []
+    try:
+        fichiers = rpe.placements_automatiques(conn, rid)
+    except Exception:
+        return []
+    if not fichiers:
+        return []
+    manuels = {r["doc_ref"] for r in conn.execute(
+        "SELECT doc_ref FROM progression_doc WHERE prog_kind='principale' AND prog_ref=?",
+        (prog.get("id", ""),)).fetchall()}
+    nb_parties = {(r["seq_code"], r["numero"]): float(r["nb_seances_R_AE"] or 0)
+                  for r in conn.execute("SELECT seq_code, numero, nb_seances_R_AE FROM "
+                                        "referentiel_parties WHERE referentiel_id=?", (rid,))}
+    types = {r["id"]: r["libelle"] for r in conn.execute("SELECT id, libelle FROM types_documents")}
+    sortie = []
+    for f in fichiers:
+        if f["id"] in manuels:
+            continue
+        for cr in creneaux:
+            seq = cr.get("seq_code") or cr.get("sequence")
+            p0, p1 = int(cr.get("partie_debut") or 1), int(cr.get("partie_fin") or 1)
+            if seq != f["seq_code"] or not (p0 <= f["partie_numero"] <= p1):
+                continue
+            deb = cr.get("date_debut") or ""
+            fin = cr.get("date_fin") or deb
+            if not deb:
+                continue
+            dans = [s for s in seances if deb <= (s.get("date") or "") <= fin]
+            avant = int(round(sum(nb_parties.get((seq, k), 0) for k in range(p0, f["partie_numero"]))))
+            rang = avant + int(f["seance_n"])
+            if not 1 <= rang <= len(dans):
+                continue
+            s = dans[rang - 1]
+            retour = f.get("retour") or ""
+            dtype = f.get("delai_type") or ""
+            ech = dans[-1] if (retour and dtype == "fin_creneau") else None
+            lib = (f"{types[f['type_id']]} : " if types.get(f.get("type_id")) else "") + f["nom_fichier"]
+            sortie.append({"cle": f"auto:{f['id']}:{cr.get('id', '')}", "date": s["date"],
+                           "creneau": s["creneau_code"], "libelle": lib, "ordre": 500,
+                           "retour": retour,
+                           "delai_jours": pgd.delai_en_jours(dtype, f.get("delai_n") or 1)
+                           if retour else 0,
+                           "echeance": (ech["date"], ech["creneau_code"]) if ech else None})
+            break
     return sortie
 
 

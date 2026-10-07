@@ -76,6 +76,18 @@ def migrer(conn) -> None:
     cols_f = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_fichiers)")}
     if "type_id" not in cols_f:
         conn.execute("ALTER TABLE referentiel_fichiers ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
+    # v0.48.5 — Placement par défaut : séance de distribution dans la partie,
+    # retour attendu et délai.
+    for nom, decl in (("seance_n", "INTEGER NOT NULL DEFAULT 0"),
+                      ("retour", "TEXT NOT NULL DEFAULT ''"),
+                      ("delai_type", "TEXT NOT NULL DEFAULT ''"),
+                      ("delai_n", "INTEGER NOT NULL DEFAULT 1")):
+        if nom not in cols_f:
+            conn.execute(f"ALTER TABLE referentiel_fichiers ADD COLUMN {nom} {decl}")
+    # v0.48.5 — Type des documents des référentiels externes de MER.
+    cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
+    if cols_xd and "type_id" not in cols_xd:
+        conn.execute("ALTER TABLE referentiel_externe_doc ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
     if conn.execute("SELECT COUNT(*) FROM types_documents").fetchone()[0] == 0:
         for i, lib in enumerate(TYPES_DEFAUT, start=1):
             conn.execute("INSERT INTO types_documents (id, libelle, ordre) VALUES (?,?,?)",
@@ -281,6 +293,49 @@ def deplacer_type(conn, tid: str, sens: int) -> None:
         ids[i], ids[j] = ids[j], ids[i]
         for k, x in enumerate(ids, start=1):
             conn.execute("UPDATE types_documents SET ordre=? WHERE id=?", (k * 10, x))
+
+
+def placer_fichier(conn, fid: str, seance_n, retour: str = "", delai_type: str = "",
+                   delai_n=1) -> dict:
+    """v0.48.5 — Séance de distribution dans la partie (0 = aucune : à
+    associer à la main), retour attendu et délai par défaut. Modifiable à tout
+    moment (planification des documents, pas structure)."""
+    from services import progression_doc as pgd
+    f = lire_fichier(conn, fid)
+    try:
+        n = max(0, int(seance_n or 0))
+    except (TypeError, ValueError):
+        raise RefExtErreur(f"Séance invalide : {seance_n!r}.")
+    if n and not f["partie_numero"]:
+        raise RefExtErreur("Seul un fichier de partie peut avoir une séance de distribution.")
+    try:
+        retour, delai_type, delai_n = pgd._valider_retour(retour, delai_type, delai_n)
+    except ValueError as e:
+        raise RefExtErreur(str(e))
+    conn.execute("UPDATE referentiel_fichiers SET seance_n=?, retour=?, delai_type=?, delai_n=? "
+                 "WHERE id=?", (n, retour, delai_type, delai_n, fid))
+    return lire_fichier(conn, fid)
+
+
+def placements_automatiques(conn, referentiel_id: str) -> list[dict]:
+    """Fichiers de partie ayant une séance de distribution (placement
+    automatique dans la progression principale)."""
+    return [dict(r) for r in conn.execute(
+        "SELECT f.*, p.nb_seances_R_AE FROM referentiel_fichiers f "
+        "JOIN referentiel_parties p ON p.referentiel_id=f.referentiel_id AND "
+        "p.seq_code=f.seq_code AND p.numero=f.partie_numero "
+        "WHERE f.referentiel_id=? AND f.partie_numero>0 AND f.seance_n>0",
+        (referentiel_id,)).fetchall()]
+
+
+def typer_doc_mer(conn, doc_id: str, type_id: str) -> None:
+    """v0.48.5 — Type d'un document de référentiel externe de MER."""
+    if conn.execute("SELECT 1 FROM referentiel_externe_doc WHERE id=?", (doc_id,)).fetchone() is None:
+        raise RefExtErreur("Document introuvable.", "introuvable")
+    if type_id and conn.execute("SELECT 1 FROM types_documents WHERE id=?",
+                                (type_id,)).fetchone() is None:
+        raise RefExtErreur("Type inconnu.")
+    conn.execute("UPDATE referentiel_externe_doc SET type_id=? WHERE id=?", (type_id or "", doc_id))
 
 
 def typer_fichier(conn, fid: str, type_id: str) -> dict:

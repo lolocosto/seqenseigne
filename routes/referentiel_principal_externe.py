@@ -165,6 +165,20 @@ def api_fichier_supprimer(fid):
     return _fait(lambda c: svc.supprimer_fichier(c, fid, _data_dir()))
 
 
+@bp.route(P + "/fichiers/<fid>/placement", methods=["PUT"])
+def api_fichier_placer(fid):
+    """v0.48.5 — Séance de distribution dans la partie, retour, délai."""
+    b = _b()
+    return _fait(lambda c: svc.placer_fichier(c, fid, b.get("seance_n", 0), b.get("retour", ""),
+                                              b.get("delai_type", ""), b.get("delai_n", 1)))
+
+
+@bp.route("/api/referentiels-externes/docs/<did>/type", methods=["PUT"])
+def api_doc_mer_typer(did):
+    """v0.48.5 — Type d'un document de référentiel externe de MER."""
+    return _fait(lambda c: svc.typer_doc_mer(c, did, _b().get("type_id", "")))
+
+
 @bp.route(P + "/fichiers/<fid>/type", methods=["PUT"])
 def api_fichier_typer(fid):
     """v0.48.3 — Type d'un fichier (classement dans la séquence)."""

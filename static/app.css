@@ -4665,3 +4665,5 @@ textarea.latex-textarea {
 .rxa-btn-creer { font-size: 12px; padding: 3px 10px; }
 #atl-ref-sidebar .atl-sidebar-head { flex-wrap: wrap; gap: 4px; }
 #atl-ref-sidebar .atl-ref-type { margin-left: auto; }
+/* v0.48.5 — Placement par défaut d'un fichier de partie */
+.rpe-placement { display: inline-flex; gap: 4px; align-items: center; font-size: 11px; color: var(--text-secondary); }
