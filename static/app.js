@@ -2819,7 +2819,9 @@ const ATL_PORTEES = {
     label: 'Niveau',
     // v0.15.1 — recapcours/recapexos/plantravail supprimés
     // (remplacés par Référentiel > Documents à publier)
-    ateliers: ['evaluation', 'referentiel', 'referentiel_externe'],
+    // v0.49.2 — « Référentiel » regroupe internes et externes (le panneau
+    // « Référentiel externe » reste dans le DOM, masqué, pour ses fonctions).
+    ateliers: ['evaluation', 'referentiel'],
     selecteurs: ['niveau'],
   },
   cycle: {

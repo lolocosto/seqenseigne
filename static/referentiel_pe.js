@@ -319,6 +319,7 @@ function _rxaPastille(etat) {
 }
 
 function rxaRendre() {
+  if (typeof refuRendre === 'function') refuRendre();     // v0.49.2 — onglet unique
   const liste = document.getElementById('rxa-liste');
   const detail = document.getElementById('rxa-detail');
   if (!liste || !detail) return;

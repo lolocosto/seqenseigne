@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.49.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.49.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -67,9 +67,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - v0.49.1 livrée : documents de MER (séance, retour, délai dont « fin de
   la partie », placement automatique, panneau « documents » d'une partie
   dans la Progression de MER).
-- Prochaine étape : C — onglet unique « Référentiel » (filtres niveau /
-  année / type / source ; groupage dans cet ordre pour les filtres sans
-  valeur) ; puis D (découpage progressif du détail interne).
+- v0.49.2 livrée (C) : onglet unique « Référentiel » dans Conception ›
+  Niveau (internes et externes, principaux et MER ; filtres année / type /
+  source avec groupage ; création par source et type).
+- Prochaines étapes : D — découpage progressif du détail interne en blocs
+  communs ; retrait de l'ancien modèle de MER après recréation par l'auteur.
 
 ## Derniers chantiers terminés
 

@@ -800,7 +800,8 @@
          (remplacés par l'atelier Référentiel > Documents à publier). -->
     <button class="vbtn atl-grp-niveau"   id="atl-btn-evaluation" onclick="atelSwitch('evaluation')" style="display:none">Évaluation</button>
     <button class="vbtn atl-grp-niveau"   id="atl-btn-referentiel" onclick="atelSwitch('referentiel')" style="display:none">Référentiel</button>
-    <button class="vbtn atl-grp-niveau"   id="atl-btn-referentiel_externe" onclick="atelSwitch('referentiel_externe')" style="display:none">Référentiel externe</button>
+    <!-- v0.49.2 — Regroupé dans « Référentiel » (bouton conservé masqué). -->
+    <button class="vbtn"   id="atl-btn-referentiel_externe" onclick="atelSwitch('referentiel_externe')" style="display:none" hidden>Référentiel externe</button>
     <!-- Portée Cycle -->
     <button class="vbtn atl-grp-cycle"    id="atl-btn-theme"    onclick="atelSwitch('theme')"    style="display:none">Thème</button>
     <button class="vbtn atl-grp-cycle"    id="atl-btn-seqcycle" onclick="atelSwitch('seqcycle')" style="display:none">Découpage en séquences</button>
@@ -2454,18 +2455,29 @@
 
       <!-- Sidebar : liste des référentiels du niveau -->
       <aside class="atl-sidebar" id="atl-ref-sidebar">
+        <!-- v0.49.2 — Onglet unique « Référentiel » : internes et externes,
+             principaux et MER (static/referentiel_unifie.js). Le niveau est
+             celui de la portée Niveau. -->
         <div class="atl-sidebar-head">
           <span class="atl-sidebar-title">Référentiels</span>
-          <!-- v0.48.4 — Type du référentiel créé (le nom est calculé). -->
-          <select id="atl-ref-type" class="atl-ref-type" title="Type du référentiel">
-            <option value="principal">Principal</option>
-            <option value="mer">MER</option>
-          </select>
-          <button class="btn-sm btn-prim" id="atl-ref-btn-creer"
-                  onclick="atelRefCreerCoquille()" title="Créer un nouveau référentiel pour ce niveau">
-            + Créer
-          </button>
         </div>
+        <div class="refu-filtres">
+          <label>Année <select id="refu-f-annee" onchange="refuFiltre('annee', this.value)"></select></label>
+          <label>Type <select id="refu-f-type" onchange="refuFiltre('type', this.value)">
+            <option value="">Tous</option><option value="principal">Principal</option><option value="mer">MER</option></select></label>
+          <label>Source <select id="refu-f-source" onchange="refuFiltre('source', this.value)">
+            <option value="">Toutes</option><option value="interne">Interne</option><option value="externe">Externe</option></select></label>
+        </div>
+        <div class="refu-creer">
+          <select id="refu-c-source" title="Source du nouveau référentiel">
+            <option value="interne">Interne</option><option value="externe">Externe</option></select>
+          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel">
+            <option value="principal">Principal</option><option value="mer">MER</option></select>
+          <input id="refu-c-desc" placeholder="Description (facultative)">
+          <button class="btn-prim rxa-btn-creer" id="atl-ref-btn-creer" onclick="refuCreer()"
+                  title="Le nom est calculé : niveau, année, type">+ Créer</button>
+        </div>
+        <span id="refu-status" class="rpe-status" role="status" aria-live="polite"></span>
         <div class="atl-sidebar-body" id="atl-ref-liste">
           <!-- Rempli dynamiquement par atelRefRendreSidebar() -->
         </div>
@@ -2480,6 +2492,8 @@
              × M objectifs × atomes) soit consultable sans déborder l'écran. -->
         <div id="atl-ref-scroll" style="flex:1;overflow-y:auto;padding:14px 18px">
 
+          <!-- v0.49.2 — Détail d'un référentiel externe (même onglet). -->
+          <div id="refu-ext" style="display:none"></div>
           <!-- Bandeau d'invitation quand aucun référentiel sélectionné -->
           <div id="atl-ref-empty"
                style="padding:60px 20px;text-align:center;color:var(--text-muted)">
@@ -3713,6 +3727,7 @@
 <script src="/static/progression_mer.js"></script>
 <script src="/static/referentiel_externe.js"></script>
 <script src="/static/referentiel_pe.js"></script>
+<script src="/static/referentiel_unifie.js"></script>
 
 <!-- v0.13.6.16 — Modale de choix de série pour la création d'exercice.
      Affichée par AtelierExercice.nouvelItem (qui surcharge le pattern

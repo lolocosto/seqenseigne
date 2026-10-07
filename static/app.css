@@ -4714,3 +4714,19 @@ textarea.latex-textarea {
 /* v0.49.1 — Documents d'une partie de MER (Progression de MER) */
 .pm-docs { margin: 4px 0 8px 30px; padding: 6px 10px; border-left: 3px solid #d1c4e9; background: #fbfaff; }
 .pm-remplace .rx-doc-nom { text-decoration: line-through; color: var(--text-secondary); }
+
+/* v0.49.2 — Onglet unique « Référentiel » */
+.refu-filtres { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 8px; font-size: 11px; color: var(--text-secondary); }
+.refu-filtres label { display: flex; flex-direction: column; gap: 2px; }
+.refu-filtres select { font-size: 12px; }
+.refu-creer { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.refu-creer select, .refu-creer input { font-size: 12px; }
+.refu-creer input { flex: 1; min-width: 110px; }
+#refu-status { padding: 0 8px; }
+.refu-groupe-titre { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;
+  letter-spacing: .4px; padding: 6px 8px 2px; }
+.refu-g1 .refu-groupe-titre { padding-left: 16px; text-transform: none; font-weight: 600; }
+.refu-g2 .refu-groupe-titre { padding-left: 24px; text-transform: none; font-weight: 500; font-style: italic; }
+#atl-ref-sidebar { width: 300px; min-width: 300px; }
+#atl-ref-sidebar .asm-item { display: block; }
+#atl-ref-sidebar .atl-item-id span { white-space: normal; }
