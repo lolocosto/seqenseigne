@@ -4667,3 +4667,41 @@ textarea.latex-textarea {
 #atl-ref-sidebar .atl-ref-type { margin-left: auto; }
 /* v0.48.5 — Placement par défaut d'un fichier de partie */
 .rpe-placement { display: inline-flex; gap: 4px; align-items: center; font-size: 11px; color: var(--text-secondary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v0.48.6 — Présentation commune des référentiels externes (modèle des MER)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.rx-seq { border: 1px solid #d1c4e9; border-radius: 6px; margin: 10px 0; overflow: hidden; }
+.rx-seq-commencee { border-color: #a5b4fc; }
+.rx-seq-tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #ede7f6;
+  padding: 6px 10px; border-bottom: 1px solid #d1c4e9; }
+.rx-seq-label { font-size: 11px; font-weight: 700; color: #5e35b1; text-transform: uppercase; letter-spacing: .5px; }
+.rx-seq-nom { font-size: 14px; font-weight: 600; width: 320px; background: #fff; }
+.rx-seq-actions { margin-left: auto; display: flex; gap: 4px; }
+.rx-seq-actions .btn-sm { font-size: 11px; }
+.rx-suppr { color: var(--danger); }
+.rx-seq-corps { padding: 6px 10px 8px 16px; }
+.rx-partie { margin: 8px 0; padding-left: 8px; border-left: 2px solid #e5e0f3; }
+.rx-partie-tete { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rx-partie-corps { margin-left: 10px; }
+.rx-petit { font-size: 11px; color: #888; }
+.rx-sous-titre { font-size: 11px; font-weight: 600; color: #5e35b1; margin: 6px 0 2px; }
+.rx-ajout { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0; font-size: 12px; }
+.rx-ajout input:not(.rpe-nb) { font-size: 12px; width: 240px; }
+.rx-obj { margin: 2px 0; }
+.rx-obj-ligne { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.rx-obj-nom { font-size: 12px; width: 300px; }
+.rx-obj-type { font-size: 10px; padding: 0 6px; border-radius: 8px; }
+.rx-obj-conn { background: #dbeafe; color: #1e40af; }
+.rx-obj-cap { background: #f1f5f9; color: var(--text-secondary); }
+.rx-criteres-btn { font-size: 11px; }
+.rx-criteres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 8px 28px; }
+.rx-criteres label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text-secondary); }
+.rx-criteres textarea { font-size: 12px; font-family: inherit; width: 100%; resize: vertical; }
+.rx-doc-ligne { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 1px 0; }
+.rx-doc-nom { min-width: 260px; }
+.rx-ajout-doc { margin: 3px 0; }
+.rx-import { font-size: 11px; cursor: pointer; }
+.rx-obj-ligne { flex-wrap: nowrap; }
+.rx-obj-nom { flex: 1; min-width: 180px; width: auto; }
+.rx-obj-ligne .rx-seq-actions { flex-shrink: 0; }

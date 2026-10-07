@@ -110,8 +110,20 @@ def api_partie_supprimer(rid, code, num):
 @bp.route(P + "/<rid>/sequences/<code>/parties/<int:num>/objectifs", methods=["POST"])
 def api_obj_ajouter(rid, code, num):
     b = _b()
-    return _fait(lambda c: svc.ajouter_objectif(c, rid, code, num, b.get("nom", ""),
-                                                b.get("nb_seances", 0), _auj()), 201)
+    type_obj = b.get("type_obj", "capacite")
+    nom, criteres = b.get("nom", ""), None
+    if type_obj == "connaissance":
+        # v0.48.6 — Nom et critères pré-remplis (Préférences, comme l'objectif
+        # « Connaître » des référentiels internes).
+        try:
+            from services.configuration import Configuration
+            cfg = Configuration(_store().data_dir).atelier_assemblage_criteres_connaitre()
+        except Exception:
+            cfg = {}
+        nom = nom or cfg.get("nom") or "Connaître les notions et les méthodes"
+        criteres = {k: cfg.get(f"critere_{k.upper()}", "") for k in ("f", "a", "e")}
+    return _fait(lambda c: svc.ajouter_objectif(c, rid, code, num, nom, b.get("nb_seances", 0),
+                                                _auj(), type_obj=type_obj, criteres=criteres), 201)
 
 
 @bp.route(P + "/<rid>/sequences/<code>/objectifs/<obj>", methods=["PUT"])

@@ -10,7 +10,7 @@
 // Backend : /api/referentiels-principaux-externes.
 // ============================================================================
 
-const RPE = { liste: [], ouverts: new Set(), types: [] };
+const RPE = { liste: [], ouverts: new Set(), types: [], criteres: new Set() };
 const _RPE_API = '/api/referentiels-principaux-externes';
 
 function _rpeE(s) { return escapeHtml(String(s == null ? '' : s)); }
@@ -102,8 +102,8 @@ function _rpeFichiers(r, seqCode, partie, fichiers) {
       <select class="rpe-type" onchange="rpeTyperFichier('${f.id}', this.value)">${optionsType(f.type_id)}</select>
       ${partie ? _rpePlacement(f) : ''}
       <button class="btn-lien rpe-x" onclick="rpeSupprimerFichier('${f.id}')" title="Supprimer">✕</button></div>`).join('')}
-    <label class="rpe-import">+ fichier(s)<input type="file" multiple style="display:none"
-      onchange="rpeImporter('${r.id}', '${seqCode}', ${partie}, this)"></label>
+    <div class="rx-ajout-doc"><label class="btn-sm rx-import">+ document(s)<input type="file" multiple style="display:none"
+      onchange="rpeImporter('${r.id}', '${seqCode}', ${partie}, this)"></label></div>
   </div>`;
 }
 
@@ -111,46 +111,96 @@ function rpeTyperFichier(fid, typeId) {
   return _rpeAction(`${_RPE_API}/fichiers/${fid}/type`, _rpeJ({ m: 'PUT', b: { type_id: typeId } }));
 }
 
+// v0.48.6 — Présentation sur le modèle des MER (cadre violet par séquence),
+// objectifs typés (connaissance en tête, capacités), critères F/A/E repliés.
 function _rpeSeq(r, s) {
   const verrou = s.commencee;
   const ctl = (html) => verrou ? '' : html;
-  return `<div class="rpe-seq${verrou ? ' rpe-commencee' : ''}">
-    <div class="rpe-seq-tete">
+  return `<div class="rx-seq${verrou ? ' rx-seq-commencee' : ''}">
+    <div class="rx-seq-tete">
+      <span class="rx-seq-label">Séquence</span>
       <span class="rpe-code">${_rpeE(s.code)}</span>
-      <input class="rpe-nom" value="${_rpeE(s.nom)}" onchange="rpeModifierSeq('${r.id}', '${s.code}', this.value)">
+      <input class="rx-seq-nom" value="${_rpeE(s.nom)}" aria-label="Nom de la séquence"
+        onchange="rpeModifierSeq('${r.id}', '${s.code}', this.value)">
       ${verrou ? '<span class="rpe-badge rpe-verrou" title="Un créneau de progression a démarré">commencée</span>' : ''}
-      ${ctl(`<button class="btn-sm" onclick="rpeDeplacerSeq('${r.id}', '${s.code}', -1)">↑</button>
-        <button class="btn-sm" onclick="rpeDeplacerSeq('${r.id}', '${s.code}', 1)">↓</button>
-        <button class="btn-lien rpe-x" onclick="rpeSupprimerSeq('${r.id}', '${s.code}')">supprimer</button>`)}
+      <span class="rx-seq-actions">${ctl(`<button class="btn-sm" title="Monter la séquence" onclick="rpeDeplacerSeq('${r.id}', '${s.code}', -1)">↑</button>
+        <button class="btn-sm" title="Descendre la séquence" onclick="rpeDeplacerSeq('${r.id}', '${s.code}', 1)">↓</button>
+        <button class="btn-sm rx-suppr" title="Supprimer la séquence" onclick="rpeSupprimerSeq('${r.id}', '${s.code}')">×</button>`)}</span>
     </div>
-    <div class="rpe-sous">Fichiers de la séquence${_rpeFichiers(r, s.code, 0, s.fichiers || [])}</div>
-    ${(s.parties || []).map(p => `
-      <div class="rpe-partie">
-        <div class="rpe-partie-tete">Partie ${p.numero} —
-          <input type="number" min="0" step="0.5" value="${p.nb_seances_R_AE}" class="rpe-nb" ${verrou ? 'disabled' : ''}
-            onchange="rpeModifierPartie('${r.id}', '${s.code}', ${p.numero}, this.value)"> séance(s)
-          ${ctl(`<button class="btn-sm" onclick="rpeDeplacerPartie('${r.id}', '${s.code}', ${p.numero}, -1)">↑</button>
-            <button class="btn-sm" onclick="rpeDeplacerPartie('${r.id}', '${s.code}', ${p.numero}, 1)">↓</button>
-            <button class="btn-lien rpe-x" onclick="rpeSupprimerPartie('${r.id}', '${s.code}', ${p.numero})">supprimer</button>`)}
-        </div>
-        <table class="rpe-obj"><tbody>${(p.objectifs || []).map(o => `<tr>
-          <td class="rpe-code">${_rpeE(o.code)}</td>
-          <td><input class="rpe-obj-nom" value="${_rpeE(o.nom)}" onchange="rpeModifierObj('${r.id}', '${s.code}', '${o.code}', {nom: this.value})"></td>
-          <td><input type="number" min="0" step="0.5" value="${o.nb_seances}" class="rpe-nb" ${verrou ? 'disabled' : ''}
-            title="nombre de séances" onchange="rpeModifierObj('${r.id}', '${s.code}', '${o.code}', {nb_seances: this.value})"></td>
-          ${['f', 'a', 'e'].map(k => `<td><input class="rpe-crit" value="${_rpeE(o['critere_' + k])}" placeholder="critère ${k.toUpperCase()}"
-            onchange="rpeModifierObj('${r.id}', '${s.code}', '${o.code}', {critere_${k}: this.value})"></td>`).join('')}
-          <td>${ctl(`<button class="btn-sm" onclick="rpeDeplacerObj('${r.id}', '${s.code}', '${o.code}', -1)">↑</button>
-            <button class="btn-sm" onclick="rpeDeplacerObj('${r.id}', '${s.code}', '${o.code}', 1)">↓</button>
-            <button class="btn-lien rpe-x" onclick="rpeSupprimerObj('${r.id}', '${s.code}', '${o.code}')">✕</button>`)}</td>
-        </tr>`).join('')}</tbody></table>
-        ${ctl(`<div class="rpe-ajout"><input id="rpe-obj-${r.id}-${s.code}-${p.numero}" placeholder="Nouvel objectif">
-          <button class="btn-sm" onclick="rpeAjouterObj('${r.id}', '${s.code}', ${p.numero})">+ objectif</button></div>`)}
-        <div class="rpe-sous">Fichiers de la partie${_rpeFichiers(r, s.code, p.numero, p.fichiers || [])}</div>
-      </div>`).join('')}
-    ${ctl(`<div class="rpe-ajout"><input type="number" min="0" step="0.5" id="rpe-part-${r.id}-${s.code}" class="rpe-nb" value="4">
-      séance(s) <button class="btn-sm" onclick="rpeAjouterPartie('${r.id}', '${s.code}')">+ partie</button></div>`)}
+    <div class="rx-seq-corps">
+      <div class="rx-sous-titre">Documents de la séquence</div>
+      ${_rpeFichiers(r, s.code, 0, s.fichiers || [])}
+      ${(s.parties || []).map(p => _rpePartie(r, s, p, verrou, ctl)).join('')
+        || '<div class="rpe-vide">Aucune partie.</div>'}
+      ${ctl(`<div class="rx-ajout"><input type="number" min="0" step="0.5" id="rpe-part-${r.id}-${s.code}" class="rpe-nb" value="4">
+        <span class="rx-petit">séances</span>
+        <button class="btn-sm" onclick="rpeAjouterPartie('${r.id}', '${s.code}')">+ partie</button></div>`)}
+    </div>
   </div>`;
+}
+
+function _rpePartie(r, s, p, verrou, ctl) {
+  const objs = p.objectifs || [];
+  const aConn = objs.some(o => o.type_obj === 'connaissance');
+  return `<div class="rx-partie">
+    <div class="rx-partie-tete">
+      <span class="rx-petit">P${p.numero} ·</span>
+      <input type="number" min="0" step="0.5" value="${p.nb_seances_R_AE}" class="rpe-nb" ${verrou ? 'disabled' : ''}
+        aria-label="Nombre de séances de la partie" onchange="rpeModifierPartie('${r.id}', '${s.code}', ${p.numero}, this.value)">
+      <span class="rx-petit">séance(s)</span>
+      ${ctl(`<button class="btn-sm" title="Monter la partie" onclick="rpeDeplacerPartie('${r.id}', '${s.code}', ${p.numero}, -1)">↑</button>
+        <button class="btn-sm" title="Descendre la partie" onclick="rpeDeplacerPartie('${r.id}', '${s.code}', ${p.numero}, 1)">↓</button>
+        <button class="btn-sm rx-suppr" title="Supprimer la partie" onclick="rpeSupprimerPartie('${r.id}', '${s.code}', ${p.numero})">×</button>`)}
+    </div>
+    <div class="rx-partie-corps">
+      <div class="rx-sous-titre">Objectifs</div>
+      ${objs.map(o => _rpeObjectif(r, s, o, verrou, ctl)).join('') || '<div class="rpe-vide">Aucun objectif.</div>'}
+      ${ctl(`<div class="rx-ajout">
+        ${aConn ? '' : `<button class="btn-sm" onclick="rpeAjouterConnaissance('${r.id}', '${s.code}', ${p.numero})"
+          title="Objectif « Connaître les notions et les méthodes » (critères pré-remplis, toujours en tête)">+ objectif « Connaître »</button>`}
+        <input id="rpe-obj-${r.id}-${s.code}-${p.numero}" placeholder="Nouvelle capacité"
+          onkeydown="if(event.key==='Enter') rpeAjouterObj('${r.id}', '${s.code}', ${p.numero})">
+        <button class="btn-sm" onclick="rpeAjouterObj('${r.id}', '${s.code}', ${p.numero})">+ capacité</button></div>`)}
+      <div class="rx-sous-titre">Documents de la partie</div>
+      ${_rpeFichiers(r, s.code, p.numero, p.fichiers || [])}
+    </div>
+  </div>`;
+}
+
+function _rpeObjectif(r, s, o, verrou, ctl) {
+  const cle = `${r.id}|${s.code}|${o.code}`;
+  const ouvert = RPE.criteres.has(cle);
+  const conn = o.type_obj === 'connaissance';
+  return `<div class="rx-obj">
+    <div class="rx-obj-ligne">
+      <span class="rpe-code">${_rpeE(o.code)}</span>
+      <span class="rx-obj-type rx-obj-${conn ? 'conn' : 'cap'}">${conn ? 'connaissance' : 'capacité'}</span>
+      <input class="rx-obj-nom" value="${_rpeE(o.nom)}" aria-label="Nom de l'objectif"
+        onchange="rpeModifierObj('${r.id}', '${s.code}', '${o.code}', {nom: this.value})">
+      <input type="number" min="0" step="0.5" value="${o.nb_seances}" class="rpe-nb" ${verrou ? 'disabled' : ''}
+        title="nombre de séances" onchange="rpeModifierObj('${r.id}', '${s.code}', '${o.code}', {nb_seances: this.value})">
+      <span class="rx-petit">séance(s)</span>
+      <button class="btn-lien rx-criteres-btn" onclick="rpeBasculerCriteres('${cle}')">${ouvert ? '▾' : '▸'} critères d'atteinte des niveaux de maîtrise</button>
+      <span class="rx-seq-actions">${ctl(conn ? `<button class="btn-sm rx-suppr" title="Supprimer" onclick="rpeSupprimerObj('${r.id}', '${s.code}', '${o.code}')">×</button>`
+        : `<button class="btn-sm" title="Monter" onclick="rpeDeplacerObj('${r.id}', '${s.code}', '${o.code}', -1)">↑</button>
+        <button class="btn-sm" title="Descendre" onclick="rpeDeplacerObj('${r.id}', '${s.code}', '${o.code}', 1)">↓</button>
+        <button class="btn-sm rx-suppr" title="Supprimer" onclick="rpeSupprimerObj('${r.id}', '${s.code}', '${o.code}')">×</button>`)}</span>
+    </div>
+    ${ouvert ? `<div class="rx-criteres">${['f', 'a', 'e'].map(k => `
+      <label><span>Critère ${k.toUpperCase()}</span>
+        <textarea rows="2" onchange="rpeModifierObj('${r.id}', '${s.code}', '${o.code}', {critere_${k}: this.value})">${_rpeE(o['critere_' + k])}</textarea></label>`).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
+function rpeBasculerCriteres(cle) {
+  RPE.criteres.has(cle) ? RPE.criteres.delete(cle) : RPE.criteres.add(cle);
+  rpeRendre();
+}
+
+function rpeAjouterConnaissance(id, c, num) {
+  return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/parties/${num}/objectifs`,
+    _rpeJ({ b: { type_obj: 'connaissance' } }));
 }
 
 function rpeBasculer(id) { RPE.ouverts.has(id) ? RPE.ouverts.delete(id) : RPE.ouverts.add(id); rpeRendre(); }
@@ -158,7 +208,7 @@ const _rpeJ = (o) => ({ method: o.m || 'POST', body: JSON.stringify(o.b || {}) }
 
 function rpeModifierDesc(id, v) { return _rpeAction(`${_RPE_API}/${id}`, _rpeJ({ m: 'PUT', b: { description: v } })); }
 function rpeSupprimer(id) {
-  if (!confirm('Supprimer ce référentiel et tous ses fichiers ?')) return;
+  if (!confirm('Supprimer ce référentiel et tous ses documents ?')) return;
   return _rpeAction(`${_RPE_API}/${id}`, { method: 'DELETE' }, 'Référentiel supprimé.');
 }
 function rpeAjouterSeq(id) {
@@ -192,7 +242,7 @@ function rpeModifierObj(id, c, o, champs) { return _rpeAction(`${_RPE_API}/${id}
 function rpeDeplacerObj(id, c, o, sens) { return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/objectifs/${o}/deplacer`, _rpeJ({ b: { sens } })); }
 function rpeSupprimerObj(id, c, o) { return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/objectifs/${o}`, { method: 'DELETE' }); }
 function rpeSupprimerFichier(fid) {
-  if (!confirm('Supprimer ce fichier ?')) return;
+  if (!confirm('Supprimer ce document ?')) return;
   return _rpeAction(`${_RPE_API}/fichiers/${fid}`, { method: 'DELETE' });
 }
 
@@ -208,7 +258,7 @@ async function rpeImporter(id, c, partie, input) {
       r.ok ? ok++ : ko++;
     } catch (e) { ko++; }
   }
-  _rpeStatus(ko ? `${ok} ajouté(s), ${ko} en échec.` : `${ok} fichier(s) ajouté(s).`, !!ko);
+  _rpeStatus(ko ? `${ok} ajouté(s), ${ko} en échec.` : `${ok} document(s) ajouté(s).`, !!ko);
   await rpeCharger();
 }
 
@@ -287,8 +337,8 @@ function rxaRendre() {
     const r = RPE.liste.find(x => x.id === id);
     RPE.ouverts.add(id);
     detail.innerHTML = r ? `<div class="rxa-aide">Séquences → parties (nb de séances) → objectifs
-      (critères F/A/E) ; fichiers par séquence ou par partie. Une séquence commencée ne se modifie
-      plus (libellés et ajout de fichiers seulement).</div>${_rpeRef(r)}` : '';
+      (connaissance du cours, capacités ; critères F/A/E) ; documents par séquence ou par partie.
+      Une séquence commencée ne se modifie plus (libellés et ajout de documents seulement).</div>${_rpeRef(r)}` : '';
   } else {
     const r = RXT_LISTE.find(x => x.id === id);
     detail.innerHTML = (r && typeof rxtRenderRef === 'function') ? rxtRenderRef(r) : '';

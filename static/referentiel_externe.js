@@ -116,17 +116,16 @@ function rxtRenderDocsAnnuels(ref) {
     const lien = d.affichable
       ? `<a href="#" onclick="rxtApercu('${d.id}','${escapeHtml(d.nom_fichier)}');return false">${escapeHtml(d.nom_fichier)}</a>`
       : `<a href="${url}" download>${escapeHtml(d.nom_fichier)} (télécharger)</a>`;
-    return `<span style="font-size:12px;display:inline-flex;align-items:center;gap:4px;
-      background:#f4f4f8;border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin:2px 4px 2px 0">
-      ${lien}
+    // v0.48.6 — Un document par ligne, avec son type à côté.
+    return `<div class="rx-doc-ligne">
+      <span class="rx-doc-nom">${lien}</span>
       ${typeof rxtTypeSelect === 'function' ? rxtTypeSelect(d) : ''}
-      <button class="btn-sm" style="padding:0 3px;color:var(--danger)"
-        onclick="rxtSupprimerDoc('${d.id}')" aria-label="Supprimer le document">×</button>
-    </span>`;
+      <button class="btn-sm rx-suppr" onclick="rxtSupprimerDoc('${d.id}')" aria-label="Supprimer le document">×</button>
+    </div>`;
   }).join('');
-  return docs + `<label class="btn-sm" style="font-size:11px;cursor:pointer">+ document(s) annuel(s)
+  return docs + `<div class="rx-ajout-doc"><label class="btn-sm rx-import">+ document(s) annuel(s)
     <input type="file" multiple style="display:none" onchange="rxtImporterDocAnnuel('${ref.id}', this)">
-  </label>`;
+  </label></div>`;
 }
 
 function rxtRenderSeq(ref, seq) {
@@ -170,13 +169,12 @@ function rxtRenderPartie(ref, p) {
     const lien = d.affichable
       ? `<a href="#" onclick="rxtApercu('${d.id}','${escapeHtml(d.nom_fichier)}');return false">${escapeHtml(d.nom_fichier)}</a>`
       : `<a href="${url}" download>${escapeHtml(d.nom_fichier)} (télécharger)</a>`;
-    return `<span style="font-size:12px;display:inline-flex;align-items:center;gap:4px;
-      background:#f4f4f8;border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin:2px 4px 2px 0">
-      ${lien}
+    // v0.48.6 — Un document par ligne, avec son type à côté.
+    return `<div class="rx-doc-ligne">
+      <span class="rx-doc-nom">${lien}</span>
       ${typeof rxtTypeSelect === 'function' ? rxtTypeSelect(d) : ''}
-      <button class="btn-sm" style="padding:0 3px;color:var(--danger)"
-        onclick="rxtSupprimerDoc('${d.id}')" aria-label="Supprimer le document">×</button>
-    </span>`;
+      <button class="btn-sm rx-suppr" onclick="rxtSupprimerDoc('${d.id}')" aria-label="Supprimer le document">×</button>
+    </div>`;
   }).join('');
   return `<div style="margin:3px 0">
     <span style="font-size:12px;color:#666">P${p.numero} ·</span>
@@ -194,9 +192,9 @@ function rxtRenderPartie(ref, p) {
     <button class="btn-sm" style="font-size:11px;color:var(--danger)"
       onclick="rxtSupprimerPartie('${p.id}')" aria-label="Supprimer la partie">×</button>
     <div style="margin:2px 0 2px 10px">${docs}
-      <label class="btn-sm" style="font-size:11px;cursor:pointer">+ document(s)
+      <div class="rx-ajout-doc"><label class="btn-sm rx-import">+ document(s)
         <input type="file" multiple style="display:none" onchange="rxtImporterDoc('${p.id}', this)">
-      </label>
+      </label></div>
     </div>
   </div>`;
 }

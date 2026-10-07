@@ -84,6 +84,13 @@ def migrer(conn) -> None:
                       ("delai_n", "INTEGER NOT NULL DEFAULT 1")):
         if nom not in cols_f:
             conn.execute(f"ALTER TABLE referentiel_fichiers ADD COLUMN {nom} {decl}")
+    # v0.48.6 — Type d'objectif : connaissance (« Connaître les notions et
+    # les méthodes », un seul par partie, toujours en 1re position) ou
+    # capacité (maîtrise d'une capacité) — modèle des référentiels internes.
+    cols_o = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_objectifs)")}
+    if cols_o and "type_obj" not in cols_o:
+        conn.execute("ALTER TABLE referentiel_objectifs ADD COLUMN type_obj TEXT NOT NULL "
+                     "DEFAULT 'capacite'")
     # v0.48.5 — Type des documents des référentiels externes de MER.
     cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
     if cols_xd and "type_id" not in cols_xd:
@@ -497,11 +504,12 @@ def deplacer_partie(conn, rid: str, code: str, numero: int, sens: int,
 # ── Objectifs ────────────────────────────────────────────────────────────────
 
 def _renumeroter_objectifs(conn, rid, code):
-    """Codes 01, 02… dans l'ordre (partie, code actuel). Deux passes pour
-    éviter les collisions de clé primaire."""
+    """Codes 01, 02… dans l'ordre (partie, objectif « connaissance » en tête,
+    code actuel). Deux passes pour éviter les collisions de clé primaire."""
     rows = [dict(r) for r in conn.execute(
         "SELECT code FROM referentiel_objectifs WHERE referentiel_id=? AND seq_code=? "
-        "ORDER BY partie_numero, code", (rid, code)).fetchall()]
+        "ORDER BY partie_numero, CASE WHEN type_obj='connaissance' THEN 0 ELSE 1 END, code",
+        (rid, code)).fetchall()]
     for k, r in enumerate(rows, start=1):
         conn.execute("UPDATE referentiel_objectifs SET code=? WHERE referentiel_id=? AND "
                      "seq_code=? AND code=?", (f"~{k:02d}", rid, code, r["code"]))
@@ -510,12 +518,23 @@ def _renumeroter_objectifs(conn, rid, code):
                      "seq_code=? AND code=?", (f"{k:02d}", rid, code, f"~{k:02d}"))
 
 
+TYPES_OBJ = ("connaissance", "capacite")
+
+
 def ajouter_objectif(conn, rid: str, code: str, partie_numero: int, nom: str,
-                     nb_seances=0, aujourd_hui: date | None = None) -> None:
+                     nb_seances=0, aujourd_hui: date | None = None,
+                     type_obj: str = "capacite", criteres: dict | None = None) -> None:
     _verifier_modifiable(conn, rid, code, aujourd_hui or date.today())
     nom = (nom or "").strip()
     if not nom:
         raise RefExtErreur("Le nom de l'objectif est obligatoire.")
+    if type_obj not in TYPES_OBJ:
+        raise RefExtErreur(f"Type d'objectif invalide : {type_obj!r}.")
+    if type_obj == "connaissance" and conn.execute(
+            "SELECT 1 FROM referentiel_objectifs WHERE referentiel_id=? AND seq_code=? AND "
+            "partie_numero=? AND type_obj='connaissance'",
+            (rid, code, int(partie_numero))).fetchone():
+        raise RefExtErreur("Cette partie a déjà son objectif de connaissance du cours.")
     if conn.execute("SELECT 1 FROM referentiel_parties WHERE referentiel_id=? AND seq_code=? "
                     "AND numero=?", (rid, code, int(partie_numero))).fetchone() is None:
         raise RefExtErreur("Partie introuvable.", "introuvable")
@@ -524,9 +543,12 @@ def ajouter_objectif(conn, rid: str, code: str, partie_numero: int, nom: str,
                        "AND seq_code=? AND partie_numero=?",
                        (rid, code, int(partie_numero))).fetchone()[0]
     prov = (der or f"{int(partie_numero):02d}") + "z"
+    cr = criteres or {}
     conn.execute("INSERT INTO referentiel_objectifs (referentiel_id, seq_code, code, nom, "
-                 "partie_numero, nb_seances) VALUES (?,?,?,?,?,?)",
-                 (rid, code, prov, nom, int(partie_numero), _nb(nb_seances)))
+                 "partie_numero, nb_seances, type_obj, critere_f, critere_a, critere_e) "
+                 "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                 (rid, code, prov, nom, int(partie_numero), _nb(nb_seances), type_obj,
+                  cr.get("f", ""), cr.get("a", ""), cr.get("e", "")))
     _renumeroter_objectifs(conn, rid, code)
 
 
@@ -557,8 +579,8 @@ def deplacer_objectif(conn, rid: str, code: str, obj_code: str, sens: int,
                       aujourd_hui: date) -> None:
     _verifier_modifiable(conn, rid, code, aujourd_hui)
     rows = [dict(r) for r in conn.execute(
-        "SELECT code, partie_numero FROM referentiel_objectifs WHERE referentiel_id=? AND "
-        "seq_code=? ORDER BY partie_numero, code", (rid, code)).fetchall()]
+        "SELECT code, partie_numero, type_obj FROM referentiel_objectifs WHERE referentiel_id=? "
+        "AND seq_code=? ORDER BY partie_numero, code", (rid, code)).fetchall()]
     codes = [r["code"] for r in rows]
     if obj_code not in codes:
         raise RefExtErreur("Objectif introuvable.", "introuvable")
@@ -566,6 +588,8 @@ def deplacer_objectif(conn, rid: str, code: str, obj_code: str, sens: int,
     j = i + (1 if sens > 0 else -1)
     if not 0 <= j < len(rows) or rows[i]["partie_numero"] != rows[j]["partie_numero"]:
         return          # on ne change pas de partie par déplacement
+    if "connaissance" in (rows[i]["type_obj"], rows[j]["type_obj"]):
+        return          # l'objectif de connaissance reste en tête de sa partie
     a, b = codes[i], codes[j]
     conn.execute("UPDATE referentiel_objectifs SET code='~tmp' WHERE referentiel_id=? AND "
                  "seq_code=? AND code=?", (rid, code, a))
