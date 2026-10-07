@@ -42,14 +42,36 @@ def _b():
 
 @bp.route(P, methods=["GET"])
 def api_lister():
-    return _fait(lambda c: {"referentiels": svc.lister(c, request.args.get("niveau", ""))})
+    """`type` : principal (défaut) | mer | tous (v0.49.0)."""
+    t = request.args.get("type", "principal")
+    return _fait(lambda c: {"referentiels": svc.lister(c, request.args.get("niveau", ""),
+                                                       type_ref=None if t == "tous" else t)})
 
 
 @bp.route(P, methods=["POST"])
 def api_creer():
     b = _b()
     return _fait(lambda c: svc.creer(c, b.get("niveau", ""), b.get("annee", ""),
-                                     b.get("description", "")), 201)
+                                     b.get("description", ""),
+                                     type_ref=b.get("type_ref", "principal")), 201)
+
+
+@bp.route(P + "/<rid>/sequences/<code>/parties/<int:num>/libelle", methods=["PUT"])
+def api_partie_libeller(rid, code, num):
+    """v0.49.0 — Libellé de partie (correction toujours permise)."""
+    return _fait(lambda c: svc.libeller_partie(c, rid, code, num, _b().get("libelle", "")))
+
+
+@bp.route(P + "/<rid>/documents-annuels", methods=["POST"])
+def api_doc_annuel_ajouter(rid):
+    """v0.49.0 — Document annuel (rattaché au référentiel)."""
+    if "fichier" not in request.files:
+        return jsonify({"error": "Aucun fichier fourni."}), 400
+    f = request.files["fichier"]
+    contenu = f.read()
+    return _fait(lambda c: svc.ajouter_fichier(c, rid, "", 0, nom_fichier=f.filename or "document",
+                                               contenu=contenu, mime=f.mimetype or "",
+                                               data_dir=_data_dir()), 201)
 
 
 @bp.route(P + "/<rid>", methods=["GET"])
@@ -89,7 +111,9 @@ def api_seq_supprimer(rid, code):
 
 @bp.route(P + "/<rid>/sequences/<code>/parties", methods=["POST"])
 def api_partie_ajouter(rid, code):
-    return _fait(lambda c: svc.ajouter_partie(c, rid, code, _b().get("nb_seances", 0), _auj()), 201)
+    b = _b()
+    return _fait(lambda c: svc.ajouter_partie(c, rid, code, b.get("nb_seances", 0), _auj(),
+                                              b.get("libelle", "")), 201)
 
 
 @bp.route(P + "/<rid>/sequences/<code>/parties/<int:num>", methods=["PUT"])

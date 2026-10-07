@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.48.6** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.49.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -59,10 +59,16 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - v0.48.6 livrée : présentation commune des référentiels externes (modèle
   MER), documents un par ligne, objectifs typés (connaissance en tête,
   capacités), critères repliés.
-- Prochaine étape : v0.48.7 — côté MER : séance / retour / délai (dont « fin
-  de la partie de MER ») sur les documents de MER, placement automatique,
-  panneau « documents à distribuer » dans la Progression de MER, documents
-  de MER au même endroit que les autres.
+- Unification des référentiels (plan validé : B, v0.49.1, C, D).
+  v0.49.0 livrée (B) : MER externes dans la structure figée (même éditeur
+  que les principaux, codes M01…, libellé de partie, documents annuels,
+  alerte « au moins une capacité par partie »), Progression de MER sur la
+  source `fige` ; ancien modèle de MER en retrait.
+- Prochaine étape : v0.49.1 — documents de MER (séance, retour, délai dont
+  « fin de la partie de MER », placement automatique, panneau « documents à
+  distribuer » de la Progression de MER). Puis C : onglet unique
+  « Référentiel » (filtres niveau / année / type / source, groupage dans cet
+  ordre) ; puis D.
 
 ## Derniers chantiers terminés
 

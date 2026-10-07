@@ -188,6 +188,11 @@ def api_planning_pdf(classe_id):
             r = conn.execute("SELECT nom FROM referentiel_externe WHERE id=?",
                              (prog["ref_mer_id"],)).fetchone()
             ref_nom = r["nom"] if r else ""
+        elif prog.get("ref_mer_id") and prog.get("ref_mer_source") == "fige":   # v0.49.0
+            from services import referentiel_principal_externe as _rpe
+            r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?",
+                             (prog["ref_mer_id"],)).fetchone()
+            ref_nom = _rpe.nom_calcule(dict(r)) if r else ""
 
     cal = ctx.calendrier(store, annee, academie)     # hors du _conn
     vacances, feries = cal["vacances"], cal["feries"]
@@ -241,6 +246,11 @@ def api_planning_theorique_pdf(prog_id):
             r = conn.execute("SELECT nom FROM referentiel_externe WHERE id=?",
                              (prog["ref_mer_id"],)).fetchone()
             ref_nom = r["nom"] if r else ""
+        elif prog.get("ref_mer_id") and prog.get("ref_mer_source") == "fige":   # v0.49.0
+            from services import referentiel_principal_externe as _rpe
+            r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?",
+                             (prog["ref_mer_id"],)).fetchone()
+            ref_nom = _rpe.nom_calcule(dict(r)) if r else ""
     parties = prog.get("parties", [])
     tex = generer_planning_theorique_tex(
         prog.get("niveau", ""), annee, ref_nom, parties)

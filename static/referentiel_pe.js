@@ -36,7 +36,7 @@ async function rpeInit() { await rpeCharger(); }
 async function rpeCharger() {
   try { RPE.types = (await _rpeApi('/api/types-documents')).types || []; } catch (e) { RPE.types = []; }
   try {
-    const l = (await _rpeApi(`${_RPE_API}?niveau=${encodeURIComponent(_rpeNiveau())}`)).referentiels;
+    const l = (await _rpeApi(`${_RPE_API}?niveau=${encodeURIComponent(_rpeNiveau())}&type=tous`)).referentiels;
     RPE.liste = [];
     for (const r of l) RPE.liste.push(await _rpeApi(`${_RPE_API}/${r.id}`));
   } catch (e) { RPE.liste = []; _rpeStatus(e.message, true); }
@@ -82,10 +82,17 @@ function _rpeRef(r) {
       ${r.utilise ? '' : `<button class="btn-sm rpe-danger" onclick="rpeSupprimer('${r.id}')">Supprimer</button>`}
     </div>
     ${ouvert ? `<div class="rpe-corps">
+      ${(r.alertes || []).length ? `<div class="rx-alertes" role="status">⚠ ${r.alertes.length} partie(s) sans objectif « capacité »
+        (ce qu'on évalue à la fin) : ${r.alertes.map(a => _rpeE(a.split(' :')[0])).join(', ')}.</div>` : ''}
       ${(r.sequences || []).map(s => _rpeSeq(r, s)).join('') || '<p class="rpe-vide">Aucune séquence.</p>'}
       <div class="rpe-ajout"><input id="rpe-seq-${r.id}" placeholder="Nom de la nouvelle séquence"
         onkeydown="if(event.key==='Enter') rpeAjouterSeq('${r.id}')">
         <button class="btn-sm" onclick="rpeAjouterSeq('${r.id}')">+ séquence</button></div>
+      <div class="rx-annuels">
+        <div class="rx-sous-titre">Documents annuels</div>
+        <div class="rx-petit">Rattachés au référentiel (récapitulatifs annuels), pas à une séquence.</div>
+        ${_rpeFichiers(r, '', 0, r.documents_annuels || [])}
+      </div>
     </div>` : ''}
   </div>`;
 }
@@ -145,6 +152,8 @@ function _rpePartie(r, s, p, verrou, ctl) {
   return `<div class="rx-partie">
     <div class="rx-partie-tete">
       <span class="rx-petit">P${p.numero} ·</span>
+      <input class="rx-partie-lib" value="${_rpeE(p.libelle || '')}" placeholder="libellé de la partie (facultatif)"
+        aria-label="Libellé de la partie" onchange="rpeLibellerPartie('${r.id}', '${s.code}', ${p.numero}, this.value)">
       <input type="number" min="0" step="0.5" value="${p.nb_seances_R_AE}" class="rpe-nb" ${verrou ? 'disabled' : ''}
         aria-label="Nombre de séances de la partie" onchange="rpeModifierPartie('${r.id}', '${s.code}', ${p.numero}, this.value)">
       <span class="rx-petit">séance(s)</span>
@@ -153,7 +162,7 @@ function _rpePartie(r, s, p, verrou, ctl) {
         <button class="btn-sm rx-suppr" title="Supprimer la partie" onclick="rpeSupprimerPartie('${r.id}', '${s.code}', ${p.numero})">×</button>`)}
     </div>
     <div class="rx-partie-corps">
-      <div class="rx-sous-titre">Objectifs</div>
+      <div class="rx-sous-titre">Objectifs${p.sans_capacite ? ' <span class="rx-alerte-inline">— au moins une capacité attendue</span>' : ''}</div>
       ${objs.map(o => _rpeObjectif(r, s, o, verrou, ctl)).join('') || '<div class="rpe-vide">Aucun objectif.</div>'}
       ${ctl(`<div class="rx-ajout">
         ${aConn ? '' : `<button class="btn-sm" onclick="rpeAjouterConnaissance('${r.id}', '${s.code}', ${p.numero})"
@@ -254,7 +263,8 @@ async function rpeImporter(id, c, partie, input) {
     fd.append('fichier', f);
     fd.append('partie', String(partie));
     try {
-      const r = await fetch(`${_RPE_API}/${id}/sequences/${c}/fichiers`, { method: 'POST', body: fd });
+      const url = c ? `${_RPE_API}/${id}/sequences/${c}/fichiers` : `${_RPE_API}/${id}/documents-annuels`;
+      const r = await fetch(url, { method: 'POST', body: fd });
       r.ok ? ok++ : ko++;
     } catch (e) { ko++; }
   }
@@ -313,10 +323,12 @@ function rxaRendre() {
   const detail = document.getElementById('rxa-detail');
   if (!liste || !detail) return;
   const items = [
-    ...RPE.liste.map(r => ({ cle: 'P:' + r.id, nom: r.nom, desc: r.description, type: 'Principal',
+    ...RPE.liste.map(r => ({ cle: 'P:' + r.id, nom: r.nom, desc: r.description,
                              etat: r.utilise ? 'utilise' : r.etat })),
+    // v0.49.0 — Ancien modèle de MER (en retrait) : lisible tant qu'il n'est pas recréé.
     ...((typeof RXT_LISTE !== 'undefined') ? RXT_LISTE : []).map(r => ({
-      cle: 'M:' + r.id, nom: r.nom || '(sans nom)', desc: r.description || '', type: 'MER', etat: r.etat })),
+      cle: 'M:' + r.id, nom: (r.nom || '(sans nom)') + ' — ancien modèle', desc: r.description || '',
+      etat: r.etat })),
   ];
   if (RXA.sel && !items.some(i => i.cle === RXA.sel)) RXA.sel = null;
   if (!RXA.sel && items.length) RXA.sel = items[0].cle;
@@ -352,17 +364,11 @@ async function rxaCreer() {
   const desc = document.getElementById('rxa-desc');
   try {
     let r;
-    if (type === 'principal') {
-      r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
-        niveau: _rpeNiveau(), annee: _rpeAnnee(), description: desc.value }) });
-      RXA.sel = 'P:' + r.id;
-      await rpeCharger();
-    } else {
-      r = await _rpeApi('/api/referentiels-externes', { method: 'POST', body: JSON.stringify({
-        niveau: _rpeNiveau(), annee: _rpeAnnee(), type: 'mer', description: desc.value }) });
-      RXA.sel = 'M:' + r.id;
-      if (typeof rxtCharger === 'function') await rxtCharger();
-    }
+    // v0.49.0 — Principal et MER : même modèle (structure figée), même éditeur.
+    r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
+      niveau: _rpeNiveau(), annee: _rpeAnnee(), description: desc.value, type_ref: type }) });
+    RXA.sel = 'P:' + r.id;
+    await rpeCharger();
     desc.value = '';
     _rpeStatus('Référentiel créé.');
   } catch (e) { _rpeStatus(e.message, true); }
@@ -402,4 +408,10 @@ async function rxtTyperDoc(did, typeId) {
     await _rpeApi(`/api/referentiels-externes/docs/${did}/type`, _rpeJ({ m: 'PUT', b: { type_id: typeId } }));
     if (typeof rxtCharger === 'function') await rxtCharger();
   } catch (e) { _rpeStatus(e.message, true); }
+}
+
+
+// v0.49.0 — Libellé de partie (correction toujours permise).
+function rpeLibellerPartie(id, c, num, v) {
+  return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/parties/${num}/libelle`, _rpeJ({ m: 'PUT', b: { libelle: v } }));
 }

@@ -91,6 +91,10 @@ def migrer(conn) -> None:
     if cols_o and "type_obj" not in cols_o:
         conn.execute("ALTER TABLE referentiel_objectifs ADD COLUMN type_obj TEXT NOT NULL "
                      "DEFAULT 'capacite'")
+    # v0.49.0 — Libellé de partie (facultatif ; affiché s'il existe).
+    cols_p = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_parties)")}
+    if cols_p and "libelle" not in cols_p:
+        conn.execute("ALTER TABLE referentiel_parties ADD COLUMN libelle TEXT NOT NULL DEFAULT ''")
     # v0.48.5 — Type des documents des référentiels externes de MER.
     cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
     if cols_xd and "type_id" not in cols_xd:
@@ -154,12 +158,17 @@ def lister(conn, niveau: str, type_ref: str | None = "principal") -> list[dict]:
     return [{**dict(r), "nom": nom_calcule(dict(r))} for r in rows]
 
 
-def creer(conn, niveau: str, annee: str, description: str = "") -> dict:
+def creer(conn, niveau: str, annee: str, description: str = "",
+          type_ref: str = "principal") -> dict:
+    """v0.49.0 — `type_ref` : 'principal' (progression principale) ou 'mer'
+    (progression de MER) ; même structure, même éditeur."""
     if niveau not in NIVEAUX:
         raise RefExtErreur(f"Niveau invalide : {niveau!r}.")
     if not annee or len(annee) != 9:
         raise RefExtErreur("Année scolaire invalide (AAAA-AAAA).")
-    base = "X" + annee[:4]
+    if type_ref not in ("principal", "mer"):
+        raise RefExtErreur(f"Type invalide : {type_ref!r}.")
+    base = ("M" if type_ref == "mer" else "X") + annee[:4]
     pris = {r["version"] for r in conn.execute(
         "SELECT version FROM referentiel_niveaux WHERE niveau=? AND version LIKE ?",
         (niveau, base + "%")).fetchall()}
@@ -169,8 +178,8 @@ def creer(conn, niveau: str, annee: str, description: str = "") -> dict:
     version = base + lettre
     rid = f"{base}_{niveau}{lettre}"      # convention interne : <annee>_<niveau><suffixe>
     conn.execute("INSERT INTO referentiel_niveaux (id, niveau, version, description, etat, "
-                 "source, type_ref, annee) VALUES (?,?,?,?, 'en_cours', 'externe', "
-                 "'principal', ?)", (rid, niveau, version, (description or "").strip(), annee))
+                 "source, type_ref, annee) VALUES (?,?,?,?, 'en_cours', 'externe', ?, ?)",
+                 (rid, niveau, version, (description or "").strip(), type_ref, annee))
     return lire(conn, rid)
 
 
@@ -182,8 +191,14 @@ def modifier(conn, rid: str, description: str) -> dict:
 
 
 def est_utilise(conn, rid: str) -> bool:
-    return conn.execute("SELECT 1 FROM progressions WHERE referentiel_id=? LIMIT 1",
-                        (rid,)).fetchone() is not None
+    if conn.execute("SELECT 1 FROM progressions WHERE referentiel_id=? LIMIT 1",
+                    (rid,)).fetchone() is not None:
+        return True
+    try:                                            # v0.49.0 — progression de MER
+        return conn.execute("SELECT 1 FROM progression_mer WHERE ref_mer_id=? AND "
+                            "ref_mer_source='fige' LIMIT 1", (rid,)).fetchone() is not None
+    except Exception:
+        return False
 
 
 def supprimer(conn, rid: str, data_dir: Path | None = None) -> None:
@@ -208,7 +223,18 @@ def supprimer(conn, rid: str, data_dir: Path | None = None) -> None:
 
 def sequence_commencee(conn, rid: str, seq_code: str, aujourd_hui: date) -> bool:
     """Vrai si un créneau d'une progression utilisant ce référentiel, sur
-    cette séquence, a une date de début passée (ou aujourd'hui)."""
+    cette séquence, a une date de début passée (ou aujourd'hui).
+
+    v0.49.0 — Référentiel de MER : la séquence est verrouillée dès qu'une de
+    ses parties est posée dans une progression de MER (les parties posées y
+    sont désignées par leur numéro)."""
+    try:
+        if conn.execute("SELECT 1 FROM progression_mer_partie WHERE partie_source='fige' "
+                        "AND partie_id LIKE ? LIMIT 1",
+                        (f"{rid}|{seq_code}|%",)).fetchone():
+            return True
+    except Exception:
+        pass
     r = conn.execute(
         "SELECT 1 FROM creneaux c JOIN progressions p ON p.id=c.progression_id "
         "WHERE p.referentiel_id=? AND c.seq_code=? AND c.date_debut IS NOT NULL "
@@ -246,8 +272,19 @@ def lire(conn, rid: str, aujourd_hui: date | None = None) -> dict:
         s["fichiers"] = _fichiers(conn, rid, s["code"], 0)
         s["commencee"] = sequence_commencee(conn, rid, s["code"], aujourd_hui)
         seqs.append(s)
+    # v0.49.0 — Chaque partie doit avoir au moins un objectif « capacité »
+    # (ce qu'on évalue à la fin) : alerte visible, non bloquante (un
+    # référentiel externe est utilisable incomplet).
+    alertes = []
+    for s in seqs:
+        for p in s["parties"]:
+            p["sans_capacite"] = not any(o.get("type_obj") != "connaissance"
+                                         for o in p["objectifs"])
+            if p["sans_capacite"]:
+                alertes.append(f"{s['code']} partie {p['numero']} : aucun objectif « capacité ».")
     return {**ref, "nom": nom_calcule(ref), "utilise": est_utilise(conn, rid),
-            "sequences": seqs}
+            "sequences": seqs, "documents_annuels": _fichiers(conn, rid, "", 0),
+            "alertes": alertes}
 
 
 def _fichiers(conn, rid, seq_code, partie_numero) -> list[dict]:
@@ -362,10 +399,12 @@ def ajouter_sequence(conn, rid: str, nom: str) -> dict:
     nom = (nom or "").strip()
     if not nom:
         raise RefExtErreur("Le nom de la séquence est obligatoire.")
+    ref = _lire_ref(conn, rid)
+    pref = "M" if ref.get("type_ref") == "mer" else "S"      # v0.49.0
     codes = [r["code"] for r in conn.execute(
         "SELECT code FROM referentiel_sequences WHERE referentiel_id=?", (rid,)).fetchall()]
-    nums = [int(c[1:]) for c in codes if c[:1] == "S" and c[1:].isdigit()]
-    code = f"S{(max(nums) + 1) if nums else 1:02d}"
+    nums = [int(c[1:]) for c in codes if c[:1] == pref and c[1:].isdigit()]
+    code = f"{pref}{(max(nums) + 1) if nums else 1:02d}"
     numero = (conn.execute("SELECT COALESCE(MAX(numero), 0) FROM referentiel_sequences "
                            "WHERE referentiel_id=?", (rid,)).fetchone()[0]) + 1
     conn.execute("INSERT INTO referentiel_sequences (referentiel_id, code, numero, nom) "
@@ -441,7 +480,8 @@ def _nb(v, nom="nombre de séances") -> float:
     return f
 
 
-def ajouter_partie(conn, rid: str, code: str, nb_seances, aujourd_hui: date) -> dict:
+def ajouter_partie(conn, rid: str, code: str, nb_seances, aujourd_hui: date,
+                   libelle: str = "") -> dict:
     _verifier_modifiable(conn, rid, code, aujourd_hui)
     if conn.execute("SELECT 1 FROM referentiel_sequences WHERE referentiel_id=? AND code=?",
                     (rid, code)).fetchone() is None:
@@ -449,8 +489,18 @@ def ajouter_partie(conn, rid: str, code: str, nb_seances, aujourd_hui: date) -> 
     n = (conn.execute("SELECT COALESCE(MAX(numero), 0) FROM referentiel_parties WHERE "
                       "referentiel_id=? AND seq_code=?", (rid, code)).fetchone()[0]) + 1
     conn.execute("INSERT INTO referentiel_parties (referentiel_id, seq_code, numero, "
-                 "nb_seances_R_AE) VALUES (?,?,?,?)", (rid, code, n, _nb(nb_seances)))
+                 "nb_seances_R_AE, libelle) VALUES (?,?,?,?,?)",
+                 (rid, code, n, _nb(nb_seances), (libelle or "").strip()))
     return {"seq_code": code, "numero": n}
+
+
+def libeller_partie(conn, rid: str, code: str, numero: int, libelle: str) -> None:
+    """v0.49.0 — Libellé de partie : correction toujours permise."""
+    n = conn.execute("UPDATE referentiel_parties SET libelle=? WHERE referentiel_id=? AND "
+                     "seq_code=? AND numero=?", ((libelle or "").strip(), rid, code,
+                                                 int(numero))).rowcount
+    if not n:
+        raise RefExtErreur("Partie introuvable.", "introuvable")
 
 
 def modifier_partie(conn, rid: str, code: str, numero: int, nb_seances,
@@ -610,11 +660,14 @@ def supprimer_objectif(conn, rid: str, code: str, obj_code: str, aujourd_hui: da
 
 def ajouter_fichier(conn, rid: str, code: str, partie_numero: int, *, nom_fichier: str,
                     contenu: bytes, mime: str, data_dir: Path) -> dict:
-    """Ajout toujours permis (même séquence commencée)."""
+    """Ajout toujours permis (même séquence commencée). v0.49.0 — `code` vide :
+    document annuel (rattaché au référentiel, pas à une séquence)."""
     _lire_ref(conn, rid)
-    if conn.execute("SELECT 1 FROM referentiel_sequences WHERE referentiel_id=? AND code=?",
-                    (rid, code)).fetchone() is None:
+    if code and conn.execute("SELECT 1 FROM referentiel_sequences WHERE referentiel_id=? "
+                             "AND code=?", (rid, code)).fetchone() is None:
         raise RefExtErreur("Séquence introuvable.", "introuvable")
+    if not code:
+        partie_numero = 0
     nom = (nom_fichier or "document").strip().replace("/", "_").replace("\\", "_")
     fid = _id("rnf_")
     dossier = Path(data_dir) / "referentiels_fichiers" / rid
@@ -645,6 +698,29 @@ def supprimer_fichier(conn, fid: str, data_dir: Path | None = None) -> None:
         except OSError:
             pass
     conn.execute("DELETE FROM referentiel_fichiers WHERE id=?", (fid,))
+
+
+def parties_mer(conn, rid: str) -> list[dict]:
+    """v0.49.0 — Parties d'un référentiel de MER (structure figée) pour la
+    progression de MER : id stable `<référentiel>|<séquence>|<numéro>`."""
+    return [{"id": f"{rid}|{r['seq_code']}|{r['numero']}",
+             "libelle": r["libelle"] or f"Partie {r['numero']}",
+             "nb_seances": r["nb_seances_R_AE"], "numero": r["numero"],
+             "sequence_code": r["seq_code"], "sequence_nom": r["seq_nom"]}
+            for r in conn.execute(
+                "SELECT p.*, s.nom AS seq_nom FROM referentiel_parties p "
+                "JOIN referentiel_sequences s ON s.referentiel_id=p.referentiel_id AND "
+                "s.code=p.seq_code WHERE p.referentiel_id=? ORDER BY s.numero, p.numero",
+                (rid,)).fetchall()]
+
+
+def partie_mer(conn, partie_id: str) -> dict | None:
+    try:
+        rid, code, num = partie_id.rsplit("|", 2)
+    except ValueError:
+        return None
+    return next((p for p in parties_mer(conn, rid)
+                 if p["sequence_code"] == code and str(p["numero"]) == num), None)
 
 
 def fichiers_de_sequence(conn, niveau: str, annee: str, seq_code: str) -> list[dict]:

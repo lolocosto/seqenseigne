@@ -16,7 +16,9 @@ from __future__ import annotations
 import uuid
 
 ETATS = ("en_cours", "valide")
-SOURCES = ("externe",)  # 'interne' viendra plus tard
+# v0.49.0 — 'fige' : référentiel de MER de la structure figée (externe
+# aujourd'hui, interne plus tard) ; 'externe' : ancien modèle, en retrait.
+SOURCES = ("externe", "fige")
 
 
 class ProgMerErreur(Exception):
@@ -92,6 +94,9 @@ def projeter_mer(seances: list, parties: list) -> list:
 def resoudre_partie(conn, partie_id: str, source: str) -> dict | None:
     """Retourne {id, libelle, nb_seances, sequence_code, sequence_nom} pour une
     partie du référentiel MER, selon sa source. None si introuvable."""
+    if source == "fige":
+        from services import referentiel_principal_externe as rpe
+        return rpe.partie_mer(conn, partie_id)
     if source == "externe":
         r = conn.execute(
             "SELECT p.id, p.libelle, p.nb_seances, p.numero, "
@@ -110,6 +115,9 @@ def resoudre_partie(conn, partie_id: str, source: str) -> dict | None:
 def lister_parties_disponibles(conn, ref_mer_id: str, source: str) -> list:
     """Toutes les parties d'un référentiel MER (pour le choix), dans l'ordre du
     référentiel."""
+    if source == "fige":
+        from services import referentiel_principal_externe as rpe
+        return rpe.parties_mer(conn, ref_mer_id)
     if source == "externe":
         rows = conn.execute(
             "SELECT p.id, p.libelle, p.nb_seances, p.numero, "

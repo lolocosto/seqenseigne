@@ -4705,3 +4705,9 @@ textarea.latex-textarea {
 .rx-obj-ligne { flex-wrap: nowrap; }
 .rx-obj-nom { flex: 1; min-width: 180px; width: auto; }
 .rx-obj-ligne .rx-seq-actions { flex-shrink: 0; }
+/* v0.49.0 — Libellé de partie, documents annuels, alertes « capacité » */
+.rx-partie-lib { font-size: 12px; width: 220px; }
+.rx-annuels { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.rx-alertes { font-size: 12px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;
+  border-radius: 5px; padding: 5px 8px; margin: 6px 0; }
+.rx-alerte-inline { color: #9a3412; font-weight: 400; }
