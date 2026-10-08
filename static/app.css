@@ -4743,3 +4743,15 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
   padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;
   background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
 }
+
+/* ── v0.51.1 — Format d'échange d'un référentiel ─────────────────────────── */
+.refu-pub {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 10px; margin-bottom: 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface, #fff); font-size: 12px;
+}
+.refu-pub-titre { font-weight: 600; font-size: 13px; margin-right: 4px; }
+.refu-pub a.btn-sm { text-decoration: none; color: inherit; }
+.refu-pub-info { color: var(--text-secondary); }
+.refu-pub-ok { color: var(--success, #2e7d32); font-weight: 600; }
+.refu-pub-ko { color: var(--danger, #c33); font-weight: 600; }

@@ -230,11 +230,15 @@ Appli locale « atelier » (conception de tous les référentiels, LaTeX) et app
 en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
 - v0.51.0 : profils complet / atelier / classe (fait).
 - v0.51.1 : format JSON des référentiels (schéma versionné, documenté) — base
-  de la future API.
+  de la future API (fait).
 - v0.51.2 : paquet de publication (JSON + PDF compilés + fichiers externes,
   empreintes, rapport) ; tuile « Publication » au tableau de bord atelier.
 - v0.51.3 : import côté classe (structure en lecture seule, rapport des
   changements, documents orphelins signalés).
+- Retour d'usage classe → atelier (validé) : référentiel utilisé, séquences
+  commencées, parties de MER posées — sans donnée d'élève ; remplace la
+  lecture directe des progressions par l'atelier (verrou des séquences
+  commencées, état « utilisé »). Par fichier, puis par l'API. Après v0.51.3.
 - v0.51.4 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).

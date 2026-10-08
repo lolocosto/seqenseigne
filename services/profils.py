@@ -43,6 +43,7 @@ BP_ATELIER = frozenset({
     "livret_sequence", "plans_de_travail", "etats_edition", "fiches_resume",
     "evaluations", "cartes_automatisme", "referentiel_documents_compilation",
     "paquet", "images", "recherche",
+    "publication",          # v0.51.1 — format d'échange des référentiels
 })
 BP_STRUCTURE = frozenset({
     "referentiels", "referentiel_principal_externe", "referentiel_externe",

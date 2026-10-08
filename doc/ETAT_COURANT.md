@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -25,8 +25,10 @@ Cadrage : `doc/redemarrage_v0_51_0.md`. Appli locale « atelier » (conception,
 LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.0 livrée : profils `complet` (défaut) / `atelier` / `classe`
   (`services/profils.py`, `lancer.bat atelier|classe`).
-- À venir : v0.51.1 format JSON des référentiels ; v0.51.2 paquet de
-  publication ; v0.51.3 import côté classe ; v0.51.4 bascule ; v0.52 mise en
+- v0.51.1 livrée : format d'échange JSON des référentiels
+  (`doc/format_referentiel.md`, `schemas/referentiel-1.json`, export et
+  vérification dans Conception › Référentiel).
+- À venir : v0.51.2 paquet de publication ; v0.51.3 import côté classe ; v0.51.4 bascule ; v0.52 mise en
   ligne (authentification, HTTPS, VPS) puis API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)
@@ -149,6 +151,9 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - **Profils** (v0.51) : toute nouvelle route doit avoir une catégorie
   (`services/profils.py` : blueprint ou exception dans `ENDPOINTS`) ; tout
   nouvel élément d'interface propre à un côté porte `data-profils="…"`.
+- **Format d'échange** (v0.51.1) : tout changement du format met à jour le
+  schéma, la doc et `FORMAT_VERSION` (mineure = champ facultatif ajouté,
+  majeure = incompatible) ; textes en ligne via `services/texte_latex.py`.
 - **Documents hors ateliers** (v0.50) : HTML + `static/impression.css`
   (gabarits `templates/impression/`, format par `@page`, routes
   `/impression/...`), jamais de LaTeX ;

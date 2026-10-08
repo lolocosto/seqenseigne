@@ -90,6 +90,7 @@ from routes.referentiel_documents_compilation import bp as bp_referentiel_docume
 from routes.paquet import bp as bp_paquet  # v0.13.7.1
 from routes.images import bp as bp_images  # v0.13.7.4
 from routes.recherche import bp as bp_recherche  # v0.18.1
+from routes.publication import bp as bp_publication  # v0.51.1
 
 def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask:
     """
@@ -144,7 +145,8 @@ def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask
                bp_referentiel_documents_compilation,  # v0.13.6.5.1
                bp_paquet,  # v0.13.7.1
                bp_images,  # v0.13.7.4
-               bp_recherche):  # v0.18.1
+               bp_recherche,  # v0.18.1
+               bp_publication):  # v0.51.1
         # v0.51.0 — Un blueprint étranger au profil n'est pas enregistré.
         if profils.blueprint_enregistre(bp.name, profil):
             app.register_blueprint(bp)

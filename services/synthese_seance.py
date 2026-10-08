@@ -26,7 +26,6 @@ sont plus proposées d'emblée.
 
 from __future__ import annotations
 import json
-import re
 import uuid
 from datetime import date
 
@@ -101,11 +100,10 @@ def modifier_activite(conn, aid: str, champs: dict) -> None:
 # ── Notions et méthodes de la partie ─────────────────────────────────────────
 
 def _texte(s: str) -> str:
-    """Titre LaTeX → texte lisible (accolades, commandes simples, $)."""
-    s = re.sub(r"\\(?:textbf|emph|textit|mathrm|text)\{([^{}]*)\}", r"\1", s or "")
-    s = s.replace("$", "").replace("\\,", " ").replace("~", " ")
-    s = re.sub(r"\\[a-zA-Z]+\s*", "", s)
-    return re.sub(r"\s+", " ", s.replace("{", "").replace("}", "")).strip()
+    """Titre LaTeX → texte lisible. v0.51.1 : conversion commune avec le
+    format d'échange des référentiels (services/texte_latex.py)."""
+    from services.texte_latex import vers_texte
+    return vers_texte(s)
 
 
 def candidats(conn, niveau: str, seq_code: str, partie_debut: int, partie_fin: int) -> dict:

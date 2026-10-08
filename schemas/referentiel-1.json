@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seqenseigne/schemas/referentiel-1.json",
+  "title": "seqenseigne.referentiel v1",
+  "description": "Format d'échange d'un référentiel (structure, parties, objectifs, documents). Voir doc/format_referentiel.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "format_version", "exporte_le", "exporte_par", "empreinte",
+               "referentiel", "structure", "types_documents", "sequences", "documents_annuels"],
+  "properties": {
+    "format": { "const": "seqenseigne.referentiel" },
+    "format_version": { "type": "string", "pattern": "^1\\.[0-9]+$" },
+    "exporte_le": { "type": "string", "minLength": 10 },
+    "exporte_par": { "type": "string" },
+    "empreinte": { "$ref": "#/$defs/empreinte" },
+    "referentiel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "nom", "niveau", "annee", "type", "source", "version", "etat", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "nom": { "type": "string" },
+        "niveau": { "type": "string", "pattern": "^N[0-9]{2}$" },
+        "annee": { "type": "string" },
+        "type": { "enum": ["principal", "mer"] },
+        "source": { "enum": ["interne", "externe"] },
+        "version": { "type": "string" },
+        "etat": { "enum": ["en_cours", "valide", "verrouille", "utilise", "annule"] },
+        "description": { "type": "string" },
+        "mode_seances": { "type": "string" }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["empreinte", "cycle", "niveau", "themes", "decoupage"],
+      "properties": {
+        "empreinte": { "$ref": "#/$defs/empreinte" },
+        "cycle": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["code", "nom"],
+          "properties": { "code": { "type": "string" }, "nom": { "type": "string" } }
+        },
+        "niveau": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "nom_court", "nom_long"],
+          "properties": {
+            "code": { "type": "string" },
+            "nom_court": { "type": "string" },
+            "nom_long": { "type": "string" },
+            "annee_dans_cycle": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "themes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "nom", "couleur", "ordre"],
+            "properties": {
+              "code": { "type": "string", "minLength": 1 },
+              "nom": { "type": "string" },
+              "nom_latex": { "type": "string" },
+              "couleur": { "type": "string" },
+              "ordre": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "decoupage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "numero", "nom", "theme"],
+            "properties": {
+              "code": { "type": "string", "minLength": 1 },
+              "numero": { "type": "integer", "minimum": 0 },
+              "nom": { "type": "string" },
+              "nom_latex": { "type": "string" },
+              "theme": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "types_documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "libelle"],
+        "properties": { "id": { "type": "string" }, "libelle": { "type": "string" } }
+      }
+    },
+    "sequences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "parties", "documents"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "parties": { "type": "array", "items": { "$ref": "#/$defs/partie" } },
+          "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } }
+        }
+      }
+    },
+    "documents_annuels": { "type": "array", "items": { "$ref": "#/$defs/document" } },
+    "publication_figee": { "type": "boolean" }
+  },
+  "$defs": {
+    "empreinte": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "nombre": { "type": "number", "minimum": 0 },
+    "titre": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "titre"],
+      "properties": { "id": { "type": "string" }, "titre": { "type": "string" } }
+    },
+    "partie": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["numero", "libelle", "nb_seances", "nb_seances_objectifs",
+                   "objectifs", "notions", "methodes", "documents"],
+      "properties": {
+        "numero": { "type": "integer", "minimum": 0 },
+        "libelle": { "type": "string" },
+        "libelle_latex": { "type": "string" },
+        "nb_seances": { "$ref": "#/$defs/nombre" },
+        "nb_seances_objectifs": { "$ref": "#/$defs/nombre" },
+        "seances_par_serie": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["niveau_cible", "serie", "nb_seances"],
+            "properties": {
+              "niveau_cible": { "type": "string" },
+              "serie": { "type": "string" },
+              "nb_seances": { "$ref": "#/$defs/nombre" }
+            }
+          }
+        },
+        "objectifs": { "type": "array", "items": { "$ref": "#/$defs/objectif" } },
+        "notions": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
+        "methodes": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
+        "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } }
+      }
+    },
+    "objectif": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "type", "nom", "nb_seances", "fin_cycle", "criteres"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["connaissance", "capacite"] },
+        "nom": { "type": "string" },
+        "nom_latex": { "type": "string" },
+        "nb_seances": { "$ref": "#/$defs/nombre" },
+        "fin_cycle": { "type": "boolean" },
+        "criteres": { "$ref": "#/$defs/criteres" },
+        "criteres_latex": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "F": { "type": "string" }, "A": { "type": "string" }, "E": { "type": "string" } }
+        }
+      }
+    },
+    "criteres": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["F", "A", "E"],
+      "properties": { "F": { "type": "string" }, "A": { "type": "string" }, "E": { "type": "string" } }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "origine", "type", "libelle", "fichier", "placement"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "origine": { "enum": ["fichier", "compile"] },
+        "type": { "type": ["string", "null"] },
+        "libelle": { "type": "string" },
+        "fichier": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["nom", "mime", "taille"],
+          "properties": {
+            "nom": { "type": "string", "minLength": 1 },
+            "mime": { "type": "string" },
+            "taille": { "type": "integer", "minimum": 0 },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        },
+        "placement": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["seance", "retour", "delai"],
+          "properties": {
+            "seance": { "type": ["integer", "null"], "minimum": 1 },
+            "retour": { "enum": ["faire", "rendre", null] },
+            "delai": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["type", "n"],
+              "properties": {
+                "type": { "enum": ["prochaine", "jours", "semaines", "fin_creneau", "fin_partie"] },
+                "n": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

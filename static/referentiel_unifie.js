@@ -1,5 +1,5 @@
 // ============================================================================
-// static/referentiel_unifie.js — v0.49.2
+// static/referentiel_unifie.js — v0.49.2 (v0.51.1 : format d'échange)
 // Conception › Niveau › « Référentiel » : UN SEUL onglet pour tous les
 // référentiels du niveau de la portée — internes et externes, principaux et
 // MER (ancien modèle de MER compris, tant qu'il n'est pas recréé).
@@ -67,6 +67,7 @@ function refuRendre() {
   const items = tous.filter(i => (!REFU.f.annee || i.annee === REFU.f.annee)
     && (!REFU.f.type || i.type === REFU.f.type) && (!REFU.f.source || i.source === REFU.f.source));
   if (REFU.sel && !tous.some(i => i.cle === REFU.sel)) REFU.sel = null;
+  if (!REFU.sel) refuRendrePublication();          // v0.51.1
   const groupes = ['annee', 'type', 'source'].filter(k => !REFU.f[k]);
   const lib = (k, v) => k === 'annee' ? (v || 'Sans année') : ((_REFU_LIB[k] || {})[v] || v);
   const pastille = e => {
@@ -107,7 +108,60 @@ function refuChoisir(cle) {
     if (empty) empty.style.display = 'none';
   }
   refuRendre();
+  refuRendrePublication();
 }
+
+// v0.51.1 — Format d'échange : export JSON et vérification du référentiel
+// choisi (structure figée seulement ; l'ancien modèle de MER n'est pas
+// exportable). La vérification ne fige rien ; l'export d'un référentiel
+// interne verrouillé conserve sa première publication (resservie ensuite).
+function refuRendrePublication() {
+  const z = document.getElementById('refu-publication');
+  if (!z) return;
+  if (!REFU.sel) { z.style.display = 'none'; z.innerHTML = ''; return; }
+  const [k, id] = [REFU.sel.slice(0, 1), REFU.sel.slice(2)];
+  z.style.display = '';
+  if (k === 'A') {
+    z.innerHTML = `<div class="refu-pub"><span class="refu-pub-titre">Format d'échange</span>
+      <span class="refu-pub-info">Ancien modèle de MER : non exportable — à recréer dans la
+      structure figée.</span></div>`;
+    return;
+  }
+  const url = '/api/publication/referentiels/' + encodeURIComponent(id);
+  z.innerHTML = `<div class="refu-pub"><span class="refu-pub-titre">Format d'échange</span>
+    <a class="btn-sm" href="${url}.json" download>Exporter (JSON)</a>
+    <button type="button" class="btn-sm" onclick="refuVerifierPublication()">Vérifier</button>
+    <span id="refu-pub-res" class="refu-pub-info" role="status" aria-live="polite"></span></div>`;
+}
+
+async function refuVerifierPublication() {
+  const res = document.getElementById('refu-pub-res');
+  if (!REFU.sel || !res) return;
+  const id = REFU.sel.slice(2);
+  res.textContent = 'Vérification…';
+  try {
+    const r = await fetch('/api/publication/referentiels/' + encodeURIComponent(id)
+      + '/verification');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    const b = d.bilan || {};
+    if (!d.valide) {
+      res.innerHTML = '<span class="refu-pub-ko">✗ Format invalide :</span> '
+        + (d.erreurs || []).slice(0, 5).map(_refuE).join(' ; ');
+      return;
+    }
+    const sans = b.documents_sans_fichier || [];
+    res.innerHTML = '<span class="refu-pub-ok">✓ Format valide</span> — '
+      + `${b.nb_sequences} séquence(s), ${b.nb_parties} partie(s), ${b.nb_documents} document(s)`
+      + (sans.length ? ` — <span class="refu-pub-ko">${sans.length} sans fichier</span>`
+        + ` (${sans.slice(0, 3).map(_refuE).join(', ')}${sans.length > 3 ? '…' : ''})` : '')
+      + ` — empreinte <code>${_refuE(String(b.empreinte || '').slice(7, 15))}</code>`
+      + (b.publication_figee ? ' — publication figée' : '');
+  } catch (e) {
+    res.textContent = e.message;
+  }
+}
+window.refuVerifierPublication = refuVerifierPublication;
 
 function _refuRendreDetailExterne() {
   const ext = document.getElementById('refu-ext');
