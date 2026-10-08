@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.49.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.50.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -19,7 +19,17 @@
 5. Le dépôt GitHub (lolocosto/seqenseigne) contient `appli/` à la racine ; il
    est à jour à chaque livraison poussée : partir d'un `git pull`.
 
-## Chantier en cours : suivi en séance
+## Chantier en cours : documents imprimables sans LaTeX (v0.50)
+
+Hors ateliers, plus de LaTeX : pages HTML + CSS d'impression, imprimées ou
+enregistrées en PDF par le navigateur (cadrage : `doc/redemarrage_v0_50_0.md`).
+- v0.50.0 livrée : planning des automatismes, planning MER d'une classe,
+  aperçu théorique MER (`templates/impression/`, `static/impression.css`,
+  routes `/impression/...`) ; anciens PDF LaTeX en lien « ancien PDF ».
+- À venir : v0.50.1 plans de classe (SVG) ; v0.50.2 retrait des générateurs
+  LaTeX hors ateliers et de leurs routes.
+
+## Chantier précédent : suivi en séance
 
 Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - v0.42.0 livrée : navigation (Paramétrage, Système ; Suivi › Début de
@@ -123,6 +133,9 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   sur GitHub.
 - **Tests figés** : `tests/test_v0_41_1_projection_figee.py` ; ne régénérer la
   capture que pour un changement de comportement voulu, et le documenter.
+- **Documents hors ateliers** (v0.50) : HTML + `static/impression.css`
+  (gabarits `templates/impression/`, format par `@page`), jamais de LaTeX ;
+  tout dessiner en traits et texte (pas de fond, Firefox ne l'imprime pas).
 - **Établissements** : création uniquement par sélecteur + « Ajouter un
   collège » (académie dans la liste connue) ; fusion refusée si la source a un
   EdT, des indisponibilités ou une grille personnalisée.

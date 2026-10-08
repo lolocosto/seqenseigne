@@ -3,7 +3,8 @@
 API REST des progressions de mise en route « à la séance ».
 """
 
-from flask import Blueprint, jsonify, request, current_app, Response
+from flask import (Blueprint, jsonify, request, current_app, Response,
+                   render_template)
 
 from services import progression_mer as svc
 from services.progression_mer import ProgMerErreur
@@ -154,16 +155,26 @@ def api_planning(classe_id):
     })
 
 
-@bp.route("/api/classes/<classe_id>/planning-mer.pdf", methods=["GET"])
-def api_planning_pdf(classe_id):
-    """PDF A3 paysage du planning de progression MER (frise)."""
-    from services.planning_mer_detaille import assembler
-    from services.planning_mer_tex import generer_planning_tex
-    from services.compilateur_pdf import compiler_atome
-    from services.configuration import Configuration
-    from services import referentiel_externe as rx
+def _ref_nom(conn, prog) -> str:
+    """Nom du référentiel MER de la progression (ancien modèle « externe » ou
+    référentiel figé v0.49.0), '' sinon."""
+    if prog.get("ref_mer_id") and prog.get("ref_mer_source") == "externe":
+        r = conn.execute("SELECT nom FROM referentiel_externe WHERE id=?",
+                         (prog["ref_mer_id"],)).fetchone()
+        return r["nom"] if r else ""
+    if prog.get("ref_mer_id") and prog.get("ref_mer_source") == "fige":   # v0.49.0
+        from services import referentiel_principal_externe as _rpe
+        r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?",
+                         (prog["ref_mer_id"],)).fetchone()
+        return _rpe.nom_calcule(dict(r)) if r else ""
+    return ""
 
-    annee = _annee()
+
+def _planning_mer_classe(classe_id, annee):
+    """v0.50.0 — Blocs de frise du planning MER (progression) d'une classe,
+    communs au rendu imprimable HTML et à l'ancien PDF LaTeX. None si la
+    classe est inconnue."""
+    from services.planning_mer_detaille import assembler
     store = _store()
     with store._conn() as conn:
         row = conn.execute(
@@ -172,7 +183,7 @@ def api_planning_pdf(classe_id):
             "FROM classes c LEFT JOIN etablissements e "
             "ON e.id=c.etablissement_id WHERE c.id=?", (classe_id,)).fetchone()
         if row is None:
-            return jsonify({"error": "classe introuvable"}), 404
+            return None
         prog = svc.creer_ou_lire(conn, row["niveau"], annee)
         etab_id = row["eid"]
         academie = row["aca"] or ""
@@ -183,16 +194,7 @@ def api_planning_pdf(classe_id):
         affectations = aff_svc.lire_affectations(conn, classe_id, annee)
         exceptions = aff_svc.dates_exceptions(conn, classe_id, annee)
         mer_mode = row["mer_mode"] or "automatismes"
-        ref_nom = ""
-        if prog.get("ref_mer_id") and prog.get("ref_mer_source") == "externe":
-            r = conn.execute("SELECT nom FROM referentiel_externe WHERE id=?",
-                             (prog["ref_mer_id"],)).fetchone()
-            ref_nom = r["nom"] if r else ""
-        elif prog.get("ref_mer_id") and prog.get("ref_mer_source") == "fige":   # v0.49.0
-            from services import referentiel_principal_externe as _rpe
-            r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?",
-                             (prog["ref_mer_id"],)).fetchone()
-            ref_nom = _rpe.nom_calcule(dict(r)) if r else ""
+        ref_nom = _ref_nom(conn, prog)
 
     cal = ctx.calendrier(store, annee, academie)     # hors du _conn
     vacances, feries = cal["vacances"], cal["feries"]
@@ -205,7 +207,33 @@ def api_planning_pdf(classe_id):
         s["numero"] = i
     blocs = assembler(seances, parties, vacances, feries, indispos, grille,
                       classe_id, annee)
-    tex = generer_planning_tex(row["nom"], annee, ref_nom, blocs)
+    return {"classe_nom": row["nom"], "ref_nom": ref_nom, "blocs": blocs}
+
+
+@bp.route("/impression/classes/<classe_id>/planning-mer", methods=["GET"])
+def impression_planning_mer(classe_id):
+    """v0.50.0 — Planning MER (progression) imprimable, HTML A3 paysage."""
+    annee = _annee()
+    d = _planning_mer_classe(classe_id, annee)
+    if d is None:
+        return jsonify({"error": "classe introuvable"}), 404
+    return render_template("impression/planning_mer.html", annee=annee, **d)
+
+
+@bp.route("/api/classes/<classe_id>/planning-mer.pdf", methods=["GET"])
+def api_planning_pdf(classe_id):
+    """PDF A3 paysage du planning de progression MER (frise)."""
+    from services.planning_mer_tex import generer_planning_tex
+    from services.compilateur_pdf import compiler_atome
+    from services.configuration import Configuration
+    from services import referentiel_externe as rx
+
+    annee = _annee()
+    store = _store()
+    d = _planning_mer_classe(classe_id, annee)
+    if d is None:
+        return jsonify({"error": "classe introuvable"}), 404
+    tex = generer_planning_tex(d["classe_nom"], annee, d["ref_nom"], d["blocs"])
 
     if not hasattr(current_app, "configuration"):
         current_app.configuration = Configuration(store.data_dir)
@@ -224,6 +252,36 @@ def api_planning_pdf(classe_id):
     return jsonify({"error": msg}), code
 
 
+def _theorique(prog_id):
+    """v0.50.0 — (niveau, réf., parties) de l'aperçu théorique, None si la
+    progression est inconnue."""
+    store = _store()
+    with store._conn() as conn:
+        prog = conn.execute("SELECT * FROM progression_mer WHERE id=?",
+                            (prog_id,)).fetchone()
+        if prog is None:
+            return None
+        prog = svc._lire(conn, prog_id)
+        ref_nom = _ref_nom(conn, prog)
+    return {"niveau": prog.get("niveau", ""), "ref_nom": ref_nom,
+            "parties": prog.get("parties", [])}
+
+
+@bp.route("/impression/progression-mer/<prog_id>/planning-theorique",
+          methods=["GET"])
+def impression_planning_theorique(prog_id):
+    """v0.50.0 — Aperçu théorique imprimable (HTML A4 portrait)."""
+    from services.impression import lignes_theoriques
+    annee = _annee()
+    d = _theorique(prog_id)
+    if d is None:
+        return jsonify({"error": "progression introuvable"}), 404
+    lignes, total = lignes_theoriques(d["parties"])
+    return render_template("impression/planning_mer_theorique.html",
+                           annee=annee, niveau=d["niveau"],
+                           ref_nom=d["ref_nom"], lignes=lignes, total=total)
+
+
 @bp.route("/api/progression-mer/<prog_id>/planning-theorique.pdf",
           methods=["GET"])
 def api_planning_theorique_pdf(prog_id):
@@ -235,25 +293,11 @@ def api_planning_theorique_pdf(prog_id):
 
     annee = _annee()
     store = _store()
-    with store._conn() as conn:
-        prog = conn.execute("SELECT * FROM progression_mer WHERE id=?",
-                            (prog_id,)).fetchone()
-        if prog is None:
-            return jsonify({"error": "progression introuvable"}), 404
-        prog = svc._lire(conn, prog_id)
-        ref_nom = ""
-        if prog.get("ref_mer_id") and prog.get("ref_mer_source") == "externe":
-            r = conn.execute("SELECT nom FROM referentiel_externe WHERE id=?",
-                             (prog["ref_mer_id"],)).fetchone()
-            ref_nom = r["nom"] if r else ""
-        elif prog.get("ref_mer_id") and prog.get("ref_mer_source") == "fige":   # v0.49.0
-            from services import referentiel_principal_externe as _rpe
-            r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?",
-                             (prog["ref_mer_id"],)).fetchone()
-            ref_nom = _rpe.nom_calcule(dict(r)) if r else ""
-    parties = prog.get("parties", [])
+    d = _theorique(prog_id)
+    if d is None:
+        return jsonify({"error": "progression introuvable"}), 404
     tex = generer_planning_theorique_tex(
-        prog.get("niveau", ""), annee, ref_nom, parties)
+        d["niveau"], annee, d["ref_nom"], d["parties"])
 
     if not hasattr(current_app, "configuration"):
         current_app.configuration = Configuration(store.data_dir)

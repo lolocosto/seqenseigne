@@ -250,26 +250,25 @@ function merAfficherPlanning() {
   const montreProg = mode === 'progression' || mode === 'panache';
   if (cardAuto) cardAuto.style.display = montreAuto ? '' : 'none';
   if (cardProg) cardProg.style.display = montreProg ? '' : 'none';
-  if (montreAuto) _merFramePlanning(
-    'mer-planning-zone', 'mer-planning-info', 'mer-planning-dl',
+  if (montreAuto) _merFramePlanning('mer-planning',
+    '/impression/classes/' + cid + '/planning-automatismes',
     '/api/classes/' + cid + '/planning-automatismes.pdf', c);
-  if (montreProg) _merFramePlanning(
-    'mer-plan-prog-zone', 'mer-plan-prog-info', 'mer-plan-prog-dl',
+  if (montreProg) _merFramePlanning('mer-plan-prog',
+    '/impression/classes/' + cid + '/planning-mer',
     '/api/classes/' + cid + '/planning-mer.pdf', c);
 }
 
-function _merFramePlanning(zoneId, infoId, dlId, urlBase, c) {
-  const zone = document.getElementById(zoneId);
-  const info = document.getElementById(infoId);
-  const dl = document.getElementById(dlId);
+// v0.50.0 — Planning imprimable HTML (A3 paysage) au lieu du PDF LaTeX.
+// pfx : préfixe des éléments (pfx-zone, -info, -dl, -print, -ancien).
+function _merFramePlanning(pfx, urlBase, pdfBase, c) {
+  const zone = document.getElementById(pfx + '-zone');
+  const info = document.getElementById(pfx + '-info');
   if (!zone) return;
-  const url = urlBase + '?annee=' + encodeURIComponent(_merAnnee());
+  const q = '?annee=' + encodeURIComponent(_merAnnee());
   if (info) info.textContent = c ? c.nom : '';
-  const fid = zoneId + '-frame';
-  zone.innerHTML = `<iframe id="${fid}" title="Planning de ${escapeHtml(c ? c.nom : '')}"
-    style="width:100%;height:70vh;border:0;border-radius:6px"></iframe>`;
-  afficherPdfDansAppli(document.getElementById(fid), url);
-  if (dl) { dl.href = url; dl.style.display = ''; }
+  afficherImpression(zone, pfx + '-frame', 'Planning de ' + (c ? c.nom : ''),
+    urlBase + q, { dlId: pfx + '-dl', printId: pfx + '-print',
+                   ancienId: pfx + '-ancien', ancienUrl: pdfBase + q });
 }
 
 

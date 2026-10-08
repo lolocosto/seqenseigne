@@ -1,0 +1,16 @@
+{#- templates/impression/_frise.html — v0.50.0
+    Frise chronologique : une suite de cases par période de cours, un bandeau
+    par période de vacances. `case` est une macro (jour) -> contenu de la case. -#}
+{% macro frise(blocs, case, classe='') -%}
+<div class="frise {{ classe }}">
+{%- for b in blocs %}
+  {%- if b.type == 'vacances' %}
+  <div class="vacances">{{ b.nom or 'Vacances' }}</div>
+  {%- elif b.type == 'periode' %}
+  <div class="periode">
+    {%- for j in b.jours %}<span class="case case-{{ j.kind or 'vide' }}"><span class="date">{{ j.jour_court }}{% if j.creneau_code %} <b>{{ j.creneau_code }}</b>{% endif %}</span><span class="contenu">{{ case(j) }}</span></span>{% endfor %}
+  </div>
+  {%- endif %}
+{%- endfor %}
+</div>
+{%- endmacro %}

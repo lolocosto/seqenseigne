@@ -1,0 +1,27 @@
+{#- templates/impression/planning_mer.html — v0.50.0
+    Planning de progression MER d'une classe, frise A3 paysage. -#}
+{% extends "impression/base.html" %}
+{% from "impression/_frise.html" import frise %}
+{% block page_format %}A3 landscape{% endblock %}
+{% block page_marge %}1cm{% endblock %}
+{% block format_libelle %}A3 paysage{% endblock %}
+{% block titre %}Planning de progression MER — {{ classe_nom }}{% endblock %}
+{% block contenu %}
+{% macro case(j) -%}
+  {%- if j.kind == 'seance' -%}
+    {%- if j.epuise -%}<span class="ferie">--</span>
+    {%- else -%}
+      <span class="mer-libelle">{{ j.mer_libelle }}</span>
+      {%- if j.mer_rang and j.mer_nb %}<span class="mer-rang">({{ j.mer_rang }}/{{ j.mer_nb }})</span>{% endif -%}
+    {%- endif -%}
+  {%- elif j.kind == 'ferie' -%}<span class="ferie">férié</span>
+  {%- elif j.kind == 'indispo' -%}<span class="indispo">∅</span>
+  {%- endif -%}
+{%- endmacro %}
+<header class="entete">
+  <h1>Planning de progression MER</h1>
+  <p class="sous-titre">{{ classe_nom }} — année {{ annee }}{% if ref_nom %} — réf. {{ ref_nom }}{% endif %}</p>
+  <p class="legende">Sous chaque date : la partie travaillée (rang dans la partie). <span class="symbole">∅</span> = indisponible.</p>
+</header>
+{{ frise(blocs, case, 'frise-mer') }}
+{% endblock %}

@@ -49,6 +49,45 @@ async function afficherPdfDansAppli(iframe, url) {
 }
 window.afficherPdfDansAppli = afficherPdfDansAppli;
 
+// v0.50.0 — Documents imprimables hors ateliers (plannings, plans de classe) :
+// pages HTML avec feuille d'impression, affichées dans un cadre de l'appli.
+// « Imprimer / PDF » ouvre la boîte d'impression du navigateur sur le seul
+// contenu du cadre (même origine) ; repli : ouverture dans un onglet.
+function imprimerCadre(frameId) {
+  const f = document.getElementById(frameId);
+  if (!f) return;
+  try {
+    f.contentWindow.focus();
+    f.contentWindow.print();
+  } catch (e) {
+    window.open(f.src, '_blank');
+  }
+}
+window.imprimerCadre = imprimerCadre;
+
+// Affiche un document imprimable dans `zone` (iframe `frameId`) et branche les
+// contrôles associés : bouton d'impression `printId`, lien « ouvrir dans un
+// onglet » `dlId`, lien vers l'ancien PDF LaTeX `ancienId` (transition v0.50,
+// facultatif).
+function afficherImpression(zone, frameId, titre, url, opts = {}) {
+  if (!zone) return null;
+  zone.innerHTML = `<iframe id="${frameId}" title="${escapeHtml(titre || '')}"
+    style="width:100%;height:${opts.hauteur || '70vh'};border:0;border-radius:6px;background:#fff"></iframe>`;
+  const f = document.getElementById(frameId);
+  f.src = url;
+  const dl = opts.dlId && document.getElementById(opts.dlId);
+  if (dl) { dl.href = url; dl.style.display = ''; }
+  const pr = opts.printId && document.getElementById(opts.printId);
+  if (pr) { pr.onclick = () => imprimerCadre(frameId); pr.style.display = ''; }
+  const an = opts.ancienId && document.getElementById(opts.ancienId);
+  if (an) {
+    if (opts.ancienUrl) { an.href = opts.ancienUrl; an.style.display = ''; }
+    else an.style.display = 'none';
+  }
+  return f;
+}
+window.afficherImpression = afficherImpression;
+
 // v0.27.4 — L'année scolaire courante est une RÈGLE MÉTIER calculée par le
 // serveur (services/annees_scolaires). Le client ne la calcule plus : il lit la
 // valeur fournie (ANNEE_COURANTE, chargée à l'init depuis /api/annees-scolaires).

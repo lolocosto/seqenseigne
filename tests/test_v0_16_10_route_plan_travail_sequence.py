@@ -40,8 +40,10 @@ def client(tmp_path):
                 "INSERT OR IGNORE INTO cycles (code, nom) VALUES ('C04', 'Cycle 4')"
             )
             conn.execute(
-                "INSERT OR IGNORE INTO param_niveaux (niveau, cycle_code, nom_court) "
-                "VALUES ('N10', 'C04', '5e')"
+                # v0.50.0 — colonnes du schéma actuel (code, annee_dans_cycle).
+                "INSERT OR IGNORE INTO param_niveaux "
+                "(code, cycle_code, annee_dans_cycle, nom_court) "
+                "VALUES ('N10', 'C04', 'anneeun', '5ème')"
             )
     return app.test_client(), app
 

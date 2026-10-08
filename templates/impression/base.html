@@ -1,0 +1,33 @@
+<!doctype html>
+{#- templates/impression/base.html — v0.50.0
+    Page imprimable commune (hors ateliers). Chaque gabarit redéfinit les
+    blocs page_format (valeur CSS de @page size, ex. « A3 landscape »),
+    page_marge et format_libelle (rappel affiché dans la barre d'outils).
+    Rendu identique à l'écran et à l'impression ; le navigateur imprime ou
+    enregistre en PDF (aucune compilation LaTeX). -#}
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titre %}Document{% endblock %}</title>
+<script>
+  // Dans le cadre de l'application, les boutons sont ceux de l'appli.
+  try { if (window.self !== window.top) document.documentElement.classList.add('dans-cadre'); }
+  catch (e) { document.documentElement.classList.add('dans-cadre'); }
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='impression.css') }}">
+<style>
+  @page { size: {% block page_format %}A4 portrait{% endblock %}; margin: {% block page_marge %}1.5cm{% endblock %}; }
+</style>
+</head>
+<body>
+<div class="barre-impression">
+  <button type="button" onclick="window.print()">Imprimer / PDF</button>
+  <span class="aide">Format {% block format_libelle %}A4 portrait{% endblock %}. Dans Firefox : destination
+    « Enregistrer au format PDF », et décocher « En-têtes et pieds de page ».</span>
+</div>
+<main class="feuille">
+{% block contenu %}{% endblock %}
+</main>
+</body>
+</html>

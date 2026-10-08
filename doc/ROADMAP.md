@@ -224,6 +224,15 @@ Notés pour plus tard :
   les thèmes, envisager de **proposer une progression** (spiralée, par
   exemple).
 
+## Documents imprimables sans LaTeX (v0.50, en cours)
+
+But : outil « classe » sans distribution LaTeX (préalable à la mise en ligne).
+- v0.50.0 : plannings automatismes / MER / aperçu théorique en HTML (fait).
+- v0.50.1 : plans de classe en SVG.
+- v0.50.2 : retrait des générateurs `.tex` hors ateliers et des routes `.pdf`.
+- Plus tard, si un téléchargement direct de PDF devient nécessaire en ligne :
+  WeasyPrint côté serveur sur les mêmes gabarits HTML.
+
 ## Mode « pur externe » (sans LaTeX)
 
 - Préférence « Désactiver la construction de référentiels en LaTeX » : masque

@@ -1,0 +1,24 @@
+{#- templates/impression/planning_automatismes.html — v0.50.0
+    Planning des automatismes (Leitner), frise A3 paysage. -#}
+{% extends "impression/base.html" %}
+{% from "impression/_frise.html" import frise %}
+{% block page_format %}A3 landscape{% endblock %}
+{% block page_marge %}1cm{% endblock %}
+{% block format_libelle %}A3 paysage{% endblock %}
+{% block titre %}Planning des automatismes — {{ classe_nom }}{% endblock %}
+{% block contenu %}
+{% macro case(j) -%}
+  {%- if j.kind == 'seance' -%}
+    <span class="enveloppes">{% for e in j.enveloppes %}{{ {1: '①', 2: '②', 3: '③', 4: '④'}.get(e, e) }}{% if not loop.last %} {% endif %}{% else %}--{% endfor %}</span>
+  {%- elif j.kind == 'ferie' -%}<span class="ferie">férié</span>
+  {%- elif j.kind == 'indispo' -%}<span class="indispo">∅</span>
+  {%- endif -%}
+{%- endmacro %}
+<header class="entete">
+  <h1>Planning des automatismes (Leitner)</h1>
+  <p class="sous-titre">{{ classe_nom }} — année {{ annee }}</p>
+  <p class="legende">Enveloppes à réviser : ① chaque séance &nbsp; ② une séance sur deux
+    &nbsp; ③ une sur quatre &nbsp; ④ une sur huit &nbsp; <span class="symbole">∅</span> = indisponible</p>
+</header>
+{{ frise(blocs, case) }}
+{% endblock %}

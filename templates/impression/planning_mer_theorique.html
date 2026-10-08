@@ -1,0 +1,27 @@
+{#- templates/impression/planning_mer_theorique.html — v0.50.0
+    Aperçu théorique d'une progression MER (niveau), A4 portrait. -#}
+{% extends "impression/base.html" %}
+{% block page_format %}A4 portrait{% endblock %}
+{% block page_marge %}2cm{% endblock %}
+{% block format_libelle %}A4 portrait{% endblock %}
+{% block titre %}Progression MER — planning théorique{% endblock %}
+{% block contenu %}
+<header class="entete">
+  <h1>Progression MER — planning théorique</h1>
+  <p class="sous-titre">niveau {{ niveau }} — année {{ annee }}{% if ref_nom %} — réf. {{ ref_nom }}{% endif %}</p>
+  <p class="legende">Total : {{ total }} séance(s). Les dates réelles dépendent de l'emploi du temps de chaque classe.</p>
+</header>
+{% if lignes %}
+<table class="liste">
+  <thead><tr><th>Partie</th><th>Séquence</th><th class="num">Séances</th><th class="num">Nombre</th></tr></thead>
+  <tbody>
+  {%- for l in lignes %}
+    <tr><td><b>{{ l.libelle }}</b></td><td class="seq">{{ l.sequence }}</td>
+      <td class="num">{{ l.plage }}</td><td class="num">{{ l.nb }}</td></tr>
+  {%- endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="vide">Aucune partie posée.</p>
+{% endif %}
+{% endblock %}
