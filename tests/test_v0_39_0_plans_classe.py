@@ -14,7 +14,6 @@ import pytest
 from persistence.sqlite_store import SqliteStore
 from services import edt, grille_horaire as gh, salles as sv
 from services import plans_classe as pc
-from services import plan_classe_pdf as pdf
 from services.plan_salle_tikz import places_depuis_tikz
 
 ANNEE = "2026-2027"
@@ -169,36 +168,14 @@ class TestAleatoire:
         assert len(res) == 2
 
 
-class TestPdf:
-    def test_page_avec_noms_et_page_numeros(self, store, base):
-        with store._conn() as c:
-            vide = pc.lire(c, "cl", base["s302"], S40, AUJ)
-            pc.enregistrer(c, "cl", base["s302"], S40,
-                           [P("e1", 1, "impose"), P("e4", 2, confirme=0)], AUJ)
-            plein = pc.lire(c, "cl", base["s302"], S40, AUJ)
-        t_vide, t_plein = pdf.page_tikz(vide), pdf.page_tikz(plein)
-        assert "Lison" not in t_vide and "{33}" in t_vide
-        assert "\\textbf{Lison" in t_plein and "\\textit{Maëva" in t_plein
-        assert "Non placés" in t_plein and "Younes" in t_plein
-
-    def test_echappement(self):
-        assert pdf.echapper("A&B_%#") == r"A\&B\_\%\#"
-
+class TestImpression:
+    # v0.50.2 — Le rendu TikZ (page_tikz, compiler) a été retiré ; l'impression
+    # HTML + SVG est testée dans tests/test_v0_50_1_impression_plans.py.
     def test_plans_de_la_salle(self, store, base):
         with store._conn() as c:
             plans = pc.plans_de_la_salle(c, base["s302"], S40, AUJ)
             assert [p["classe"]["nom"] for p in plans] == ["4EME3"]
             assert pc.plans_de_la_salle(c, base["s310"], S40, AUJ) == []
-
-    def test_compilation_reelle(self, store, base):
-        import shutil
-        if not shutil.which("pdflatex"):
-            pytest.skip("pdflatex absent")
-        with store._conn() as c:
-            pc.enregistrer(c, "cl", base["s302"], S40, [P("e1", 1), P("e4", 2)], AUJ)
-            plans = pc.plans_de_la_salle(c, base["s302"], S40, AUJ)
-        octets = pdf.compiler(pdf.document(plans), shutil.which("pdflatex"))
-        assert octets[:4] == b"%PDF"
 
 
 class TestRoutes:

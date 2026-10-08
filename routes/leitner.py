@@ -7,8 +7,7 @@ applique la cadence Leitner (enveloppes 1..4). En mode « automatismes pur »,
 toutes les séances comptées de la classe sont des séances d'automatismes.
 """
 
-from flask import (Blueprint, jsonify, request, current_app, Response,
-                   render_template)
+from flask import Blueprint, jsonify, request, current_app, render_template
 
 from services import contexte_projection as ctx
 from services import leitner
@@ -90,7 +89,7 @@ def api_planning(classe_id):
 
 def _blocs(classe_id, annee):
     """(données, blocs de frise) du planning, ou None si classe inconnue.
-    Commun au rendu imprimable HTML (v0.50.0) et à l'ancien PDF LaTeX."""
+    Utilisé par le rendu imprimable HTML (v0.50.0)."""
     from services.planning_leitner_detaille import assembler
     data = _collecter(classe_id, annee)
     if data is None:
@@ -112,42 +111,3 @@ def impression_planning(classe_id):
     data, blocs = res
     return render_template("impression/planning_automatismes.html",
                            classe_nom=data["nom"], annee=annee, blocs=blocs)
-
-
-@bp.route("/api/classes/<classe_id>/planning-automatismes.pdf", methods=["GET"])
-def api_planning_pdf(classe_id):
-    """PDF A3 paysage du planning d'automatismes (frise), à imprimer/afficher."""
-    from services.planning_automatismes_tex import generer_planning_tex
-    from services.compilateur_pdf import compiler_atome
-    from services.configuration import Configuration
-
-    annee = _annee()
-    res = _blocs(classe_id, annee)
-    if res is None:
-        return jsonify({"error": "classe introuvable"}), 404
-    data, blocs = res
-    tex = generer_planning_tex(data["nom"], annee, blocs)
-
-    # Configuration (mise en cache sur l'app), comme les autres routes PDF.
-    if not hasattr(current_app, "configuration"):
-        current_app.configuration = Configuration(
-            current_app.json_store.data_dir)
-    config = current_app.configuration
-
-    try:
-        resultat = compiler_atome(
-            tex_source=tex,
-            pdflatex=config.chemin_pdflatex(),
-            timeout=config.timeout_compilation_court(),
-        )
-    except Exception as e:  # pragma: no cover
-        return jsonify({"error": f"Compilation impossible : {e}"}), 503
-
-    if getattr(resultat, "ok", False):
-        # Pas de Content-Disposition : le PDF s'affiche dans l'iframe (comme le
-        # rendu d'atome), au lieu d'être capté par le lecteur PDF du système.
-        return Response(resultat.pdf_bytes, mimetype="application/pdf")
-    msg = (resultat.erreurs[0].message if getattr(resultat, "erreurs", None)
-           else "Erreur de compilation.")
-    code = 503 if "pdflatex introuvable" in msg.lower() else 422
-    return jsonify({"error": msg}), code

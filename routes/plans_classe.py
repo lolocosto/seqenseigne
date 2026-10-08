@@ -1,17 +1,15 @@
 """routes/plans_classe.py — v0.39.0
 
 API des plans de classe hebdomadaires (services/plans_classe.py) et de leur
-impression (services/plan_classe_pdf.py).
+impression (v0.50.1 : HTML + SVG, services/impression.plan_svg ; le rendu
+LaTeX/TikZ a été retiré en v0.50.2).
 """
 
 from datetime import date
-from pathlib import Path
 
-from flask import (Blueprint, jsonify, request, current_app, Response,
-                   render_template)
+from flask import Blueprint, jsonify, request, current_app, render_template
 
 from services import plans_classe as svc
-from services import plan_classe_pdf as pdf
 from services.plans_classe import PlanErreur
 from services.salles import SalleErreur
 
@@ -130,26 +128,3 @@ def impression_plans():
     return render_template("impression/plans_classe.html",
                            pages=[plan_svg(p) for p in plans],
                            semaine=_date_fr(lundi))
-
-
-@bp.route("/api/plans-classe/pdf", methods=["GET"])
-def api_pdf():
-    """PDF des plans de la semaine : une classe (classe_id) ou toutes les
-    classes qui ont cours dans la salle cette semaine-là."""
-    from services.compilateur_pdf import detecter_pdflatex
-    classe_id, salle_id, lundi = _args()
-    try:
-        with _store()._conn() as conn:
-            if classe_id:
-                plans = [svc.lire(conn, classe_id, salle_id, lundi, date.today())]
-            else:
-                plans = svc.plans_de_la_salle(conn, salle_id, lundi, date.today())
-        contenu = pdf.compiler(pdf.document(plans),
-                               detecter_pdflatex(Path(current_app.root_path)))
-    except (PlanErreur, SalleErreur) as e:
-        return _erreur(e)
-    except pdf.PdfErreur as e:
-        return jsonify({"error": str(e), "code": "pdf"}), 500
-    nom = f"plans_{svc.lundi_iso(lundi)}.pdf"
-    return Response(contenu, mimetype="application/pdf",
-                    headers={"Content-Disposition": f'inline; filename="{nom}"'})

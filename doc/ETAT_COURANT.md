@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.50.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.50.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -19,7 +19,7 @@
 5. Le dépôt GitHub (lolocosto/seqenseigne) contient `appli/` à la racine ; il
    est à jour à chaque livraison poussée : partir d'un `git pull`.
 
-## Chantier en cours : documents imprimables sans LaTeX (v0.50)
+## Dernier chantier : documents imprimables sans LaTeX (v0.50, terminé)
 
 Hors ateliers, plus de LaTeX : pages HTML + CSS d'impression, imprimées ou
 enregistrées en PDF par le navigateur (cadrage : `doc/redemarrage_v0_50_0.md`).
@@ -28,9 +28,9 @@ enregistrées en PDF par le navigateur (cadrage : `doc/redemarrage_v0_50_0.md`).
   routes `/impression/...`) ; anciens PDF LaTeX en lien « ancien PDF ».
   Rendu validé par l'auteur sous Firefox.
 - v0.50.1 livrée : plans de classe en HTML + SVG (une page A4 par plan,
-  `/impression/plans-classe`).
-- À venir : v0.50.2 retrait des générateurs LaTeX hors ateliers et de leurs
-  routes.
+  `/impression/plans-classe`). Rendu validé par l'auteur.
+- v0.50.2 livrée : générateurs LaTeX hors ateliers et routes `.pdf`
+  retirés ; LaTeX ne sert plus qu'aux ateliers de conception.
 
 ## Chantier précédent : suivi en séance
 
@@ -137,7 +137,8 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - **Tests figés** : `tests/test_v0_41_1_projection_figee.py` ; ne régénérer la
   capture que pour un changement de comportement voulu, et le documenter.
 - **Documents hors ateliers** (v0.50) : HTML + `static/impression.css`
-  (gabarits `templates/impression/`, format par `@page`), jamais de LaTeX ;
+  (gabarits `templates/impression/`, format par `@page`, routes
+  `/impression/...`), jamais de LaTeX ;
   tout dessiner en traits et texte (pas de fond, Firefox ne l'imprime pas).
 - **Établissements** : création uniquement par sélecteur + « Ajouter un
   collège » (académie dans la liste connue) ; fusion refusée si la source a un

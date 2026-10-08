@@ -2,7 +2,7 @@
 //
 // Documents imprimables HTML (sans LaTeX) affichés dans un cadre de l'appli :
 // on extrait d'app.js le bloc `imprimerCadre` / `afficherImpression` et on
-// vérifie le câblage des contrôles (cadre, impression, onglet, ancien PDF).
+// vérifie le câblage des contrôles (cadre, impression, onglet).
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -23,7 +23,6 @@ beforeEach(() => {
   document.body.innerHTML = `
     <button id="x-print" style="display:none"></button>
     <a id="x-dl" style="display:none"></a>
-    <a id="x-ancien" style="display:none"></a>
     <div id="x-zone"></div>`;
   globalThis.escapeHtml = (s) => String(s).replace(/</g, '&lt;');
   // eslint-disable-next-line no-new-func
@@ -34,22 +33,13 @@ describe('afficherImpression (v0.50.0)', () => {
   it('pose un cadre sur la page HTML et branche les contrôles', () => {
     const f = window.afficherImpression(document.getElementById('x-zone'),
       'x-frame', 'Planning <4A>', '/impression/a?annee=1',
-      { dlId: 'x-dl', printId: 'x-print', ancienId: 'x-ancien',
-        ancienUrl: '/api/a.pdf?annee=1' });
+      { dlId: 'x-dl', printId: 'x-print' });
     expect(f.id).toBe('x-frame');
     expect(f.getAttribute('src')).toBe('/impression/a?annee=1');
     expect(f.getAttribute('title')).toBe('Planning <4A>');
     expect(document.getElementById('x-dl').getAttribute('href')).toBe('/impression/a?annee=1');
     expect(document.getElementById('x-dl').style.display).toBe('');
     expect(document.getElementById('x-print').style.display).toBe('');
-    expect(document.getElementById('x-ancien').getAttribute('href')).toBe('/api/a.pdf?annee=1');
-  });
-
-  it('cache le lien vers l’ancien PDF quand il n’y en a pas', () => {
-    document.getElementById('x-ancien').style.display = '';
-    window.afficherImpression(document.getElementById('x-zone'), 'x-frame',
-      't', '/impression/b', { ancienId: 'x-ancien' });
-    expect(document.getElementById('x-ancien').style.display).toBe('none');
   });
 
   it('le bouton imprime le seul contenu du cadre', () => {

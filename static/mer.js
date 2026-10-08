@@ -251,24 +251,21 @@ function merAfficherPlanning() {
   if (cardAuto) cardAuto.style.display = montreAuto ? '' : 'none';
   if (cardProg) cardProg.style.display = montreProg ? '' : 'none';
   if (montreAuto) _merFramePlanning('mer-planning',
-    '/impression/classes/' + cid + '/planning-automatismes',
-    '/api/classes/' + cid + '/planning-automatismes.pdf', c);
+    '/impression/classes/' + cid + '/planning-automatismes', c);
   if (montreProg) _merFramePlanning('mer-plan-prog',
-    '/impression/classes/' + cid + '/planning-mer',
-    '/api/classes/' + cid + '/planning-mer.pdf', c);
+    '/impression/classes/' + cid + '/planning-mer', c);
 }
 
 // v0.50.0 — Planning imprimable HTML (A3 paysage) au lieu du PDF LaTeX.
-// pfx : préfixe des éléments (pfx-zone, -info, -dl, -print, -ancien).
-function _merFramePlanning(pfx, urlBase, pdfBase, c) {
+// pfx : préfixe des éléments (pfx-zone, -info, -dl, -print).
+function _merFramePlanning(pfx, urlBase, c) {
   const zone = document.getElementById(pfx + '-zone');
   const info = document.getElementById(pfx + '-info');
   if (!zone) return;
   const q = '?annee=' + encodeURIComponent(_merAnnee());
   if (info) info.textContent = c ? c.nom : '';
   afficherImpression(zone, pfx + '-frame', 'Planning de ' + (c ? c.nom : ''),
-    urlBase + q, { dlId: pfx + '-dl', printId: pfx + '-print',
-                   ancienId: pfx + '-ancien', ancienUrl: pdfBase + q });
+    urlBase + q, { dlId: pfx + '-dl', printId: pfx + '-print' });
 }
 
 

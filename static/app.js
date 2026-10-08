@@ -67,8 +67,7 @@ window.imprimerCadre = imprimerCadre;
 
 // Affiche un document imprimable dans `zone` (iframe `frameId`) et branche les
 // contrôles associés : bouton d'impression `printId`, lien « ouvrir dans un
-// onglet » `dlId`, lien vers l'ancien PDF LaTeX `ancienId` (transition v0.50,
-// facultatif).
+// onglet » `dlId`.
 function afficherImpression(zone, frameId, titre, url, opts = {}) {
   if (!zone) return null;
   zone.innerHTML = `<iframe id="${frameId}" title="${escapeHtml(titre || '')}"
@@ -79,11 +78,6 @@ function afficherImpression(zone, frameId, titre, url, opts = {}) {
   if (dl) { dl.href = url; dl.style.display = ''; }
   const pr = opts.printId && document.getElementById(opts.printId);
   if (pr) { pr.onclick = () => imprimerCadre(frameId); pr.style.display = ''; }
-  const an = opts.ancienId && document.getElementById(opts.ancienId);
-  if (an) {
-    if (opts.ancienUrl) { an.href = opts.ancienUrl; an.style.display = ''; }
-    else an.style.display = 'none';
-  }
   return f;
 }
 window.afficherImpression = afficherImpression;

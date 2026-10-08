@@ -5,7 +5,9 @@ planning des automatismes, planning MER d'une classe, aperçu théorique MER.
 
 Le jeu de données est celui du test de non-régression de la projection
 (v0.41.1) : EdT A/B, MER panachées, vacances et fériés fictifs. On vérifie
-que la page HTML porte exactement les mêmes cases que l'ancien .tex.
+que la page HTML porte une case par jour des blocs de frise (v0.50.2 : la
+comparaison avec l'ancien .tex a disparu avec les routes PDF LaTeX ; le
+HTML lui-même est figé dans la capture v0.41.1).
 """
 import re
 
@@ -21,25 +23,17 @@ def jeu(app, client, monkeypatch):
     return client
 
 
-def _tex(client, url):
-    """Source .tex de l'ancienne route PDF (compilation court-circuitée)."""
-    from services import compilateur_pdf
-    capture = {}
+def _blocs_attendus(app, module, fonction, *args):
+    """Blocs de frise calculés par la route (même source que la page)."""
+    import importlib
+    m = importlib.import_module(module)
+    with app.test_request_context(f"/?annee={ANNEE}"):
+        return getattr(m, fonction)(*args)
 
-    class _Faux:
-        ok, erreurs = False, []
 
-    origine = compilateur_pdf.compiler_atome
-
-    def _capture(tex_source, **kw):
-        capture["tex"] = tex_source
-        return _Faux()
-    compilateur_pdf.compiler_atome = _capture
-    try:
-        client.get(url)
-    finally:
-        compilateur_pdf.compiler_atome = origine
-    return capture.get("tex", "")
+def _compter(blocs):
+    jours = [j for b in blocs if b["type"] == "periode" for j in b["jours"]]
+    return jours, sum(1 for b in blocs if b["type"] == "vacances")
 
 
 def _cases(html):
@@ -48,7 +42,7 @@ def _cases(html):
 
 # ── Planning des automatismes ────────────────────────────────────────────────
 
-def test_automatismes_page_a3_et_memes_cases_que_le_tex(jeu):
+def test_automatismes_page_a3_et_une_case_par_jour(app, jeu):
     r = jeu.get(f"/impression/classes/cl/planning-automatismes?annee={ANNEE}")
     assert r.status_code == 200
     assert r.mimetype == "text/html"
@@ -57,19 +51,17 @@ def test_automatismes_page_a3_et_memes_cases_que_le_tex(jeu):
     assert "impression.css" in html
     assert "Planning des automatismes (Leitner)" in html
     assert "4EME3 — année 2026-2027" in html
-    tex = _tex(jeu, f"/api/classes/cl/planning-automatismes.pdf?annee={ANNEE}")
+    _, blocs = _blocs_attendus(app, "routes.leitner", "_blocs", "cl", ANNEE)
+    jours, nb_vac = _compter(blocs)
     cases = _cases(html)
-    assert len(cases) == tex.count(r"\parbox[t]") > 0
-    # Mêmes bandeaux de vacances.
-    assert html.count('<div class="vacances">') == tex.count(r"\rule{\linewidth}") // 2
-    assert "Vacances" in html
-    # Enveloppes en symboles Unicode, autant que de \ding dans le .tex.
+    assert len(cases) == len(jours) > 0
+    assert cases == [j["kind"] for j in jours]
+    assert html.count('<div class="vacances">') == nb_vac > 0
+    # Enveloppes en symboles Unicode : une par enveloppe (légende exclue).
     nb_env = sum(html.count(c) for c in "①②③④")
     legende = 4   # la légende contient ①②③④
-    assert nb_env - legende == tex.count(r"\ding{") - 4
-    # Indisponibilités et fériés : autant que dans le .tex (légende exclue).
-    assert cases.count("indispo") == tex.count(r"\varnothing") - 1
-    assert cases.count("ferie") == tex.count("férié")
+    assert nb_env - legende == sum(len(j.get("enveloppes") or [])
+                                   for j in jours if j["kind"] == "seance")
 
 
 def test_automatismes_classe_inconnue_404(jeu):
@@ -88,16 +80,18 @@ def test_nom_de_classe_echappe(app, jeu):
 
 # ── Planning MER d'une classe ────────────────────────────────────────────────
 
-def test_planning_mer_page_a3_et_memes_cases_que_le_tex(jeu):
+def test_planning_mer_page_a3_et_une_case_par_jour(app, jeu):
     r = jeu.get(f"/impression/classes/cl/planning-mer?annee={ANNEE}")
     assert r.status_code == 200
     html = r.get_data(as_text=True)
     assert "@page { size: A3 landscape; margin: 1cm; }" in html
     assert "Planning de progression MER" in html
     assert 'class="frise frise-mer"' in html
-    tex = _tex(jeu, f"/api/classes/cl/planning-mer.pdf?annee={ANNEE}")
-    assert len(_cases(html)) == tex.count(r"\parbox[t]") > 0
-    assert html.count('<div class="vacances">') == tex.count(r"\rule{\linewidth}") // 2
+    d = _blocs_attendus(app, "routes.progression_mer", "_planning_mer_classe",
+                        "cl", ANNEE)
+    jours, nb_vac = _compter(d["blocs"])
+    assert _cases(html) == [j["kind"] for j in jours] and jours
+    assert html.count('<div class="vacances">') == nb_vac > 0
 
 
 def test_planning_mer_classe_inconnue_404(jeu):

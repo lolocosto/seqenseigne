@@ -3,7 +3,7 @@
 // Plans de classe hebdomadaires (Planification › Plans de classe).
 // Backend : /api/plans-classe (GET/PUT/DELETE), /api/plans-classe/salles,
 //           /api/plans-classe/aleatoire (POST), /impression/plans-classe
-//           (v0.50.1, HTML imprimable ; ancien /api/plans-classe/pdf).
+//           (v0.50.1, HTML imprimable).
 // Géométrie des places : window.SallesPur (static/salles_pur.js).
 //
 // Interaction (validée) :
@@ -180,9 +180,7 @@ function _pcRendreOutils() {
     ${p.source === 'saisi' ? `<button class="btn-sm" onclick="pcReinitialiser()"${ro}>Annuler le plan de la semaine</button>` : ''}
     <span class="pc-espace"></span>
     <a class="btn-sm" target="_blank" href="/impression/plans-classe?classe_id=${encodeURIComponent(PC.classeId)}&${q}">Imprimer ce plan</a>
-    <a class="btn-sm" target="_blank" href="/impression/plans-classe?${q}">Imprimer les plans de la salle</a>
-    <a class="pc-ancien-pdf" target="_blank" href="/api/plans-classe/pdf?classe_id=${encodeURIComponent(PC.classeId)}&${q}"
-       title="Ancien rendu LaTeX, conservé pendant la transition v0.50">ancien PDF</a>`;
+    <a class="btn-sm" target="_blank" href="/impression/plans-classe?${q}">Imprimer les plans de la salle</a>`;
 }
 
 function _pcInfoAesh() {

@@ -3,8 +3,7 @@
 API REST des progressions de mise en route « à la séance ».
 """
 
-from flask import (Blueprint, jsonify, request, current_app, Response,
-                   render_template)
+from flask import Blueprint, jsonify, request, current_app, render_template
 
 from services import progression_mer as svc
 from services.progression_mer import ProgMerErreur
@@ -172,8 +171,7 @@ def _ref_nom(conn, prog) -> str:
 
 def _planning_mer_classe(classe_id, annee):
     """v0.50.0 — Blocs de frise du planning MER (progression) d'une classe,
-    communs au rendu imprimable HTML et à l'ancien PDF LaTeX. None si la
-    classe est inconnue."""
+    pour le rendu imprimable HTML. None si la classe est inconnue."""
     from services.planning_mer_detaille import assembler
     store = _store()
     with store._conn() as conn:
@@ -220,38 +218,6 @@ def impression_planning_mer(classe_id):
     return render_template("impression/planning_mer.html", annee=annee, **d)
 
 
-@bp.route("/api/classes/<classe_id>/planning-mer.pdf", methods=["GET"])
-def api_planning_pdf(classe_id):
-    """PDF A3 paysage du planning de progression MER (frise)."""
-    from services.planning_mer_tex import generer_planning_tex
-    from services.compilateur_pdf import compiler_atome
-    from services.configuration import Configuration
-    from services import referentiel_externe as rx
-
-    annee = _annee()
-    store = _store()
-    d = _planning_mer_classe(classe_id, annee)
-    if d is None:
-        return jsonify({"error": "classe introuvable"}), 404
-    tex = generer_planning_tex(d["classe_nom"], annee, d["ref_nom"], d["blocs"])
-
-    if not hasattr(current_app, "configuration"):
-        current_app.configuration = Configuration(store.data_dir)
-    config = current_app.configuration
-    try:
-        resultat = compiler_atome(tex_source=tex,
-                                  pdflatex=config.chemin_pdflatex(),
-                                  timeout=config.timeout_compilation_court())
-    except Exception as e:  # pragma: no cover
-        return jsonify({"error": f"Compilation impossible : {e}"}), 503
-    if getattr(resultat, "ok", False):
-        return Response(resultat.pdf_bytes, mimetype="application/pdf")
-    msg = (resultat.erreurs[0].message if getattr(resultat, "erreurs", None)
-           else "Erreur de compilation.")
-    code = 503 if "pdflatex introuvable" in msg.lower() else 422
-    return jsonify({"error": msg}), code
-
-
 def _theorique(prog_id):
     """v0.50.0 — (niveau, réf., parties) de l'aperçu théorique, None si la
     progression est inconnue."""
@@ -280,37 +246,3 @@ def impression_planning_theorique(prog_id):
     return render_template("impression/planning_mer_theorique.html",
                            annee=annee, niveau=d["niveau"],
                            ref_nom=d["ref_nom"], lignes=lignes, total=total)
-
-
-@bp.route("/api/progression-mer/<prog_id>/planning-theorique.pdf",
-          methods=["GET"])
-def api_planning_theorique_pdf(prog_id):
-    """PDF A3 du planning THÉORIQUE (niveau) : les parties enchaînées sur des
-    séances numérotées (sans dates réelles, puisque non rattaché à une classe)."""
-    from services.planning_mer_tex import generer_planning_theorique_tex
-    from services.compilateur_pdf import compiler_atome
-    from services.configuration import Configuration
-
-    annee = _annee()
-    store = _store()
-    d = _theorique(prog_id)
-    if d is None:
-        return jsonify({"error": "progression introuvable"}), 404
-    tex = generer_planning_theorique_tex(
-        d["niveau"], annee, d["ref_nom"], d["parties"])
-
-    if not hasattr(current_app, "configuration"):
-        current_app.configuration = Configuration(store.data_dir)
-    config = current_app.configuration
-    try:
-        resultat = compiler_atome(tex_source=tex,
-                                  pdflatex=config.chemin_pdflatex(),
-                                  timeout=config.timeout_compilation_court())
-    except Exception as e:  # pragma: no cover
-        return jsonify({"error": f"Compilation impossible : {e}"}), 503
-    if getattr(resultat, "ok", False):
-        return Response(resultat.pdf_bytes, mimetype="application/pdf")
-    msg = (resultat.erreurs[0].message if getattr(resultat, "erreurs", None)
-           else "Erreur de compilation.")
-    code = 503 if "pdflatex introuvable" in msg.lower() else 422
-    return jsonify({"error": msg}), code

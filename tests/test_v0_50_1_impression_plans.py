@@ -1,7 +1,7 @@
 """tests/test_v0_50_1_impression_plans.py — v0.50.1
 
 Plans de classe imprimables en HTML + SVG (sans LaTeX) : même contenu que
-l'ancien rendu TikZ (services/plan_classe_pdf.page_tikz) — places, noms,
+l'ancien rendu TikZ (retiré en v0.50.2) — places, noms,
 gras / italique, numéros, AESH, non placés —, une page A4 par plan.
 
 Jeu de données : celui de tests/test_v0_39_0_plans_classe.py (salle 302
@@ -10,7 +10,6 @@ réelle, 33 places, 4 élèves fictifs).
 from datetime import date
 
 from services import plans_classe as pc
-from services import plan_classe_pdf as pdf
 from services import salles as sv, edt, grille_horaire as gh
 from services.impression import plan_svg
 
@@ -27,10 +26,6 @@ def test_plan_sans_eleve_place_numeros_seuls(store, base):
     assert page["titre"] == "Plan de la salle 302 — 4EME3 — semaine du 28/09/2026"
     assert len(page["places"]) == 33 == len(_places(page, "num"))
     assert not page["avec_noms"] and page["non_places"] == []
-    # Même nombre de places que le dessin TikZ.
-    with store._conn() as c:
-        tikz = pdf.page_tikz(pc.lire(c, "cl", base["s302"], S40, AUJ))
-    assert tikz.count("\\draw[rotate around") == len(page["places"])
     # Tient dans la page A4 (17 × 21 cm utiles), proportions conservées.
     assert page["largeur_cm"] <= 17.0 and page["hauteur_cm"] <= 21.0
     _, _, vw, vh = map(float, page["viewbox"].split())

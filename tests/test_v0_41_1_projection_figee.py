@@ -12,6 +12,10 @@ indisponibilité, MER, vacances et fériés fictifs) : la capture a été faite
 AVANT le refactor (tests/fixtures/snapshot_projection_v0_41_1.json) et doit
 rester identique après.
 
+v0.50.2 : entrées « tex_planning_* » (anciens PDF LaTeX) remplacées par
+« html_planning_* » (pages imprimables HTML) ; le reste de la capture est
+inchangé (modification ciblée du fichier, sans régénération complète).
+
 Régénérer la capture (uniquement si un changement de comportement est VOULU) :
     python tests/test_v0_41_1_projection_figee.py --regenerer
 """
@@ -97,29 +101,15 @@ def _capturer(client, app):
     ]:
         r = client.get(url)
         sorties[nom] = {"statut": r.status_code, "json": r.get_json()}
-    # Routes PDF : on capture le .tex généré (la compilation est court-circuitée).
-    from services import compilateur_pdf
-    capture_tex = {}
-
-    class _Faux:
-        ok, erreurs = False, []
-
-    origine = compilateur_pdf.compiler_atome
-
-    def _capture(tex_source, **kw):
-        capture_tex["tex"] = tex_source
-        return _Faux()
-    compilateur_pdf.compiler_atome = _capture
-    try:
-        for nom, url in [
-            ("tex_planning_mer", f"/api/classes/cl/planning-mer.pdf?annee={ANNEE}"),
-            ("tex_planning_automatismes", f"/api/classes/cl/planning-automatismes.pdf?annee={ANNEE}"),
-        ]:
-            capture_tex.clear()
-            client.get(url)
-            sorties[nom] = capture_tex.get("tex", "")
-    finally:
-        compilateur_pdf.compiler_atome = origine
+    # v0.50.2 — Les plannings imprimables sont des pages HTML (les routes
+    # PDF LaTeX, capturées ici sous forme de .tex jusqu'en v0.50.1, ont été
+    # retirées) : on fige le HTML produit, validé par l'auteur en v0.50.0.
+    for nom, url in [
+        ("html_planning_mer", f"/impression/classes/cl/planning-mer?annee={ANNEE}"),
+        ("html_planning_automatismes",
+         f"/impression/classes/cl/planning-automatismes?annee={ANNEE}"),
+    ]:
+        sorties[nom] = client.get(url).get_data(as_text=True)
     sorties["apercu_edt"] = edt_apercu.apercu(
         app.json_store, ANNEE, {"etablissement_id": "et", "operation": "supprimer",
                                 "edt_id": _id_case(app, "lun", "M1"),

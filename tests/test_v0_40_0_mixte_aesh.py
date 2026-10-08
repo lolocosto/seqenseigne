@@ -18,7 +18,7 @@ from persistence.sqlite_store import SqliteStore
 from services import edt, grille_horaire as gh, salles as sv
 from services import eleves_sexe
 from services import plans_classe as pc
-from services import plan_classe_pdf as pdf
+from services.impression import plan_svg
 from services.plan_salle_tikz import places_depuis_tikz
 
 ANNEE = "2026-2027"
@@ -182,8 +182,10 @@ class TestAesh:
             # 3 garçons, 3 filles : 3 paires mixtes au moins sont atteignables.
             assert pc.score_mixite(r, p["voisins"], {e["id"]: e["sexe"] for e in p["eleves"]}) >= 3
 
-    def test_pdf_affiche_aesh(self, store, base):
+    def test_impression_affiche_aesh(self, store, base):
+        # v0.50.2 — impression HTML + SVG (le rendu TikZ a été retiré).
         with store._conn() as c:
             pc.enregistrer(c, "cl", base, S40, [P("e0", 1)], AUJ, reservations=[2])
-            t = pdf.page_tikz(pc.lire(c, "cl", base, S40, AUJ))
-        assert "{AESH}" in t
+            page = plan_svg(pc.lire(c, "cl", base, S40, AUJ))
+        assert [p["lignes"][0]["texte"] for p in page["places"]
+                if p["classe"] == "aesh"] == ["AESH"]

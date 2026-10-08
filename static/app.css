@@ -4312,7 +4312,6 @@ textarea.latex-textarea {
   border-bottom: 1px solid var(--border);
 }
 .pc-outils a.btn-sm { text-decoration: none; color: inherit; }
-.pc-outils a.pc-ancien-pdf { font-size: 11px; color: var(--text-secondary); }  /* v0.50.1, transition */
 .pc-espace { flex: 1; }
 .pc-source { font-size: 12px; padding: 2px 9px; border-radius: 10px; background: #f1f5f9; color: var(--text-secondary); }
 .pc-source-reconduit { background: #fef3c7; color: #78350f; }

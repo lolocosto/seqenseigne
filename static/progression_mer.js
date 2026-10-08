@@ -184,8 +184,8 @@ function progMerAfficherPlanning() {
   const posees = PROGMER && PROGMER.parties || [];
   if (!posees.length) {
     if (dl) dl.style.display = 'none';
-    ['progmer-plan-print', 'progmer-plan-ancien'].forEach(id => {
-      const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    const pr = document.getElementById('progmer-plan-print');
+    if (pr) pr.style.display = 'none';
     zone.innerHTML = '<p style="font-size:13px;color:#999;padding:16px;'
       + 'text-align:center">Posez des parties pour afficher l\'aperçu.</p>';
     return;
@@ -198,9 +198,7 @@ function progMerAfficherPlanning() {
   afficherImpression(zone, 'progmer-plan-frame',
     'Aperçu théorique de la progression MER',
     '/impression/progression-mer/' + PROGMER.id + '/planning-theorique' + q,
-    { hauteur: '55vh', dlId: 'progmer-plan-dl', printId: 'progmer-plan-print',
-      ancienId: 'progmer-plan-ancien',
-      ancienUrl: '/api/progression-mer/' + PROGMER.id + '/planning-theorique.pdf' + q });
+    { hauteur: '55vh', dlId: 'progmer-plan-dl', printId: 'progmer-plan-print' });
 }
 
 
