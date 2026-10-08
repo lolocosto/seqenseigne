@@ -91,14 +91,18 @@ from routes.paquet import bp as bp_paquet  # v0.13.7.1
 from routes.images import bp as bp_images  # v0.13.7.4
 from routes.recherche import bp as bp_recherche  # v0.18.1
 
-def create_app(data_dir: Path | None = None) -> Flask:
+def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask:
     """
     Fabrique de l'application Flask.
     data_dir : chemin du dossier data/ (défaut : <dossier de app.py>/data)
+    profil   : « complet » (défaut), « atelier » ou « classe » (v0.51.0) ;
+               sinon lu dans la variable d'environnement SEQ_PROFIL.
     Utilisé tel quel en production et injecté avec un dossier temporaire dans les tests.
     """
     root = Path(__file__).parent
     data_dir = data_dir or (root / "data")
+    from services import profils
+    profil = profils.profil_courant(profil)
 
     app = Flask(
         __name__,
@@ -141,7 +145,11 @@ def create_app(data_dir: Path | None = None) -> Flask:
                bp_paquet,  # v0.13.7.1
                bp_images,  # v0.13.7.4
                bp_recherche):  # v0.18.1
-        app.register_blueprint(bp)
+        # v0.51.0 — Un blueprint étranger au profil n'est pas enregistré.
+        if profils.blueprint_enregistre(bp.name, profil):
+            app.register_blueprint(bp)
+    # v0.51.0 — Garde de profil sur les routes restantes (no-op en complet).
+    profils.installer_garde(app, profil)
 
     # ── Page principale ───────────────────────────────────────────────────────
     @app.route("/")
@@ -189,9 +197,15 @@ if __name__ == "__main__":
     #   - usage local classique : rien à faire (debug désactivé, plus sûr) ;
     #   - pour déboguer ponctuellement : SEQ_DEBUG=1 python app.py
     debug = os.environ.get("SEQ_DEBUG", "") == "1"
+    # v0.51.0 — Profil (SEQ_PROFIL) et port (SEQ_PORT ; défaut 5001 pour le
+    # profil classe, 5000 sinon, pour faire tourner atelier et classe ensemble).
+    from services.profils import profil_courant
+    profil = profil_courant()
+    port = int(os.environ.get("SEQ_PORT") or (5001 if profil == "classe" else 5000))
     print("\n  seqenseigne — suivi de progression")
-    print("  Ouvrir : http://localhost:5000")
+    print(f"  Profil : {profil}")
+    print(f"  Ouvrir : http://localhost:{port}")
     if debug:
         print("  (mode debug ACTIVÉ via SEQ_DEBUG=1 — ne pas exposer)")
     print()
-    create_app().run(debug=debug, port=5000)
+    create_app(profil=profil).run(debug=debug, port=port)

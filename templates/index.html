@@ -1,27 +1,32 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-profil="{{ profil }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>seqenseigne — suivi de progression</title>
+  <title>seqenseigne{% if profil == 'atelier' %} — atelier{% elif profil == 'classe' %} — classe{% else %} — suivi de progression{% endif %}</title>
+  <!-- v0.51.0 — Profil de lancement (complet / atelier / classe) : les
+       éléments marqués data-profils="…" ne s'affichent que dans ces profils
+       (règle dans app.css ; tout est visible en profil complet). -->
+  <script>window.SEQ_PROFIL = {{ profil | tojson }};</script>
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
 
 <header>
   <div class="header-inner">
-    <span class="logo">seqenseigne</span>
+    <span class="logo">seqenseigne{% if profil != 'complet' %} <span class="logo-profil">{{ profil }}</span>{% endif %}</span>
     <nav class="tabs" role="tablist" aria-label="Sections principales">
       <button class="tab active" data-tab="accueil" role="tab" aria-selected="true">Tableau de bord</button>
-      <button class="tab" data-tab="classe" role="tab" aria-selected="false">Suivi</button>
-      <button class="tab" data-tab="planification" role="tab" aria-selected="false">Planification</button>
-      <button class="tab" data-tab="ateliers" role="tab" aria-selected="false">Conception de référentiel</button>
+      <button class="tab" data-tab="classe" data-profils="classe" role="tab" aria-selected="false">Suivi</button>
+      <button class="tab" data-tab="planification" data-profils="classe" role="tab" aria-selected="false">Planification</button>
+      <button class="tab" data-tab="ateliers" data-profils="atelier" role="tab" aria-selected="false">Conception de référentiel</button>
       <!-- v0.42.0 — Paramétrage (pédagogique : classes, établissements, salles,
            observables) et Système (l'appli : administration, préférences). -->
-      <button class="tab" data-tab="parametrage" role="tab" aria-selected="false">Paramétrage</button>
+      <button class="tab" data-tab="parametrage" data-profils="classe" role="tab" aria-selected="false">Paramétrage</button>
       <button class="tab" data-tab="systeme" role="tab" aria-selected="false">Système</button>
     </nav>
-    <div class="header-actions">
+    <!-- v0.51.0 — Export / import JSON du suivi des classes : côté classe. -->
+    <div class="header-actions" data-profils="classe">
       <button id="btn-export" class="btn-sm">Exporter</button>
       <label class="btn-sm" style="cursor:pointer">Importer
         <input type="file" id="inp-import" accept=".json" style="display:none">
@@ -36,7 +41,9 @@
   <div style="padding:12px 16px;max-width:1200px">
     <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
       <h2 style="margin:0">Tableau de bord</h2>
-      <span style="font-size:12px;color:var(--text-secondary)">Vue d'ensemble — suivi et conception</span>
+      <span style="font-size:12px;color:var(--text-secondary)" data-profils="complet">Vue d'ensemble — suivi et conception</span>
+      <span style="font-size:12px;color:var(--text-secondary)" data-profils="atelier">Pilotage de la conception des référentiels</span>
+      <span style="font-size:12px;color:var(--text-secondary)" data-profils="classe">Pilotage de l'activité des classes</span>
     </div>
 
     <!-- Barre d'actions rapides (hors grille de tuiles) -->
@@ -48,18 +55,18 @@
     </div>
     <div id="tdb-tuiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
       <!-- Tuile : séances de la semaine -->
-      <div class="card" style="margin:0">
+      <div class="card" style="margin:0" data-profils="classe">
         <div style="font-size:14px;font-weight:600;margin-bottom:8px">Séances de la semaine
           <span id="tdb-semaine-dates" style="font-weight:normal;color:#888;font-size:12px"></span></div>
         <div id="tdb-seances"></div>
       </div>
       <!-- Tuile : atomes en cours (conception) -->
-      <div class="card" style="margin:0">
+      <div class="card" style="margin:0" data-profils="atelier">
         <div style="font-size:14px;font-weight:600;margin-bottom:8px">Conception — atomes à finaliser</div>
         <div id="tdb-atomes"></div>
       </div>
       <!-- Tuile : éléments non rattachés (conception) -->
-      <div class="card" style="margin:0">
+      <div class="card" style="margin:0" data-profils="atelier">
         <div style="font-size:14px;font-weight:600;margin-bottom:8px">Conception — éléments non rattachés</div>
         <div id="tdb-non-rattaches"></div>
       </div>
@@ -2688,12 +2695,12 @@
 <main id="tab-admin" class="tab-content" style="display:none">
 
   <div class="sub-tabs">
-    <button class="sub-tab active" id="admin-importref-btn" onclick="adminSousOnglet('importref')">Import référence</button>
-    <button class="sub-tab" id="admin-importpaquet-btn" onclick="adminSousOnglet('importpaquet')">Import mise en forme</button>
-    <button class="sub-tab" id="admin-images-btn" onclick="adminSousOnglet('images')">Images</button>
-    <button class="sub-tab" id="admin-importfiches-btn" onclick="adminSousOnglet('importfiches')">Import fiches</button>
-    <button class="sub-tab" id="admin-bdd-btn" onclick="adminSousOnglet('bdd')">Base de données</button>
-    <button class="sub-tab" id="admin-importsuivi-btn" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
+    <button class="sub-tab active" id="admin-importref-btn" data-profils="atelier" onclick="adminSousOnglet('importref')">Import référence</button>
+    <button class="sub-tab" id="admin-importpaquet-btn" data-profils="atelier" onclick="adminSousOnglet('importpaquet')">Import mise en forme</button>
+    <button class="sub-tab" id="admin-images-btn" data-profils="atelier" onclick="adminSousOnglet('images')">Images</button>
+    <button class="sub-tab" id="admin-importfiches-btn" data-profils="atelier" onclick="adminSousOnglet('importfiches')">Import fiches</button>
+    <button class="sub-tab" id="admin-bdd-btn" data-profils="atelier classe" onclick="adminSousOnglet('bdd')">Base de données</button>
+    <button class="sub-tab" id="admin-importsuivi-btn" data-profils="complet" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
   </div>
 
   <!-- ── Sous-onglet : import .tex ── -->
@@ -2984,7 +2991,7 @@
     </div>
 
     <!-- v0.10.3 — Auto-import des cycles depuis CSV ─────────────────────── -->
-    <div class="card" style="margin-bottom:12px">
+    <div class="card" style="margin-bottom:12px" data-profils="atelier">
       <div style="font-size:13px;font-weight:500;margin-bottom:8px">
         Auto-import des cycles
       </div>
@@ -3020,7 +3027,7 @@
 
       <div style="display:flex;flex-direction:column;gap:10px">
 
-        <div class="admin-reset-row">
+        <div class="admin-reset-row" data-profils="atelier">
           <div>
             <div style="font-size:12px;font-weight:500">Données de référence</div>
             <div style="font-size:11px;color:var(--text-secondary)">
@@ -3033,7 +3040,7 @@
           </button>
         </div>
 
-        <div class="admin-reset-row">
+        <div class="admin-reset-row" data-profils="atelier">
           <div>
             <div style="font-size:12px;font-weight:500">Mise en forme LaTeX</div>
             <div style="font-size:11px;color:var(--text-secondary)">
@@ -3046,7 +3053,7 @@
           </button>
         </div>
 
-        <div class="admin-reset-row">
+        <div class="admin-reset-row" data-profils="classe">
           <div>
             <div style="font-size:12px;font-weight:500">Données de suivi</div>
             <div style="font-size:11px;color:var(--text-secondary)">
@@ -3059,7 +3066,7 @@
           </button>
         </div>
 
-        <div class="admin-reset-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+        <div class="admin-reset-row" data-profils="complet" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
           <div>
             <div style="font-size:12px;font-weight:500;color:var(--danger)">Tout réinitialiser</div>
             <div style="font-size:11px;color:var(--text-secondary)">
@@ -3205,7 +3212,7 @@
   <div class="preferences-bloc">
     <h2>Préférences</h2>
 
-    <div class="pref-categorie">
+    <div class="pref-categorie" data-profils="atelier">
       <div class="pref-categorie-titre">Ateliers d'édition</div>
       <div class="pref-cat" data-pref-cat="edition-rendu-pdf">
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Rendu PDF</div>
@@ -3301,7 +3308,7 @@
       </div>
     </div>
 
-    <div class="pref-categorie">
+    <div class="pref-categorie" data-profils="atelier">
       <div class="pref-categorie-titre">Atelier d'assemblage</div>
       <div class="pref-cat" data-pref-cat="assemblage-sequence">
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Séquence</div>
@@ -3352,7 +3359,7 @@
     </div>
 
     <!-- v0.48.3 — Types des documents attachés aux référentiels externes -->
-    <div class="pref-categorie">
+    <div class="pref-categorie" data-profils="atelier">
       <div class="pref-categorie-titre">Référentiels externes</div>
       <div class="pref-cat" data-pref-cat="referentiels-types-documents">
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Types de documents</div>
@@ -3373,7 +3380,7 @@
       </div>
     </div>
 
-    <div class="pref-categorie">
+    <div class="pref-categorie" data-profils="classe">
       <div class="pref-categorie-titre">Progression à la séance</div>
       <div class="pref-cat" data-pref-cat="seance-types-mise-en-route">
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Types de mise en route</div>
@@ -3400,7 +3407,7 @@
       </div>
     </div>
 
-    <div class="pref-categorie">
+    <div class="pref-categorie" data-profils="atelier">
       <div class="pref-categorie-titre">Outils</div>
       <div class="pref-cat" data-pref-cat="outils-rendu-par-lot">
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Rendu par lot</div>
@@ -3475,7 +3482,7 @@
       </div>
     </div>
 
-    <div class="pref-categorie">
+    <div class="pref-categorie" data-profils="atelier">
       <div class="pref-categorie-titre">Application</div>
       <div class="pref-cat" data-pref-cat="application-chemins">
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Chemins</div>

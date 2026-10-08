@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.50.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -19,7 +19,17 @@
 5. Le dépôt GitHub (lolocosto/seqenseigne) contient `appli/` à la racine ; il
    est à jour à chaque livraison poussée : partir d'un `git pull`.
 
-## Dernier chantier : documents imprimables sans LaTeX (v0.50, terminé)
+## Chantier en cours : séparation en deux outils (v0.51)
+
+Cadrage : `doc/redemarrage_v0_51_0.md`. Appli locale « atelier » (conception,
+LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
+- v0.51.0 livrée : profils `complet` (défaut) / `atelier` / `classe`
+  (`services/profils.py`, `lancer.bat atelier|classe`).
+- À venir : v0.51.1 format JSON des référentiels ; v0.51.2 paquet de
+  publication ; v0.51.3 import côté classe ; v0.51.4 bascule ; v0.52 mise en
+  ligne (authentification, HTTPS, VPS) puis API de publication.
+
+## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)
 
 Hors ateliers, plus de LaTeX : pages HTML + CSS d'impression, imprimées ou
 enregistrées en PDF par le navigateur (cadrage : `doc/redemarrage_v0_50_0.md`).
@@ -136,6 +146,9 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   sur GitHub.
 - **Tests figés** : `tests/test_v0_41_1_projection_figee.py` ; ne régénérer la
   capture que pour un changement de comportement voulu, et le documenter.
+- **Profils** (v0.51) : toute nouvelle route doit avoir une catégorie
+  (`services/profils.py` : blueprint ou exception dans `ENDPOINTS`) ; tout
+  nouvel élément d'interface propre à un côté porte `data-profils="…"`.
 - **Documents hors ateliers** (v0.50) : HTML + `static/impression.css`
   (gabarits `templates/impression/`, format par `@page`, routes
   `/impression/...`), jamais de LaTeX ;

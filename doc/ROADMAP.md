@@ -224,6 +224,26 @@ Notés pour plus tard :
   les thèmes, envisager de **proposer une progression** (spiralée, par
   exemple).
 
+## Séparation en deux outils (v0.51, en cours)
+
+Appli locale « atelier » (conception de tous les référentiels, LaTeX) et appli
+en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
+- v0.51.0 : profils complet / atelier / classe (fait).
+- v0.51.1 : format JSON des référentiels (schéma versionné, documenté) — base
+  de la future API.
+- v0.51.2 : paquet de publication (JSON + PDF compilés + fichiers externes,
+  empreintes, rapport) ; tuile « Publication » au tableau de bord atelier.
+- v0.51.3 : import côté classe (structure en lecture seule, rapport des
+  changements, documents orphelins signalés).
+- v0.51.4 : bascule des données de classe vers une base « classe » séparée.
+- v0.52.x : mise en ligne — compte unique (mot de passe haché, second
+  facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).
+- Tableau de bord atelier : pilotage de la conception (état des
+  référentiels, compilation, publication) à enrichir dès la v0.51.2.
+- Import suivi (classes historiques) : profil complet seulement, à retirer
+  après la bascule.
+- Multi-utilisateur (collègues) : plus tard, chantier à part.
+
 ## Documents imprimables sans LaTeX (v0.50, terminé)
 
 But : outil « classe » sans distribution LaTeX (préalable à la mise en ligne).

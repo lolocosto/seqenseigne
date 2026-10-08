@@ -23,15 +23,39 @@ REM        --racine . --generer --manifest appli_inventaire.txt
 REM
 REM  Pour outrepasser temporairement la verification (cas exceptionnel) :
 REM     .\lancer.bat --skip-verify
+REM
+REM  v0.51.0 - Profil de lancement (premier ou second parametre) :
+REM     .\lancer.bat              profil complet, port 5000 (comme avant)
+REM     .\lancer.bat atelier      conception des referentiels, port 5000
+REM     .\lancer.bat classe       suivi des classes, port 5001
+REM  Les deux profils peuvent tourner en meme temps (deux fenetres).
+REM  Exemple combine : .\lancer.bat classe --skip-verify
 REM ============================================================================
 
 echo.
 echo  seqenseigne
 echo.
 
+REM --- v0.51.0 : lecture des parametres (profil, --skip-verify) ---------------
+set "SEQ_PROFIL=complet"
+set "SEQ_PORT=5000"
+set "SKIP_VERIFY="
+:lire_params
+if "%~1"=="" goto :params_lus
+if /I "%~1"=="--skip-verify" set "SKIP_VERIFY=1"
+if /I "%~1"=="--no-verify"   set "SKIP_VERIFY=1"
+if /I "%~1"=="complet"       set "SEQ_PROFIL=complet"
+if /I "%~1"=="atelier"       set "SEQ_PROFIL=atelier"
+if /I "%~1"=="classe"        set "SEQ_PROFIL=classe"
+shift
+goto :lire_params
+:params_lus
+if /I "%SEQ_PROFIL%"=="classe" set "SEQ_PORT=5001"
+title seqenseigne - %SEQ_PROFIL%
+echo  Profil : %SEQ_PROFIL%
+
 REM --- Detection de l'option --skip-verify ------------------------------------
-if /I "%~1"=="--skip-verify" goto :launch_skip
-if /I "%~1"=="--no-verify"   goto :launch_skip
+if "%SKIP_VERIFY%"=="1" goto :launch_skip
 
 REM --- Verification des prerequis --------------------------------------------
 if not exist "appli_inventaire.txt"   goto :err_no_manifest
@@ -60,7 +84,7 @@ echo.
 goto :launch
 
 :launch
-echo  Demarrage du serveur sur http://localhost:5000
+echo  Demarrage du serveur sur http://localhost:%SEQ_PORT%
 echo  (Ctrl+C pour arreter)
 echo.
 "..\outils\python\python.exe" app.py

@@ -27,6 +27,22 @@ let ANNEE_COURANTE = '';  // v0.27.4 — année scolaire courante fournie par le
 // décalés reçus du serveur. L'ancienne fonction appliquerDecalagesJS est
 // supprimée pour ne pas laisser de logique métier dupliquée en JS.
 
+// v0.51.0 — Profil de lancement (complet / atelier / classe), posé par le
+// serveur dans index.html. profilPermet('classe') : vrai en profil complet ou
+// classe. profilAffiche(el) : l'élément (data-profils) est-il visible ?
+const SEQ_PROFIL_COURANT = (typeof window !== 'undefined' && window.SEQ_PROFIL) || 'complet';
+function profilPermet(cote) {
+  return SEQ_PROFIL_COURANT === 'complet' || SEQ_PROFIL_COURANT === cote;
+}
+function profilAffiche(el) {
+  if (!el) return false;
+  const attr = el.getAttribute('data-profils');
+  return !attr || SEQ_PROFIL_COURANT === 'complet'
+    || attr.split(/\s+/).includes(SEQ_PROFIL_COURANT);
+}
+window.profilPermet = profilPermet;
+window.profilAffiche = profilAffiche;
+
 // v0.27.0.3 — Affiche un PDF DANS l'appli via le viewer pdf.js embarqué (et non
 // par l'affichage natif du navigateur, qui l'enverrait au lecteur système).
 // Fetch le PDF en blob, puis charge le viewer avec une URL blob locale.
@@ -142,17 +158,20 @@ async function api(path, opts={}) {
 async function init() {
   await chargerNiveauxRef();
   await chargerAnnees();
-  await loadClasses();
-  buildClasseSel();
-  renderClassesList();
-  const saved = localStorage.getItem('currentCid');
-  if (saved && CLASSES.find(c=>c.id===saved)) await selectClasse(saved);
+  // v0.51.0 — Les classes n'existent pas dans le profil atelier.
+  if (profilPermet('classe')) {
+    await loadClasses();
+    buildClasseSel();
+    renderClassesList();
+    const saved = localStorage.getItem('currentCid');
+    if (saved && CLASSES.find(c=>c.id===saved)) await selectClasse(saved);
 
-  // v0.19.1.2 — L'onglet « Suivi de classe » est actif par défaut au
-  // chargement : monter sa navigation à 2 barres et rendre les sélecteurs.
-  // (selectClasse a pu déjà appeler sousOnglet('suivi') ; suiviInit est
-  // idempotent et restaure la portée/atelier mémorisés.)
-  if (typeof suiviInit === 'function') suiviInit();
+    // v0.19.1.2 — L'onglet « Suivi de classe » est actif par défaut au
+    // chargement : monter sa navigation à 2 barres et rendre les sélecteurs.
+    // (selectClasse a pu déjà appeler sousOnglet('suivi') ; suiviInit est
+    // idempotent et restaure la portée/atelier mémorisés.)
+    if (typeof suiviInit === 'function') suiviInit();
+  }
 
   // v0.30.0 — L'onglet « Tableau de bord » est désormais l'écran d'accueil
   // (actif par défaut). On charge ses tuiles au démarrage.
@@ -437,7 +456,7 @@ document.querySelectorAll('.tab').forEach(btn => {
       if (btn.dataset.tab==='accueil' && typeof tdbInit === 'function') tdbInit();
       if (btn.dataset.tab==='ateliers') initAteliers();
       if (btn.dataset.tab==='mer' && typeof merInit === 'function') merInit();
-      if (btn.dataset.tab==='admin')    adminSousOnglet('importref');
+      if (btn.dataset.tab==='admin')    adminSousOnglet(_adminPremierSousOnglet());
       // v0.42.0 — Onglet « Système » : barre Administration / Préférences.
       if (btn.dataset.tab==='systeme' && typeof systemeSwitch === 'function') {
         systemeSwitch(_systemeSousOnglet());
@@ -882,6 +901,10 @@ function _systemeSousOnglet() {
 }
 
 function _prefInitialiser() {
+  if (typeof prefCatInitEtats === 'function') prefCatInitEtats();
+  // v0.51.0 — Les préférences de conception (chemins, LaTeX, compilation,
+  // types de documents) n'existent que dans l'atelier.
+  if (typeof profilPermet === 'function' && !profilPermet('atelier')) return;
   // v0.9 — Recharger les chemins de configuration à chaque entrée dans les
   // Préférences (ils peuvent avoir été modifiés ailleurs).
   if (typeof prefCheminsCharger === 'function') prefCheminsCharger();
@@ -891,7 +914,6 @@ function _prefInitialiser() {
   if (typeof prefChargerCriteresConnaitre === 'function') prefChargerCriteresConnaitre();
   // v0.18.4 — Paramètres de compilation + état replié/déplié des sections.
   if (typeof prefChargerParamsCompilation === 'function') prefChargerParamsCompilation();
-  if (typeof prefCatInitEtats === 'function') prefCatInitEtats();
   // v0.48.3 — Types de documents des référentiels externes.
   if (typeof prefTypesDocsCharger === 'function') prefTypesDocsCharger();
 }
@@ -909,7 +931,9 @@ function systemeSwitch(sous) {
     const b = document.getElementById('systeme-btn-' + x);
     if (b) b.classList.toggle('active', x === sous);
   });
-  if (sous === 'admin' && typeof adminSousOnglet === 'function') adminSousOnglet('importref');
+  if (sous === 'admin' && typeof adminSousOnglet === 'function') {
+    adminSousOnglet(typeof _adminPremierSousOnglet === 'function' ? _adminPremierSousOnglet() : 'importref');
+  }
   if (sous === 'preferences') _prefInitialiser();
 }
 
@@ -3751,14 +3775,27 @@ let ADMIN_DATA   = null;
 let ADMIN_ATOMES = [];
 let ADMIN_FILTRE = 'tous';
 
+// v0.51.0 — Premier sous-onglet d'administration visible dans le profil.
+const ADMIN_SOUS_ONGLETS = ['importref', 'importpaquet', 'images', 'importfiches', 'bdd',
+  'importsuivi'];
+function _adminPremierSousOnglet() {
+  for (const s of ADMIN_SOUS_ONGLETS) {
+    if (profilAffiche(document.getElementById('admin-' + s + '-btn'))) return s;
+  }
+  return 'bdd';
+}
+
 function adminSousOnglet(nom) {
+  // v0.51.0 — Un sous-onglet hors profil n'est jamais ouvert.
+  if (!profilAffiche(document.getElementById('admin-' + nom + '-btn'))) {
+    nom = _adminPremierSousOnglet();
+  }
   // Convention de nommage : admin-<sousSection>[-<élément>][-<modifier>].
   // Les sous-onglets Admin sont identifiés par leur panneau `admin-<nom>`
   // et leur bouton d'onglet `admin-<nom>-btn`.
   // v0.9 — 'compilation' a été déplacé vers Ateliers > Rendu par lot.
   // v0.10.5.2 — ajout de 'importfiches'.
-  ['importref', 'importpaquet', 'images', 'importfiches', 'bdd',
-   'importsuivi'].forEach(s => {
+  ADMIN_SOUS_ONGLETS.forEach(s => {
     const el = document.getElementById('admin-' + s);
     if (el) el.style.display = s === nom ? '' : 'none';
     const btn = document.getElementById('admin-' + s + '-btn');

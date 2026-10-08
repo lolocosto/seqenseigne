@@ -14,9 +14,13 @@ const TDB_JOUR_LBL = { lun: 'Lundi', mar: 'Mardi', mer: 'Mercredi', jeu: 'Jeudi'
 const TDB_ATOME_LBL = { notion: 'notions', methode: 'méthodes', exercice: 'exercices', carte: 'cartes', fiche: 'fiches' };
 
 async function tdbInit() {
-  tdbChargerSeances();
-  tdbChargerAtomes();
-  tdbChargerNonRattaches();
+  // v0.51.0 — Une tuile par côté : séances (classe), atomes (atelier).
+  const permet = (c) => (typeof profilPermet === 'function' ? profilPermet(c) : true);
+  if (permet('classe')) tdbChargerSeances();
+  if (permet('atelier')) {
+    tdbChargerAtomes();
+    tdbChargerNonRattaches();
+  }
 }
 
 function _tdbAnnee() {
