@@ -129,6 +129,27 @@ def candidats(conn, niveau: str, seq_code: str, partie_debut: int, partie_fin: i
             if m:
                 vus_m.add(m["id"])
                 methodes.append({"id": m["id"], "titre": _texte(m["titre"]) or m["id"]})
+    if not rows:
+        # v0.51.3 — Appli en ligne : pas d'atomes, titres importés du paquet de
+        # publication (référentiel le plus récemment importé du niveau).
+        try:
+            ref = conn.execute(
+                "SELECT t.referentiel_id FROM referentiel_titres_publies t JOIN "
+                "referentiel_niveaux r ON r.id=t.referentiel_id WHERE r.niveau=? AND "
+                "t.seq_code=? ORDER BY r.publication_importe_le DESC LIMIT 1",
+                (niveau, seq_code)).fetchone()
+        except Exception:
+            ref = None
+        if ref is not None:
+            for t in conn.execute(
+                    "SELECT * FROM referentiel_titres_publies WHERE referentiel_id=? AND "
+                    "seq_code=? AND partie_numero BETWEEN ? AND ? ORDER BY partie_numero, "
+                    "nature, ordre", (ref["referentiel_id"], seq_code, partie_debut,
+                                      partie_fin)).fetchall():
+                cible, vus = (notions, vus_n) if t["nature"] == "notion" else (methodes, vus_m)
+                if t["atome_id"] not in vus:
+                    vus.add(t["atome_id"])
+                    cible.append({"id": t["atome_id"], "titre": t["titre"]})
     return {"notions": notions, "methodes": methodes}
 
 

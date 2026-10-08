@@ -4773,3 +4773,22 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .tdb-pub-ko { color: #b91c1c; font-weight: 600; }
 .tdb-pub-journal { font-size: 12px; margin-top: 8px; color: var(--text-secondary); }
 .tdb-pub-journal ul { margin: 4px 0 0 16px; padding: 0; }
+
+/* ── v0.51.3 — Import de référentiels (profil classe) ────────────────────── */
+.imppub-paquet { font-size: 13px; margin-bottom: 8px; }
+.imppub-note { font-size: 12px; color: var(--text-secondary); }
+.imppub-ref { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px;
+  margin-bottom: 8px; font-size: 13px; }
+.imppub-ref ul { margin: 2px 0 4px 18px; padding: 0; font-size: 12px; }
+.imppub-ref-tete code, .imppub-table code { font-size: 11px; color: var(--text-secondary); }
+.imppub-badge { font-size: 11px; border-radius: 3px; padding: 1px 6px; margin-left: 4px; }
+.imppub-badge.nouveau, .imppub-badge.ok { background: #e8f5e9; color: #2e7d32; }
+.imppub-badge.mise_a_jour { background: #e8eef7; color: #2E5090; }
+.imppub-badge.identique { background: #eee; color: #555; }
+.imppub-badge.refuse { background: #fee2e2; color: #b91c1c; }
+.imppub-raisons { color: #b91c1c; }
+.imppub-orphelins { color: #7a4f10; }
+.imppub-ko { color: #b91c1c; font-weight: 600; }
+.imppub-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.imppub-table th, .imppub-table td { text-align: left; padding: 4px 6px;
+  border-bottom: 1px solid var(--border); }

@@ -30,6 +30,10 @@ REM     .\lancer.bat atelier      conception des referentiels, port 5000
 REM     .\lancer.bat classe       suivi des classes, port 5001
 REM  Les deux profils peuvent tourner en meme temps (deux fenetres).
 REM  Exemple combine : .\lancer.bat classe --skip-verify
+REM
+REM  v0.51.3 - Base separee pour le profil classe (essai de l'import de
+REM  paquets sur une base vide, dossier data_classe\, cree au besoin) :
+REM     .\lancer.bat classe --base-classe
 REM ============================================================================
 
 echo.
@@ -40,6 +44,7 @@ REM --- v0.51.0 : lecture des parametres (profil, --skip-verify) ---------------
 set "SEQ_PROFIL=complet"
 set "SEQ_PORT=5000"
 set "SKIP_VERIFY="
+set "SEQ_DATA="
 :lire_params
 if "%~1"=="" goto :params_lus
 if /I "%~1"=="--skip-verify" set "SKIP_VERIFY=1"
@@ -47,6 +52,7 @@ if /I "%~1"=="--no-verify"   set "SKIP_VERIFY=1"
 if /I "%~1"=="complet"       set "SEQ_PROFIL=complet"
 if /I "%~1"=="atelier"       set "SEQ_PROFIL=atelier"
 if /I "%~1"=="classe"        set "SEQ_PROFIL=classe"
+if /I "%~1"=="--base-classe" set "SEQ_DATA=data_classe"
 shift
 goto :lire_params
 :params_lus

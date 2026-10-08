@@ -55,6 +55,7 @@ BP_CLASSE = frozenset({
     "projection", "affectation", "indisponibilites", "decalage_progression",
     "leitner", "progression_mer", "progression_doc", "planification_hebdo",
     "calendrier",
+    "import_publication",   # v0.51.3 — import des paquets de publication
 })
 BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord"})
 

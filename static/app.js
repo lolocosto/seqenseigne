@@ -3776,8 +3776,8 @@ let ADMIN_ATOMES = [];
 let ADMIN_FILTRE = 'tous';
 
 // v0.51.0 — Premier sous-onglet d'administration visible dans le profil.
-const ADMIN_SOUS_ONGLETS = ['importref', 'importpaquet', 'images', 'importfiches', 'bdd',
-  'importsuivi'];
+const ADMIN_SOUS_ONGLETS = ['importref', 'importpaquet', 'images', 'importfiches',
+  'importpub', 'bdd', 'importsuivi'];   // v0.51.3 : importpub
 function _adminPremierSousOnglet() {
   for (const s of ADMIN_SOUS_ONGLETS) {
     if (profilAffiche(document.getElementById('admin-' + s + '-btn'))) return s;
@@ -3802,6 +3802,7 @@ function adminSousOnglet(nom) {
     if (btn) btn.classList.toggle('active', s === nom);
   });
   if (nom === 'bdd') adminBddStatut();
+  if (nom === 'importpub' && typeof impPubInit === 'function') impPubInit();   // v0.51.3
   // v0.9 — pré-remplissage des chemins Admin depuis Préférences
   if (nom === 'importref'    && typeof adminPreremplirChemins === 'function') adminPreremplirChemins('importref');
   if (nom === 'importpaquet' && typeof adminPreremplirChemins === 'function') adminPreremplirChemins('importpaquet');

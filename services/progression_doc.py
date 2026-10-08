@@ -190,6 +190,12 @@ def _docs_internes(conn, niveau: str, sequence: str, annuels: bool) -> list:
     if ref is None:
         return []
     ref_id = ref["id"]
+    # v0.51.3 — Référentiel importé d'un paquet de publication (appli en
+    # ligne) : ses PDF compilés sont listés dans referentiel_docs_publies (les
+    # cibles ne se recalculent pas sans les atomes de l'atelier).
+    publies = _docs_internes_publies(conn, ref_id, sequence, annuels)
+    if publies is not None:
+        return publies
     out = []
     try:
         documents = rd.lister_documents(conn, ref_id)
@@ -220,6 +226,24 @@ def _docs_internes(conn, niveau: str, sequence: str, annuels: bool) -> list:
                 "categorie": "annuel" if est_annuel else "sequence",
             })
     return out
+
+
+def _docs_internes_publies(conn, ref_id: str, sequence: str, annuels: bool):
+    """None si le référentiel n'est pas importé ; sinon ses documents publiés
+    de la séquence (ou annuels)."""
+    try:
+        r = conn.execute("SELECT origine FROM referentiel_niveaux WHERE id=?",
+                         (ref_id,)).fetchone()
+    except Exception:
+        return None
+    if r is None or (r["origine"] or "locale") != "publication":
+        return None
+    seq = "" if annuels else sequence
+    return [{"source": "interne", "doc_ref": d["ref"], "libelle": d["libelle"],
+             "categorie": "annuel" if annuels else "sequence"}
+            for d in conn.execute("SELECT * FROM referentiel_docs_publies WHERE "
+                                  "referentiel_id=? AND seq_code=? ORDER BY ordre",
+                                  (ref_id, seq)).fetchall()]
 
 
 _LIBELLES_TYPE_DOC = {

@@ -91,3 +91,14 @@ n'importe rien si elle échoue.
 - Routes (profil atelier ou complet) : `GET /api/publication/publiables`,
   `POST /api/publication/paquet` (`{"referentiels": [id…]}` → zip ; en-tête
   `X-Paquet-Resume`), `GET /api/publication/journal`.
+
+## Import (v0.51.3, profil classe)
+
+Système › Administration › **Import référentiels** : *Analyser* (rien n'est
+écrit) puis *Importer*. Statuts : nouveau, mise à jour (changements
+détaillés), identique, refusé (séquence ou partie commencée retirée, conflit
+niveau/version, référentiel conçu dans la même base). Les associations de
+documents qui deviennent orphelines sont signalées et conservées. Détail :
+`services/import_publication.py`, `doc/redemarrage_v0_51_3.md`.
+Essai sur une base vide : `lancer.bat classe --base-classe` (dossier
+`data_classe\`).

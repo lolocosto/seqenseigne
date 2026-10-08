@@ -241,7 +241,7 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   (semaines = séances ÷ séances par semaine du niveau). L'export applique
   déjà la règle (v0.51.2).
 - v0.51.3 : import côté classe (structure en lecture seule, rapport des
-  changements, documents orphelins signalés).
+  changements, documents orphelins signalés) (fait).
 - Retour d'usage classe → atelier (validé) : référentiel utilisé, séquences
   commencées, parties de MER posées — sans donnée d'élève ; remplace la
   lecture directe des progressions par l'atelier (verrou des séquences

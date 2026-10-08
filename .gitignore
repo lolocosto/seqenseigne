@@ -20,6 +20,9 @@ data/rapports/
 data/images/
 data/referentiels/
 data/referentiels_externes/
+data/referentiels_fichiers/
+# v0.51.3 — base séparée du profil classe (lancer.bat classe --base-classe)
+data_classe/
 # static/vendor/ (pdf.js) est versionné depuis v0.41.0 : un clone neuf doit
 # avoir un viewer PDF fonctionnel. Cohérent avec push-to-github.html.
 log/

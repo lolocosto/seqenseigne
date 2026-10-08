@@ -2706,7 +2706,8 @@
     <button class="sub-tab" id="admin-importpaquet-btn" data-profils="atelier" onclick="adminSousOnglet('importpaquet')">Import mise en forme</button>
     <button class="sub-tab" id="admin-images-btn" data-profils="atelier" onclick="adminSousOnglet('images')">Images</button>
     <button class="sub-tab" id="admin-importfiches-btn" data-profils="atelier" onclick="adminSousOnglet('importfiches')">Import fiches</button>
-    <button class="sub-tab" id="admin-bdd-btn" data-profils="atelier classe" onclick="adminSousOnglet('bdd')">Base de données</button>
+    <button class="sub-tab" id="admin-importpub-btn" data-profils="classe" onclick="adminSousOnglet('importpub')">Import référentiels</button>
+<button class="sub-tab" id="admin-bdd-btn" data-profils="atelier classe" onclick="adminSousOnglet('bdd')">Base de données</button>
     <button class="sub-tab" id="admin-importsuivi-btn" data-profils="complet" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
   </div>
 
@@ -2960,6 +2961,34 @@
   <!-- ── Sous-onglet : Compilation batch (v0.8) ── -->
 
   <!-- ── Sous-onglet : base de données ── -->
+  <!-- v0.51.3 — Import d'un paquet de publication (référentiels conçus dans
+       l'appli locale, reçus ici en lecture seule). -->
+  <div id="admin-importpub" style="display:none;padding:24px;max-width:960px">
+    <h3 style="margin:0 0 4px">Import de référentiels</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">
+      Les référentiels se conçoivent dans l'appli locale (profil atelier), qui
+      produit un <b>paquet de publication</b> (tableau de bord › Publication).
+      L'import vérifie tout le paquet avant d'écrire quoi que ce soit ; une
+      séquence déjà commencée n'est jamais retirée, une association de document
+      devenue orpheline est signalée, jamais supprimée.
+    </p>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="file" id="imppub-fichier" accept=".zip,application/zip">
+        <button class="btn-sm" type="button" onclick="impPubAnalyser()">Analyser</button>
+        <button class="btn-prim" type="button" id="imppub-importer" onclick="impPubImporter()" disabled>Importer</button>
+        <span id="imppub-status" style="font-size:12px" role="status" aria-live="polite"></span>
+      </div>
+      <div id="imppub-analyse" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Référentiels importés</div>
+      <div id="imppub-importes"></div>
+      <details style="margin-top:8px;font-size:12px"><summary>Journal des imports</summary>
+        <div id="imppub-journal"></div></details>
+    </div>
+  </div>
+
   <div id="admin-bdd" style="display:none;padding:24px;max-width:860px">
 
     <div style="margin-bottom:20px">
@@ -3743,6 +3772,7 @@
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>
+<script src="/static/import_publication.js"></script>
 <script src="/static/planification_hebdo.js"></script>
 <script src="/static/progression_mer.js"></script>
 <script src="/static/referentiel_externe.js"></script>
