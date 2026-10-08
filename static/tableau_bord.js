@@ -20,6 +20,7 @@ async function tdbInit() {
   if (permet('atelier')) {
     tdbChargerAtomes();
     tdbChargerNonRattaches();
+    tdbChargerPublication();
   }
 }
 
@@ -133,3 +134,110 @@ async function tdbChargerNonRattaches() {
     </div>`;
   }).join('');
 }
+
+
+// ── v0.51.2 — Tuile « Publication » (profil atelier) ─────────────────────────
+// Référentiels publiables (internes verrouillés/utilisés, externes non
+// annulés), groupés par niveau : dernière publication, « modifié depuis »,
+// format invalide. Les cases cochées forment le paquet (zip) téléchargé.
+const TDB_PUB = { sel: new Set(), liste: [] };
+
+function _tdbDateHeure(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}h${m[5]}` : (iso || '');
+}
+
+async function tdbChargerPublication() {
+  const zone = document.getElementById('tdb-publication');
+  if (!zone) return;
+  zone.innerHTML = '<p style="font-size:12px;color:#888">Calcul des empreintes…</p>';
+  let d;
+  try {
+    d = await api('/api/publication/publiables');
+  } catch (e) {
+    zone.innerHTML = '<p style="font-size:12px;color:#c33">Erreur de chargement.</p>';
+    return;
+  }
+  TDB_PUB.liste = d.referentiels || [];
+  const ids = new Set(TDB_PUB.liste.map(r => r.id));
+  TDB_PUB.sel = new Set([...TDB_PUB.sel].filter(i => ids.has(i)));
+  if (!TDB_PUB.liste.length) {
+    zone.innerHTML = '<p style="font-size:13px;color:#888">Aucun référentiel publiable '
+      + '(internes verrouillés ou utilisés, externes).</p>';
+    return;
+  }
+  const parNiveau = {};
+  TDB_PUB.liste.forEach(r => (parNiveau[r.niveau] = parNiveau[r.niveau] || []).push(r));
+  const badge = r => {
+    if (!r.valide) return `<span class="tdb-pub-badge ko" title="${escapeHtml((r.erreurs || []).join(' ; '))}">format invalide</span>`;
+    if (!r.derniere_publication) return '<span class="tdb-pub-badge neuf">jamais publié</span>';
+    const date = _tdbDateHeure(r.derniere_publication.cree_le);
+    return r.modifie_depuis
+      ? `<span class="tdb-pub-badge modif" title="Publié le ${escapeHtml(date)}">modifié depuis</span>`
+      : `<span class="tdb-pub-badge ok">publié le ${escapeHtml(date)}</span>`;
+  };
+  const journal = (d.journal || []).map(j => `<li>${escapeHtml(_tdbDateHeure(j.cree_le))} —
+      ${escapeHtml(j.nom_paquet)} : ${j.referentiels.map(r => escapeHtml(r.nom)).join(', ')}</li>`).join('');
+  zone.innerHTML = Object.keys(parNiveau).sort().map(n => `
+      <div class="tdb-pub-niveau">${escapeHtml(n)}</div>
+      ${parNiveau[n].map(r => `<label class="tdb-pub-ligne">
+        <input type="checkbox" ${r.valide ? '' : 'disabled'} ${TDB_PUB.sel.has(r.id) ? 'checked' : ''}
+          onchange="tdbPubCocher('${escapeHtml(r.id)}', this.checked)">
+        <span class="tdb-pub-nom">${escapeHtml(r.nom)}</span>${badge(r)}</label>`).join('')}`).join('')
+    + `<div class="tdb-pub-actions">
+        <button class="btn-sm" type="button" onclick="tdbPubCocherModifies()">Cocher les non publiés et modifiés</button>
+        <button class="btn-prim" type="button" id="tdb-pub-creer" onclick="tdbPubCreer()">Créer le paquet</button>
+      </div>
+      <div id="tdb-pub-res" class="tdb-pub-res" role="status" aria-live="polite"></div>`
+    + (journal ? `<details class="tdb-pub-journal"><summary>Dernières publications</summary><ul>${journal}</ul></details>` : '');
+}
+
+function tdbPubCocher(id, oui) {
+  if (oui) TDB_PUB.sel.add(id); else TDB_PUB.sel.delete(id);
+}
+
+function tdbPubCocherModifies() {
+  TDB_PUB.liste.filter(r => r.valide && (!r.derniere_publication || r.modifie_depuis))
+    .forEach(r => TDB_PUB.sel.add(r.id));
+  tdbChargerPublication();
+}
+
+async function tdbPubCreer() {
+  const res = document.getElementById('tdb-pub-res');
+  const ids = [...TDB_PUB.sel];
+  if (!ids.length) { if (res) res.textContent = 'Cochez au moins un référentiel.'; return; }
+  if (res) res.textContent = 'Création du paquet…';
+  try {
+    const r = await fetch('/api/publication/paquet', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referentiels: ids }) });
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      const err = ((d.rapport || {}).erreurs || []).slice(0, 6).map(escapeHtml).join('<br>');
+      if (res) res.innerHTML = `<span class="tdb-pub-ko">✗ ${escapeHtml(d.error || 'Erreur')}</span>`
+        + (err ? '<br>' + err : '');
+      return;
+    }
+    let resume = {};
+    try { resume = JSON.parse(r.headers.get('X-Paquet-Resume') || '{}'); } catch (e) {}
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = resume.nom || 'paquet.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    TDB_PUB.sel.clear();
+    await tdbChargerPublication();
+    const res2 = document.getElementById('tdb-pub-res');
+    if (res2) res2.innerHTML = `<span class="tdb-pub-ok">✓ ${escapeHtml(resume.nom || 'Paquet créé')}</span> — `
+      + `${resume.nb_referentiels} référentiel(s), ${resume.nb_fichiers} fichier(s), `
+      + `${(resume.taille / 1048576).toFixed(1)} Mo`
+      + (resume.documents_sans_pdf ? ` — ${resume.documents_sans_pdf} document(s) sans PDF non publiés` : '')
+      + (resume.parties_ecart ? ` — <span class="tdb-pub-ko">${resume.parties_ecart} partie(s) dont la durée saisie diffère des objectifs</span>` : '');
+  } catch (e) {
+    if (res) res.textContent = e.message;
+  }
+}
+window.tdbPubCocher = tdbPubCocher;
+window.tdbPubCocherModifies = tdbPubCocherModifies;
+window.tdbPubCreer = tdbPubCreer;

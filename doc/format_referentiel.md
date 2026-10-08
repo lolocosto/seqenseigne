@@ -1,6 +1,8 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.0** (seqenseigne v0.51.1).
+> Version du format : **1.0** (seqenseigne v0.51.1 ; précisions v0.51.2 :
+> durée d'une partie, documents sans PDF, type des objectifs internes,
+> accents). Transport : paquet de publication, voir `doc/format_paquet.md`.
 > Schéma officiel : `schemas/referentiel-1.json` (JSON Schema 2020-12).
 > Code : `services/format_referentiel.py` (export, empreintes, validation),
 > `services/texte_latex.py` (textes sans LaTeX), `services/schema_json.py`
@@ -115,7 +117,7 @@ Une entrée par séquence du découpage, dans le même ordre.
 ```json
 { "code": "S05",
   "parties": [ {
-    "numero": 1, "libelle": "Développer", "nb_seances": 4, "nb_seances_objectifs": 3,
+    "numero": 1, "libelle": "Développer", "nb_seances": 3, "nb_seances_saisie": 4,
     "objectifs": [ {
       "code": "01", "type": "connaissance", "nom": "Connaître les notions et les méthodes",
       "nb_seances": 1, "fin_cycle": false,
@@ -129,13 +131,19 @@ Une entrée par séquence du découpage, dans le même ordre.
 ```
 
 - Partie : `numero` (clé), `libelle` (facultatif, peut être vide),
-  `nb_seances` (colonne `nb_seances_R_AE` reprise telle quelle : durée de la
-  partie pour un externe ou une MER ; séances de révision et
-  d'approfondissement pour un interne), `nb_seances_objectifs` (somme des
-  séances des objectifs), `seances_par_serie` (internes en mode `par_serie`
-  seulement : `niveau_cible`, `serie`, `nb_seances`).
+  `nb_seances` = **somme des séances de ses objectifs** (règle : la durée
+  d'une partie se calcule ; la progression en déduit un nombre de semaines
+  selon le nombre de séances par semaine du niveau), `nb_seances_saisie`
+  (valeur saisie sur la partie, pour information ; un écart est signalé dans
+  la vérification et le rapport de publication), `seances_par_serie`
+  (internes en mode `par_serie` seulement : `niveau_cible`, `serie`,
+  `nb_seances`).
 - Objectif : `code` (clé dans la séquence), `type` (`connaissance` ou
-  `capacite`), `nom`, `nb_seances`, `fin_cycle`, `criteres` F / A / E.
+  `capacite`), `nom`, `nb_seances`, `fin_cycle`, `criteres` F / A / E. Pour
+  un référentiel **interne**, le type se déduit de la position : le premier
+  objectif de chaque partie est « Connaître les notions et les méthodes »
+  (`connaissance`), les autres sont des capacités ; pour un externe, c'est
+  le type saisi.
 - `notions`, `methodes` : **titres seulement**, pour la synthèse Pronote
   (ligne « Cours : ») — identifiants et titres, pas de contenu. Vides pour un
   référentiel externe. Le contenu (cours, exercices, fiches, cartes) est porté
@@ -162,9 +170,10 @@ Une entrée par séquence du découpage, dans le même ordre.
   document compilé (`livret_cours`, `evaluation`…) ; `null` si non typé.
 - `fichier` : nom, type MIME, taille, `sha256` du contenu. **Le contenu
   n'est pas dans le JSON** : il voyage dans le paquet de publication
-  (v0.51.2), vérifié par son empreinte. `fichier` vaut `null` quand un PDF
-  interne n'a pas encore été compilé ; `sha256` manque si le fichier est
-  absent du disque.
+  (v0.51.2), vérifié par son empreinte. Un document **compilé sans PDF**
+  n'est pas publié (il figure seulement dans le rapport : pour un référentiel
+  verrouillé, il ne viendra plus) ; `sha256` manque si un fichier déposé est
+  absent du disque (la publication est alors refusée).
 - `placement` (fichiers de partie, facultatif) : séance de distribution dans
   la partie, retour attendu (`faire`, `rendre` ou `null`), délai (`prochaine`,
   `jours`, `semaines`, `fin_creneau`, `fin_partie` ; `n` pour jours et
@@ -181,7 +190,8 @@ Préférences) et sont publiés avec les référentiels.
 L'appli en ligne n'a pas LaTeX. Tous les textes (noms de thèmes, de
 séquences, de parties et d'objectifs, critères, titres de notions et de
 méthodes) sont exportés en **texte lisible** (Unicode : `\frac{1}{2}` → 1/2,
-`a^2` → a², `\times` → ×, `\og … \fg` → « … », `~` → espace insécable…).
+`a^2` → a², `\times` → ×, `\og … \fg` → « … », `~` → espace insécable,
+`\'E` → É, `\oe uvre` → œuvre…).
 Quand la source LaTeX diffère, elle est conservée à côté dans un champ
 `…_latex` (`nom_latex`, `libelle_latex`, `criteres_latex`), pour un rendu
 mathématique éventuel plus tard.
@@ -204,7 +214,9 @@ toutes**. À son premier export, le document est conservé dans
 `data/referentiels/<id>/_publication/referentiel.json` ; les exports suivants
 le resservent à l'identique (seuls l'état et les métadonnées d'export sont mis
 à jour), même si les atomes ont changé depuis (cas d'un nouveau référentiel en
-cours sur le même niveau). La vérification ne fige rien. Un référentiel
+cours sur le même niveau). La vérification ne fige rien. Une publication
+figée produite par un exporteur corrigé depuis (liste `EXPORTEURS_PERIMES`,
+aujourd'hui la v0.51.1) est régénérée au prochain export. Un référentiel
 externe est toujours exporté à partir de son état du moment.
 
 ## Versions

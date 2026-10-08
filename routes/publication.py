@@ -5,15 +5,19 @@ Format d'échange des référentiels (profil atelier) :
   GET /api/publication/referentiels/<rid>.json      → fichier JSON (téléchargé)
   GET /api/publication/referentiels/<rid>/verification
         → { valide, erreurs, bilan } (vérification avant publication)
+  GET  /api/publication/publiables   → référentiels publiables (v0.51.2)
+  POST /api/publication/paquet {referentiels:[id…]} → paquet zip (v0.51.2)
+  GET  /api/publication/journal      → dernières publications (v0.51.2)
 
 Voir services/format_referentiel.py et doc/format_referentiel.md.
 """
 
 import json
 
-from flask import Blueprint, Response, current_app, jsonify
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from services import format_referentiel as fmt
+from services import paquet_publication as pqt
 
 bp = Blueprint("publication", __name__)
 
@@ -56,8 +60,46 @@ def api_verification(rid):
     store = _store()
     try:
         with store._conn() as conn:
-            doc = fmt.exporter(conn, rid, store.data_dir, _profil(), figer=False)
+            omis: list = []
+            doc = fmt.exporter(conn, rid, store.data_dir, _profil(), figer=False, omis=omis)
     except fmt.FormatErreur as e:
         return _erreur(e)
     erreurs = fmt.valider(doc)
-    return jsonify({"valide": not erreurs, "erreurs": erreurs, "bilan": fmt.bilan(doc)})
+    return jsonify({"valide": not erreurs, "erreurs": erreurs,
+                    "bilan": fmt.bilan(doc, omis)})
+
+
+# ── v0.51.2 — Paquet de publication ─────────────────────────────────────────
+
+@bp.route("/api/publication/publiables", methods=["GET"])
+def api_publiables():
+    store = _store()
+    with store._conn() as conn:
+        return jsonify({"referentiels": pqt.lister_publiables(conn, store.data_dir),
+                        "journal": pqt.journal(conn, 5)})
+
+
+@bp.route("/api/publication/journal", methods=["GET"])
+def api_journal():
+    with _store()._conn() as conn:
+        return jsonify({"journal": pqt.journal(conn)})
+
+
+@bp.route("/api/publication/paquet", methods=["POST"])
+def api_paquet():
+    store = _store()
+    rids = (request.get_json(silent=True) or {}).get("referentiels") or []
+    try:
+        with store._conn() as conn:
+            contenu, manifeste = pqt.creer(conn, store.data_dir, rids, _profil())
+    except pqt.PaquetErreur as e:
+        return jsonify({"error": str(e), "code": e.code, "rapport": e.rapport}), 422
+    rapport = manifeste["rapport"]
+    return Response(contenu, mimetype="application/zip", headers={
+        "Content-Disposition": f'attachment; filename="{manifeste["nom"]}"',
+        # Résumé lisible par l'écran (le manifeste complet est dans le zip).
+        "X-Paquet-Resume": json.dumps({
+            "nom": manifeste["nom"], "nb_referentiels": len(manifeste["referentiels"]),
+            "nb_fichiers": len(manifeste["fichiers"]), "taille": len(contenu),
+            "documents_sans_pdf": len(rapport["documents_sans_pdf"]),
+            "parties_ecart": len(rapport["parties_ecart"])}, ensure_ascii=True)})

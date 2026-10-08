@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -28,7 +28,10 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.1 livrée : format d'échange JSON des référentiels
   (`doc/format_referentiel.md`, `schemas/referentiel-1.json`, export et
   vérification dans Conception › Référentiel).
-- À venir : v0.51.2 paquet de publication ; v0.51.3 import côté classe ; v0.51.4 bascule ; v0.52 mise en
+- v0.51.2 livrée : paquet de publication (`doc/format_paquet.md`), tuile
+  « Publication » du tableau de bord atelier ; durée d'une partie = somme des
+  objectifs ; corrections après le premier export réel.
+- À venir : v0.51.3 import côté classe ; v0.51.4 bascule ; v0.52 mise en
   ligne (authentification, HTTPS, VPS) puis API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)

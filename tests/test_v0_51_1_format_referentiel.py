@@ -106,6 +106,11 @@ def _exporter(app, rid):
     (r"\og citation \fg{}", "« citation »"),
     (r"$\sqrt{2}$", "√(2)"),
     ("Texte simple", "Texte simple"),
+    # v0.51.2 — accents et lettres en commandes LaTeX.
+    (r"\'Evénement certain", "Événement certain"),
+    (r"\'{E}galité des produits", "Égalité des produits"),
+    (r"mettant en \oe uvre", "mettant en œuvre"),
+    (r"Fran\c{c}ais, \^ile, na\"ive", "Français, île, naïve"),
 ])
 def test_vers_texte(src, attendu):
     assert vers_texte(src) == attendu
@@ -138,8 +143,9 @@ def test_interne_parties_objectifs_titres_documents(app):
     doc = _exporter(app, rid)
     s1 = doc["sequences"][0]
     p = s1["parties"][0]
-    assert (p["numero"], p["libelle"], p["nb_seances"], p["nb_seances_objectifs"]) == \
-        (1, "Développer", 2, 3.5)
+    # v0.51.2 — durée de la partie = somme des objectifs ; saisie gardée.
+    assert (p["numero"], p["libelle"], p["nb_seances"], p["nb_seances_saisie"]) == \
+        (1, "Développer", 3.5, 2)
     o1, o2 = p["objectifs"]
     assert (o1["code"], o1["type"]) == ("01", "connaissance")
     assert o1["criteres"]["F"] == "Sait calculer a × b"
@@ -317,3 +323,29 @@ def test_verification_ne_fige_pas(app, client):
     assert pub.is_file()
     v = client.get(f"/api/publication/referentiels/{rid}/verification").get_json()
     assert v["bilan"]["publication_figee"]
+
+
+# ── v0.51.2 — correctifs après le premier export réel ───────────────────────
+
+def test_interne_premier_objectif_de_partie_connaissance(app):
+    rid = _interne(app)
+    with app.json_store._conn() as c:      # type_obj non renseigné (cas réel)
+        c.execute("UPDATE referentiel_objectifs SET type_obj='capacite' "
+                  "WHERE referentiel_id=?", (rid,))
+    o1, o2 = _exporter(app, rid)["sequences"][0]["parties"][0]["objectifs"]
+    assert (o1["type"], o2["type"]) == ("connaissance", "capacite")
+
+
+def test_publication_051_1_regeneree(app):
+    rid = _interne(app)
+    doc = _exporter(app, rid)
+    pub = app.json_store.data_dir / "referentiels" / rid / "_publication" / "referentiel.json"
+    vieux = json.loads(pub.read_text(encoding="utf-8"))
+    vieux["exporte_par"] = "seqenseigne 0.51.1 (atelier)"
+    vieux["sequences"][0]["parties"][0]["notions"][0]["titre"] = "\\'Evénement"
+    pub.write_text(json.dumps(vieux, ensure_ascii=False), encoding="utf-8")
+    neuf = _exporter(app, rid)
+    assert neuf["sequences"][0]["parties"][0]["notions"][0]["titre"] == "Distributivité"
+    assert neuf["empreinte"] == doc["empreinte"]
+    assert json.loads(pub.read_text(encoding="utf-8"))["exporte_par"].startswith(
+        "seqenseigne 0.51.2")

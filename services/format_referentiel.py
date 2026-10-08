@@ -41,7 +41,11 @@ from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
 FORMAT_VERSION = "1.0"
-VERSION_APPLI = "0.51.1"
+VERSION_APPLI = "0.51.2"
+# v0.51.2 — Publications figées produites par un exporteur corrigé depuis
+# (accents LaTeX non convertis, type des objectifs internes) : régénérées au
+# prochain export (aucune n'a encore été importée côté classe).
+EXPORTEURS_PERIMES = ("seqenseigne 0.51.1 ",)
 
 ETATS_FIGES = ("verrouille", "utilise")
 _NIVEAUX_DEFAUT = {"N07": ("CM1", "cours moyen 1re année"),
@@ -254,7 +258,8 @@ def _pdf_compile(data_dir: Path | None, rid: str, nom: str, fige: bool) -> dict 
     return None
 
 
-def _documents_compiles(conn, ref: dict, data_dir: Path | None) -> dict:
+def _documents_compiles(conn, ref: dict, data_dir: Path | None,
+                        omis: list | None = None) -> dict:
     """{(seq_code or ''): [doc, ...]} — PDF compilés d'un référentiel interne."""
     out: dict[str, list] = {}
     if (ref.get("source") or "interne") == "externe" or \
@@ -277,11 +282,16 @@ def _documents_compiles(conn, ref: dict, data_dir: Path | None) -> dict:
                 lib += f" — {seq}"
             elif type_doc == "evaluation":
                 lib = c.get("libelle") or lib
+            fichier = _pdf_compile(data_dir, ref["id"], c.get("nom_fichier", ""), fige)
+            if fichier is None:
+                # v0.51.2 — Un document compilé sans PDF n'est pas publié
+                # (signalé dans le rapport).
+                if omis is not None:
+                    omis.append(lib)
+                continue
             out.setdefault(seq, []).append({
                 "ref": f"{type_doc}|{cid}", "origine": "compile", "type": type_doc,
-                "libelle": lib,
-                "fichier": _pdf_compile(data_dir, ref["id"], c.get("nom_fichier", ""), fige),
-                "placement": None})
+                "libelle": lib, "fichier": fichier, "placement": None})
     return out
 
 
@@ -305,7 +315,8 @@ def _types_utilises(conn, doc: dict) -> list[dict]:
             for t in conn.execute(q, sorted(ids)).fetchall()]
 
 
-def construire(conn, rid: str, data_dir: Path | None = None) -> dict:
+def construire(conn, rid: str, data_dir: Path | None = None,
+               omis: list | None = None) -> dict:
     """Document JSON d'un référentiel, calculé depuis la base (sans tenir
     compte d'une publication figée)."""
     ref = _ref(conn, rid)
@@ -319,7 +330,7 @@ def construire(conn, rid: str, data_dir: Path | None = None) -> dict:
     if ref.get("mode_seances"):
         entete["mode_seances"] = ref["mode_seances"]
     structure = _structure(conn, ref)
-    compiles = _documents_compiles(conn, ref, data_dir)
+    compiles = _documents_compiles(conn, ref, data_dir, omis)
     cols_obj = _colonnes(conn, "referentiel_objectifs")
     par_serie = _table_existe(conn, "referentiel_parties_seances")
     sequences = []
@@ -332,15 +343,22 @@ def construire(conn, rid: str, data_dir: Path | None = None) -> dict:
             num = int(p["numero"])
             partie = {"numero": num}
             _texte(partie, "libelle", p.get("libelle") or "")
-            partie["nb_seances"] = _nombre(p.get("nb_seances_R_AE"))
+            saisie = _nombre(p.get("nb_seances_R_AE"))
             objectifs = []
-            for o in conn.execute(
+            interne = source == "interne"
+            for rang, o in enumerate(conn.execute(
                     "SELECT * FROM referentiel_objectifs WHERE referentiel_id=? AND "
-                    "seq_code=? AND partie_numero=? ORDER BY code", (rid, code, num)).fetchall():
+                    "seq_code=? AND partie_numero=? ORDER BY code", (rid, code, num)).fetchall()):
                 o = dict(o)
-                ob = {"code": o["code"],
-                      "type": (o.get("type_obj") if "type_obj" in cols_obj else None)
-                      or "capacite"}
+                # Interne : le 1er objectif de la partie est « Connaître les
+                # notions et les méthodes » (modèle des référentiels internes ;
+                # la colonne type_obj n'y est pas renseignée). Externe : type saisi.
+                if interne:
+                    type_obj = "connaissance" if rang == 0 else "capacite"
+                else:
+                    type_obj = (o.get("type_obj") if "type_obj" in cols_obj else None) \
+                        or "capacite"
+                ob = {"code": o["code"], "type": type_obj}
                 _texte(ob, "nom", o["nom"])
                 ob["nb_seances"] = _nombre(o.get("nb_seances"))
                 ob["fin_cycle"] = bool(o.get("fin_cycle"))
@@ -354,7 +372,11 @@ def construire(conn, rid: str, data_dir: Path | None = None) -> dict:
                 if crit_src:
                     ob["criteres_latex"] = crit_src
                 objectifs.append(ob)
-            partie["nb_seances_objectifs"] = _nombre(sum(o["nb_seances"] for o in objectifs))
+            # v0.51.2 — Durée d'une partie = somme des séances de ses objectifs
+            # (règle de l'auteur) ; la valeur saisie sur la partie est gardée
+            # pour information, l'écart est signalé dans le rapport.
+            partie["nb_seances"] = _nombre(sum(o["nb_seances"] for o in objectifs))
+            partie["nb_seances_saisie"] = saisie
             partie["objectifs"] = objectifs
             if par_serie and ref.get("mode_seances") == "par_serie":
                 partie["seances_par_serie"] = [
@@ -398,22 +420,34 @@ def _chemin_publication(data_dir: Path, rid: str) -> Path:
 
 
 def exporter(conn, rid: str, data_dir: Path | None = None,
-             profil: str = "atelier", figer: bool = True) -> dict:
+             profil: str = "atelier", figer: bool = True,
+             omis: list | None = None) -> dict:
     """Document à publier. Un référentiel interne verrouillé ou utilisé est
     publié une fois pour toutes : sa première publication est conservée et
     resservie (état et métadonnées d'export mis à jour). `figer=False`
-    (simple vérification) : ne conserve rien."""
+    (simple vérification) : ne conserve rien. `omis` (liste) reçoit les
+    libellés des documents compilés non publiés faute de PDF."""
     ref = _ref(conn, rid)
     fige = (ref.get("source") or "interne") == "interne" and ref.get("etat") in ETATS_FIGES
     chemin = _chemin_publication(data_dir, rid) if (fige and data_dir) else None
     if chemin is not None and chemin.is_file():
         doc = json.loads(chemin.read_text(encoding="utf-8"))
+        if str(doc.get("exporte_par", "")).startswith(EXPORTEURS_PERIMES):
+            chemin.unlink()                      # régénérée ci-dessous
+    if chemin is not None and chemin.is_file():
+        if omis is not None:
+            r = chemin.with_name("omis.json")
+            if r.is_file():
+                omis.extend(json.loads(r.read_text(encoding="utf-8")))
         doc["referentiel"]["etat"] = ref.get("etat")
         doc["exporte_le"] = datetime.now().astimezone().isoformat(timespec="seconds")
         doc["exporte_par"] = f"seqenseigne {VERSION_APPLI} ({profil})"
         doc["publication_figee"] = True
         return doc
-    doc = construire(conn, rid, data_dir)
+    locaux: list = []
+    doc = construire(conn, rid, data_dir, locaux)
+    if omis is not None:
+        omis.extend(locaux)
     doc["exporte_par"] = f"seqenseigne {VERSION_APPLI} ({profil})"
     if chemin is not None and figer:
         erreurs = valider(doc)
@@ -421,6 +455,8 @@ def exporter(conn, rid: str, data_dir: Path | None = None,
             chemin.parent.mkdir(parents=True, exist_ok=True)
             chemin.write_text(json.dumps(doc, ensure_ascii=False, indent=1),
                               encoding="utf-8")
+            chemin.with_name("omis.json").write_text(
+                json.dumps(locaux, ensure_ascii=False), encoding="utf-8")
             doc["publication_figee"] = True
     return doc
 
@@ -482,6 +518,10 @@ def valider(doc: dict) -> list[str]:
             erreurs.append(f"sequences {s['code']} : numéros de partie en double")
         _docs(f"sequences {s['code']}", s["documents"])
         for p in s["parties"]:
+            somme = sum(o["nb_seances"] for o in p["objectifs"])
+            if abs(p["nb_seances"] - somme) > 1e-9:
+                erreurs.append(f"{s['code']} partie {p['numero']} : nb_seances ({p['nb_seances']}) "
+                               f"≠ somme des objectifs ({somme})")
             obj = [o["code"] for o in p["objectifs"]]
             if len(set(obj)) != len(obj):
                 erreurs.append(f"{s['code']} partie {p['numero']} : codes d'objectif en double")
@@ -495,7 +535,7 @@ def valider(doc: dict) -> list[str]:
     return erreurs
 
 
-def bilan(doc: dict) -> dict:
+def bilan(doc: dict, omis: list | None = None) -> dict:
     """Résumé lisible (vérification avant publication)."""
     nb_parties = sum(len(s["parties"]) for s in doc["sequences"])
     docs = list(doc["documents_annuels"])
@@ -507,5 +547,12 @@ def bilan(doc: dict) -> dict:
             "structure_empreinte": doc["structure"]["empreinte"],
             "nb_sequences": len(doc["sequences"]), "nb_parties": nb_parties,
             "nb_documents": len(docs),
-            "documents_sans_fichier": [d["libelle"] for d in docs if not d.get("fichier")],
+            "documents_sans_fichier": [d["libelle"] for d in docs
+                                       if not (d.get("fichier") or {}).get("sha256")],
+            "documents_sans_pdf": list(omis or []),
+            "parties_ecart": [
+                f"{s['code']} partie {p['numero']} : {p['nb_seances_saisie']} saisie(s) "
+                f"sur la partie, {p['nb_seances']} d'après les objectifs"
+                for s in doc["sequences"] for p in s["parties"]
+                if p.get("nb_seances_saisie", p["nb_seances"]) != p["nb_seances"]],
             "publication_figee": bool(doc.get("publication_figee"))}

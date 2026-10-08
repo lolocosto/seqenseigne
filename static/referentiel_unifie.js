@@ -156,7 +156,17 @@ async function refuVerifierPublication() {
       + (sans.length ? ` — <span class="refu-pub-ko">${sans.length} sans fichier</span>`
         + ` (${sans.slice(0, 3).map(_refuE).join(', ')}${sans.length > 3 ? '…' : ''})` : '')
       + ` — empreinte <code>${_refuE(String(b.empreinte || '').slice(7, 15))}</code>`
-      + (b.publication_figee ? ' — publication figée' : '');
+      + (b.publication_figee ? ' — publication figée' : '')
+      // v0.51.2 — documents compilés sans PDF (non publiés), écarts de durée.
+      + ((b.documents_sans_pdf || []).length
+        ? `<br>${b.documents_sans_pdf.length} document(s) compilé(s) sans PDF, non publié(s)`
+          + ` (${b.documents_sans_pdf.slice(0, 3).map(_refuE).join(', ')}`
+          + `${b.documents_sans_pdf.length > 3 ? '…' : ''})` : '')
+      + ((b.parties_ecart || []).length
+        ? `<br><span class="refu-pub-ko">${b.parties_ecart.length} partie(s) dont la durée`
+          + ` saisie diffère de la somme des objectifs</span> (la durée publiée est la somme) :`
+          + ` ${b.parties_ecart.slice(0, 4).map(_refuE).join(' ; ')}`
+          + `${b.parties_ecart.length > 4 ? '…' : ''}` : '');
   } catch (e) {
     res.textContent = e.message;
   }

@@ -1614,6 +1614,14 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.51.2 — Journal des publications (paquets) ─────────────────────
+        try:
+            from services import paquet_publication as _pub
+            _pub.migrer(conn)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

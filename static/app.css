@@ -4755,3 +4755,21 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .refu-pub-info { color: var(--text-secondary); }
 .refu-pub-ok { color: var(--success, #2e7d32); font-weight: 600; }
 .refu-pub-ko { color: var(--danger, #c33); font-weight: 600; }
+
+/* ── v0.51.2 — Tuile « Publication » ─────────────────────────────────────── */
+.tdb-pub-niveau { font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  margin: 6px 0 2px; }
+.tdb-pub-ligne { display: flex; align-items: center; gap: 6px; font-size: 13px;
+  padding: 3px 2px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.tdb-pub-nom { flex: 1; min-width: 0; }
+.tdb-pub-badge { font-size: 11px; border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+.tdb-pub-badge.ok { background: #e8f5e9; color: #2e7d32; }
+.tdb-pub-badge.neuf { background: #e8eef7; color: #2E5090; }
+.tdb-pub-badge.modif { background: #fffbeb; color: #7a4f10; }
+.tdb-pub-badge.ko { background: #fee2e2; color: #b91c1c; }
+.tdb-pub-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.tdb-pub-res { font-size: 12px; margin-top: 6px; }
+.tdb-pub-ok { color: #2e7d32; font-weight: 600; }
+.tdb-pub-ko { color: #b91c1c; font-weight: 600; }
+.tdb-pub-journal { font-size: 12px; margin-top: 8px; color: var(--text-secondary); }
+.tdb-pub-journal ul { margin: 4px 0 0 16px; padding: 0; }

@@ -122,14 +122,14 @@
     "partie": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["numero", "libelle", "nb_seances", "nb_seances_objectifs",
+      "required": ["numero", "libelle", "nb_seances", "nb_seances_saisie",
                    "objectifs", "notions", "methodes", "documents"],
       "properties": {
         "numero": { "type": "integer", "minimum": 0 },
         "libelle": { "type": "string" },
         "libelle_latex": { "type": "string" },
         "nb_seances": { "$ref": "#/$defs/nombre" },
-        "nb_seances_objectifs": { "$ref": "#/$defs/nombre" },
+        "nb_seances_saisie": { "$ref": "#/$defs/nombre" },
         "seances_par_serie": {
           "type": "array",
           "items": {

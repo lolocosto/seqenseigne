@@ -28,9 +28,22 @@ _SYMBOLES = {
     "to": "→", "leftarrow": "←", "Rightarrow": "⇒", "Leftrightarrow": "⇔",
     "ldots": "…", "dots": "…", "cdots": "⋯", "degres": "°", "degre": "°",
     "circ": "°", "%": "%", "euro": "€", "og": "« ", "fg": " »",
-    "ie": "i.e.", "eg": "e.g.", "oe": "œ", "ae": "æ", "OE": "Œ", "AE": "Æ",
-    "S": "§", "quad": " ", "qquad": " ", "newline": " ", "par": " ",
+    "ie": "i.e.", "eg": "e.g.", "S": "§", "quad": " ", "qquad": " ", "newline": " ", "par": " ",
 }
+# v0.51.2 — Accents et lettres en commandes LaTeX (\'E, \`a, \^o, \"e,
+# \c{c}, \oe…) : l'espace qui suit une commande-lettre est absorbé, comme en
+# LaTeX (« \oe uvre » → « œuvre »).
+_ACCENTS = {"'": "\u0301", "`": "\u0300", "^": "\u0302", '"': "\u0308",
+            "~": "\u0303", "c": "\u0327"}
+_LETTRES = {"oe": "œ", "OE": "Œ", "ae": "æ", "AE": "Æ", "ss": "ß", "o": "ø", "O": "Ø",
+            "i": "ı"}
+
+
+def _accent(m: re.Match) -> str:
+    import unicodedata
+    return unicodedata.normalize("NFC", m.group(2) + _ACCENTS[m.group(1)])
+
+
 _BINAIRES = set("×÷·±∓⩽⩾≤≥≠≈≃≡∈∉⊂∪∩→←⇒⇔")
 _EXPOSANTS = str.maketrans("0123456789+-=()n", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿ")
 _INDICES = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
@@ -55,6 +68,12 @@ def vers_texte(s: str | None) -> str:
         return ""
     s = s.replace("\r", " ").replace("\n", " ")
     s = re.sub(r"(?<!\\)%.*$", "", s)                       # commentaires
+    # Accents et lettres (avant ~ et ^, qui ont un autre sens hors commande).
+    s = re.sub(r"\\(['`^\"~])\s*\{?\s*([A-Za-zı])\s*\}?", _accent, s)
+    s = re.sub(r"\\(c)\s*\{\s*([A-Za-z])\s*\}", _accent, s)
+    s = re.sub(r"\\(c) ([A-Za-z])", _accent, s)
+    s = re.sub(r"\\(oe|OE|ae|AE|ss|o|O|i)(?![A-Za-z])\s*(?:\{\})?",
+               lambda m: _LETTRES[m.group(1)], s)
     # Caractères échappés.
     for a, b in (("\\%", "%"), ("\\&", "&"), ("\\#", "#"), ("\\_", "_"),
                  ("\\$", "\x00DOLLAR\x00"), ("\\{", "\x00AO\x00"),

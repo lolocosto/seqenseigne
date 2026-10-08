@@ -232,7 +232,14 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
 - v0.51.1 : format JSON des référentiels (schéma versionné, documenté) — base
   de la future API (fait).
 - v0.51.2 : paquet de publication (JSON + PDF compilés + fichiers externes,
-  empreintes, rapport) ; tuile « Publication » au tableau de bord atelier.
+  empreintes, rapport) ; tuile « Publication » au tableau de bord atelier
+  (fait).
+- Passe « durées » (validée, à planifier) : la durée d'une partie est la
+  somme des séances de ses objectifs — à appliquer au figeage, aux éditeurs
+  de référentiels (ne plus saisir la durée de la partie, l'afficher
+  calculée), à la Progression de MER et à la progression principale
+  (semaines = séances ÷ séances par semaine du niveau). L'export applique
+  déjà la règle (v0.51.2).
 - v0.51.3 : import côté classe (structure en lecture seule, rapport des
   changements, documents orphelins signalés).
 - Retour d'usage classe → atelier (validé) : référentiel utilisé, séquences
