@@ -1,0 +1,47 @@
+{#- templates/impression/plans_classe.html — v0.50.1
+    Plans de classe de la semaine (une classe, ou toutes les classes de la
+    salle) : une page A4 par plan, dessin SVG en cm de salle. Imposé par
+    l'enseignant en gras, placement à confirmer en italique, places vides
+    numérotées (en gris quand des élèves sont placés). -#}
+{% extends "impression/base.html" %}
+{% block page_format %}A4 portrait{% endblock %}
+{% block page_marge %}1.5cm{% endblock %}
+{% block format_libelle %}A4 portrait, une page par plan{% endblock %}
+{% block titre %}Plans de classe — semaine du {{ semaine }}{% endblock %}
+{% block contenu %}
+{% for p in pages %}
+<section class="plan-page">
+  <h2 class="plan-titre">{{ p.titre }}</h2>
+  {% if p.vide %}
+  <p>Le plan de cette salle n'a pas encore de places.</p>
+  {% else %}
+  <div class="plan-dessin">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="{{ p.viewbox }}"
+       width="{{ p.largeur_cm }}cm" height="{{ p.hauteur_cm }}cm" role="img"
+       aria-label="{{ p.titre }}">
+    <rect class="tableau" x="{{ p.tableau.x }}" y="{{ p.tableau.y }}"
+          width="{{ p.tableau.l }}" height="{{ p.tableau.h }}"/>
+    <text class="tableau-lbl" x="{{ p.tableau.tx }}" y="{{ p.tableau.ty }}">Tableau</text>
+    {%- for pl in p.places %}
+    <g class="place {{ pl.classe }}">
+      <rect x="{{ pl.rx }}" y="{{ pl.ry }}" width="{{ p.L }}" height="{{ p.H }}"
+            {%- if pl.angle %} transform="rotate({{ pl.angle }} {{ pl.x }} {{ pl.y }})"{% endif %}/>
+      {%- set n = pl.lignes | length %}
+      {%- for l in pl.lignes %}
+      <text x="{{ pl.x }}" y="{{ (pl.y + (loop.index0 - (n - 1) / 2) * pl.fs * 1.15) | round(2) }}"
+            font-size="{{ pl.fs }}"{% if l.longueur %} textLength="{{ l.longueur }}" lengthAdjust="spacingAndGlyphs"{% endif %}>{{ l.texte }}</text>
+      {%- endfor %}
+    </g>
+    {%- endfor %}
+  </svg>
+  </div>
+  {% if p.avec_noms %}
+  {% if p.non_places %}<p class="plan-note"><b>Non placés :</b> {{ p.non_places | join(' ; ') }}</p>{% endif %}
+  <p class="plan-legende"><b>Gras</b> : placé par l'enseignant ; <i>italique</i> : place libre à confirmer.</p>
+  {% endif %}
+  {% endif %}
+</section>
+{% else %}
+<p class="vide">Aucun plan de classe pour cette salle cette semaine.</p>
+{% endfor %}
+{% endblock %}

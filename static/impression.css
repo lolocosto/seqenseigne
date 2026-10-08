@@ -96,3 +96,20 @@ table.liste tr { break-inside: avoid; page-break-inside: avoid; }
   .barre-impression { display: none !important; }
   .feuille { padding: 0; }
 }
+
+/* ── Plans de classe (v0.50.1) ────────────────────────────────────────── */
+.plan-page { break-after: page; page-break-after: always; }
+.plan-page:last-child { break-after: auto; page-break-after: auto; }
+.plan-titre { font-size: 14pt; margin: 0 0 6pt; }
+.plan-dessin { text-align: center; }
+.plan-dessin svg { max-width: 100%; height: auto; }
+.plan-dessin .tableau { fill: #888; stroke: none; }
+.plan-dessin .tableau-lbl { font-size: 11px; fill: #666; text-anchor: middle;
+  dominant-baseline: middle; }
+.plan-dessin .place rect { fill: none; stroke: #000; stroke-width: 0.8; }
+.plan-dessin .place text { text-anchor: middle; dominant-baseline: middle; fill: #000; }
+.plan-dessin .num-gris text { fill: #888; }
+.plan-dessin .impose text, .plan-dessin .aesh text { font-weight: bold; }
+.plan-dessin .a-confirmer text { font-style: italic; }
+.plan-note, .plan-legende { margin: 6pt 0 0; font-size: 10pt; }
+.plan-legende { font-size: 9pt; }

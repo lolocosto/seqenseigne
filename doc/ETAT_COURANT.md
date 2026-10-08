@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.50.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.50.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -26,8 +26,11 @@ enregistrées en PDF par le navigateur (cadrage : `doc/redemarrage_v0_50_0.md`).
 - v0.50.0 livrée : planning des automatismes, planning MER d'une classe,
   aperçu théorique MER (`templates/impression/`, `static/impression.css`,
   routes `/impression/...`) ; anciens PDF LaTeX en lien « ancien PDF ».
-- À venir : v0.50.1 plans de classe (SVG) ; v0.50.2 retrait des générateurs
-  LaTeX hors ateliers et de leurs routes.
+  Rendu validé par l'auteur sous Firefox.
+- v0.50.1 livrée : plans de classe en HTML + SVG (une page A4 par plan,
+  `/impression/plans-classe`).
+- À venir : v0.50.2 retrait des générateurs LaTeX hors ateliers et de leurs
+  routes.
 
 ## Chantier précédent : suivi en séance
 

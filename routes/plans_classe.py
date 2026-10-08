@@ -7,7 +7,8 @@ impression (services/plan_classe_pdf.py).
 from datetime import date
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, current_app, Response
+from flask import (Blueprint, jsonify, request, current_app, Response,
+                   render_template)
 
 from services import plans_classe as svc
 from services import plan_classe_pdf as pdf
@@ -103,6 +104,32 @@ def api_aleatoire():
                                            nouveaux, date.today()))
     except (PlanErreur, SalleErreur) as e:
         return _erreur(e)
+
+
+def _plans_a_imprimer():
+    """Plans de la semaine : une classe (classe_id) ou toutes les classes qui
+    ont cours dans la salle cette semaine-là."""
+    classe_id, salle_id, lundi = _args()
+    with _store()._conn() as conn:
+        if classe_id:
+            plans = [svc.lire(conn, classe_id, salle_id, lundi, date.today())]
+        else:
+            plans = svc.plans_de_la_salle(conn, salle_id, lundi, date.today())
+    return plans, svc.lundi_iso(lundi)
+
+
+@bp.route("/impression/plans-classe", methods=["GET"])
+def impression_plans():
+    """v0.50.1 — Plans de classe imprimables (HTML + SVG, une page A4 par
+    plan), imprimés ou enregistrés en PDF par le navigateur, sans LaTeX."""
+    from services.impression import plan_svg, _date_fr
+    try:
+        plans, lundi = _plans_a_imprimer()
+    except (PlanErreur, SalleErreur) as e:
+        return _erreur(e)
+    return render_template("impression/plans_classe.html",
+                           pages=[plan_svg(p) for p in plans],
+                           semaine=_date_fr(lundi))
 
 
 @bp.route("/api/plans-classe/pdf", methods=["GET"])

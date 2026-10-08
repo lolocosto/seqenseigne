@@ -228,7 +228,7 @@ Notés pour plus tard :
 
 But : outil « classe » sans distribution LaTeX (préalable à la mise en ligne).
 - v0.50.0 : plannings automatismes / MER / aperçu théorique en HTML (fait).
-- v0.50.1 : plans de classe en SVG.
+- v0.50.1 : plans de classe en SVG (fait).
 - v0.50.2 : retrait des générateurs `.tex` hors ateliers et des routes `.pdf`.
 - Plus tard, si un téléchargement direct de PDF devient nécessaire en ligne :
   WeasyPrint côté serveur sur les mêmes gabarits HTML.

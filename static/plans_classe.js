@@ -2,7 +2,8 @@
 // static/plans_classe.js — v0.39.0 (v0.39.1 : cadenas ; v0.40.0 : mixte, AESH)
 // Plans de classe hebdomadaires (Planification › Plans de classe).
 // Backend : /api/plans-classe (GET/PUT/DELETE), /api/plans-classe/salles,
-//           /api/plans-classe/aleatoire (POST), /api/plans-classe/pdf.
+//           /api/plans-classe/aleatoire (POST), /impression/plans-classe
+//           (v0.50.1, HTML imprimable ; ancien /api/plans-classe/pdf).
 // Géométrie des places : window.SallesPur (static/salles_pur.js).
 //
 // Interaction (validée) :
@@ -178,8 +179,10 @@ function _pcRendreOutils() {
     ${_pcInfoAesh()}
     ${p.source === 'saisi' ? `<button class="btn-sm" onclick="pcReinitialiser()"${ro}>Annuler le plan de la semaine</button>` : ''}
     <span class="pc-espace"></span>
-    <a class="btn-sm" target="_blank" href="/api/plans-classe/pdf?classe_id=${encodeURIComponent(PC.classeId)}&${q}">Imprimer ce plan</a>
-    <a class="btn-sm" target="_blank" href="/api/plans-classe/pdf?${q}">Imprimer les plans de la salle</a>`;
+    <a class="btn-sm" target="_blank" href="/impression/plans-classe?classe_id=${encodeURIComponent(PC.classeId)}&${q}">Imprimer ce plan</a>
+    <a class="btn-sm" target="_blank" href="/impression/plans-classe?${q}">Imprimer les plans de la salle</a>
+    <a class="pc-ancien-pdf" target="_blank" href="/api/plans-classe/pdf?classe_id=${encodeURIComponent(PC.classeId)}&${q}"
+       title="Ancien rendu LaTeX, conservé pendant la transition v0.50">ancien PDF</a>`;
 }
 
 function _pcInfoAesh() {
