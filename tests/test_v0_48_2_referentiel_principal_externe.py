@@ -64,8 +64,10 @@ def test_structure_et_renumerotation(st):
         l = rpe.lire(c, rid, AUJ)["sequences"][0]
         assert [p["numero"] for p in l["parties"]] == [1]
         assert [(o["code"], o["nom"]) for o in l["parties"][0]["objectifs"]] == [("01", "Ranger")]
+        # v0.51.4 — En conception, les codes suivent le rang.
         rpe.deplacer_sequence(c, rid, "S02", -1, AUJ)
-        assert [s["code"] for s in rpe.lire(c, rid, AUJ)["sequences"]] == ["S02", "S01"]
+        assert [(s["code"], s["nom"]) for s in rpe.lire(c, rid, AUJ)["sequences"]] == \
+            [("S01", "Géométrie"), ("S02", "Nombres")]
 
 
 def test_fichiers(st, tmp_path):

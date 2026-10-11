@@ -3,10 +3,13 @@
 // v0.48.5 : séance de distribution, retour, délai ; type des documents de MER)
 // Référentiels PRINCIPAUX externes (Conception de référentiel › Référentiels
 // externes › Principaux) : même structure qu'un référentiel interne figé.
-// Séquences → parties (nb de séances) → objectifs (nb de séances, critères
+// Séquences → parties (durée = somme des séances des objectifs) → objectifs (nb de séances, critères
 // F/A/E) ; fichiers (tous formats) par séquence ou par partie. Une séquence
 // commencée (créneau démarré dans une progression) n'accepte plus que la
 // correction des libellés et l'ajout de fichiers.
+// v0.51.4 : codes de séquence recalculés tant que le référentiel est en
+// conception ; durée de partie calculée (somme des objectifs, lecture seule) ;
+// déplacement d'un document vers un autre point d'attache.
 // Backend : /api/referentiels-principaux-externes.
 // ============================================================================
 
@@ -84,6 +87,9 @@ function _rpeRef(r) {
     ${ouvert ? `<div class="rpe-corps">
       ${(r.alertes || []).length ? `<div class="rx-alertes" role="status">⚠ ${r.alertes.length} partie(s) sans objectif « capacité »
         (ce qu'on évalue à la fin) : ${r.alertes.map(a => _rpeE(a.split(' :')[0])).join(', ')}.</div>` : ''}
+      <div class="rx-petit rpe-codes">${r.en_conception
+        ? 'En conception : les codes de séquence suivent leur rang (recalculés au déplacement et à la suppression).'
+        : 'Référentiel utilisé ou publié : les codes de séquence ne changent plus.'}</div>
       ${(r.sequences || []).map(s => _rpeSeq(r, s)).join('') || '<p class="rpe-vide">Aucune séquence.</p>'}
       <div class="rpe-ajout"><input id="rpe-seq-${r.id}" placeholder="Nom de la nouvelle séquence"
         onkeydown="if(event.key==='Enter') rpeAjouterSeq('${r.id}')">
@@ -108,10 +114,41 @@ function _rpeFichiers(r, seqCode, partie, fichiers) {
          title="${f.affichable ? 'Afficher' : 'Télécharger'}">${f.affichable ? '📄' : '⬇'} ${_rpeE(f.nom_fichier)}</a>
       <select class="rpe-type" onchange="rpeTyperFichier('${f.id}', this.value)">${optionsType(f.type_id)}</select>
       ${partie ? _rpePlacement(f) : ''}
+      ${_rpeDeplacerFichier(r, f)}
       <button class="btn-lien rpe-x" onclick="rpeSupprimerFichier('${f.id}')" title="Supprimer">✕</button></div>`).join('')}
     <div class="rx-ajout-doc"><label class="btn-sm rx-import">+ document(s)<input type="file" multiple style="display:none"
       onchange="rpeImporter('${r.id}', '${seqCode}', ${partie}, this)"></label></div>
   </div>`;
+}
+
+// v0.51.4 — Point d'attache d'un document : annuel, séquence ou partie.
+function _rpeDeplacerFichier(r, f) {
+  if (f.distribue) {
+    return '<span class="rpe-badge" title="Marqué distribué dans le suivi de séance : ne se déplace plus">distribué</span>';
+  }
+  const ici = `${f.seq_code || ''}|${f.partie_numero || 0}`;
+  const opt = (v, lib) => `<option value="${v}"${v === ici ? ' disabled' : ''}>${_rpeE(lib)}${v === ici ? ' (ici)' : ''}</option>`;
+  const opts = [opt('|0', 'Documents annuels')];
+  for (const s of (r.sequences || [])) {
+    opts.push(opt(`${s.code}|0`, `${s.code} — ${s.nom}`));
+    for (const p of (s.parties || [])) {
+      opts.push(opt(`${s.code}|${p.numero}`, `\u00a0\u00a0\u00a0${s.code} · P${p.numero}${p.libelle ? ' ' + p.libelle : ''}`));
+    }
+  }
+  return `<select class="rpe-deplacer" title="Déplacer le document vers un autre point d'attache"
+    aria-label="Déplacer le document" onchange="rpeDeplacerFichier('${f.id}', this.value)">
+    <option value="" selected>déplacer vers…</option>${opts.join('')}</select>`;
+}
+
+async function rpeDeplacerFichier(fid, v) {
+  if (!v) return;
+  const [seq_code, num] = v.split('|');
+  try {
+    const d = await _rpeApi(`${_RPE_API}/fichiers/${fid}/rattachement`,
+      _rpeJ({ m: 'PUT', b: { seq_code, partie_numero: parseInt(num, 10) || 0 } }));
+    _rpeStatus(d.alerte || 'Document déplacé.', !!d.alerte);
+  } catch (e) { _rpeStatus(e.message, true); }
+  await rpeCharger();
 }
 
 function rpeTyperFichier(fid, typeId) {
@@ -139,8 +176,7 @@ function _rpeSeq(r, s) {
       ${_rpeFichiers(r, s.code, 0, s.fichiers || [])}
       ${(s.parties || []).map(p => _rpePartie(r, s, p, verrou, ctl)).join('')
         || '<div class="rpe-vide">Aucune partie.</div>'}
-      ${ctl(`<div class="rx-ajout"><input type="number" min="0" step="0.5" id="rpe-part-${r.id}-${s.code}" class="rpe-nb" value="4">
-        <span class="rx-petit">séances</span>
+      ${ctl(`<div class="rx-ajout">
         <button class="btn-sm" onclick="rpeAjouterPartie('${r.id}', '${s.code}')">+ partie</button></div>`)}
     </div>
   </div>`;
@@ -154,8 +190,7 @@ function _rpePartie(r, s, p, verrou, ctl) {
       <span class="rx-petit">P${p.numero} ·</span>
       <input class="rx-partie-lib" value="${_rpeE(p.libelle || '')}" placeholder="libellé de la partie (facultatif)"
         aria-label="Libellé de la partie" onchange="rpeLibellerPartie('${r.id}', '${s.code}', ${p.numero}, this.value)">
-      <input type="number" min="0" step="0.5" value="${p.nb_seances_R_AE}" class="rpe-nb" ${verrou ? 'disabled' : ''}
-        aria-label="Nombre de séances de la partie" onchange="rpeModifierPartie('${r.id}', '${s.code}', ${p.numero}, this.value)">
+      <span class="rpe-duree" title="Somme des séances des objectifs de la partie">${_rpeE(String(+p.nb_seances_R_AE || 0).replace('.', ','))}</span>
       <span class="rx-petit">séance(s)</span>
       ${ctl(`<button class="btn-sm" title="Monter la partie" onclick="rpeDeplacerPartie('${r.id}', '${s.code}', ${p.numero}, -1)">↑</button>
         <button class="btn-sm" title="Descendre la partie" onclick="rpeDeplacerPartie('${r.id}', '${s.code}', ${p.numero}, 1)">↓</button>
@@ -233,10 +268,8 @@ function rpeSupprimerSeq(id, c) {
   return _rpeAction(`${_RPE_API}/${id}/sequences/${c}`, { method: 'DELETE' });
 }
 function rpeAjouterPartie(id, c) {
-  const n = document.getElementById(`rpe-part-${id}-${c}`);
-  return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/parties`, _rpeJ({ b: { nb_seances: n ? n.value : 0 } }));
+  return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/parties`, _rpeJ({ b: {} }));
 }
-function rpeModifierPartie(id, c, num, v) { return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/parties/${num}`, _rpeJ({ m: 'PUT', b: { nb_seances: v } })); }
 function rpeDeplacerPartie(id, c, num, sens) { return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/parties/${num}/deplacer`, _rpeJ({ b: { sens } })); }
 function rpeSupprimerPartie(id, c, num) {
   if (!confirm(`Supprimer la partie ${num} (objectifs, fichiers) ?`)) return;
@@ -349,7 +382,7 @@ function rxaRendre() {
   if (k === 'P') {
     const r = RPE.liste.find(x => x.id === id);
     RPE.ouverts.add(id);
-    detail.innerHTML = r ? `<div class="rxa-aide">Séquences → parties (nb de séances) → objectifs
+    detail.innerHTML = r ? `<div class="rxa-aide">Séquences → parties (durée = somme des séances des objectifs) → objectifs
       (connaissance du cours, capacités ; critères F/A/E) ; documents par séquence ou par partie.
       Une séquence commencée ne se modifie plus (libellés et ajout de documents seulement).</div>${_rpeRef(r)}` : '';
   } else {

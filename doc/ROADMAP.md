@@ -234,19 +234,28 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
 - v0.51.2 : paquet de publication (JSON + PDF compilés + fichiers externes,
   empreintes, rapport) ; tuile « Publication » au tableau de bord atelier
   (fait).
-- Passe « durées » (validée, à planifier) : la durée d'une partie est la
-  somme des séances de ses objectifs — à appliquer au figeage, aux éditeurs
-  de référentiels (ne plus saisir la durée de la partie, l'afficher
-  calculée), à la Progression de MER et à la progression principale
-  (semaines = séances ÷ séances par semaine du niveau). L'export applique
-  déjà la règle (v0.51.2).
+- Passe « durées » (validée, en partie faite) : la durée d'une partie est la
+  somme des séances de ses objectifs. Faits : export (v0.51.2), éditeur des
+  référentiels externes et MER — durée calculée, en lecture seule (v0.51.4).
+  Reste : figeage des internes, progression principale et Progression de
+  MER en semaines (semaines = séances ÷ séances par semaine du niveau).
+- v0.51.4 : atelier — codes de séquence recalculés tant que le référentiel
+  est en conception ; documents déplaçables ; durée de partie calculée (fait).
+- Structures modèles à la création d'un référentiel (demande de l'auteur,
+  à cadrer) : proposer les structures connues du niveau (thèmes → séquences
+  → parties → objectifs, arbre dépliable) ; en choisir une préremplit le
+  référentiel, ensuite utilisable tel quel (ajout des documents) ou modifié
+  (réordonner, ajouter, supprimer à tous les niveaux) ; ou partir de vide en
+  définissant tout, **thèmes compris** (absents aujourd'hui des référentiels
+  externes). Objectif : la structure complète dans le JSON publié, pour le
+  suivi et la création des progressions.
 - v0.51.3 : import côté classe (structure en lecture seule, rapport des
   changements, documents orphelins signalés) (fait).
 - Retour d'usage classe → atelier (validé) : référentiel utilisé, séquences
   commencées, parties de MER posées — sans donnée d'élève ; remplace la
   lecture directe des progressions par l'atelier (verrou des séquences
   commencées, état « utilisé »). Par fichier, puis par l'API. Après v0.51.3.
-- v0.51.4 : bascule des données de classe vers une base « classe » séparée.
+- v0.51.5 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).
 - Tableau de bord atelier : pilotage de la conception (état des

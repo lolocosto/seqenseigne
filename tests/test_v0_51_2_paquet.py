@@ -69,7 +69,9 @@ def test_rapport_documents_sans_pdf_et_ecarts(app):
     with app.json_store._conn() as c:
         c.execute("INSERT INTO referentiel_documents (id, referentiel_id, type_document) "
                   "VALUES ('rd2', ?, 'livret_cours')", (rint,))
-        rpe.modifier_partie(c, rext, seq, 1, 5, AUJ)        # saisie 5, objectifs 3
+        # Donnée antérieure à la v0.51.4 (durée saisie à la main).
+        c.execute("UPDATE referentiel_parties SET nb_seances_R_AE=5 WHERE referentiel_id=? "
+                  "AND seq_code=? AND numero=1", (rext, seq))   # saisie 5, objectifs 3
     _, m = _creer(app, [rint, rext])
     r = m["rapport"]
     assert any("Livret de cours" in x for x in r["documents_sans_pdf"])

@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -34,8 +34,12 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.3 livrée : import des paquets dans le profil classe (Système ›
   Administration › Import référentiels) ; base séparée d'essai
   (`lancer.bat classe --base-classe`).
-- À venir : retour d'usage ; v0.51.4 bascule ; v0.52 mise en
-  ligne (authentification, HTTPS, VPS) puis API de publication.
+- v0.51.4 livrée : atelier des référentiels externes et MER — codes de
+  séquence recalculés tant que le référentiel est en conception, documents
+  déplaçables (sauf distribués), durée de partie calculée en lecture seule.
+- À venir : structures modèles à la création (à cadrer) ; retour d'usage ;
+  v0.51.5 bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
+  API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)
 

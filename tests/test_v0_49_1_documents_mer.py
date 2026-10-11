@@ -44,6 +44,8 @@ def ctx(tmp_path, monkeypatch):
         rpe.ajouter_sequence(c, rid, "Calcul mental")
         rpe.ajouter_partie(c, rid, "M01", 3, AUJ, libelle="Série 1")
         rpe.ajouter_partie(c, rid, "M01", 2, AUJ, libelle="Série 2")
+        rpe.ajouter_objectif(c, rid, "M01", 1, "Série 1", 3)     # v0.51.4 — durées
+        rpe.ajouter_objectif(c, rid, "M01", 2, "Série 2", 2)
         f_cours = rpe.ajouter_fichier(c, rid, "M01", 1, nom_fichier="cours.pdf", contenu=b"%",
                                       mime="application/pdf", data_dir=st.data_dir)
         f_test = rpe.ajouter_fichier(c, rid, "M01", 1, nom_fichier="test.pdf", contenu=b"%",

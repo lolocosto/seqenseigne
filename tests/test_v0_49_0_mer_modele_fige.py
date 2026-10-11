@@ -62,6 +62,7 @@ def test_progression_de_mer(st):
     with st._conn() as c:
         rid = _mer(c)
         rpe.ajouter_partie(c, rid, "M01", 4, AUJ)
+        rpe.ajouter_objectif(c, rid, "M01", 1, "Compléter à 1 000", 6)   # durée P1 = 6
         prog = pm.creer_ou_lire(c, "N09", ANNEE)
         pm.definir_referentiel(c, prog["id"], rid, "fige")
         dispo = pm.lister_parties_disponibles(c, rid, "fige")

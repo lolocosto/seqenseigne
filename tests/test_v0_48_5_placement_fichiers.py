@@ -42,6 +42,9 @@ def ctx(tmp_path, monkeypatch):
         rpe.ajouter_sequence(c, rid, "Nombres")
         rpe.ajouter_partie(c, rid, "S01", 3, AUJ)
         rpe.ajouter_partie(c, rid, "S01", 4, AUJ)
+        # v0.51.4 — Durée d'une partie = somme de ses objectifs (3 et 4).
+        rpe.ajouter_objectif(c, rid, "S01", 1, "Comparer", 3)
+        rpe.ajouter_objectif(c, rid, "S01", 2, "Ranger", 4)
         f1 = rpe.ajouter_fichier(c, rid, "S01", 1, nom_fichier="fiche1.pdf", contenu=b"%",
                                  mime="application/pdf", data_dir=st.data_dir)
         f2 = rpe.ajouter_fichier(c, rid, "S01", 2, nom_fichier="dm.pdf", contenu=b"%",

@@ -209,6 +209,14 @@ def api_fichier_placer(fid):
                                               b.get("delai_type", ""), b.get("delai_n", 1)))
 
 
+@bp.route(P + "/fichiers/<fid>/rattachement", methods=["PUT"])
+def api_fichier_deplacer(fid):
+    """v0.51.4 — Nouveau point d'attache : annuel, séquence ou partie."""
+    b = _b()
+    return _fait(lambda c: svc.deplacer_fichier(c, fid, b.get("seq_code", ""),
+                                                b.get("partie_numero", 0)))
+
+
 @bp.route("/api/referentiels-externes/docs/<did>/type", methods=["PUT"])
 def api_doc_mer_typer(did):
     """v0.48.5 — Type d'un document de référentiel externe de MER."""

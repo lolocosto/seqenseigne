@@ -21,8 +21,15 @@ Règles (validées) :
     l'ajout de fichiers ;
   - objectifs numérotés automatiquement (01, 02…) dans la séquence,
     renumérotés au réordonnancement ;
-  - les codes de séquence (S01, S02…) sont attribués à la création et ne
-    changent jamais (les créneaux de progression s'y réfèrent).
+  - v0.51.4 — les codes de séquence (S01, S02… / M01…) suivent le rang tant
+    que le référentiel est EN CONCEPTION (utilisé par aucune progression,
+    jamais publié) : recalculés au réordonnancement et à la suppression ;
+    ensuite ils ne changent plus (les créneaux, les parties posées en MER et
+    l'appli en ligne s'y réfèrent) ;
+  - v0.51.4 — la durée d'une partie (nb_seances_R_AE) est calculée : somme
+    des nombres de séances de ses objectifs (lecture seule) ;
+  - v0.51.4 — un document attaché se déplace (annuel, séquence, partie) tant
+    qu'il n'a pas été marqué distribué dans le suivi de séance.
 """
 
 from __future__ import annotations
@@ -99,6 +106,15 @@ def migrer(conn) -> None:
     cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
     if cols_xd and "type_id" not in cols_xd:
         conn.execute("ALTER TABLE referentiel_externe_doc ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
+    # v0.51.4 — Durée des parties = somme des objectifs (référentiels conçus
+    # localement ; les référentiels importés l'ont déjà).
+    if cols_p:
+        cols_n = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_niveaux)")}
+        q = "SELECT id FROM referentiel_niveaux WHERE source='externe'"
+        if "origine" in cols_n:
+            q += " AND COALESCE(origine, '')<>'publication'"
+        for r in conn.execute(q).fetchall():
+            recalculer_parties(conn, r[0])
     if conn.execute("SELECT COUNT(*) FROM types_documents").fetchone()[0] == 0:
         for i, lib in enumerate(TYPES_DEFAUT, start=1):
             conn.execute("INSERT INTO types_documents (id, libelle, ordre) VALUES (?,?,?)",
@@ -283,12 +299,14 @@ def lire(conn, rid: str, aujourd_hui: date | None = None) -> dict:
             if p["sans_capacite"]:
                 alertes.append(f"{s['code']} partie {p['numero']} : aucun objectif « capacité ».")
     return {**ref, "nom": nom_calcule(ref), "utilise": est_utilise(conn, rid),
+            "en_conception": en_conception(conn, rid),
             "sequences": seqs, "documents_annuels": _fichiers(conn, rid, "", 0),
             "alertes": alertes}
 
 
 def _fichiers(conn, rid, seq_code, partie_numero) -> list[dict]:
-    return [{**dict(f), "affichable": f["mime"] in MIMES_AFFICHABLES} for f in conn.execute(
+    return [{**dict(f), "affichable": f["mime"] in MIMES_AFFICHABLES,
+             "distribue": fichier_distribue(conn, f["id"])} for f in conn.execute(
         "SELECT f.*, COALESCE(t.libelle, '') AS type_libelle FROM referentiel_fichiers f "
         "LEFT JOIN types_documents t ON t.id=f.type_id WHERE f.referentiel_id=? AND "
         "f.seq_code=? AND f.partie_numero=? ORDER BY f.ordre, f.nom_fichier",
@@ -440,6 +458,7 @@ def deplacer_sequence(conn, rid: str, code: str, sens: int, aujourd_hui: date) -
     for k, c in enumerate(codes, start=1):
         conn.execute("UPDATE referentiel_sequences SET numero=? WHERE referentiel_id=? AND "
                      "code=?", (k, rid, c))
+    return {"recode": recoder_sequences(conn, rid)}
 
 
 def supprimer_sequence(conn, rid: str, code: str, aujourd_hui: date,
@@ -458,6 +477,72 @@ def supprimer_sequence(conn, rid: str, code: str, aujourd_hui: date,
     conn.execute("DELETE FROM referentiel_sequences WHERE referentiel_id=? AND code=?",
                  (rid, code))
     _renumeroter_sequences(conn, rid)
+    recoder_sequences(conn, rid)
+
+
+def est_publie(conn, rid: str) -> bool:
+    """v0.51.4 — Vrai si le référentiel figure dans un paquet de publication."""
+    try:
+        rows = conn.execute("SELECT referentiels FROM publications").fetchall()
+    except Exception:
+        return False
+    import json
+    for r in rows:
+        try:
+            if any(x.get("id") == rid for x in json.loads(r[0] or "[]")):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def en_conception(conn, rid: str) -> bool:
+    """v0.51.4 — Référentiel en conception : conçu ici, utilisé par aucune
+    progression et jamais publié. Ses codes de séquence suivent le rang."""
+    ref = _lire_ref(conn, rid)
+    if (ref.get("origine") or "") == "publication":
+        return False
+    return not est_utilise(conn, rid) and not est_publie(conn, rid)
+
+
+def _tables_seq_code(conn) -> list[str]:
+    """Tables portant (referentiel_id, seq_code)."""
+    tables = []
+    for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall():
+        cols = {r[1] for r in conn.execute(f"PRAGMA table_info({t})")}
+        if {"referentiel_id", "seq_code"} <= cols:
+            tables.append(t)
+    return tables
+
+
+def recoder_sequences(conn, rid: str) -> bool:
+    """v0.51.4 — Codes de séquence recalculés d'après le rang (S01…Sn, M01…
+    pour une MER), dans toutes les tables du référentiel, si le référentiel
+    est en conception. Renvoie vrai si des codes ont changé."""
+    if not en_conception(conn, rid):
+        return False
+    pref = "M" if _lire_ref(conn, rid).get("type_ref") == "mer" else "S"
+    rows = conn.execute("SELECT code FROM referentiel_sequences WHERE referentiel_id=? "
+                        "ORDER BY numero", (rid,)).fetchall()
+    corresp = {r["code"]: f"{pref}{k:02d}" for k, r in enumerate(rows, start=1)}
+    corresp = {a: b for a, b in corresp.items() if a != b}
+    if not corresp:
+        return False
+    tables = _tables_seq_code(conn)
+    # Clés étrangères (parties, objectifs… → séquence) vérifiées à la fin de
+    # la transaction seulement.
+    conn.execute("PRAGMA defer_foreign_keys = ON")
+    # Deux temps (codes provisoires) : les nouveaux codes peuvent être des
+    # anciens codes d'autres séquences.
+    for etape in (0, 1):
+        for ancien, nouveau in corresp.items():
+            de, vers = (ancien, "~" + nouveau) if etape == 0 else ("~" + nouveau, nouveau)
+            conn.execute("UPDATE referentiel_sequences SET code=? WHERE referentiel_id=? "
+                         "AND code=?", (vers, rid, de))
+            for t in tables:
+                conn.execute(f"UPDATE {t} SET seq_code=? WHERE referentiel_id=? AND "
+                             "seq_code=?", (vers, rid, de))
+    return True
 
 
 def _renumeroter_sequences(conn, rid):
@@ -480,8 +565,19 @@ def _nb(v, nom="nombre de séances") -> float:
     return f
 
 
-def ajouter_partie(conn, rid: str, code: str, nb_seances, aujourd_hui: date,
+def recalculer_parties(conn, rid: str) -> None:
+    """v0.51.4 — Durée de chaque partie = somme des séances de ses objectifs."""
+    conn.execute(
+        "UPDATE referentiel_parties SET nb_seances_R_AE=(SELECT COALESCE(SUM(o.nb_seances), 0) "
+        "FROM referentiel_objectifs o WHERE o.referentiel_id=referentiel_parties.referentiel_id "
+        "AND o.seq_code=referentiel_parties.seq_code AND "
+        "o.partie_numero=referentiel_parties.numero) WHERE referentiel_id=?", (rid,))
+
+
+def ajouter_partie(conn, rid: str, code: str, nb_seances=0, aujourd_hui: date | None = None,
                    libelle: str = "") -> dict:
+    """v0.51.4 — `nb_seances` est ignoré : la durée est calculée (objectifs)."""
+    aujourd_hui = aujourd_hui or date.today()
     _verifier_modifiable(conn, rid, code, aujourd_hui)
     if conn.execute("SELECT 1 FROM referentiel_sequences WHERE referentiel_id=? AND code=?",
                     (rid, code)).fetchone() is None:
@@ -490,7 +586,7 @@ def ajouter_partie(conn, rid: str, code: str, nb_seances, aujourd_hui: date,
                       "referentiel_id=? AND seq_code=?", (rid, code)).fetchone()[0]) + 1
     conn.execute("INSERT INTO referentiel_parties (referentiel_id, seq_code, numero, "
                  "nb_seances_R_AE, libelle) VALUES (?,?,?,?,?)",
-                 (rid, code, n, _nb(nb_seances), (libelle or "").strip()))
+                 (rid, code, n, 0, (libelle or "").strip()))
     return {"seq_code": code, "numero": n}
 
 
@@ -505,9 +601,9 @@ def libeller_partie(conn, rid: str, code: str, numero: int, libelle: str) -> Non
 
 def modifier_partie(conn, rid: str, code: str, numero: int, nb_seances,
                     aujourd_hui: date) -> None:
-    _verifier_modifiable(conn, rid, code, aujourd_hui)
-    conn.execute("UPDATE referentiel_parties SET nb_seances_R_AE=? WHERE referentiel_id=? "
-                 "AND seq_code=? AND numero=?", (_nb(nb_seances), rid, code, int(numero)))
+    """v0.51.4 — Plus de saisie : la durée d'une partie est calculée."""
+    raise RefExtErreur("La durée d'une partie est la somme des séances de ses objectifs : "
+                       "modifiez les objectifs.")
 
 
 def supprimer_partie(conn, rid: str, code: str, numero: int, aujourd_hui: date,
@@ -600,6 +696,7 @@ def ajouter_objectif(conn, rid: str, code: str, partie_numero: int, nom: str,
                  (rid, code, prov, nom, int(partie_numero), _nb(nb_seances), type_obj,
                   cr.get("f", ""), cr.get("a", ""), cr.get("e", "")))
     _renumeroter_objectifs(conn, rid, code)
+    recalculer_parties(conn, rid)
 
 
 def modifier_objectif(conn, rid: str, code: str, obj_code: str, champs: dict,
@@ -623,6 +720,7 @@ def modifier_objectif(conn, rid: str, code: str, obj_code: str, champs: dict,
                  "critere_e=?, nb_seances=? WHERE referentiel_id=? AND seq_code=? AND code=?",
                  (o["nom"], o["critere_f"], o["critere_a"], o["critere_e"], o["nb_seances"],
                   rid, code, obj_code))
+    recalculer_parties(conn, rid)
 
 
 def deplacer_objectif(conn, rid: str, code: str, obj_code: str, sens: int,
@@ -654,9 +752,65 @@ def supprimer_objectif(conn, rid: str, code: str, obj_code: str, aujourd_hui: da
     conn.execute("DELETE FROM referentiel_objectifs WHERE referentiel_id=? AND seq_code=? "
                  "AND code=?", (rid, code, obj_code))
     _renumeroter_objectifs(conn, rid, code)
+    recalculer_parties(conn, rid)
 
 
 # ── Fichiers ─────────────────────────────────────────────────────────────────
+
+def fichier_distribue(conn, fid: str) -> bool:
+    """v0.51.4 — Vrai si le document a été marqué distribué dans le suivi de
+    séance d'une classe (placement automatique, ou association manuelle dans
+    une progression principale ou de MER)."""
+    try:
+        manuels = [r[0] for r in conn.execute(
+            "SELECT id FROM progression_doc WHERE doc_ref=?", (fid,)).fetchall()]
+    except Exception:
+        manuels = []
+    cles = [f"automer:{fid}"] + manuels + [f"mer:{m}" for m in manuels]
+    try:
+        q = ("SELECT 1 FROM seance_documents WHERE distribue_date<>'' AND (cle_prevu LIKE ? "
+             f"OR cle_prevu IN ({','.join('?' * len(cles))})) LIMIT 1")
+        return conn.execute(q, [f"auto:{fid}:%", *cles]).fetchone() is not None
+    except Exception:
+        return False
+
+
+def deplacer_fichier(conn, fid: str, seq_code: str, partie_numero: int) -> dict:
+    """v0.51.4 — Change le point d'attache d'un document : annuel (seq_code
+    vide), séquence (partie 0) ou partie. Refusé une fois le document marqué
+    distribué. La séance de distribution (placement automatique) n'a de sens
+    que dans une partie : effacée ailleurs, conservée d'une partie à l'autre
+    (alerte si elle dépasse la durée de la nouvelle partie)."""
+    f = lire_fichier(conn, fid)
+    rid = f["referentiel_id"]
+    seq_code = (seq_code or "").strip()
+    partie_numero = int(partie_numero or 0) if seq_code else 0
+    if (f["seq_code"], int(f["partie_numero"] or 0)) == (seq_code, partie_numero):
+        return {**f, "alerte": ""}
+    if fichier_distribue(conn, fid):
+        raise RefExtErreur("Ce document a déjà été distribué à une classe : il ne se "
+                           "déplace plus.")
+    if seq_code and conn.execute("SELECT 1 FROM referentiel_sequences WHERE referentiel_id=? "
+                                 "AND code=?", (rid, seq_code)).fetchone() is None:
+        raise RefExtErreur("Séquence introuvable.", "introuvable")
+    duree = None
+    if partie_numero:
+        p = conn.execute("SELECT nb_seances_R_AE FROM referentiel_parties WHERE "
+                         "referentiel_id=? AND seq_code=? AND numero=?",
+                         (rid, seq_code, partie_numero)).fetchone()
+        if p is None:
+            raise RefExtErreur("Partie introuvable.", "introuvable")
+        duree = float(p[0] or 0)
+    seance_n = int(f["seance_n"] or 0) if partie_numero else 0
+    n = conn.execute("SELECT COALESCE(MAX(ordre), 0) FROM referentiel_fichiers WHERE "
+                     "referentiel_id=? AND seq_code=?", (rid, seq_code)).fetchone()[0]
+    conn.execute("UPDATE referentiel_fichiers SET seq_code=?, partie_numero=?, seance_n=?, "
+                 "ordre=? WHERE id=?", (seq_code, partie_numero, seance_n, n + 10, fid))
+    alerte = ""
+    if seance_n and duree is not None and seance_n > duree:
+        alerte = (f"Séance de distribution {seance_n} au-delà de la durée de la partie "
+                  f"({duree:g} séance(s)) : à corriger.")
+    return {**lire_fichier(conn, fid), "alerte": alerte}
 
 def ajouter_fichier(conn, rid: str, code: str, partie_numero: int, *, nom_fichier: str,
                     contenu: bytes, mime: str, data_dir: Path) -> dict:

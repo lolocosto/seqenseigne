@@ -4792,3 +4792,9 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .imppub-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .imppub-table th, .imppub-table td { text-align: left; padding: 4px 6px;
   border-bottom: 1px solid var(--border); }
+
+/* v0.51.4 — Atelier : durée de partie calculée, déplacement de document. */
+.rpe-duree { display: inline-block; min-width: 28px; padding: 1px 6px; font-size: 12px; text-align: center;
+  background: #f1eef8; border: 1px solid #d8d0ea; border-radius: 4px; color: #4a3d6b; }
+.rpe-deplacer { font-size: 11px; max-width: 170px; }
+.rpe-codes { margin: 2px 0 8px; }
