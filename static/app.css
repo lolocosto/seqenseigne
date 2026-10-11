@@ -4798,3 +4798,14 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
   background: #f1eef8; border: 1px solid #d8d0ea; border-radius: 4px; color: #4a3d6b; }
 .rpe-deplacer { font-size: 11px; max-width: 170px; }
 .rpe-codes { margin: 2px 0 8px; }
+
+/* v0.51.5 — Thèmes des référentiels externes et MER. */
+.rpe-themes { border: 1px solid #e3e0ea; border-radius: 6px; padding: 8px 10px; margin: 6px 0 10px; background: #fbfaff; }
+.rpe-theme-ligne { display: flex; align-items: center; gap: 6px; margin: 3px 0; font-size: 12px; }
+.rpe-theme-code { display: inline-block; min-width: 22px; padding: 1px 6px; border-radius: 4px; color: #fff;
+  font-weight: 600; text-align: center; font-size: 12px; }
+.rpe-theme-nom { font-size: 12px; width: 260px; }
+.rpe-themes select { font-size: 12px; width: 190px; }
+.rpe-groupe { border-left: 4px solid var(--theme, #bbb); padding-left: 10px; margin: 12px 0; }
+.rpe-groupe-tete { font-weight: 600; font-size: 13px; color: var(--theme, #666); margin-bottom: 6px; }
+.rpe-seq-theme { font-size: 11px; max-width: 150px; }

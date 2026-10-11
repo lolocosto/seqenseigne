@@ -175,7 +175,8 @@ def _structure(conn, ref: dict) -> dict:
         niveau_bloc["annee_dans_cycle"] = _ANNEE_DANS_CYCLE[niv["annee_dans_cycle"]]
     themes = []
     for i, t in enumerate(conn.execute(
-            "SELECT * FROM referentiel_themes WHERE referentiel_id=? ORDER BY code",
+            "SELECT * FROM referentiel_themes WHERE referentiel_id=? ORDER BY "
+            + ("ordre, code" if "ordre" in _colonnes(conn, "referentiel_themes") else "code"),
             (rid,)).fetchall(), start=1):
         th = {"code": t["code"]}
         _texte(th, "nom", t["nom"])

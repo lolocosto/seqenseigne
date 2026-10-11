@@ -91,7 +91,37 @@ def api_supprimer(rid):
 
 @bp.route(P + "/<rid>/sequences", methods=["POST"])
 def api_seq_ajouter(rid):
-    return _fait(lambda c: svc.ajouter_sequence(c, rid, _b().get("nom", "")), 201)
+    b = _b()
+    return _fait(lambda c: svc.ajouter_sequence(c, rid, b.get("nom", ""),
+                                                b.get("theme_code")), 201)
+
+
+# ── v0.51.5 — Thèmes ─────────────────────────────────────────────────────────
+
+@bp.route(P + "/<rid>/themes", methods=["POST"])
+def api_theme_ajouter(rid):
+    b = _b()
+    return _fait(lambda c: svc.ajouter_theme(c, rid, b.get("nom", ""), b.get("couleur", "")), 201)
+
+
+@bp.route(P + "/<rid>/themes/<code>", methods=["PUT"])
+def api_theme_modifier(rid, code):
+    return _fait(lambda c: svc.modifier_theme(c, rid, code, _b()))
+
+
+@bp.route(P + "/<rid>/themes/<code>/deplacer", methods=["POST"])
+def api_theme_deplacer(rid, code):
+    return _fait(lambda c: svc.deplacer_theme(c, rid, code, int(_b().get("sens", 1))))
+
+
+@bp.route(P + "/<rid>/themes/<code>", methods=["DELETE"])
+def api_theme_supprimer(rid, code):
+    return _fait(lambda c: svc.supprimer_theme(c, rid, code))
+
+
+@bp.route(P + "/<rid>/sequences/<code>/theme", methods=["PUT"])
+def api_seq_theme(rid, code):
+    return _fait(lambda c: svc.affecter_theme(c, rid, code, _b().get("theme_code"), _auj()))
 
 
 @bp.route(P + "/<rid>/sequences/<code>", methods=["PUT"])

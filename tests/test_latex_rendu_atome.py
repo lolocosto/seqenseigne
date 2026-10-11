@@ -169,7 +169,7 @@ def db_peuplee():
         -- Peuplement : référentiel N10
         INSERT INTO referentiel_niveaux (id, niveau, version, date_fin)
             VALUES ('ref_n10', 'N10', '2021', NULL);
-        INSERT INTO referentiel_themes VALUES
+        INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur) VALUES
             ('ref_n10', 'A', 'Nombres et Calculs', 'nombres'),
             ('ref_n10', 'D', 'Espace et Géométrie', 'geometrie');
         INSERT INTO referentiel_sequences VALUES
@@ -585,7 +585,7 @@ class TestRefSelectionDeterministe:
                 (ref_id, 'N10', version, etat, date_fin),
             )
             conn.execute(
-                "INSERT INTO referentiel_themes VALUES (?, ?, ?, ?)",
+                "INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur) VALUES (?, ?, ?, ?)",
                 (ref_id, 'A', 'Nombres et Calculs', 'nombres'),
             )
             conn.execute(

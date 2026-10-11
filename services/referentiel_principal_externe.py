@@ -28,6 +28,10 @@ Règles (validées) :
     l'appli en ligne s'y réfèrent) ;
   - v0.51.4 — la durée d'une partie (nb_seances_R_AE) est calculée : somme
     des nombres de séances de ses objectifs (lecture seule) ;
+  - v0.51.5 — thèmes (code, nom, couleur, ordre) : les séquences d'un même
+    thème sont regroupées, dans l'ordre des thèmes (séquences sans thème en
+    dernier) ; codes A, B… recalculés d'après le rang tant que le référentiel
+    est en conception ; une séquence sans thème est signalée (non bloquant) ;
   - v0.51.4 — un document attaché se déplace (annuel, séquence, partie) tant
     qu'il n'a pas été marqué distribué dans le suivi de séance.
 """
@@ -106,6 +110,10 @@ def migrer(conn) -> None:
     cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
     if cols_xd and "type_id" not in cols_xd:
         conn.execute("ALTER TABLE referentiel_externe_doc ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
+    # v0.51.5 — Ordre des thèmes d'un référentiel.
+    cols_t = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_themes)")}
+    if cols_t and "ordre" not in cols_t:
+        conn.execute("ALTER TABLE referentiel_themes ADD COLUMN ordre INTEGER NOT NULL DEFAULT 0")
     # v0.51.4 — Durée des parties = somme des objectifs (référentiels conçus
     # localement ; les référentiels importés l'ont déjà).
     if cols_p:
@@ -298,8 +306,16 @@ def lire(conn, rid: str, aujourd_hui: date | None = None) -> dict:
                                          for o in p["objectifs"])
             if p["sans_capacite"]:
                 alertes.append(f"{s['code']} partie {p['numero']} : aucun objectif « capacité ».")
+    themes = lister_themes(conn, rid)
+    if not themes:
+        alertes_themes = ["Aucun thème : définissez les thèmes du référentiel."]
+    else:
+        alertes_themes = [f"{s['code']} « {s['nom']} » : sans thème." for s in seqs
+                          if not s.get("theme_code")]
     return {**ref, "nom": nom_calcule(ref), "utilise": est_utilise(conn, rid),
             "en_conception": en_conception(conn, rid),
+            "themes": themes, "alertes_themes": alertes_themes,
+            "couleurs_themes": [{"code": c, "libelle": l} for c, l in COULEURS_THEMES],
             "sequences": seqs, "documents_annuels": _fichiers(conn, rid, "", 0),
             "alertes": alertes}
 
@@ -412,8 +428,12 @@ def typer_fichier(conn, fid: str, type_id: str) -> dict:
 
 # ── Séquences ────────────────────────────────────────────────────────────────
 
-def ajouter_sequence(conn, rid: str, nom: str) -> dict:
+def ajouter_sequence(conn, rid: str, nom: str, theme_code: str | None = None) -> dict:
+    """v0.51.5 — `theme_code` : la séquence se place à la fin de son thème."""
     _lire_ref(conn, rid)
+    theme_code = (theme_code or "").strip() or None
+    if theme_code:
+        _theme(conn, rid, theme_code)
     nom = (nom or "").strip()
     if not nom:
         raise RefExtErreur("Le nom de la séquence est obligatoire.")
@@ -425,9 +445,13 @@ def ajouter_sequence(conn, rid: str, nom: str) -> dict:
     code = f"{pref}{(max(nums) + 1) if nums else 1:02d}"
     numero = (conn.execute("SELECT COALESCE(MAX(numero), 0) FROM referentiel_sequences "
                            "WHERE referentiel_id=?", (rid,)).fetchone()[0]) + 1
-    conn.execute("INSERT INTO referentiel_sequences (referentiel_id, code, numero, nom) "
-                 "VALUES (?,?,?,?)", (rid, code, numero, nom))
-    return {"code": code, "numero": numero, "nom": nom}
+    conn.execute("INSERT INTO referentiel_sequences (referentiel_id, code, numero, nom, "
+                 "theme_code) VALUES (?,?,?,?,?)", (rid, code, numero, nom, theme_code))
+    _ordonner_sequences(conn, rid)
+    code = _recoder_sequences(conn, rid).get(code, code)
+    numero = conn.execute("SELECT numero FROM referentiel_sequences WHERE referentiel_id=? "
+                          "AND code=?", (rid, code)).fetchone()[0]
+    return {"code": code, "numero": numero, "nom": nom, "theme_code": theme_code}
 
 
 def modifier_sequence(conn, rid: str, code: str, nom: str) -> None:
@@ -451,7 +475,13 @@ def deplacer_sequence(conn, rid: str, code: str, sens: int, aujourd_hui: date) -
     i = codes.index(code)
     j = i + (1 if sens > 0 else -1)
     if not 0 <= j < len(codes):
-        return
+        return {"recode": False}
+    # v0.51.5 — Une séquence se déplace à l'intérieur de son thème.
+    themes = {r["code"]: r["theme_code"] for r in conn.execute(
+        "SELECT code, theme_code FROM referentiel_sequences WHERE referentiel_id=?",
+        (rid,)).fetchall()}
+    if themes[codes[i]] != themes[codes[j]]:
+        return {"recode": False}
     for c in (codes[i], codes[j]):
         _verifier_modifiable(conn, rid, c, aujourd_hui)
     codes[i], codes[j] = codes[j], codes[i]
@@ -519,15 +549,20 @@ def recoder_sequences(conn, rid: str) -> bool:
     """v0.51.4 — Codes de séquence recalculés d'après le rang (S01…Sn, M01…
     pour une MER), dans toutes les tables du référentiel, si le référentiel
     est en conception. Renvoie vrai si des codes ont changé."""
+    return bool(_recoder_sequences(conn, rid))
+
+
+def _recoder_sequences(conn, rid: str) -> dict:
+    """Correspondance {ancien code: nouveau code} des séquences recodées."""
     if not en_conception(conn, rid):
-        return False
+        return {}
     pref = "M" if _lire_ref(conn, rid).get("type_ref") == "mer" else "S"
     rows = conn.execute("SELECT code FROM referentiel_sequences WHERE referentiel_id=? "
                         "ORDER BY numero", (rid,)).fetchall()
     corresp = {r["code"]: f"{pref}{k:02d}" for k, r in enumerate(rows, start=1)}
     corresp = {a: b for a, b in corresp.items() if a != b}
     if not corresp:
-        return False
+        return {}
     tables = _tables_seq_code(conn)
     # Clés étrangères (parties, objectifs… → séquence) vérifiées à la fin de
     # la transaction seulement.
@@ -542,7 +577,7 @@ def recoder_sequences(conn, rid: str) -> bool:
             for t in tables:
                 conn.execute(f"UPDATE {t} SET seq_code=? WHERE referentiel_id=? AND "
                              "seq_code=?", (vers, rid, de))
-    return True
+    return corresp
 
 
 def _renumeroter_sequences(conn, rid):
@@ -551,6 +586,180 @@ def _renumeroter_sequences(conn, rid):
             (rid,)).fetchall(), start=1):
         conn.execute("UPDATE referentiel_sequences SET numero=? WHERE referentiel_id=? AND "
                      "code=?", (k, rid, r["code"]))
+
+
+# ── v0.51.5 — Thèmes ─────────────────────────────────────────────────────────
+
+# Couleurs des thèmes (slugs partagés avec les référentiels internes).
+COULEURS_THEMES = (("nombres", "Nombres et calculs"), ("grandeurs", "Grandeurs et mesures"),
+                   ("geometrie", "Espace et géométrie"), ("donnees", "Organisation et gestion "
+                   "des données"), ("algorithmique", "Algorithmique et programmation"),
+                   ("noir_gris", "Neutre"))
+
+
+def lister_themes(conn, rid: str) -> list[dict]:
+    rows = conn.execute("SELECT * FROM referentiel_themes WHERE referentiel_id=? "
+                        "ORDER BY ordre, code", (rid,)).fetchall()
+    out = []
+    for t in rows:
+        t = dict(t)
+        t["nb_sequences"] = conn.execute(
+            "SELECT COUNT(*) FROM referentiel_sequences WHERE referentiel_id=? AND "
+            "theme_code=?", (rid, t["code"])).fetchone()[0]
+        out.append(t)
+    return out
+
+
+def _theme(conn, rid: str, code: str) -> dict:
+    r = conn.execute("SELECT * FROM referentiel_themes WHERE referentiel_id=? AND code=?",
+                     (rid, code)).fetchone()
+    if r is None:
+        raise RefExtErreur("Thème introuvable.", "introuvable")
+    return dict(r)
+
+
+def _lettre(k: int) -> str:
+    """1 → A, 26 → Z, 27 → AA…"""
+    s = ""
+    while k > 0:
+        k, r = divmod(k - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+
+def _couleur(couleur: str) -> str:
+    couleur = (couleur or "").strip()
+    if couleur and couleur not in dict(COULEURS_THEMES):
+        raise RefExtErreur(f"Couleur de thème inconnue : {couleur!r}.")
+    return couleur
+
+
+def ajouter_theme(conn, rid: str, nom: str, couleur: str = "") -> dict:
+    _lire_ref(conn, rid)
+    nom = (nom or "").strip()
+    if not nom:
+        raise RefExtErreur("Le nom du thème est obligatoire.")
+    couleur = _couleur(couleur)
+    existants = {t["code"] for t in lister_themes(conn, rid)}
+    if any(t["nom"].lower() == nom.lower() for t in lister_themes(conn, rid)):
+        raise RefExtErreur(f"Le thème « {nom} » existe déjà.")
+    k = 1
+    while _lettre(k) in existants:
+        k += 1
+    code = _lettre(k)
+    ordre = conn.execute("SELECT COALESCE(MAX(ordre), 0) FROM referentiel_themes WHERE "
+                         "referentiel_id=?", (rid,)).fetchone()[0] + 1
+    conn.execute("INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur, ordre) "
+                 "VALUES (?,?,?,?,?)", (rid, code, nom, couleur, ordre))
+    _ordonner_themes(conn, rid)
+    code = _recoder_themes(conn, rid).get(code, code)
+    return _theme(conn, rid, code)
+
+
+def modifier_theme(conn, rid: str, code: str, champs: dict) -> dict:
+    """Nom et couleur : toujours modifiables."""
+    t = _theme(conn, rid, code)
+    if "nom" in champs:
+        t["nom"] = (champs["nom"] or "").strip()
+        if not t["nom"]:
+            raise RefExtErreur("Le nom du thème est obligatoire.")
+    if "couleur" in champs:
+        t["couleur"] = _couleur(champs["couleur"])
+    conn.execute("UPDATE referentiel_themes SET nom=?, couleur=? WHERE referentiel_id=? AND "
+                 "code=?", (t["nom"], t["couleur"], rid, code))
+    return t
+
+
+def deplacer_theme(conn, rid: str, code: str, sens: int) -> dict:
+    """Le thème et toutes ses séquences changent de place."""
+    codes = [t["code"] for t in lister_themes(conn, rid)]
+    if code not in codes:
+        raise RefExtErreur("Thème introuvable.", "introuvable")
+    i = codes.index(code)
+    j = i + (1 if sens > 0 else -1)
+    if not 0 <= j < len(codes):
+        return {"recode": False}
+    codes[i], codes[j] = codes[j], codes[i]
+    for k, c in enumerate(codes, start=1):
+        conn.execute("UPDATE referentiel_themes SET ordre=? WHERE referentiel_id=? AND code=?",
+                     (k, rid, c))
+    _ordonner_sequences(conn, rid)
+    a = bool(_recoder_themes(conn, rid))
+    b = bool(_recoder_sequences(conn, rid))
+    return {"recode": a or b}
+
+
+def supprimer_theme(conn, rid: str, code: str) -> None:
+    """Ses séquences deviennent « sans thème » (signalées)."""
+    _theme(conn, rid, code)
+    conn.execute("UPDATE referentiel_sequences SET theme_code=NULL WHERE referentiel_id=? AND "
+                 "theme_code=?", (rid, code))
+    conn.execute("DELETE FROM referentiel_themes WHERE referentiel_id=? AND code=?", (rid, code))
+    _ordonner_themes(conn, rid)
+    _ordonner_sequences(conn, rid)
+    _recoder_themes(conn, rid)
+    _recoder_sequences(conn, rid)
+
+
+def affecter_theme(conn, rid: str, seq_code: str, theme_code: str | None,
+                   aujourd_hui: date) -> dict:
+    """Change le thème d'une séquence : elle passe à la fin de son nouveau
+    thème. Refusé pour une séquence commencée."""
+    theme_code = (theme_code or "").strip() or None
+    r = conn.execute("SELECT theme_code FROM referentiel_sequences WHERE referentiel_id=? AND "
+                     "code=?", (rid, seq_code)).fetchone()
+    if r is None:
+        raise RefExtErreur("Séquence introuvable.", "introuvable")
+    if r["theme_code"] == theme_code:
+        return {"code": seq_code}
+    _verifier_modifiable(conn, rid, seq_code, aujourd_hui)
+    if theme_code:
+        _theme(conn, rid, theme_code)
+    fin = conn.execute("SELECT COALESCE(MAX(numero), 0) FROM referentiel_sequences WHERE "
+                       "referentiel_id=?", (rid,)).fetchone()[0] + 1
+    conn.execute("UPDATE referentiel_sequences SET theme_code=?, numero=? WHERE "
+                 "referentiel_id=? AND code=?", (theme_code, fin, rid, seq_code))
+    _ordonner_sequences(conn, rid)
+    return {"code": _recoder_sequences(conn, rid).get(seq_code, seq_code)}
+
+
+def _ordonner_themes(conn, rid):
+    for k, t in enumerate(lister_themes(conn, rid), start=1):
+        conn.execute("UPDATE referentiel_themes SET ordre=? WHERE referentiel_id=? AND code=?",
+                     (k, rid, t["code"]))
+
+
+def _ordonner_sequences(conn, rid):
+    """Séquences regroupées par thème, dans l'ordre des thèmes (sans thème
+    en dernier), en gardant leur ordre relatif."""
+    rang = {t["code"]: t["ordre"] for t in lister_themes(conn, rid)}
+    rows = conn.execute("SELECT code, numero, theme_code FROM referentiel_sequences WHERE "
+                        "referentiel_id=?", (rid,)).fetchall()
+    tri = sorted(rows, key=lambda r: (rang.get(r["theme_code"], 10 ** 6), r["numero"]))
+    for k, r in enumerate(tri, start=1):
+        conn.execute("UPDATE referentiel_sequences SET numero=? WHERE referentiel_id=? AND "
+                     "code=?", (-k, rid, r["code"]))
+    conn.execute("UPDATE referentiel_sequences SET numero=-numero WHERE referentiel_id=? AND "
+                 "numero<0", (rid,))
+
+
+def _recoder_themes(conn, rid) -> dict:
+    """Codes de thème A, B… d'après le rang, si le référentiel est en conception."""
+    if not en_conception(conn, rid):
+        return {}
+    corresp = {t["code"]: _lettre(k) for k, t in enumerate(lister_themes(conn, rid), start=1)}
+    corresp = {a: b for a, b in corresp.items() if a != b}
+    if not corresp:
+        return {}
+    conn.execute("PRAGMA defer_foreign_keys = ON")
+    for etape in (0, 1):
+        for ancien, nouveau in corresp.items():
+            de, vers = (ancien, "~" + nouveau) if etape == 0 else ("~" + nouveau, nouveau)
+            conn.execute("UPDATE referentiel_themes SET code=? WHERE referentiel_id=? AND "
+                         "code=?", (vers, rid, de))
+            conn.execute("UPDATE referentiel_sequences SET theme_code=? WHERE referentiel_id=? "
+                         "AND theme_code=?", (vers, rid, de))
+    return corresp
 
 
 # ── Parties ──────────────────────────────────────────────────────────────────

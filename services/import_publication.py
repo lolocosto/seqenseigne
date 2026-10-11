@@ -294,8 +294,9 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
                      "publication_importe_le, id) VALUES (?,?,?,?,?,?,?,?,'publication',?,?,?)",
                      valeurs + (rid,))
     for t in st["themes"]:
-        conn.execute("INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur) "
-                     "VALUES (?,?,?,?)", (rid, t["code"], t["nom"], t["couleur"]))
+        conn.execute("INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur, "
+                     "ordre) VALUES (?,?,?,?,?)",
+                     (rid, t["code"], t["nom"], t["couleur"], int(t.get("ordre") or 0)))
     for s in st["decoupage"]:
         conn.execute("INSERT INTO referentiel_sequences (referentiel_id, code, numero, nom, "
                      "theme_code) VALUES (?,?,?,?,?)",

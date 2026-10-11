@@ -241,8 +241,16 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   MER en semaines (semaines = séances ÷ séances par semaine du niveau).
 - v0.51.4 : atelier — codes de séquence recalculés tant que le référentiel
   est en conception ; documents déplaçables ; durée de partie calculée (fait).
-- Structures modèles à la création d'un référentiel (demande de l'auteur,
-  à cadrer) : proposer les structures connues du niveau (thèmes → séquences
+- v0.51.5 : thèmes dans l'éditeur des référentiels externes et MER
+  (codes A, B… en conception, couleur, séquences regroupées par thème,
+  alerte « sans thème ») (fait).
+- v0.51.6 : structures modèles (cadrage validé : modèles du même type
+  seulement — principal ↔ principal, MER ↔ MER — plus le programme du cycle
+  pour les principaux ; programme du cycle = une partie par séquence, 0
+  séance, ou les parties de l'atelier de conception quand elles existent ;
+  documents jamais copiés ; détection de doublon : un nouveau référentiel
+  identique à un existant est signalé — pour reconduire, la progression de
+  l'année suivante se base sur le même référentiel). Demande initiale : proposer les structures connues du niveau (thèmes → séquences
   → parties → objectifs, arbre dépliable) ; en choisir une préremplit le
   référentiel, ensuite utilisable tel quel (ajout des documents) ou modifié
   (réordonner, ajouter, supprimer à tous les niveaux) ; ou partir de vide en
@@ -255,7 +263,7 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   commencées, parties de MER posées — sans donnée d'élève ; remplace la
   lecture directe des progressions par l'atelier (verrou des séquences
   commencées, état « utilisé »). Par fichier, puis par l'API. Après v0.51.3.
-- v0.51.5 : bascule des données de classe vers une base « classe » séparée.
+- v0.51.7 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).
 - Tableau de bord atelier : pilotage de la conception (état des

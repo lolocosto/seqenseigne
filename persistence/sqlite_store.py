@@ -2997,7 +2997,7 @@ class SqliteStore:
                 return None
             themes = [dict(r) for r in conn.execute(
                 "SELECT code, nom, couleur FROM referentiel_themes "
-                "WHERE referentiel_id=? ORDER BY code", (referentiel_id,)
+                "WHERE referentiel_id=? ORDER BY ordre, code", (referentiel_id,)
             ).fetchall()]
             seqs = [dict(r) for r in conn.execute(
                 "SELECT code, numero, nom, theme_code FROM referentiel_sequences "

@@ -123,7 +123,7 @@ def app_avec_atome(data_dir):
             VALUES ('ref1', 'N10', '2021', NULL)
         """)
         conn.execute("""
-            INSERT INTO referentiel_themes VALUES
+            INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur) VALUES
             ('ref1', 'A', 'Nombres et Calculs', 'nombres')
         """)
         conn.execute("""

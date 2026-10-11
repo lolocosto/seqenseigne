@@ -10,6 +10,8 @@
 // v0.51.4 : codes de séquence recalculés tant que le référentiel est en
 // conception ; durée de partie calculée (somme des objectifs, lecture seule) ;
 // déplacement d'un document vers un autre point d'attache.
+// v0.51.5 : thèmes (bloc en tête, codes A, B… en conception) ; séquences
+// regroupées par thème, déplacées à l'intérieur de leur thème.
 // Backend : /api/referentiels-principaux-externes.
 // ============================================================================
 
@@ -90,10 +92,9 @@ function _rpeRef(r) {
       <div class="rx-petit rpe-codes">${r.en_conception
         ? 'En conception : les codes de séquence suivent leur rang (recalculés au déplacement et à la suppression).'
         : 'Référentiel utilisé ou publié : les codes de séquence ne changent plus.'}</div>
-      ${(r.sequences || []).map(s => _rpeSeq(r, s)).join('') || '<p class="rpe-vide">Aucune séquence.</p>'}
-      <div class="rpe-ajout"><input id="rpe-seq-${r.id}" placeholder="Nom de la nouvelle séquence"
-        onkeydown="if(event.key==='Enter') rpeAjouterSeq('${r.id}')">
-        <button class="btn-sm" onclick="rpeAjouterSeq('${r.id}')">+ séquence</button></div>
+      ${_rpeThemes(r)}
+      ${(r.alertes_themes || []).length ? `<div class="rx-alertes" role="status">⚠ ${r.alertes_themes.map(_rpeE).join(' ')}</div>` : ''}
+      ${_rpeGroupes(r)}
       <div class="rx-annuels">
         <div class="rx-sous-titre">Documents annuels</div>
         <div class="rx-petit">Rattachés au référentiel (récapitulatifs annuels), pas à une séquence.</div>
@@ -164,6 +165,7 @@ function _rpeSeq(r, s) {
     <div class="rx-seq-tete">
       <span class="rx-seq-label">Séquence</span>
       <span class="rpe-code">${_rpeE(s.code)}</span>
+      ${_rpeThemeSelect(r, s, verrou)}
       <input class="rx-seq-nom" value="${_rpeE(s.nom)}" aria-label="Nom de la séquence"
         onchange="rpeModifierSeq('${r.id}', '${s.code}', this.value)">
       ${verrou ? '<span class="rpe-badge rpe-verrou" title="Un créneau de progression a démarré">commencée</span>' : ''}
@@ -255,11 +257,84 @@ function rpeSupprimer(id) {
   if (!confirm('Supprimer ce référentiel et tous ses documents ?')) return;
   return _rpeAction(`${_RPE_API}/${id}`, { method: 'DELETE' }, 'Référentiel supprimé.');
 }
-function rpeAjouterSeq(id) {
-  const i = document.getElementById('rpe-seq-' + id);
+function rpeAjouterSeq(id, theme) {
+  const i = document.getElementById(`rpe-seq-${id}-${theme || '_'}`);
   if (!i || !i.value.trim()) return;
   RPE.ouverts.add(id);
-  return _rpeAction(`${_RPE_API}/${id}/sequences`, _rpeJ({ b: { nom: i.value } }));
+  return _rpeAction(`${_RPE_API}/${id}/sequences`, _rpeJ({ b: { nom: i.value, theme_code: theme || null } }));
+}
+
+// ── v0.51.5 — Thèmes ────────────────────────────────────────────────────────
+const RPE_COULEURS = { nombres: '#c0392b', donnees: '#2980b9', grandeurs: '#d35400',
+  geometrie: '#8e44ad', algorithmique: '#e91e63', noir_gris: '#555555' };
+function _rpeCouleur(c) { return RPE_COULEURS[c] || '#777'; }
+
+function _rpeThemes(r) {
+  const couleurs = r.couleurs_themes || [];
+  const opts = (sel) => '<option value="">— couleur —</option>' + couleurs.map(c =>
+    `<option value="${c.code}"${c.code === sel ? ' selected' : ''}>${_rpeE(c.libelle)}</option>`).join('');
+  const lignes = (r.themes || []).map(t => `<div class="rpe-theme-ligne">
+      <span class="rpe-theme-code" style="background:${_rpeCouleur(t.couleur)}">${_rpeE(t.code)}</span>
+      <input class="rpe-theme-nom" value="${_rpeE(t.nom)}" aria-label="Nom du thème"
+        onchange="rpeModifierTheme('${r.id}', '${t.code}', {nom: this.value})">
+      <select onchange="rpeModifierTheme('${r.id}', '${t.code}', {couleur: this.value})" aria-label="Couleur du thème">${opts(t.couleur)}</select>
+      <span class="rx-petit">${t.nb_sequences} séquence(s)</span>
+      <button class="btn-sm" title="Monter le thème et ses séquences" onclick="rpeDeplacerTheme('${r.id}', '${t.code}', -1)">↑</button>
+      <button class="btn-sm" title="Descendre le thème et ses séquences" onclick="rpeDeplacerTheme('${r.id}', '${t.code}', 1)">↓</button>
+      <button class="btn-sm rx-suppr" title="Supprimer le thème" onclick="rpeSupprimerTheme('${r.id}', '${t.code}', ${t.nb_sequences})">×</button>
+    </div>`).join('');
+  return `<div class="rpe-themes">
+    <div class="rx-sous-titre">Thèmes</div>
+    ${lignes || '<div class="rpe-vide">Aucun thème.</div>'}
+    <div class="rx-ajout"><input id="rpe-theme-${r.id}" placeholder="Nouveau thème"
+        onkeydown="if(event.key==='Enter') rpeAjouterTheme('${r.id}')">
+      <select id="rpe-theme-coul-${r.id}" aria-label="Couleur du nouveau thème">${opts('')}</select>
+      <button class="btn-sm" onclick="rpeAjouterTheme('${r.id}')">+ thème</button></div>
+  </div>`;
+}
+
+// Séquences regroupées par thème (ordre des thèmes), puis les séquences sans thème.
+function _rpeGroupes(r) {
+  const themes = r.themes || [];
+  const seqs = r.sequences || [];
+  const groupes = themes.map(t => ({ t, seqs: seqs.filter(s => s.theme_code === t.code) }));
+  const sans = seqs.filter(s => !themes.some(t => t.code === s.theme_code));
+  if (sans.length || !themes.length) groupes.push({ t: null, seqs: sans });
+  return groupes.map(({ t, seqs: ss }) => {
+    const cle = t ? t.code : '_';
+    const arg = t ? `'${t.code}'` : 'null';
+    return `<div class="rpe-groupe"${t ? ` style="--theme:${_rpeCouleur(t.couleur)}"` : ''}>
+      <div class="rpe-groupe-tete">${t ? `Thème ${_rpeE(t.code)} — ${_rpeE(t.nom)}` : 'Sans thème'}</div>
+      ${ss.map(s => _rpeSeq(r, s)).join('') || '<p class="rpe-vide">Aucune séquence.</p>'}
+      <div class="rpe-ajout"><input id="rpe-seq-${r.id}-${cle}" placeholder="Nom de la nouvelle séquence"
+        onkeydown="if(event.key==='Enter') rpeAjouterSeq('${r.id}', ${arg})">
+        <button class="btn-sm" onclick="rpeAjouterSeq('${r.id}', ${arg})">+ séquence</button></div>
+    </div>`;
+  }).join('');
+}
+
+function _rpeThemeSelect(r, s, verrou) {
+  if (!(r.themes || []).length) return '';
+  const opts = '<option value="">— sans thème —</option>' + r.themes.map(t =>
+    `<option value="${t.code}"${t.code === s.theme_code ? ' selected' : ''}>${_rpeE(t.code)} ${_rpeE(t.nom)}</option>`).join('');
+  return `<select class="rpe-seq-theme" title="Thème de la séquence" aria-label="Thème de la séquence"
+    ${verrou ? 'disabled' : ''} onchange="rpeAffecterTheme('${r.id}', '${s.code}', this.value)">${opts}</select>`;
+}
+
+function rpeAjouterTheme(id) {
+  const i = document.getElementById('rpe-theme-' + id);
+  const c = document.getElementById('rpe-theme-coul-' + id);
+  if (!i || !i.value.trim()) return;
+  return _rpeAction(`${_RPE_API}/${id}/themes`, _rpeJ({ b: { nom: i.value, couleur: c ? c.value : '' } }));
+}
+function rpeModifierTheme(id, code, champs) { return _rpeAction(`${_RPE_API}/${id}/themes/${code}`, _rpeJ({ m: 'PUT', b: champs })); }
+function rpeDeplacerTheme(id, code, sens) { return _rpeAction(`${_RPE_API}/${id}/themes/${code}/deplacer`, _rpeJ({ b: { sens } })); }
+function rpeSupprimerTheme(id, code, n) {
+  if (!confirm(n ? `Supprimer le thème ${code} ? Ses ${n} séquence(s) passeront « sans thème ».` : `Supprimer le thème ${code} ?`)) return;
+  return _rpeAction(`${_RPE_API}/${id}/themes/${code}`, { method: 'DELETE' });
+}
+function rpeAffecterTheme(id, c, theme) {
+  return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/theme`, _rpeJ({ m: 'PUT', b: { theme_code: theme || null } }));
 }
 function rpeModifierSeq(id, c, nom) { return _rpeAction(`${_RPE_API}/${id}/sequences/${c}`, _rpeJ({ m: 'PUT', b: { nom } })); }
 function rpeDeplacerSeq(id, c, sens) { return _rpeAction(`${_RPE_API}/${id}/sequences/${c}/deplacer`, _rpeJ({ b: { sens } })); }
@@ -382,7 +457,7 @@ function rxaRendre() {
   if (k === 'P') {
     const r = RPE.liste.find(x => x.id === id);
     RPE.ouverts.add(id);
-    detail.innerHTML = r ? `<div class="rxa-aide">Séquences → parties (durée = somme des séances des objectifs) → objectifs
+    detail.innerHTML = r ? `<div class="rxa-aide">Thèmes → séquences (regroupées par thème) → parties (durée = somme des séances des objectifs) → objectifs
       (connaissance du cours, capacités ; critères F/A/E) ; documents par séquence ou par partie.
       Une séquence commencée ne se modifie plus (libellés et ajout de documents seulement).</div>${_rpeRef(r)}` : '';
   } else {
