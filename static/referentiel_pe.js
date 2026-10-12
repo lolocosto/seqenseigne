@@ -92,6 +92,11 @@ function _rpeRef(r) {
       <div class="rx-petit rpe-codes">${r.en_conception
         ? 'En conception : les codes de séquence suivent leur rang (recalculés au déplacement et à la suppression).'
         : 'Référentiel utilisé ou publié : les codes de séquence ne changent plus.'}</div>
+      ${r.cree_depuis ? `<div class="rx-petit">Créé à partir de : ${_rpeE(r.cree_depuis)}</div>` : ''}
+      ${(r.doublons || []).length ? `<div class="rx-alertes rpe-doublon" role="status">⚠ Contenu identique à
+        ${r.doublons.map(d => _rpeE(d.nom)).join(', ')} (structure et documents). Un nouveau référentiel
+        ne se justifie que si quelque chose change : pour reconduire, basez la progression sur le
+        référentiel existant.</div>` : ''}
       ${_rpeThemes(r)}
       ${(r.alertes_themes || []).length ? `<div class="rx-alertes" role="status">⚠ ${r.alertes_themes.map(_rpeE).join(' ')}</div>` : ''}
       ${_rpeGroupes(r)}

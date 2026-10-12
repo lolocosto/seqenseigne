@@ -110,6 +110,13 @@ def migrer(conn) -> None:
     cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
     if cols_xd and "type_id" not in cols_xd:
         conn.execute("ALTER TABLE referentiel_externe_doc ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
+    # v0.51.6 — Modèle de départ (libellé) ; empreinte des fichiers.
+    cols_n = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_niveaux)")}
+    if cols_n and "cree_depuis" not in cols_n:
+        conn.execute("ALTER TABLE referentiel_niveaux ADD COLUMN cree_depuis TEXT NOT NULL "
+                     "DEFAULT ''")
+    if "sha256" not in {r[1] for r in conn.execute("PRAGMA table_info(referentiel_fichiers)")}:
+        conn.execute("ALTER TABLE referentiel_fichiers ADD COLUMN sha256 TEXT NOT NULL DEFAULT ''")
     # v0.51.5 — Ordre des thèmes d'un référentiel.
     cols_t = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_themes)")}
     if cols_t and "ordre" not in cols_t:
@@ -1043,6 +1050,10 @@ def ajouter_fichier(conn, rid: str, code: str, partie_numero: int, *, nom_fichie
                  "nom_fichier, chemin, mime, taille, ordre) VALUES (?,?,?,?,?,?,?,?,?)",
                  (fid, rid, code, int(partie_numero or 0), nom, chemin, mime or "",
                   len(contenu), n + 10))
+    # v0.51.6 — Empreinte du contenu (détection des référentiels en double).
+    import hashlib
+    conn.execute("UPDATE referentiel_fichiers SET sha256=? WHERE id=?",
+                 (hashlib.sha256(contenu).hexdigest(), fid))
     return lire_fichier(conn, fid)
 
 

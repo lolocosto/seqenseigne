@@ -2487,10 +2487,13 @@
             <option value="">Toutes</option><option value="interne">Interne</option><option value="externe">Externe</option></select></label>
         </div>
         <div class="refu-creer">
-          <select id="refu-c-source" title="Source du nouveau référentiel">
+          <select id="refu-c-source" title="Source du nouveau référentiel" onchange="refuChargerModeles()">
             <option value="interne">Interne</option><option value="externe">Externe</option></select>
-          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel">
+          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel" onchange="refuChargerModeles()">
             <option value="principal">Principal</option><option value="mer">MER</option></select>
+          <!-- v0.51.6 — Structure de départ d'un référentiel externe (aperçu à droite). -->
+          <select id="refu-c-modele" class="refu-c-modele" title="Structure de départ" style="display:none"
+                  onchange="refuApercuModele(this.value)"><option value="">Structure vide</option></select>
           <input id="refu-c-desc" placeholder="Description (facultative)">
           <button class="btn-prim rxa-btn-creer" id="atl-ref-btn-creer" onclick="refuCreer()"
                   title="Le nom est calculé : niveau, année, type">+ Créer</button>

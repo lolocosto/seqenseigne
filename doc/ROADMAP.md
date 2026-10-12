@@ -244,7 +244,7 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
 - v0.51.5 : thèmes dans l'éditeur des référentiels externes et MER
   (codes A, B… en conception, couleur, séquences regroupées par thème,
   alerte « sans thème ») (fait).
-- v0.51.6 : structures modèles (cadrage validé : modèles du même type
+- v0.51.6 : structures modèles (fait ; cadrage validé : modèles du même type
   seulement — principal ↔ principal, MER ↔ MER — plus le programme du cycle
   pour les principaux ; programme du cycle = une partie par séquence, 0
   séance, ou les parties de l'atelier de conception quand elles existent ;

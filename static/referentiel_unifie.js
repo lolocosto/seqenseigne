@@ -11,9 +11,12 @@
 //     atelier_referentiel.js) ; externe → éditeur commun (static/
 //     referentiel_pe.js) ; ancien modèle de MER → éditeur historique
 //     (static/referentiel_externe.js).
+//   - v0.51.6 : structure de départ d'un référentiel externe (programme du
+//     cycle, référentiels existants du même type) avec aperçu dépliable.
 // ============================================================================
 
-const REFU = { f: { annee: '', type: '', source: '' }, sel: null, actif: false };
+const REFU = { f: { annee: '', type: '', source: '' }, sel: null, actif: false,
+  modeles: [], apercu: null };
 
 function _refuE(s) { return escapeHtml(String(s == null ? '' : s)); }
 function _refuAnneeInterne(version) {
@@ -43,7 +46,77 @@ async function refuInit() {
   // figée), ancien modèle de MER.
   if (typeof rpeCharger === 'function') await rpeCharger();
   if (typeof rxtCharger === 'function') { try { await rxtCharger(); } catch (e) {} }
+  await refuChargerModeles();
   refuRendre();
+}
+
+// ── v0.51.6 — Structures modèles ────────────────────────────────────────────
+
+async function refuChargerModeles() {
+  const sel = document.getElementById('refu-c-modele');
+  if (!sel) return;
+  const source = (document.getElementById('refu-c-source') || {}).value;
+  const type = (document.getElementById('atl-ref-type') || {}).value || 'principal';
+  const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
+  sel.style.display = source === 'externe' ? '' : 'none';
+  REFU.modeles = [];
+  if (source === 'externe' && niveau) {
+    try {
+      REFU.modeles = (await _rpeApi(`${_RPE_API}/modeles?niveau=${encodeURIComponent(niveau)}`
+        + `&type=${encodeURIComponent(type)}`)).modeles || [];
+    } catch (e) { REFU.modeles = []; }
+  }
+  sel.innerHTML = '<option value="">Structure vide</option>' + REFU.modeles.map(m =>
+    `<option value="${_refuE(m.cle)}">${_refuE(m.nom)}${m.description ? ' — ' + _refuE(m.description) : ''}</option>`).join('');
+  if (REFU.apercu) { REFU.apercu = null; _refuRendreDetailExterne(); }
+}
+
+function refuApercuModele(cle) {
+  REFU.apercu = cle || null;
+  _refuRendreDetailExterne();
+}
+
+function _refuArbre(m) {
+  const themes = m.themes || [];
+  const seqs = m.sequences || [];
+  const n = (x) => String(+x || 0).replace('.', ',');
+  const seq = (s) => {
+    const parties = s.parties || [];
+    const duree = parties.reduce((a, p) => a + (p.objectifs || []).reduce((b, o) => b + (+o.nb_seances || 0), 0), 0);
+    return `<details class="refu-arbre-seq"><summary>${_refuE(s.nom)}
+        <span class="rx-petit">${parties.length} partie(s) · ${n(duree)} séance(s)</span></summary>
+      ${parties.map((p, i) => `<div class="refu-arbre-partie">P${i + 1}${p.libelle ? ' · ' + _refuE(p.libelle) : ''}
+          <span class="rx-petit">${n((p.objectifs || []).reduce((b, o) => b + (+o.nb_seances || 0), 0))} séance(s)</span>
+        <ul>${(p.objectifs || []).map(o => `<li><span class="rpe-badge">${o.type === 'connaissance' ? 'connaissance' : 'capacité'}</span>
+          ${_refuE(o.nom)} <span class="rx-petit">${n(o.nb_seances)} séance(s)</span></li>`).join('')}</ul></div>`).join('')}
+    </details>`;
+  };
+  const groupes = themes.map(t => ({ t, ss: seqs.filter(s => s.theme === t.code) }));
+  const sans = seqs.filter(s => !themes.some(t => t.code === s.theme));
+  if (sans.length) groupes.push({ t: null, ss: sans });
+  return groupes.map(({ t, ss }) => `<details class="refu-arbre-theme" open
+      ${t && typeof _rpeCouleur === 'function' ? `style="--theme:${_rpeCouleur(t.couleur)}"` : ''}>
+    <summary>${t ? `Thème ${_refuE(t.code)} — ${_refuE(t.nom)}` : 'Sans thème'}
+      <span class="rx-petit">${ss.length} séquence(s)</span></summary>
+    ${ss.map(seq).join('') || '<div class="rpe-vide">Aucune séquence.</div>'}</details>`).join('');
+}
+
+function _refuRendreApercu(ext) {
+  const m = REFU.modeles.find(x => x.cle === REFU.apercu);
+  if (!m) { REFU.apercu = null; return false; }
+  ext.style.display = '';
+  ext.innerHTML = `<div class="card refu-apercu">
+    <div class="rpe-ref-tete"><strong>Aperçu : ${_refuE(m.nom)}</strong>
+      <span class="rx-petit">${_refuE(m.resume)}</span></div>
+    <div class="rxa-aide">Créer recopie cette structure (thèmes, séquences, parties, objectifs avec
+      critères et séances) dans un nouveau référentiel externe en conception, sans les documents ;
+      vous pourrez ensuite tout modifier. Choisissez « Structure vide » pour partir de rien.</div>
+    ${_refuArbre(m.modele)}
+    <div class="rx-ajout"><button class="btn-prim" onclick="refuCreer()">+ Créer à partir de ce modèle</button></div>
+  </div>`;
+  const empty = document.getElementById('atl-ref-empty');
+  if (empty) empty.style.display = 'none';
+  return true;
 }
 
 function refuFiltre(cle, v) { REFU.f[cle] = v; refuRendre(); }
@@ -95,6 +168,9 @@ function refuRendre() {
 
 function refuChoisir(cle) {
   REFU.sel = cle;
+  REFU.apercu = null;                                          // v0.51.6
+  const mod = document.getElementById('refu-c-modele');
+  if (mod) mod.value = '';
   const [k, id] = [cle.slice(0, 1), cle.slice(2)];
   const ext = document.getElementById('refu-ext');
   if (k === 'I') {
@@ -172,10 +248,13 @@ async function refuVerifierPublication() {
   }
 }
 window.refuVerifierPublication = refuVerifierPublication;
+window.refuChargerModeles = refuChargerModeles;
+window.refuApercuModele = refuApercuModele;
 
 function _refuRendreDetailExterne() {
   const ext = document.getElementById('refu-ext');
   if (!ext) return;
+  if (REFU.apercu && _refuRendreApercu(ext)) return;          // v0.51.6
   if (!REFU.sel || REFU.sel[0] === 'I') { ext.style.display = 'none'; return; }
   const [k, id] = [REFU.sel.slice(0, 1), REFU.sel.slice(2)];
   ext.style.display = '';
@@ -211,9 +290,11 @@ async function refuCreer() {
       await atelRefRechargerListe();
       REFU.sel = 'I:' + ((d.ref && d.ref.id) || d.id);
     } else {
+      const modele = (document.getElementById('refu-c-modele') || {}).value || '';
       const r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
-        niveau, annee: _rpeAnnee(), description: desc.value, type_ref: type }) });
+        niveau, annee: _rpeAnnee(), description: desc.value, type_ref: type, modele }) });
       await rpeCharger();
+      await refuChargerModeles();
       REFU.sel = 'E:' + r.id;
     }
     desc.value = '';

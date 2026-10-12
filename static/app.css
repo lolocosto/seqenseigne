@@ -4809,3 +4809,14 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .rpe-groupe { border-left: 4px solid var(--theme, #bbb); padding-left: 10px; margin: 12px 0; }
 .rpe-groupe-tete { font-weight: 600; font-size: 13px; color: var(--theme, #666); margin-bottom: 6px; }
 .rpe-seq-theme { font-size: 11px; max-width: 150px; }
+
+/* v0.51.6 — Structures modèles (aperçu dépliable). */
+.refu-c-modele { flex-basis: 100%; }
+.refu-apercu { padding: 12px 14px; }
+.refu-arbre-theme { border-left: 4px solid var(--theme, #bbb); padding: 2px 0 2px 10px; margin: 8px 0; }
+.refu-arbre-theme > summary { font-weight: 600; color: var(--theme, #555); cursor: pointer; }
+.refu-arbre-seq { margin: 4px 0 4px 6px; }
+.refu-arbre-seq > summary { cursor: pointer; font-size: 13px; }
+.refu-arbre-partie { margin: 4px 0 6px 18px; font-size: 12px; font-weight: 600; }
+.refu-arbre-partie ul { margin: 2px 0 0 0; padding-left: 18px; font-weight: 400; }
+.refu-arbre-partie li { margin: 2px 0; }

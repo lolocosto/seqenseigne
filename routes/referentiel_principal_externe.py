@@ -50,10 +50,13 @@ def api_lister():
 
 @bp.route(P, methods=["POST"])
 def api_creer():
+    """v0.51.6 — `modele` (facultatif) : clé d'une structure modèle."""
+    from services import modeles_referentiel as mdl
     b = _b()
-    return _fait(lambda c: svc.creer(c, b.get("niveau", ""), b.get("annee", ""),
+    return _fait(lambda c: mdl.creer(c, _data_dir(), b.get("niveau", ""), b.get("annee", ""),
                                      b.get("description", ""),
-                                     type_ref=b.get("type_ref", "principal")), 201)
+                                     type_ref=b.get("type_ref", "principal"),
+                                     cle=b.get("modele") or None, aujourd_hui=_auj()), 201)
 
 
 @bp.route(P + "/<rid>/sequences/<code>/parties/<int:num>/libelle", methods=["PUT"])
@@ -76,7 +79,21 @@ def api_doc_annuel_ajouter(rid):
 
 @bp.route(P + "/<rid>", methods=["GET"])
 def api_lire(rid):
-    return _fait(lambda c: svc.lire(c, rid, _auj()))
+    from services import modeles_referentiel as mdl
+
+    def _lire(c):
+        r = svc.lire(c, rid, _auj())
+        r["doublons"] = mdl.doublons(c, _data_dir(), rid)        # v0.51.6
+        return r
+    return _fait(_lire)
+
+
+@bp.route(P + "/modeles", methods=["GET"])
+def api_modeles():
+    """v0.51.6 — Structures modèles pour créer un référentiel du niveau."""
+    from services import modeles_referentiel as mdl
+    return _fait(lambda c: {"modeles": mdl.lister(c, _data_dir(), request.args.get("niveau", ""),
+                                                  request.args.get("type", "principal"))})
 
 
 @bp.route(P + "/<rid>", methods=["PUT"])
