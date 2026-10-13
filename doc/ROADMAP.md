@@ -259,11 +259,23 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   suivi et la création des progressions.
 - v0.51.3 : import côté classe (structure en lecture seule, rapport des
   changements, documents orphelins signalés) (fait).
-- Retour d'usage classe → atelier (validé) : référentiel utilisé, séquences
-  commencées, parties de MER posées — sans donnée d'élève ; remplace la
+- Retour d'usage classe → atelier (validé, v0.51.8) : référentiel utilisé,
+  date de début du premier créneau de chaque séquence planifiée, parties de
+  MER posées — sans donnée d'élève, ni classe, ni établissement ; verrous
+  jamais perdus ; remplace la
   lecture directe des progressions par l'atelier (verrou des séquences
   commencées, état « utilisé »). Par fichier, puis par l'API. Après v0.51.3.
-- v0.51.7 : bascule des données de classe vers une base « classe » séparée.
+- Protocole d'échange (validé, sur le modèle des datagrammes acquittés) :
+  identité de chaque instance (identifiant, nom), lien un atelier ↔ une
+  appli en ligne, en-tête (émetteur, destinataire, numéro d'ordre, accusé),
+  réception dans l'ordre (trou refusé, numéros manquants à redemander),
+  archive et renvoi, retrait de l'archive à l'acquittement ; états de
+  synchronisation par référentiel (synchronisé, modifié depuis la
+  publication, publication en attente, en retard, désynchronisé).
+  - v0.51.7 : protocole appliqué aux paquets (fait).
+  - v0.51.8 : retour d'usage (classe → atelier) sur ce protocole ;
+    acquittements ; états de synchronisation.
+- v0.51.9 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).
 - Tableau de bord atelier : pilotage de la conception (état des

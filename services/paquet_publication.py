@@ -16,6 +16,9 @@ Règles :
   - un fichier commun à plusieurs documents ou référentiels n'est stocké
     qu'une fois ;
   - chaque création de paquet est inscrite au journal (table publications).
+  - v0.51.7 — en-tête d'échange (`echange` : émetteur, destinataire, numéro
+    d'ordre, accusé ; services/echanges.py) ; le paquet est archivé pour
+    pouvoir être renvoyé ; format 1.1 (ajout compatible).
 
 Description du format : doc/format_paquet.md.
 """
@@ -31,7 +34,7 @@ from pathlib import Path
 from services import format_referentiel as fmt
 
 FORMAT = "seqenseigne.paquet"
-FORMAT_VERSION = "1.0"
+FORMAT_VERSION = "1.1"
 
 _EXT = {"application/pdf": ".pdf", "image/png": ".png", "image/jpeg": ".jpg",
         "application/vnd.oasis.opendocument.text": ".odt",
@@ -55,6 +58,9 @@ def migrer(conn) -> None:
             nb_fichiers  INTEGER NOT NULL DEFAULT 0,
             taille       INTEGER NOT NULL DEFAULT 0
         )""")
+    # v0.51.7 — Numéro d'ordre de l'envoi.
+    if "numero" not in {r[1] for r in conn.execute("PRAGMA table_info(publications)")}:
+        conn.execute("ALTER TABLE publications ADD COLUMN numero INTEGER NOT NULL DEFAULT 0")
 
 
 # ── Référentiels publiables ──────────────────────────────────────────────────
@@ -187,8 +193,10 @@ def creer(conn, data_dir: Path, rids: list[str], profil: str = "atelier",
                "taille_totale": sum(f["taille"] for f in fichiers.values())}
     if erreurs:
         raise PaquetErreur("Le paquet ne peut pas être créé.", "paquet_invalide", rapport)
-    nom = f"paquet_{maintenant:%Y-%m-%d_%H%M}.zip"
-    manifeste = {"format": FORMAT, "format_version": FORMAT_VERSION,
+    from services import echanges as ech
+    en_tete = ech.entete(conn, "paquet")
+    nom = f"paquet_{en_tete['numero']:04d}_{maintenant:%Y-%m-%d_%H%M}.zip"
+    manifeste = {"format": FORMAT, "format_version": FORMAT_VERSION, "echange": en_tete,
                  "cree_le": maintenant.isoformat(timespec="seconds"),
                  "cree_par": f"seqenseigne {fmt.VERSION_APPLI} ({profil})",
                  "nom": nom, "referentiels": refs,
@@ -206,10 +214,12 @@ def creer(conn, data_dir: Path, rids: list[str], profil: str = "atelier",
     contenu = tampon.getvalue()
     import uuid
     conn.execute("INSERT INTO publications (id, cree_le, nom_paquet, referentiels, "
-                 "nb_fichiers, taille) VALUES (?,?,?,?,?,?)",
+                 "nb_fichiers, taille, numero) VALUES (?,?,?,?,?,?,?)",
                  ("pub_" + uuid.uuid4().hex[:10], manifeste["cree_le"], nom,
                   json.dumps([{k: r[k] for k in ("id", "nom", "empreinte")} for r in refs],
-                             ensure_ascii=False), len(fichiers), len(contenu)))
+                             ensure_ascii=False), len(fichiers), len(contenu),
+                  en_tete["numero"]))
+    ech.archiver(conn, data_dir, en_tete, nom, contenu)
     return contenu, manifeste
 
 

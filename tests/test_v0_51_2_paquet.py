@@ -45,7 +45,7 @@ def test_paquet_contenu_et_manifeste(app):
     rint = _interne(app)
     rext, seq, fid, tid = _externe(app)
     contenu, m = _creer(app, [rint, rext])
-    assert m["format"] == "seqenseigne.paquet" and m["format_version"] == "1.0"
+    assert m["format"] == "seqenseigne.paquet" and m["format_version"] == "1.1"
     assert m["nom"].startswith("paquet_") and m["nom"].endswith(".zip")
     assert [r["id"] for r in m["referentiels"]] == [rint, rext]
     z = _zip(contenu)

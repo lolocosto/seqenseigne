@@ -4820,3 +4820,14 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .refu-arbre-partie { margin: 4px 0 6px 18px; font-size: 12px; font-weight: 600; }
 .refu-arbre-partie ul { margin: 2px 0 0 0; padding-left: 18px; font-weight: 400; }
 .refu-arbre-partie li { margin: 2px 0; }
+
+/* v0.51.7 — Protocole d'échange (identité, séquence des envois). */
+.ech-bloc { margin-top: 10px; padding: 8px 10px; border: 1px dashed var(--border, #ddd); border-radius: 6px; font-size: 12px; }
+.ech-ligne { margin: 3px 0; }
+.ech-nom { font-size: 12px; width: 240px; }
+.ech-id { font-family: monospace; font-size: 11px; color: #888; }
+.ech-ok { color: #4a7; font-size: 11px; }
+.ech-envois ul { margin: 4px 0 0; padding-left: 18px; }
+.imppub-echange { font-size: 12px; margin-bottom: 6px; padding: 4px 8px; border-radius: 4px; }
+.imppub-echange.ok { background: #eef7ee; color: #2d6a2d; }
+.imppub-echange.ko { background: #fdecec; color: #a12; }

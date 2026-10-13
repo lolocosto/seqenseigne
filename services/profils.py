@@ -57,7 +57,8 @@ BP_CLASSE = frozenset({
     "calendrier",
     "import_publication",   # v0.51.3 — import des paquets de publication
 })
-BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord"})
+BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord",
+                       "echanges"})        # v0.51.7 — protocole d'échange
 
 # Exceptions, route par route (prioritaires sur la catégorie du blueprint).
 ENDPOINTS = {

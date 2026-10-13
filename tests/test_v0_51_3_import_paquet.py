@@ -107,7 +107,11 @@ def test_paquet_identique(apps):
     rext, *_ = _externe(atelier)
     contenu = _paquet(atelier, [rext])
     _importer(classe, contenu)
-    res = _importer(classe, contenu)
+    # v0.51.7 — Le même envoi n'est pas réimporté (séquence) ; un nouvel envoi
+    # au contenu inchangé avance la séquence, référentiel « identique ».
+    with pytest.raises(imp.ImportErreur, match="déjà reçu"):
+        _importer(classe, contenu)
+    res = _importer(classe, _paquet(atelier, [rext]))
     assert _statuts(res) == {rext: "identique"} and not res["referentiels"][0]["importe"]
 
 

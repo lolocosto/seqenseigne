@@ -31,10 +31,16 @@ paquet_2026-10-08_1905.zip
 ```json
 {
   "format": "seqenseigne.paquet",
-  "format_version": "1.0",
+  "format_version": "1.1",
+  "echange": {
+    "type": "paquet", "numero": 3,
+    "emetteur": { "id": "inst_5eb6…", "nom": "Atelier — maison", "role": "atelier" },
+    "destinataire": "inst_48be…",
+    "accuse": 2
+  },
   "cree_le": "2026-10-08T19:05:00+02:00",
-  "cree_par": "seqenseigne 0.51.2 (atelier)",
-  "nom": "paquet_2026-10-08_1905.zip",
+  "cree_par": "seqenseigne 0.51.7 (atelier)",
+  "nom": "paquet_0003_2026-10-08_1905.zip",
   "referentiels": [
     { "id": "N11_v2025", "nom": "4e — 2025-2026 — Principal", "niveau": "N11",
       "type": "principal", "empreinte": "sha256:…", "chemin": "referentiels/N11_v2025.json" }
@@ -57,6 +63,31 @@ paquet_2026-10-08_1905.zip
   durée saisie diffère de la somme des objectifs (la durée publiée est la
   somme), taille totale des fichiers. `erreurs` est toujours vide dans un
   paquet créé (une erreur empêche la création).
+
+### En-tête d'échange (`echange`, format 1.1, v0.51.7)
+
+Protocole sur le modèle des datagrammes acquittés (`services/echanges.py`) :
+
+- `emetteur` : identité de la base qui produit le paquet (identifiant créé à
+  la première utilisation, nom modifiable, rôle `atelier`) ;
+- `destinataire` : identifiant de l'appli en ligne liée, `null` tant
+  qu'aucun retour n'a été reçu d'elle ;
+- `numero` : numéro d'ordre des paquets de cet atelier (1, 2, 3…) ;
+- `accuse` : dernier numéro de retour d'usage reçu de l'appli en ligne
+  (`null` si aucun ; retours d'usage : v0.51.8).
+
+À la réception, l'appli en ligne :
+- se lie à l'atelier au premier paquet accepté ; refuse ensuite tout paquet
+  d'un autre atelier, ou destiné à une autre instance ;
+- n'accepte que le **numéro attendu** (dernier reçu + 1) : un numéro déjà
+  reçu est ignoré (refus « déjà reçu ») ; un trou est refusé avec la liste
+  des numéros manquants, à demander à l'atelier (« Renvoyer ») ;
+- accepte un paquet sans en-tête (format 1.0, antérieur à la v0.51.7) tant
+  qu'aucun paquet numéroté n'a été reçu ;
+- en base partagée (même identifiant), ne contrôle pas la séquence.
+
+L'atelier archive chaque paquet (`data/echanges/envoyes/`) pour pouvoir le
+renvoyer ; un paquet acquitté par un retour d'usage est retiré de l'archive.
 
 ## Règles de création
 

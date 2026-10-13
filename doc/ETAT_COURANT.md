@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.6** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.7** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -42,7 +42,10 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.6 livrée : création d'un référentiel externe à partir d'une
   structure modèle (programme du cycle, référentiels du même type), aperçu
   dépliable ; contenu identique à un autre référentiel signalé.
-- À venir : retour d'usage ; v0.51.7 bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
+- v0.51.7 livrée : protocole d'échange appliqué aux paquets (identité des
+  instances, paquets numérotés, réception dans l'ordre, archive et renvoi).
+- À venir : v0.51.8 retour d'usage et états de synchronisation ; v0.51.9
+  bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
   API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)

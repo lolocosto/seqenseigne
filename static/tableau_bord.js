@@ -176,7 +176,7 @@ async function tdbChargerPublication() {
       ? `<span class="tdb-pub-badge modif" title="Publié le ${escapeHtml(date)}">modifié depuis</span>`
       : `<span class="tdb-pub-badge ok">publié le ${escapeHtml(date)}</span>`;
   };
-  const journal = (d.journal || []).map(j => `<li>${escapeHtml(_tdbDateHeure(j.cree_le))} —
+  const journal = (d.journal || []).map(j => `<li>${j.numero ? 'n° ' + j.numero + ' — ' : ''}${escapeHtml(_tdbDateHeure(j.cree_le))} —
       ${escapeHtml(j.nom_paquet)} : ${j.referentiels.map(r => escapeHtml(r.nom)).join(', ')}</li>`).join('');
   zone.innerHTML = Object.keys(parNiveau).sort().map(n => `
       <div class="tdb-pub-niveau">${escapeHtml(n)}</div>
@@ -189,7 +189,10 @@ async function tdbChargerPublication() {
         <button class="btn-prim" type="button" id="tdb-pub-creer" onclick="tdbPubCreer()">Créer le paquet</button>
       </div>
       <div id="tdb-pub-res" class="tdb-pub-res" role="status" aria-live="polite"></div>`
-    + (journal ? `<details class="tdb-pub-journal"><summary>Dernières publications</summary><ul>${journal}</ul></details>` : '');
+    + (journal ? `<details class="tdb-pub-journal"><summary>Dernières publications</summary><ul>${journal}</ul></details>` : '')
+    + '<div id="tdb-echanges"></div>';
+  // v0.51.7 — Identité, appli en ligne liée, paquets numérotés (renvoi).
+  if (typeof echRendre === 'function') echRendre('tdb-echanges', 'atelier');
 }
 
 function tdbPubCocher(id, oui) {

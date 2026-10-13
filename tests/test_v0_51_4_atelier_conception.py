@@ -90,7 +90,8 @@ def test_codes_conserves_si_publie(st):
         rid = _trois_sequences(c, st)
         c.execute("CREATE TABLE IF NOT EXISTS publications (id TEXT PRIMARY KEY, cree_le TEXT, "
                   "nom_paquet TEXT, referentiels TEXT, nb_fichiers INTEGER, taille INTEGER)")
-        c.execute("INSERT INTO publications VALUES ('p1', '2026-10-01', 'paquet', ?, 0, 0)",
+        c.execute("INSERT INTO publications (id, cree_le, nom_paquet, referentiels, nb_fichiers, "
+                  "taille) VALUES ('p1', '2026-10-01', 'paquet', ?, 0, 0)",
                   (json.dumps([{"id": rid, "nom": "x", "empreinte": "sha256:0"}]),))
         assert rpe.est_publie(c, rid) and not rpe.en_conception(c, rid)
         rpe.supprimer_sequence(c, rid, "S01", AUJ, st.data_dir)

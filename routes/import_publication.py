@@ -28,7 +28,9 @@ def _contenu():
 
 
 def _erreur(e: imp.ImportErreur):
-    return jsonify({"error": str(e), "code": e.code, "erreurs": e.erreurs[:50]}), 422
+    # v0.51.7 — 409 : envoi hors séquence (déjà reçu, manquants, autre instance).
+    return jsonify({"error": str(e), "code": e.code, "erreurs": e.erreurs[:50]}), \
+        (409 if e.code == "sequence" else 422)
 
 
 @bp.route("/api/import-publication/analyse", methods=["POST"])

@@ -24,6 +24,9 @@ async function impPubInit() {
   await impPubChargerEtat();
 }
 
+// v0.51.7 — Séquence des paquets : n° attendu seulement.
+const IMPPUB_ACCEPTES = ['attendu', 'sans_numero', 'meme_base'];
+
 function _impFichier() {
   const inp = document.getElementById('imppub-fichier');
   return inp && inp.files && inp.files[0];
@@ -66,13 +69,17 @@ function _impRendreAnalyse(a, apresImport) {
   const notes = [];
   if ((rap.documents_sans_pdf || []).length) notes.push(`${rap.documents_sans_pdf.length} document(s) sans PDF non publiés par l'atelier`);
   if ((rap.parties_ecart || []).length) notes.push(`${rap.parties_ecart.length} partie(s) dont la durée saisie diffère des objectifs (durée importée = somme)`);
-  z.innerHTML = `<div class="imppub-paquet">Paquet <b>${_impE(p.nom || '')}</b>
+  const ec = a.echange || null;
+  const ecOk = !ec || IMPPUB_ACCEPTES.includes(ec.statut);
+  const ecHtml = ec ? `<div class="imppub-echange ${ecOk ? 'ok' : 'ko'}">${ecOk ? '✓' : '✗'} ${_impE(ec.message)}</div>` : '';
+  z.innerHTML = ecHtml + `<div class="imppub-paquet">Paquet <b>${_impE(p.nom || '')}</b>
       ${p.cree_le ? '— créé le ' + _impE(_impDate(p.cree_le)) : ''}
       ${p.nb_fichiers != null ? '— ' + p.nb_fichiers + ' fichier(s)' : ''}
       ${notes.length ? '<br><span class="imppub-note">' + notes.map(_impE).join(' ; ') + '</span>' : ''}</div>` + lignes;
   const btn = document.getElementById('imppub-importer');
-  if (btn) btn.disabled = apresImport || !(a.referentiels || [])
-    .some(r => r.statut === 'nouveau' || r.statut === 'mise_a_jour');
+  // v0.51.7 — Un paquet attendu s'importe même sans changement (la séquence avance).
+  if (btn) btn.disabled = apresImport || !ecOk || (!(a.referentiels || [])
+    .some(r => r.statut === 'nouveau' || r.statut === 'mise_a_jour') && !(ec && ec.statut === 'attendu'));
 }
 
 async function impPubAnalyser() {
@@ -112,6 +119,7 @@ function _impErreur(e) {
 }
 
 async function impPubChargerEtat() {
+  if (typeof echRendre === 'function') echRendre('imppub-echanges', 'classe');
   const zi = document.getElementById('imppub-importes');
   const zj = document.getElementById('imppub-journal');
   let d;

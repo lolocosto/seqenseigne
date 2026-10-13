@@ -241,7 +241,9 @@ def analyser(conn, data_dir: Path, contenu: bytes,
     manifeste, docs, z = _lire(contenu)
     z.close()
     aujourd_hui = aujourd_hui or date.today()
-    return {"paquet": {"nom": manifeste.get("nom", ""), "cree_le": manifeste.get("cree_le", ""),
+    from services import echanges as ech
+    return {"echange": ech.controler(conn, "paquet", manifeste.get("echange")),   # v0.51.7
+            "paquet": {"nom": manifeste.get("nom", ""), "cree_le": manifeste.get("cree_le", ""),
                        "cree_par": manifeste.get("cree_par", ""),
                        "nb_fichiers": len(manifeste.get("fichiers", [])),
                        "rapport": manifeste.get("rapport", {})},
@@ -357,10 +359,16 @@ def importer(conn_fabrique, data_dir: Path, contenu: bytes,
     """Importe les référentiels acceptés du paquet. `conn_fabrique` : appelable
     qui ouvre une connexion transactionnelle (store._conn) ; un référentiel =
     une transaction. Retourne l'analyse complétée (statut final, erreurs)."""
+    from services import echanges as ech
     with conn_fabrique() as conn:
         migrer(conn)
         manifeste, docs, z = _lire(contenu)
-        analyse = {"paquet": {"nom": manifeste.get("nom", ""),
+        # v0.51.7 — Séquence des envois : n° attendu seulement.
+        controle = ech.controler(conn, "paquet", manifeste.get("echange"))
+        if controle["statut"] not in ech.ACCEPTES:
+            z.close()
+            raise ImportErreur(controle["message"], "sequence", [controle["message"]])
+        analyse = {"echange": controle, "paquet": {"nom": manifeste.get("nom", ""),
                               "cree_le": manifeste.get("cree_le", "")},
                    "referentiels": [_analyser_un(conn, data_dir, rid, doc,
                                                  aujourd_hui or date.today())
@@ -387,6 +395,9 @@ def importer(conn_fabrique, data_dir: Path, contenu: bytes,
                      res["nom"], res["empreinte"], res["statut"],
                      json.dumps({k: res[k] for k in ("raisons", "changements", "orphelins")},
                                 ensure_ascii=False)))
+    with conn_fabrique() as conn:
+        ech.enregistrer_reception(conn, "paquet", manifeste.get("echange"),
+                                  analyse["paquet"]["nom"])
     return analyse
 
 
