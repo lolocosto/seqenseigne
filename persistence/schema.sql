@@ -450,14 +450,6 @@ CREATE INDEX IF NOT EXISTS idx_exercices_fichier ON exercices (fichier);
 
 -- ── Livrets de séquence ───────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS livrets_de_sequence (
-    id       TEXT PRIMARY KEY,
-    niveau   TEXT NOT NULL,
-    sequence TEXT NOT NULL,  -- 'S01', 'S03'…
-    contenu  TEXT NOT NULL DEFAULT '{}'  -- snapshot JSON du YAML courant
-);
-CREATE INDEX IF NOT EXISTS idx_livrets
-    ON livrets_de_sequence (niveau, sequence);
 
 -- Affectation ordonnée des exercices dans un livret
 -- v0.14.6.b.2 — Table `livret_exercices` SUPPRIMÉE. Cette table était
@@ -473,15 +465,6 @@ CREATE INDEX IF NOT EXISTS idx_livrets
 -- Les exercices de révision ne sont pas forcément présents en base comme
 -- exercices (ils appartiennent à un autre niveau), on stocke donc les
 -- coordonnées métier plutôt qu'un FK vers exercices.id.
-CREATE TABLE IF NOT EXISTS livret_revisions (
-    livret_id     TEXT NOT NULL REFERENCES livrets_de_sequence(id) ON DELETE CASCADE,
-    niveau_source TEXT NOT NULL,        -- 'N10' lorsque N11 révise N10
-    seq_source    TEXT NOT NULL,        -- 'S03'
-    serie         TEXT NOT NULL,        -- 'fondamental' | 'avancé' | 'exploration'
-    num           INTEGER NOT NULL,     -- n° de l'exercice dans sa série source
-    ordre         INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (livret_id, niveau_source, seq_source, serie, num)
-);
 
 -- ── Référentiels versionnés ──────────────────────────────────────────────────
 -- Un référentiel fige la structure pédagogique d'un niveau à un instant donné :
@@ -728,26 +711,8 @@ CREATE TABLE IF NOT EXISTS creneau_objectifs_seances (
 
 -- ── Versions de livrets ───────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS versions (
-    id       INTEGER PRIMARY KEY AUTOINCREMENT,
-    niveau   TEXT NOT NULL,
-    seq_code TEXT NOT NULL,
-    tag      TEXT NOT NULL,
-    label    TEXT NOT NULL DEFAULT '',
-    date     TEXT NOT NULL DEFAULT '',
-    contenu  TEXT NOT NULL DEFAULT '{}',  -- snapshot JSON figé, jamais modifié
-    UNIQUE (niveau, seq_code, tag)
-);
 
 -- Version active par classe × séquence, avec verrouillage
-CREATE TABLE IF NOT EXISTS versions_classes (
-    classe_id  TEXT NOT NULL,
-    niveau     TEXT NOT NULL,
-    seq_code   TEXT NOT NULL,
-    tag_actif  TEXT,
-    verrouille INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (classe_id, niveau, seq_code)
-);
 
 -- ── Classes et élèves ────────────────────────────────────────────────────────
 

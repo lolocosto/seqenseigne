@@ -106,16 +106,3 @@ def test_validations(ctx):
     assert "fiche1.pdf" not in _prevus(st)
 
 
-def test_type_document_mer(app, client):
-    from services import referentiel_externe as rx
-    with app.json_store._conn() as c:
-        r = rx.creer(c, niveau="N09", annee=ANNEE)
-        c.execute("INSERT INTO referentiel_externe_doc (id, partie_id, nom_fichier, chemin) "
-                  "VALUES ('d1', 'p1', 'calcul.pdf', 'x')")
-        tid = rpe.lister_types(c)[0]["id"]
-    assert client.put("/api/referentiels-externes/docs/d1/type",
-                      json={"type_id": tid}).status_code == 200
-    with app.json_store._conn() as c:
-        assert c.execute("SELECT type_id FROM referentiel_externe_doc WHERE id='d1'").fetchone()[0] == tid
-    assert client.put("/api/referentiels-externes/docs/d1/type",
-                      json={"type_id": "zz"}).status_code == 400

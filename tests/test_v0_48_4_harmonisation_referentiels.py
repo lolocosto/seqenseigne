@@ -8,7 +8,6 @@ nom calculé des référentiels externes de MER (+ description).
 import pytest
 
 from services import referentiel_principal_externe as rpe
-from services import referentiel_externe as rx
 from services import referentiels as refs
 
 
@@ -44,10 +43,3 @@ def test_progression_ne_voit_que_les_principaux(app, client):
     assert [x["id"] for x in l] == ["2026_N11b"]
 
 
-def test_mer_externe_nom_calcule(app):
-    with app.json_store._conn() as c:
-        a = rx.creer(c, niveau="N09", annee="2026-2027", description="Calcul mental")
-        b = rx.creer(c, niveau="N09", annee="2026-2027")
-        assert a["nom"] == "6e — 2026-2027 — MER" and a["description"] == "Calcul mental"
-        assert b["nom"] == "6e — 2026-2027 — MER b"
-        assert rx.creer(c, niveau="N09", annee="2026-2027", nom="Ancien nom")["nom"] == "Ancien nom"

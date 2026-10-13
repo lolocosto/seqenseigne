@@ -78,11 +78,6 @@ def migrer(conn) -> None:
         if cols and nom not in cols:
             conn.execute(f"ALTER TABLE referentiel_niveaux ADD COLUMN {nom} {decl}")
     conn.executescript(SCHEMA_FICHIERS)
-    # v0.48.4 — description des référentiels externes de MER (le nom est
-    # désormais calculé).
-    cols_x = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe)")}
-    if cols_x and "description" not in cols_x:
-        conn.execute("ALTER TABLE referentiel_externe ADD COLUMN description TEXT NOT NULL DEFAULT ''")
     # v0.48.3 — type d'un fichier ; types par défaut.
     cols_f = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_fichiers)")}
     if "type_id" not in cols_f:
@@ -106,10 +101,6 @@ def migrer(conn) -> None:
     cols_p = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_parties)")}
     if cols_p and "libelle" not in cols_p:
         conn.execute("ALTER TABLE referentiel_parties ADD COLUMN libelle TEXT NOT NULL DEFAULT ''")
-    # v0.48.5 — Type des documents des référentiels externes de MER.
-    cols_xd = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_externe_doc)")}
-    if cols_xd and "type_id" not in cols_xd:
-        conn.execute("ALTER TABLE referentiel_externe_doc ADD COLUMN type_id TEXT NOT NULL DEFAULT ''")
     # v0.51.6 — Modèle de départ (libellé) ; empreinte des fichiers.
     cols_n = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_niveaux)")}
     if cols_n and "cree_depuis" not in cols_n:
@@ -420,16 +411,6 @@ def placements_automatiques(conn, referentiel_id: str) -> list[dict]:
         "p.seq_code=f.seq_code AND p.numero=f.partie_numero "
         "WHERE f.referentiel_id=? AND f.partie_numero>0 AND f.seance_n>0",
         (referentiel_id,)).fetchall()]
-
-
-def typer_doc_mer(conn, doc_id: str, type_id: str) -> None:
-    """v0.48.5 — Type d'un document de référentiel externe de MER."""
-    if conn.execute("SELECT 1 FROM referentiel_externe_doc WHERE id=?", (doc_id,)).fetchone() is None:
-        raise RefExtErreur("Document introuvable.", "introuvable")
-    if type_id and conn.execute("SELECT 1 FROM types_documents WHERE id=?",
-                                (type_id,)).fetchone() is None:
-        raise RefExtErreur("Type inconnu.")
-    conn.execute("UPDATE referentiel_externe_doc SET type_id=? WHERE id=?", (type_id or "", doc_id))
 
 
 def typer_fichier(conn, fid: str, type_id: str) -> dict:

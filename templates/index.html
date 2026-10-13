@@ -824,7 +824,6 @@
     <button class="vbtn atl-grp-niveau"   id="atl-btn-evaluation" onclick="atelSwitch('evaluation')" style="display:none">Évaluation</button>
     <button class="vbtn atl-grp-niveau"   id="atl-btn-referentiel" onclick="atelSwitch('referentiel')" style="display:none">Référentiel</button>
     <!-- v0.49.2 — Regroupé dans « Référentiel » (bouton conservé masqué). -->
-    <button class="vbtn"   id="atl-btn-referentiel_externe" onclick="atelSwitch('referentiel_externe')" style="display:none" hidden>Référentiel externe</button>
     <!-- Portée Cycle -->
     <button class="vbtn atl-grp-cycle"    id="atl-btn-theme"    onclick="atelSwitch('theme')"    style="display:none">Thème</button>
     <button class="vbtn atl-grp-cycle"    id="atl-btn-seqcycle" onclick="atelSwitch('seqcycle')" style="display:none">Découpage en séquences</button>
@@ -2504,6 +2503,7 @@
                   title="Le nom est calculé : niveau, année, type">+ Créer</button>
         </div>
         <span id="refu-status" class="rpe-status" role="status" aria-live="polite"></span>
+        <span id="rpe-status" class="rpe-status" role="status" aria-live="polite"></span>
         <div class="atl-sidebar-body" id="atl-ref-liste">
           <!-- Rempli dynamiquement par atelRefRendreSidebar() -->
         </div>
@@ -2658,46 +2658,6 @@
     </div>
   </div>
 
-  <!-- ─── Référentiel externe (docs conçus hors de l'appli) ─── -->
-  <div id="atl-referentiel_externe" class="atl-panel" style="display:none;padding:12px 16px">
-    <!-- v0.48.4 — Même organisation que les référentiels internes : liste à
-         gauche (principaux et MER), détail à droite. static/referentiel_pe.js
-         (principaux, structure figée) + static/referentiel_externe.js (MER). -->
-    <div class="rxa-cadre">
-      <aside class="atl-sidebar rxa-sidebar">
-        <div class="atl-sidebar-head">
-          <span class="atl-sidebar-title">Référentiels externes</span>
-        </div>
-        <div class="rxa-creer">
-          <select id="rxa-type" title="Type du référentiel">
-            <option value="principal">Principal</option>
-            <option value="mer">MER</option>
-          </select>
-          <input id="rxa-desc" placeholder="Description (facultative)">
-          <button class="btn-prim rxa-btn-creer" onclick="rxaCreer()" title="Le nom est calculé : niveau, année, type">+ Créer</button>
-        </div>
-        <div id="rxa-liste"></div>
-        <span id="rpe-status" class="rpe-status" role="status" aria-live="polite"></span>
-        <span id="rxt-status" role="status" aria-live="polite" style="font-size:12px;color:#4a7"></span>
-      </aside>
-      <section class="rxa-detail">
-        <div id="rxa-detail"><p class="rpe-vide">Choisissez un référentiel dans la liste, ou créez-en un.</p></div>
-        <!-- Conteneurs historiques (rendus redirigés vers le détail). -->
-        <div id="rpe-liste" style="display:none"></div>
-        <div id="rxt-liste" style="display:none"></div>
-    <div id="rxt-apercu" style="display:none;margin-top:14px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <strong id="rxt-apercu-nom" style="font-size:13px"></strong>
-        <button class="btn-sm" style="font-size:12px;margin-left:auto"
-          onclick="rxtFermerApercu()">Fermer l'aperçu</button>
-      </div>
-      <iframe id="rxt-apercu-frame" title="Aperçu du document"
-        style="width:100%;height:75vh;border:1px solid var(--border);border-radius:6px"></iframe>
-    </div>
-      </section>
-    </div>
-  </div>
-
 </main>
 <!-- ═══ SYSTÈME (v0.42.0) : barre Administration / Préférences ══════════════ -->
 <main id="tab-systeme" class="tab-content" style="display:none">
@@ -2715,6 +2675,7 @@
     <button class="sub-tab" id="admin-images-btn" data-profils="atelier" onclick="adminSousOnglet('images')">Images</button>
     <button class="sub-tab" id="admin-importfiches-btn" data-profils="atelier" onclick="adminSousOnglet('importfiches')">Import fiches</button>
     <button class="sub-tab" id="admin-importpub-btn" data-profils="classe" onclick="adminSousOnglet('importpub')">Import référentiels</button>
+    <button class="sub-tab" id="admin-importusage-btn" data-profils="atelier" onclick="adminSousOnglet('importusage')">Import retours d'usage</button>
 <button class="sub-tab" id="admin-bdd-btn" data-profils="atelier classe" onclick="adminSousOnglet('bdd')">Base de données</button>
     <button class="sub-tab" id="admin-importsuivi-btn" data-profils="complet" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
   </div>
@@ -2971,6 +2932,31 @@
   <!-- ── Sous-onglet : base de données ── -->
   <!-- v0.51.3 — Import d'un paquet de publication (référentiels conçus dans
        l'appli locale, reçus ici en lecture seule). -->
+  <!-- v0.51.11 — Import d'un retour d'usage (atelier ; pendant de l'import de
+       référentiels côté appli en ligne). static/import_publication.js. -->
+  <div id="admin-importusage" style="display:none;padding:24px;max-width:960px">
+    <h3 style="margin:0 0 4px">Import de retours d'usage</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">
+      L'appli en ligne produit des <b>retours d'usage</b> numérotés (référentiels
+      utilisés, séquences planifiées, parties de MER posées — aucune donnée d'élève).
+      Ils arrivent normalement par la boîte aux lettres ; cet écran importe un retour à
+      la main. Seul le numéro attendu est accepté ; les verrous ne se perdent jamais.
+    </p>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="file" id="impusage-fichier" accept=".json,application/json">
+        <button class="btn-sm" type="button" onclick="impUsageAnalyser()">Analyser</button>
+        <button class="btn-prim" type="button" id="impusage-importer" onclick="impUsageImporter()" disabled>Importer</button>
+        <span id="impusage-status" style="font-size:12px" role="status" aria-live="polite"></span>
+      </div>
+      <div id="impusage-analyse" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Usage reçu, par référentiel</div>
+      <div id="impusage-etat"></div>
+    </div>
+  </div>
+
   <div id="admin-importpub" style="display:none;padding:24px;max-width:960px">
     <h3 style="margin:0 0 4px">Import de référentiels</h3>
     <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">
@@ -3795,7 +3781,6 @@
 <script src="/static/echanges.js"></script>
 <script src="/static/planification_hebdo.js"></script>
 <script src="/static/progression_mer.js"></script>
-<script src="/static/referentiel_externe.js"></script>
 <script src="/static/referentiel_pe.js"></script>
 <script src="/static/referentiel_unifie.js"></script>
 

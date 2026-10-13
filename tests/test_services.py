@@ -7,7 +7,6 @@ import pytest
 from services import classes as svc_cls
 from services import suivi as svc_suivi
 from services import atomes as svc_atomes
-from services import versions as svc_ver
 from services.sequences import (
     _normaliser_criteres, _normaliser_exercices,
     trouver_sequence, build_sequences,
@@ -92,8 +91,7 @@ class TestCreerClasse:
         data = {"classes": []}
         _, nouvelle = svc_cls.creer_classe(data, "5e1", "N10", "", "")
         assert "eleves" in nouvelle
-        assert "versions_actives" in nouvelle
-        assert "sequences_verouillees" in nouvelle
+        assert "versions_actives" not in nouvelle
 
 
 class TestModifierClasse:
@@ -165,41 +163,6 @@ class TestImporterElevesCSV:
         data, resume = svc_cls.importer_eleves_csv(data, "5E1", rows, "Nom", "Prenom")
         assert resume["ignores"] == 1
         assert resume["ajouts"] == 0
-
-
-class TestVerrouillage:
-    def _classe(self):
-        return {"classes": [
-            {"id": "5E1", "nom": "5e1", "niveau": "N10",
-             "annee": "", "etablissement": "", "eleves": [],
-             "versions_actives": {}, "sequences_verouillees": []}
-        ]}
-
-    def test_verrouiller(self):
-        data = svc_cls.verrouiller_sequence(self._classe(), "5E1", "N10", "S01")
-        c = svc_cls.trouver_classe(data, "5E1")
-        assert "N10_S01" in c["sequences_verouillees"]
-
-    def test_pas_de_doublon(self):
-        data = self._classe()
-        data = svc_cls.verrouiller_sequence(data, "5E1", "N10", "S01")
-        data = svc_cls.verrouiller_sequence(data, "5E1", "N10", "S01")
-        c = svc_cls.trouver_classe(data, "5E1")
-        assert c["sequences_verouillees"].count("N10_S01") == 1
-
-    def test_est_verrouille(self):
-        data = self._classe()
-        data = svc_cls.verrouiller_sequence(data, "5E1", "N10", "S01")
-        c = svc_cls.trouver_classe(data, "5E1")
-        assert svc_cls.est_verrouille(c, "N10", "S01")
-        assert not svc_cls.est_verrouille(c, "N10", "S02")
-
-    def test_definir_version_refuse_si_verrou(self):
-        data = self._classe()
-        data = svc_cls.verrouiller_sequence(data, "5E1", "N10", "S01")
-        _, erreur = svc_cls.definir_version_active(data, "5E1", "N10", "S01", "v1")
-        assert erreur is not None
-        assert "verrouillée" in erreur
 
 
 # ── services/suivi.py ──────────────────────────────────────────────────────────
@@ -386,47 +349,6 @@ class TestDiagnosticsQualite:
 
 
 # ── services/versions.py ───────────────────────────────────────────────────────
-
-class TestVersions:
-    def _seq(self):
-        return {
-            "objectifs": [
-                {"code": "01", "nom": "Cours", "exercices": {"fondamental": [], "avancé": [], "exploration": []}},
-                {"code": "02", "nom": "Obj 2", "exercices": {"fondamental": [1], "avancé": [], "exploration": []}},
-            ],
-            "connaissances": [],
-        }
-
-    def test_creer_snapshot(self):
-        versions, snap, err = svc_ver.creer_snapshot(
-            {}, "N10", "S01", "2025-09-01", "Rentrée", self._seq()
-        )
-        assert err is None
-        assert snap["tag"] == "2025-09-01"
-        assert len(snap["objectifs"]) == 2
-        assert len(versions["N10"]["S01"]) == 1
-
-    def test_tag_duplique_retourne_erreur(self):
-        versions = {"N10": {"S01": [{"tag": "2025-09-01"}]}}
-        _, _, err = svc_ver.creer_snapshot(
-            versions, "N10", "S01", "2025-09-01", "", self._seq()
-        )
-        assert err is not None
-
-    def test_supprimer_snapshot(self):
-        versions = {"N10": {"S01": [{"tag": "v1"}, {"tag": "v2"}]}}
-        classes  = {"classes": []}
-        versions, err = svc_ver.supprimer_snapshot(versions, classes, "N10", "S01", "v1")
-        assert err is None
-        assert len(versions["N10"]["S01"]) == 1
-        assert versions["N10"]["S01"][0]["tag"] == "v2"
-
-    def test_supprimer_refuse_si_classe_utilise(self):
-        versions = {"N10": {"S01": [{"tag": "v1"}]}}
-        classes  = {"classes": [{"nom": "5e1", "versions_actives": {"N10_S01": "v1"}}]}
-        _, err = svc_ver.supprimer_snapshot(versions, classes, "N10", "S01", "v1")
-        assert err is not None
-
 
 # ── services/sequences.py ─────────────────────────────────────────────────────
 

@@ -262,28 +262,3 @@ def api_eleve_delete(cid, eid):
     return jsonify({"ok": True})
 
 
-# ── Versions ───────────────────────────────────────────────────────────────────
-
-@bp.route("/api/classes/<cid>/version", methods=["POST"])
-def api_classe_version_set(cid):
-    body   = request.get_json()
-    niveau = body.get("niveau", "").strip()
-    seq    = body.get("seq", "").strip()
-    tag    = body.get("tag")
-    js = _js()
-    # Vérifier le verrouillage directement dans SQLite si disponible
-    if hasattr(js, 'est_verrouille') and js.est_verrouille(cid, niveau, seq):
-        return jsonify({"error": "Séquence verrouillée — créer une nouvelle version"}), 409
-
-    data, erreur = svc.definir_version_active(
-        js.lire_classes(), cid, niveau, seq, tag
-    )
-    if erreur:
-        code = 404 if "introuvable" in erreur else 409
-        return jsonify({"error": erreur}), code
-
-    # Persister aussi dans versions_classes SQLite si disponible
-    if hasattr(js, 'set_version_active'):
-        js.set_version_active(cid, niveau, seq, tag)
-    js.ecrire_classes(data)
-    return jsonify({"ok": True, "key": f"{niveau}_{seq}", "tag": tag})

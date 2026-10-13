@@ -38,19 +38,13 @@ async function progMerCharger() {
       PROGMER = await api('/api/progression-mer?niveau='
         + encodeURIComponent(niveau) + '&annee=' + encodeURIComponent(annee));
     } catch (e) { PROGMER = null; }
-    try {
-      const r = await api('/api/referentiels-externes?niveau='
-        + encodeURIComponent(niveau) + '&type=mer');
-      PROGMER_REFS = ((r && r.referentiels) || []).filter(x => x.etat === 'valide')
-        .map(x => ({ ...x, source: 'externe' }));
-    } catch (e) { PROGMER_REFS = []; }
     // v0.49.0 — Référentiels de MER de la structure figée (utilisables dès
-    // leur création, même incomplets).
+    // leur création, même incomplets). v0.51.11 — ancien modèle retiré.
+    PROGMER_REFS = [];
     try {
       const r2 = await api('/api/referentiels-principaux-externes?niveau='
         + encodeURIComponent(niveau) + '&type=mer');
-      PROGMER_REFS = PROGMER_REFS.concat(((r2 && r2.referentiels) || [])
-        .map(x => ({ ...x, source: 'fige' })));
+      PROGMER_REFS = ((r2 && r2.referentiels) || []).map(x => ({ ...x, source: 'fige' }));
     } catch (e) {}
     await progMerChargerDispo();
   }
@@ -66,7 +60,7 @@ function progMerRenderRef() {
   const cour = PROGMER && PROGMER.ref_mer_id;
   sel.innerHTML = '<option value="">— Choisir un référentiel de MER —</option>'
     + PROGMER_REFS.map(r => `<option value="${r.id}"${r.id === cour ? ' selected' : ''}>`
-      + `${escapeHtml(r.nom || '(sans nom)')}${r.source === 'externe' ? ' (ancien modèle)' : ''}</option>`).join('');
+      + `${escapeHtml(r.nom || '(sans nom)')}</option>`).join('');
   if (cour) sel.value = cour;
 }
 
@@ -79,7 +73,7 @@ async function progMerDefinirRef() {
       + encodeURIComponent(_progmerAnnee()),
       { method: 'POST', body: JSON.stringify({ niveau: _progmerNiveau(),
         ref_mer_id: refId,
-        ref_mer_source: ((PROGMER_REFS.find(r => r.id === refId) || {}).source) || 'externe' }) });
+        ref_mer_source: ((PROGMER_REFS.find(r => r.id === refId) || {}).source) || 'fige' }) });
     await progMerChargerDispo();
     progMerRenderDispo();
     progMerRenderComposee();
@@ -154,7 +148,7 @@ async function progMerPoser(partieId) {
   try {
     PROGMER = await api('/api/progression-mer/' + PROGMER.id + '/parties',
       { method: 'POST', body: JSON.stringify({ partie_id: partieId,
-        partie_source: (PROGMER && PROGMER.ref_mer_source) || 'externe' }) });
+        partie_source: (PROGMER && PROGMER.ref_mer_source) || 'fige' }) });
     progMerRenderDispo(); progMerRenderComposee(); progMerAfficherPlanning();
   } catch (e) {}
 }

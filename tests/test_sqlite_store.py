@@ -76,21 +76,6 @@ class TestClasses:
         assert "cl_a" not in ids
         assert "cl_b" in ids
 
-    def test_versions_actives_preservees(self, db):
-        c = self._classe()
-        c["versions_actives"] = {"N11_S01": "2025-09-01"}
-        db.ecrire_classes({"classes": [c]})
-        result = db.lire_classes()
-        assert result["classes"][0]["versions_actives"] == {"N11_S01": "2025-09-01"}
-
-    def test_sequences_verouillees_preservees(self, db):
-        c = self._classe()
-        c["sequences_verouillees"] = ["N11_S01", "N11_S02"]
-        db.ecrire_classes({"classes": [c]})
-        result = db.lire_classes()
-        assert "N11_S01" in result["classes"][0]["sequences_verouillees"]
-
-
 # ── Suivi ─────────────────────────────────────────────────────────────────────
 
 class TestSuivi:
@@ -275,61 +260,6 @@ class TestSuppression:
 
 
 # ── Versions ──────────────────────────────────────────────────────────────────
-
-class TestVersions:
-
-    def test_lire_vide(self, db):
-        assert db.lire_versions() == {}
-
-    def test_upsert_et_lire(self, db):
-        db.upsert_version("N11", "S01", "2025-09-01", "Rentrée",
-                          "2025-09-01", {"objectifs": []})
-        result = db.lire_versions()
-        assert "N11" in result
-        assert "S01" in result["N11"]
-        assert result["N11"]["S01"][0]["tag"] == "2025-09-01"
-
-    def test_plusieurs_versions(self, db):
-        db.upsert_version("N11", "S01", "2025-09-01", "v1", "2025-09-01", {})
-        db.upsert_version("N11", "S01", "2025-10-01", "v2", "2025-10-01", {})
-        result = db.lire_versions()
-        assert len(result["N11"]["S01"]) == 2
-
-    def test_supprimer_version(self, db):
-        db.upsert_version("N11", "S01", "2025-09-01", "v1", "2025-09-01", {})
-        db.supprimer_version("N11", "S01", "2025-09-01")
-        result = db.lire_versions()
-        assert not result.get("N11", {}).get("S01", [])
-
-    def _classe_test(self, db):
-        db.ecrire_classes({"classes": [{
-            "id": "4E3", "nom": "4e3", "niveau": "N11", "annee": "2025-2026",
-            "etablissement": "", "progression_id": "", "eleves": [],
-            "versions_actives": {}, "sequences_verouillees": [],
-        }]})
-
-    def test_version_utilisee(self, db):
-        self._classe_test(db)
-        db.upsert_version("N11", "S01", "v1", "", "", {})
-        db.set_version_active("4E3", "N11", "S01", "v1")
-        assert db.version_utilisee("N11", "S01", "v1") is True
-        assert db.version_utilisee("N11", "S01", "v2") is False
-
-    def test_verrouiller(self, db):
-        self._classe_test(db)
-        db.set_version_active("4E3", "N11", "S01", "v1")
-        assert db.est_verrouille("4E3", "N11", "S01") is False
-        db.verrouiller("4E3", "N11", "S01")
-        assert db.est_verrouille("4E3", "N11", "S01") is True
-
-    def test_ecrire_lire_versions_complet(self, db):
-        data = {"N11": {"S01": [
-            {"tag": "v1", "label": "Test", "date": "2025-09-01", "objectifs": []}
-        ]}}
-        db.ecrire_versions(data)
-        result = db.lire_versions()
-        assert result["N11"]["S01"][0]["label"] == "Test"
-
 
 # ── Atomes pédagogiques ───────────────────────────────────────────────────────
 

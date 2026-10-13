@@ -59,10 +59,7 @@ def store_peuple():
             conn.execute("INSERT INTO notions (id) VALUES ('n1')")
             conn.execute("INSERT INTO methodes (id) VALUES ('m1')")
             # v0.14.6.b.2 — INSERT INTO objectifs (v1) retiré.
-            conn.execute(
-                "INSERT INTO livrets_de_sequence (id, niveau, sequence) "
-                "VALUES ('l1', 'N11', 'S01')"
-            )
+            # v0.51.11 — livrets_de_sequence / livret_revisions retirées.
 
             # ── Chaîne séquence_parties → objectifs ──────────────
             conn.execute(
@@ -87,11 +84,6 @@ def store_peuple():
             )
             # v0.14.6.b.2 — INSERT INTO livret_exercices retiré (table
             # supprimée).
-            conn.execute(
-                "INSERT INTO livret_revisions "
-                "(livret_id, niveau_source, seq_source, serie, num, ordre) "
-                "VALUES ('l1', 'N10', 'S01', 'fondamental', 1, 1)"
-            )
             conn.execute(
                 "INSERT INTO methode_notions (methode_id, notion_id) "
                 "VALUES ('m1', 'n1')"
@@ -146,11 +138,10 @@ def test_reset_reference_vide_toutes_les_tables_regenerees(store_peuple):
             # v0.14.6.b.2 — `objectifs`, `exercice_objectifs` et
             # `livret_exercices` retirées de la liste : tables supprimées.
             "notions", "methodes", "exercices",
-            "livrets_de_sequence",
             # v0.7 : items_texte remplacé par atome_sections + atome_section_items.
             "atome_sections", "atome_section_items",
             "methode_notions",
-            "objectif_exos", "livret_revisions",
+            "objectif_exos",
         ]
         for t in tables_a_vider:
             n = conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]

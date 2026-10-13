@@ -51,17 +51,7 @@ COLONNES_A_AJOUTER: dict[str, list[tuple[str, str]]] = {
 
 # Nouvelles tables à créer (idempotent via IF NOT EXISTS)
 TABLES_A_CREER: list[tuple[str, str]] = [
-    ("livret_revisions", """
-        CREATE TABLE IF NOT EXISTS livret_revisions (
-            livret_id     TEXT NOT NULL REFERENCES livrets_de_sequence(id) ON DELETE CASCADE,
-            niveau_source TEXT NOT NULL,
-            seq_source    TEXT NOT NULL,
-            serie         TEXT NOT NULL,
-            num           INTEGER NOT NULL,
-            ordre         INTEGER NOT NULL DEFAULT 0,
-            PRIMARY KEY (livret_id, niveau_source, seq_source, serie, num)
-        )
-    """),
+    # v0.51.11 — livret_revisions retirée (anciens livrets).
 ]
 
 # Index à créer (idempotent via IF NOT EXISTS)

@@ -145,3 +145,97 @@ async function impPubChargerEtat() {
 window.impPubInit = impPubInit;
 window.impPubAnalyser = impPubAnalyser;
 window.impPubImporter = impPubImporter;
+
+// ============================================================================
+// v0.51.11 — Atelier : Système › Administration › « Import retours d'usage »
+// (pendant de l'import de référentiels). Routes : /api/retour-usage/
+// {analyse,importer,etat}.
+// ============================================================================
+
+function _impUsageFichier() {
+  const inp = document.getElementById('impusage-fichier');
+  return inp && inp.files && inp.files[0];
+}
+
+async function _impUsageEnvoyer(url) {
+  const f = _impUsageFichier();
+  if (!f) throw new Error('Choisissez d\'abord un retour d\'usage (.json).');
+  const fd = new FormData();
+  fd.append('fichier', f);
+  const r = await fetch(url, { method: 'POST', body: fd });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Erreur');
+  return d;
+}
+
+async function impUsageInit() {
+  const z = document.getElementById('impusage-analyse');
+  if (z) z.innerHTML = '';
+  const btn = document.getElementById('impusage-importer');
+  if (btn) btn.disabled = true;
+  await impUsageChargerEtat();
+}
+
+async function impUsageAnalyser() {
+  const st = document.getElementById('impusage-status');
+  const z = document.getElementById('impusage-analyse');
+  const btn = document.getElementById('impusage-importer');
+  if (st) st.textContent = 'Vérification…';
+  try {
+    const a = await _impUsageEnvoyer('/api/retour-usage/analyse');
+    const ok = IMPPUB_ACCEPTES.includes(a.echange.statut);
+    if (z) z.innerHTML = `<div class="imppub-echange ${ok ? 'ok' : 'ko'}">${ok ? '✓' : '✗'} ${_impE(a.echange.message)}</div>
+      <div class="imppub-paquet">Retour <b>${_impE(a.nom || '')}</b>${a.cree_le ? ' — créé le ' + _impE(_impDate(a.cree_le)) : ''}</div>
+      <ul class="imppub-changements">${(a.referentiels || []).map(r => `<li><code>${_impE(r.id)}</code>
+        ${r.connu ? '' : '<b>inconnu ici</b> — '}${r.utilise ? 'utilisé' : 'non utilisé'}
+        · ${r.nb_sequences} séquence(s) planifiée(s) · ${r.nb_parties_mer} partie(s) de MER</li>`).join('')}</ul>`;
+    if (btn) btn.disabled = !ok;
+    if (st) st.textContent = 'Analyse terminée : rien n\'est encore importé.';
+  } catch (e) {
+    if (st) st.innerHTML = `<span class="imppub-ko">✗ ${_impE(e.message)}</span>`;
+    if (btn) btn.disabled = true;
+  }
+}
+
+async function impUsageImporter() {
+  const st = document.getElementById('impusage-status');
+  const z = document.getElementById('impusage-analyse');
+  const btn = document.getElementById('impusage-importer');
+  if (st) st.textContent = 'Import…';
+  try {
+    const r = await _impUsageEnvoyer('/api/retour-usage/importer');
+    const parts = [`${(r.referentiels || []).length} référentiel(s) mis à jour`];
+    if ((r.paquets_acquittes || []).length) parts.push(`paquet(s) n° ${r.paquets_acquittes.join(', ')} acquitté(s)`);
+    if ((r.inconnus || []).length) parts.push(`${r.inconnus.length} inconnu(s) ici`);
+    if (z) z.innerHTML = `<ul class="imppub-changements">${(r.referentiels || []).map(x => `<li><b>${_impE(x.nom)}</b> —
+      ${_impE((x.synchro || {}).libelle || '')}${(x.nouvelles_sequences || []).length
+        ? ' · nouvelles séquences en usage : ' + x.nouvelles_sequences.map(_impE).join(', ') : ''}</li>`).join('')}</ul>`;
+    if (st) st.textContent = '✓ ' + parts.join(' ; ') + '.';
+    if (btn) btn.disabled = true;
+    await impUsageChargerEtat();
+  } catch (e) {
+    if (st) st.innerHTML = `<span class="imppub-ko">✗ ${_impE(e.message)}</span>`;
+  }
+}
+
+async function impUsageChargerEtat() {
+  const z = document.getElementById('impusage-etat');
+  if (!z) return;
+  let d;
+  try { d = await api('/api/retour-usage/etat'); }
+  catch (e) { z.innerHTML = '<p style="font-size:12px;color:#c33">Erreur de chargement.</p>'; return; }
+  const u = (d.usages || []).filter(Boolean);
+  z.innerHTML = u.length
+    ? `<table class="imppub-table"><thead><tr><th>Référentiel</th><th>Utilisé</th><th>Séquences en usage</th><th>Reçu le</th></tr></thead><tbody>`
+      + u.map(x => `<tr><td><code>${_impE(x.referentiel_id)}</code></td>
+        <td>${x.utilise ? 'oui' + (x.utilise_depuis ? ' (depuis le ' + _impE(x.utilise_depuis) + ')' : '') : 'non'}</td>
+        <td>${Object.entries(x.sequences || {}).map(([k, v]) => `${_impE(k)} (${_impE(v)})`).join(', ')
+            || '—'}${(x.parties_mer || []).length ? ' · MER : ' + x.parties_mer.map(_impE).join(', ') : ''}</td>
+        <td>${_impE(_impDate(x.recu_le))} (n° ${x.numero})</td></tr>`).join('')
+      + '</tbody></table>'
+    : '<p style="font-size:12px;color:#888">Aucun retour d\'usage reçu.</p>';
+}
+
+window.impUsageInit = impUsageInit;
+window.impUsageAnalyser = impUsageAnalyser;
+window.impUsageImporter = impUsageImporter;

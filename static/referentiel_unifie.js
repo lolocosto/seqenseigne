@@ -2,15 +2,14 @@
 // static/referentiel_unifie.js — v0.49.2 (v0.51.1 : format d'échange)
 // Conception › Niveau › « Référentiel » : UN SEUL onglet pour tous les
 // référentiels du niveau de la portée — internes et externes, principaux et
-// MER (ancien modèle de MER compris, tant qu'il n'est pas recréé).
+// MER (v0.51.11 : ancien modèle de MER retiré).
 //   - liste à gauche : filtres Année, Type, Source ; pour chaque filtre sans
 //     valeur choisie, groupage dans cet ordre (année, puis type, puis source) ;
 //   - création : source (interne / externe), type (principal / MER),
 //     description ; nom calculé ;
 //   - détail à droite : interne → détail historique (static/
 //     atelier_referentiel.js) ; externe → éditeur commun (static/
-//     referentiel_pe.js) ; ancien modèle de MER → éditeur historique
-//     (static/referentiel_externe.js).
+//     referentiel_pe.js).
 //   - v0.51.6 : structure de départ d'un référentiel externe (programme du
 //     cycle, référentiels existants du même type) avec aperçu dépliable.
 // ============================================================================
@@ -34,18 +33,14 @@ function _refuItems() {
     cle: 'E:' + r.id, id: r.id, source: 'externe', type: r.type_ref || 'principal',
     annee: r.annee || '', nom: r.nom, desc: r.description || '',
     etat: r.utilise ? 'utilise' : r.etat }));
-  (typeof RXT_LISTE !== 'undefined' ? RXT_LISTE : []).forEach(r => items.push({
-    cle: 'A:' + r.id, id: r.id, source: 'externe', type: 'mer', annee: r.annee || '',
-    nom: (r.nom || '(sans nom)') + ' — ancien modèle', desc: r.description || '', etat: r.etat }));
   return items;
 }
 
 async function refuInit() {
   REFU.actif = true;
   // Données : internes (déjà chargés par atelRefInit), externes (structure
-  // figée), ancien modèle de MER.
+  // figée).
   if (typeof rpeCharger === 'function') await rpeCharger();
-  if (typeof rxtCharger === 'function') { try { await rxtCharger(); } catch (e) {} }
   await refuChargerModeles();
   refuRendre();
 }
@@ -197,12 +192,6 @@ function refuRendrePublication() {
   if (!REFU.sel) { z.style.display = 'none'; z.innerHTML = ''; return; }
   const [k, id] = [REFU.sel.slice(0, 1), REFU.sel.slice(2)];
   z.style.display = '';
-  if (k === 'A') {
-    z.innerHTML = `<div class="refu-pub"><span class="refu-pub-titre">Format d'échange</span>
-      <span class="refu-pub-info">Ancien modèle de MER : non exportable — à recréer dans la
-      structure figée.</span></div>`;
-    return;
-  }
   const url = '/api/publication/referentiels/' + encodeURIComponent(id);
   z.innerHTML = `<div class="refu-pub"><span class="refu-pub-titre">Format d'échange</span>
     <a class="btn-sm" href="${url}.json" download>Exporter (JSON)</a>
@@ -265,9 +254,6 @@ function _refuRendreDetailExterne() {
       (connaissance, capacités ; critères F/A/E) ; documents par séquence, par partie, annuels.
       Une séquence commencée ne se modifie plus (libellés et ajout de documents seulement).</div>
       ${_rpeRef(r)}` : '';
-  } else {
-    const r = (RXT_LISTE || []).find(x => x.id === id);
-    ext.innerHTML = (r && typeof rxtRenderRef === 'function') ? rxtRenderRef(r) : '';
   }
   const empty = document.getElementById('atl-ref-empty');
   if (empty) empty.style.display = 'none';

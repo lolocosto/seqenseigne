@@ -89,17 +89,6 @@ def api_suivi_exo():
         )
         js.ecrire_suivi(suivi)
 
-    # Verrouiller la séquence dès la première saisie
-    classe = svc_cls.trouver_classe(js.lire_classes(), cid)
-    if classe:
-        niveau = classe.get("niveau", "N10")
-        if hasattr(js, 'verrouiller'):
-            js.verrouiller(cid, niveau, seq)
-        else:
-            classes_data = svc_cls.verrouiller_sequence(
-                js.lire_classes(), cid, niveau, seq
-            )
-            js.ecrire_classes(classes_data)
 
     return jsonify({"ok": True})
 
@@ -137,16 +126,6 @@ def api_niveaux_set():
         )
         js.ecrire_niveaux(niveaux)
 
-    classe = svc_cls.trouver_classe(js.lire_classes(), cid)
-    if classe:
-        niv_classe = classe.get("niveau", "N10")
-        if hasattr(js, 'verrouiller'):
-            js.verrouiller(cid, niv_classe, seq)
-        else:
-            classes_data = svc_cls.verrouiller_sequence(
-                js.lire_classes(), cid, niv_classe, seq
-            )
-            js.ecrire_classes(classes_data)
 
     # Bascule du référentiel en état verrouillé (idempotent)
     _verrouiller_referentiel_de_classe(js, cid)

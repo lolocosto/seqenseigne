@@ -25,7 +25,7 @@ Règles :
     l'identique (seul l'état est mis à jour).
 
 Seuls les référentiels de la structure figée (table referentiel_niveaux) sont
-exportables ; l'ancien modèle de MER (referentiel_externe) ne l'est pas.
+exportables (l'ancien modèle de MER est retiré en v0.51.11).
 """
 
 from __future__ import annotations
@@ -129,11 +129,6 @@ def sha256_fichier(chemin: Path) -> str:
 def _ref(conn, rid: str) -> dict:
     r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?", (rid,)).fetchone()
     if r is None:
-        if _table_existe(conn, "referentiel_externe") and conn.execute(
-                "SELECT 1 FROM referentiel_externe WHERE id=?", (rid,)).fetchone():
-            raise FormatErreur("Ancien modèle de MER : non exportable. Recréez-le "
-                               "dans la structure figée (Conception › Référentiel).",
-                               "ancien_modele")
         raise FormatErreur(f"Référentiel introuvable : {rid}", "introuvable")
     return dict(r)
 

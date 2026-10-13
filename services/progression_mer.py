@@ -5,9 +5,9 @@ progression principale (en semaines). Une progression MER par classe/année,
 adossée à UN référentiel MER. On y pose des parties du référentiel, dans
 l'ordre ; chaque partie consomme son nombre de séances (lu dans le référentiel).
 
-Le référentiel MER est générique : `ref_mer_source` indique où lire sa
-structure (« externe » aujourd'hui ; « interne » plus tard). La résolution des
-parties (libellé, nb de séances) délègue selon la source.
+Le référentiel MER est un référentiel de la structure figée (`ref_mer_source`
+= 'fige'). v0.51.11 — l'ancien modèle (« externe », tables
+`referentiel_externe*`) est retiré.
 
 `projeter_mer(seances, parties)` est pure (testable sans base).
 """
@@ -16,9 +16,9 @@ from __future__ import annotations
 import uuid
 
 ETATS = ("en_cours", "valide")
-# v0.49.0 — 'fige' : référentiel de MER de la structure figée (externe
-# aujourd'hui, interne plus tard) ; 'externe' : ancien modèle, en retrait.
-SOURCES = ("externe", "fige")
+# v0.49.0 — 'fige' : référentiel de MER de la structure figée.
+# v0.51.11 — ancien modèle ('externe') retiré.
+SOURCES = ("fige",)
 
 
 class ProgMerErreur(Exception):
@@ -97,18 +97,6 @@ def resoudre_partie(conn, partie_id: str, source: str) -> dict | None:
     if source == "fige":
         from services import referentiel_principal_externe as rpe
         return rpe.partie_mer(conn, partie_id)
-    if source == "externe":
-        r = conn.execute(
-            "SELECT p.id, p.libelle, p.nb_seances, p.numero, "
-            "s.code AS seq_code, s.nom AS seq_nom "
-            "FROM referentiel_externe_partie p "
-            "JOIN referentiel_externe_sequence s ON s.id = p.sequence_id "
-            "WHERE p.id=?", (partie_id,)).fetchone()
-        if r is None:
-            return None
-        return {"id": r["id"], "libelle": r["libelle"],
-                "nb_seances": r["nb_seances"], "numero": r["numero"],
-                "sequence_code": r["seq_code"], "sequence_nom": r["seq_nom"]}
     return None
 
 
@@ -118,19 +106,6 @@ def lister_parties_disponibles(conn, ref_mer_id: str, source: str) -> list:
     if source == "fige":
         from services import referentiel_principal_externe as rpe
         return rpe.parties_mer(conn, ref_mer_id)
-    if source == "externe":
-        rows = conn.execute(
-            "SELECT p.id, p.libelle, p.nb_seances, p.numero, "
-            "s.code AS seq_code, s.nom AS seq_nom, s.ordre AS seq_ordre, "
-            "p.ordre AS p_ordre "
-            "FROM referentiel_externe_partie p "
-            "JOIN referentiel_externe_sequence s ON s.id = p.sequence_id "
-            "WHERE s.ref_ext_id=? ORDER BY s.ordre, s.code, p.ordre, p.numero",
-            (ref_mer_id,)).fetchall()
-        return [{"id": r["id"], "libelle": r["libelle"],
-                 "nb_seances": r["nb_seances"], "numero": r["numero"],
-                 "sequence_code": r["seq_code"], "sequence_nom": r["seq_nom"]}
-                for r in rows]
     return []
 
 
@@ -155,13 +130,13 @@ def creer_ou_lire(conn, niveau: str, annee: str) -> dict:
     pid = _rid("pmr")
     conn.execute(
         "INSERT INTO progression_mer (id, niveau, annee, ref_mer_source, "
-        "etat) VALUES (?,?,?, 'externe', 'en_cours')",
+        "etat) VALUES (?,?,?, 'fige', 'en_cours')",
         (pid, niveau, annee))
     return lire_par_niveau(conn, niveau, annee)
 
 
 def definir_referentiel(conn, prog_id: str, ref_mer_id: str,
-                        ref_mer_source: str = "externe") -> dict:
+                        ref_mer_source: str = "fige") -> dict:
     """Associe un référentiel MER à la progression. Change de référentiel PURGE
     les parties posées (elles référencent l'ancien référentiel)."""
     if ref_mer_source not in SOURCES:
@@ -224,7 +199,7 @@ def _lister_parties_posees(conn, prog_id: str) -> list:
 
 
 def poser_partie(conn, prog_id: str, partie_id: str,
-                 partie_source: str = "externe") -> dict:
+                 partie_source: str = "fige") -> dict:
     """Ajoute une partie à la fin de la progression. Refuse un doublon (une
     partie est atomique, posée une seule fois)."""
     r = conn.execute("SELECT 1 FROM progression_mer WHERE id=?",

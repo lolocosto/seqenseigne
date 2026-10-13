@@ -38,7 +38,7 @@ PROFIL_DEFAUT = "complet"
 # ── Catégorie de chaque blueprint ────────────────────────────────────────────
 
 BP_ATELIER = frozenset({
-    "sequences", "versions", "atomes", "scanner", "admin", "cycle", "themes",
+    "sequences", "atomes", "scanner", "admin", "cycle", "themes",
     "sequences_du_cycle", "v2_lecture", "v2_edition", "rendu_atome",
     "livret_sequence", "plans_de_travail", "etats_edition", "fiches_resume",
     "evaluations", "cartes_automatisme", "referentiel_documents_compilation",
@@ -46,7 +46,7 @@ BP_ATELIER = frozenset({
     "publication",          # v0.51.1 — format d'échange des référentiels
 })
 BP_STRUCTURE = frozenset({
-    "referentiels", "referentiel_principal_externe", "referentiel_externe",
+    "referentiels", "referentiel_principal_externe",
     "referentiel_documents",
 })
 BP_CLASSE = frozenset({

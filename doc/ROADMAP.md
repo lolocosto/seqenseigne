@@ -284,7 +284,19 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   Système › Préférences › Échanges ; plus d'import manuel de retour d'usage
   dans l'atelier (boîte aux lettres seulement) ; pas de retour d'usage sans
   référentiel importé ; base partagée expliquée.
-- v0.51.11 : bascule des données de classe vers une base « classe » séparée.
+- v0.51.11 : retraits (fait) — ancien modèle de MER (`referentiel_externe*`)
+  et anciens livrets (`livrets_de_sequence`, `livret_revisions`, `versions`,
+  `versions_classes`), contenu sauvegardé en JSON ; onglet Administration ›
+  « Import retours d'usage » dans l'atelier.
+- v0.51.12 : bascule (répartition validée table par table : 43 tables classe,
+  31 atelier, 22 des deux côtés) — rôle de chaque base, structures absentes
+  de chaque côté (gardes sur les lectures croisées), outil (aperçu,
+  sauvegarde, paquet n° 1, retour d'usage, nettoyage), tests des données
+  attendues côté classe (titres, noms et PDF des documents, cases du suivi).
+- v0.51.13 : tableau de bord — tuiles Publication / Retour d'usage
+  simplifiées (détail dans un écran dédié), tuiles Établissements (salles,
+  lien « plan »), Classes (liste des élèves, lien « plan »), Journée (modèle
+  de la planification hebdo, flèches de navigation).
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS. Transport des envois entre le PC et le serveur (la
   boîte aux lettres rend inutile l'API générale prévue au départ) — à

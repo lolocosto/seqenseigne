@@ -144,7 +144,6 @@ def documents_disponibles(conn, niveau: str, annee: str, sequence: str,
 def _docs_pour_sequence(conn, niveau: str, annee: str, sequence: str) -> list:
     docs = []
     docs.extend(_docs_internes(conn, niveau, sequence, annuels=False))
-    docs.extend(_docs_externes(conn, niveau, annee, sequence, annuels=False))
     docs.extend(_docs_principal_externe(conn, niveau, annee, sequence))   # v0.48.2
     return docs
 
@@ -169,7 +168,10 @@ def _docs_principal_externe(conn, niveau: str, annee: str, sequence: str) -> lis
 def _docs_annuels(conn, niveau: str, annee: str) -> list:
     docs = []
     docs.extend(_docs_internes(conn, niveau, "", annuels=True))
-    docs.extend(_docs_externes(conn, niveau, annee, "", annuels=True))
+    # v0.51.11 — Documents annuels des référentiels de la structure figée
+    # (l'ancien modèle de MER est retiré).
+    docs.extend({**d, "categorie": "annuel"}
+                for d in _docs_principal_externe(conn, niveau, annee, ""))
     return docs
 
 
@@ -263,41 +265,3 @@ def _libelle_type_doc(type_doc: str) -> str:
     return _LIBELLES_TYPE_DOC.get(type_doc, type_doc)
 
 
-# ── Source externe (référentiel principal OU MER) ────────────────────────────
-
-def _docs_externes(conn, niveau: str, annee: str, sequence: str,
-                   annuels: bool) -> list:
-    """Documents des référentiels externes du niveau (principal et MER)."""
-    from services import referentiel_externe as rx
-    refs = conn.execute(
-        "SELECT id, nom, type FROM referentiel_externe WHERE niveau=?",
-        (niveau,)).fetchall()
-    out = []
-    for r in refs:
-        ref_id = r["id"]
-        try:
-            full = rx.lire(conn, ref_id)
-        except Exception:
-            continue
-        if annuels:
-            for d in full.get("docs_annuels", []):
-                out.append({
-                    "source": "externe",
-                    "doc_ref": d["id"],
-                    "libelle": f"{r['nom']} — {d['nom_fichier']}",
-                    "categorie": "annuel",
-                })
-        else:
-            # docs des parties dont la séquence correspond
-            for seqx in full.get("sequences", []):
-                if (seqx.get("code") or "") != sequence:
-                    continue
-                for part in seqx.get("parties", []):
-                    for d in part.get("docs", []):
-                        out.append({
-                            "source": "externe",
-                            "doc_ref": d["id"],
-                            "libelle": f"{r['nom']} — {d['nom_fichier']}",
-                            "categorie": "sequence",
-                        })
-    return out

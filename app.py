@@ -29,7 +29,6 @@ from persistence.csv_store  import CsvStore
 from routes.sequences      import bp as bp_sequences
 from routes.classes        import bp as bp_classes
 from routes.suivi          import bp as bp_suivi
-from routes.versions       import bp as bp_versions
 from routes.atomes         import bp as bp_atomes
 from routes.admin          import bp as bp_admin
 from routes.progression    import bp as bp_progression
@@ -47,7 +46,6 @@ from routes.affectation     import bp as bp_affectation
 from routes.indisponibilites import bp as bp_indisponibilites
 from routes.decalage_progression import bp as bp_decalage_progression
 from routes.leitner import bp as bp_leitner
-from routes.referentiel_externe import bp as bp_referentiel_externe
 from routes.progression_mer import bp as bp_progression_mer
 from routes.progression_doc import bp as bp_progression_doc
 from routes.tableau_bord import bp as bp_tableau_bord
@@ -131,12 +129,12 @@ def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask
     auto_importer_cycles(data_dir, app.json_store.db_path)
 
     # ── Blueprints ────────────────────────────────────────────────────────────
-    for bp in (bp_sequences, bp_classes, bp_suivi, bp_versions,
+    for bp in (bp_sequences, bp_classes, bp_suivi,
                bp_atomes, bp_scanner, bp_admin, bp_progression,
                bp_etablissements, bp_calendrier,
                bp_grille_horaire, bp_salles, bp_plans_classe, bp_seance, bp_observables, bp_observation, bp_rpe, bp_edt, bp_projection, bp_affectation,
                bp_indisponibilites, bp_decalage_progression, bp_leitner,
-               bp_referentiel_externe, bp_progression_mer, bp_tableau_bord,
+               bp_progression_mer, bp_tableau_bord,
                bp_progression_doc,
                bp_planification_hebdo,
                bp_annees_scolaires, bp_referentiels, bp_cycle, bp_themes,

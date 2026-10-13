@@ -174,13 +174,9 @@ def scanner_vers_bdd(data: dict, json_store, csv_store=None,
     exercices.extend(nouveaux_e)
     json_store.ecrire_exercices(exercices)
 
-    # Livrets
-    livrets = json_store.lire_livrets_importes()
-    ids_l = {(l["niveau"], l["sequence"]) for l in livrets}
-    nouveaux_l = [l for l in data["livrets"]
-                  if (l["niveau"], l["sequence"]) not in ids_l]
-    livrets.extend(nouveaux_l)
-    json_store.ecrire_livrets_importes(livrets)
+    # v0.51.11 — Les livrets scannés ne sont plus enregistrés (anciens
+    # livrets importés retirés ; les livrets se construisent dans les ateliers).
+    nouveaux_l = []
 
     # v0.14.6.b.2 — Étape 4 (Peuplement v2 via scanner_vers_v2)
     # supprimée : voir docstring du module. Les tables v2 sont alimentées

@@ -58,8 +58,6 @@ def creer_classe(classes_data: dict, nom: str, niveau: str,
         "etablissement":  etablissement,
         "eleves":         [],
         **({"etablissement_id": etablissement_id} if etablissement_id else {}),
-        "versions_actives":      {},
-        "sequences_verouillees": [],
     }
     classes_data.setdefault("classes", []).append(nouvelle)
     return classes_data, nouvelle
@@ -187,44 +185,3 @@ def importer_eleves_csv(classes_data: dict, cid: str,
 
 
 # ── Verrous de séquence ────────────────────────────────────────────────────────
-
-def verrouiller_sequence(classes_data: dict, cid: str,
-                         niveau: str, seq: str) -> dict:
-    """
-    Verrouille une séquence pour une classe dès la première saisie.
-    Retourne classes_data (potentiellement modifié).
-    """
-    classe = trouver_classe(classes_data, cid)
-    if not classe:
-        return classes_data
-    key = f"{niveau}_{seq}"
-    locked = classe.setdefault("sequences_verouillees", [])
-    if key not in locked:
-        locked.append(key)
-    return classes_data
-
-
-def est_verrouille(classe: dict, niveau: str, seq: str) -> bool:
-    """Retourne True si la séquence est verrouillée pour cette classe."""
-    key = f"{niveau}_{seq}"
-    return key in classe.get("sequences_verouillees", [])
-
-
-def definir_version_active(classes_data: dict, cid: str,
-                           niveau: str, seq: str,
-                           tag: str | None) -> tuple[dict, str | None]:
-    """
-    Définit la version active d'une séquence pour une classe.
-    Retourne (classes_data, erreur_msg). erreur_msg est None si OK.
-    """
-    classe = trouver_classe(classes_data, cid)
-    if not classe:
-        return classes_data, "classe introuvable"
-    if est_verrouille(classe, niveau, seq):
-        return classes_data, (
-            "Cette séquence est verrouillée (résultats déjà saisis). "
-            "Créez une nouvelle version du livret pour continuer."
-        )
-    key = f"{niveau}_{seq}"
-    classe.setdefault("versions_actives", {})[key] = tag
-    return classes_data, None

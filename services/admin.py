@@ -117,7 +117,6 @@ def statut_bdd(json_store, yaml_store, csv_store) -> dict:
             "notions":      len(json_store.lire_notions()),
             "methodes":     len(json_store.lire_methodes()),
             "exercices":    len(json_store.lire_exercices()),
-            "livrets":      len(json_store.lire_livrets_importes()),
             "referentiels": len(referentiels),
         },
         "paquet": paquet,

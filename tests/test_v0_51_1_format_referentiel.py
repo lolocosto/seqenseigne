@@ -229,15 +229,6 @@ def test_mer(app):
     assert doc["structure"]["decoupage"][0]["code"].startswith("M")
 
 
-def test_ancien_modele_de_mer_refuse(app):
-    from services import referentiel_externe as rx
-    with app.json_store._conn() as c:
-        r = rx.creer(c, niveau="N11", annee="2026-2027", type="mer", nom="Ancien")
-        with pytest.raises(fmt.FormatErreur) as e:
-            fmt.exporter(c, r["id"], app.json_store.data_dir)
-    assert e.value.code == "ancien_modele"
-
-
 # ── Empreintes et validation ─────────────────────────────────────────────────
 
 def test_empreinte_hors_metadonnees_et_etat(app):

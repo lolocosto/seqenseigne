@@ -1297,65 +1297,8 @@ class SqliteStore:
         except Exception:
             pass
 
-        # ── v0.25.0 — Référentiels externes ───────────────────────────────────
-        # Référentiels dont le contenu est conçu HORS de l'appli (docs PDF/ODT…
-        # de collègues), intégrés « tels quels ». Structure légère : séquences →
-        # parties (avec nb de séances) → documents attachés. Type 'mer' pour
-        # l'instant (les référentiels MER sont exclusivement externes). Deux
-        # états : 'en_cours' (éditable) et 'valide' (utilisable en progression).
-        # Des docs peuvent être ajoutés à tout moment, même après validation.
-        try:
-            conn.executescript("""
-                CREATE TABLE IF NOT EXISTS referentiel_externe (
-                    id      TEXT PRIMARY KEY,
-                    niveau  TEXT NOT NULL,
-                    annee   TEXT NOT NULL DEFAULT '',
-                    type    TEXT NOT NULL DEFAULT 'mer',
-                    nom     TEXT NOT NULL DEFAULT '',
-                    etat    TEXT NOT NULL DEFAULT 'en_cours'
-                );
-                CREATE TABLE IF NOT EXISTS referentiel_externe_sequence (
-                    id         TEXT PRIMARY KEY,
-                    ref_ext_id TEXT NOT NULL,
-                    code       TEXT NOT NULL DEFAULT '',
-                    nom        TEXT NOT NULL DEFAULT '',
-                    ordre      INTEGER NOT NULL DEFAULT 0
-                );
-                CREATE TABLE IF NOT EXISTS referentiel_externe_partie (
-                    id          TEXT PRIMARY KEY,
-                    sequence_id TEXT NOT NULL,
-                    numero      INTEGER NOT NULL DEFAULT 1,
-                    libelle     TEXT NOT NULL DEFAULT '',
-                    nb_seances  INTEGER NOT NULL DEFAULT 1,
-                    ordre       INTEGER NOT NULL DEFAULT 0
-                );
-                CREATE TABLE IF NOT EXISTS referentiel_externe_doc (
-                    id          TEXT PRIMARY KEY,
-                    partie_id   TEXT NOT NULL,
-                    nom_fichier TEXT NOT NULL,
-                    chemin      TEXT NOT NULL,
-                    mime        TEXT NOT NULL DEFAULT '',
-                    taille      INTEGER NOT NULL DEFAULT 0
-                );
-            """)
-            conn.commit()
-        except Exception:
-            pass
-
-        # ── v0.32.3 — Documents ANNUELS des référentiels externes ─────────────
-        # Un doc externe est rattaché soit à une partie (doc de séquence,
-        # partie_id renseigné), soit au référentiel lui-même (doc annuel,
-        # ref_ext_id renseigné, partie_id vide). On ajoute la colonne ref_ext_id
-        # (nullable) sans toucher aux docs de partie existants.
-        try:
-            cols = {r["name"] for r in conn.execute(
-                "PRAGMA table_info(referentiel_externe_doc)").fetchall()}
-            if cols and "ref_ext_id" not in cols:
-                conn.execute("ALTER TABLE referentiel_externe_doc "
-                             "ADD COLUMN ref_ext_id TEXT")
-                conn.commit()
-        except Exception:
-            pass
+        # v0.25.0 / v0.32.3 — Ancien modèle de MER (referentiel_externe*) :
+        # retiré en v0.51.11 (services/retraits.py, plus bas).
 
         # ── v0.32.5 — Association de documents à la progression ────────────────
         # Un document (à distribuer) est associé à un point de la progression, au
@@ -1614,6 +1557,15 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.51.11 — Retrait de l'ancien modèle de MER et des anciens livrets
+        #    (sauvegarde JSON dans data/sauvegardes/ avant suppression) ───────
+        try:
+            from services import retraits as _retraits
+            _retraits.appliquer(conn, self.data_dir)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [retraits] impossible : {_e}")
+
         # ── v0.51.2 — Journal des publications (paquets) ─────────────────────
         try:
             from services import paquet_publication as _pub
@@ -1804,20 +1756,6 @@ class SqliteStore:
                 """, (c["id"],)).fetchall()
                 c["eleves"] = [dict(e) for e in rows_e]
 
-                # versions_actives et sequences_verouillees
-                rows_vc = conn.execute(
-                    "SELECT * FROM versions_classes WHERE classe_id = ?",
-                    (c["id"],)
-                ).fetchall()
-                va, sv = {}, []
-                for vc in rows_vc:
-                    key = f"{vc['niveau']}_{vc['seq_code']}"
-                    if vc["tag_actif"]:
-                        va[key] = vc["tag_actif"]
-                    if vc["verrouille"]:
-                        sv.append(key)
-                c["versions_actives"] = va
-                c["sequences_verouillees"] = sv
                 classes.append(c)
 
         return {"classes": classes}
@@ -1841,7 +1779,6 @@ class SqliteStore:
             ).fetchall()}
             for cid in existants - ids_entrants:
                 conn.execute("DELETE FROM eleves_classes WHERE classe_id=?", (cid,))
-                conn.execute("DELETE FROM versions_classes WHERE classe_id=?", (cid,))
                 conn.execute("DELETE FROM classes WHERE id=?", (cid,))
 
             for c in classes:
@@ -1912,29 +1849,6 @@ class SqliteStore:
                         VALUES (?,?)
                     """, (e["id"], c["id"]))
 
-                for key, tag in c.get("versions_actives", {}).items():
-                    parts = key.split("_", 1)
-                    if len(parts) == 2:
-                        niv, seq = parts
-                        conn.execute("""
-                            INSERT INTO versions_classes
-                              (classe_id, niveau, seq_code, tag_actif, verrouille)
-                            VALUES (?,?,?,?,0)
-                            ON CONFLICT(classe_id, niveau, seq_code)
-                            DO UPDATE SET tag_actif=excluded.tag_actif
-                        """, (c["id"], niv, seq, tag))
-
-                for key in c.get("sequences_verouillees", []):
-                    parts = key.split("_", 1)
-                    if len(parts) == 2:
-                        niv, seq = parts
-                        conn.execute("""
-                            INSERT INTO versions_classes
-                              (classe_id, niveau, seq_code, tag_actif, verrouille)
-                            VALUES (?,?,?,NULL,1)
-                            ON CONFLICT(classe_id, niveau, seq_code)
-                            DO UPDATE SET verrouille=1
-                        """, (c["id"], niv, seq))
 
     def ajouter_eleve(self, classe_id: str, eleve_id: str, nom: str, prenom: str,
                       date_entree: str | None = None) -> None:
@@ -1980,7 +1894,7 @@ class SqliteStore:
     def supprimer_donnees_classe(self, classe_id: str) -> None:
         """
         Supprime la classe et toutes ses données dérivées :
-        versions_classes, suivi, niveaux, eleves_classes (cascade).
+        suivi, niveaux, eleves_classes (cascade).
         Supprime également les élèves devenus orphelins (plus rattachés
         à aucune classe) — nécessaire car la table eleves est globale.
         """
@@ -1995,7 +1909,6 @@ class SqliteStore:
             # Nettoyer les tables de suivi dénormalisées (pas de FK cascade dessus)
             conn.execute("DELETE FROM suivi WHERE classe_id=?", (classe_id,))
             conn.execute("DELETE FROM niveaux WHERE classe_id=?", (classe_id,))
-            conn.execute("DELETE FROM versions_classes WHERE classe_id=?", (classe_id,))
 
             # DELETE FROM classes cascade sur eleves_classes (FK ON DELETE CASCADE)
             conn.execute("DELETE FROM classes WHERE id=?", (classe_id,))
@@ -2183,93 +2096,6 @@ class SqliteStore:
                 (classe_id, seq_code, eleve_id, obj_code,
                  creneau_id, niveau)
             )
-
-    # ── Versions ─────────────────────────────────────────────────────────────
-
-    def lire_versions(self) -> dict:
-        with self._conn() as conn:
-            rows = conn.execute(
-                "SELECT * FROM versions ORDER BY date DESC"
-            ).fetchall()
-        result: dict = {}
-        for r in rows:
-            entry = {"tag": r["tag"], "label": r["label"],
-                     "date": r["date"], **_uj(r["contenu"], {})}
-            result.setdefault(r["niveau"], {}).setdefault(r["seq_code"], []).append(entry)
-        return result
-
-    def ecrire_versions(self, data: dict) -> None:
-        with self._conn() as conn:
-            conn.execute("DELETE FROM versions")
-            for niv, seqs in data.items():
-                for seq, versions in seqs.items():
-                    for v in versions:
-                        tag, label, date = v.get("tag",""), v.get("label",""), v.get("date","")
-                        extra = {k: val for k, val in v.items()
-                                 if k not in ("tag","label","date")}
-                        conn.execute(
-                            "INSERT OR REPLACE INTO versions "
-                            "(niveau,seq_code,tag,label,date,contenu) VALUES (?,?,?,?,?,?)",
-                            (niv, seq, tag, label, date, _j(extra))
-                        )
-
-    def upsert_version(self, niveau: str, seq: str, tag: str,
-                       label: str, date: str, contenu: dict) -> None:
-        with self._conn() as conn:
-            conn.execute(
-                "INSERT OR REPLACE INTO versions "
-                "(niveau,seq_code,tag,label,date,contenu) VALUES (?,?,?,?,?,?)",
-                (niveau, seq, tag, label, date, _j(contenu))
-            )
-
-    def supprimer_version(self, niveau: str, seq: str, tag: str) -> None:
-        with self._conn() as conn:
-            conn.execute(
-                "DELETE FROM versions WHERE niveau=? AND seq_code=? AND tag=?",
-                (niveau, seq, tag)
-            )
-
-    def version_utilisee(self, niveau: str, seq: str, tag: str) -> bool:
-        with self._conn() as conn:
-            return conn.execute(
-                "SELECT 1 FROM versions_classes WHERE niveau=? AND seq_code=? "
-                "AND tag_actif=? LIMIT 1", (niveau, seq, tag)
-            ).fetchone() is not None
-
-    def lire_version_active(self, classe_id: str, niveau: str, seq: str) -> str | None:
-        with self._conn() as conn:
-            row = conn.execute(
-                "SELECT tag_actif FROM versions_classes "
-                "WHERE classe_id=? AND niveau=? AND seq_code=?",
-                (classe_id, niveau, seq)
-            ).fetchone()
-        return row["tag_actif"] if row else None
-
-    def set_version_active(self, classe_id: str, niveau: str, seq: str,
-                           tag: str | None) -> None:
-        with self._conn() as conn:
-            conn.execute("""
-                INSERT INTO versions_classes (classe_id,niveau,seq_code,tag_actif,verrouille)
-                VALUES (?,?,?,?,0)
-                ON CONFLICT(classe_id,niveau,seq_code) DO UPDATE SET tag_actif=excluded.tag_actif
-            """, (classe_id, niveau, seq, tag))
-
-    def est_verrouille(self, classe_id: str, niveau: str, seq: str) -> bool:
-        with self._conn() as conn:
-            row = conn.execute(
-                "SELECT verrouille FROM versions_classes "
-                "WHERE classe_id=? AND niveau=? AND seq_code=?",
-                (classe_id, niveau, seq)
-            ).fetchone()
-        return bool(row["verrouille"]) if row else False
-
-    def verrouiller(self, classe_id: str, niveau: str, seq: str) -> None:
-        with self._conn() as conn:
-            conn.execute("""
-                INSERT INTO versions_classes (classe_id,niveau,seq_code,verrouille)
-                VALUES (?,?,?,1)
-                ON CONFLICT(classe_id,niveau,seq_code) DO UPDATE SET verrouille=1
-            """, (classe_id, niveau, seq))
 
     # ── Atomes ───────────────────────────────────────────────────────────────
 
@@ -2896,60 +2722,6 @@ class SqliteStore:
                 # (`peupler_v2_depuis_base` qui peuple `objectif_exos`).
                 # La table legacy `exercice_objectifs` n'est plus
                 # alimentée et sera droppée en v0.14.6.b.2.
-
-    def lire_livrets_importes(self) -> list:
-        with self._conn() as conn:
-            rows = conn.execute(
-                "SELECT * FROM livrets_de_sequence ORDER BY rowid"
-            ).fetchall()
-        return [{"id": r["id"], "niveau": r["niveau"],
-                 "sequence": r["sequence"], **_uj(r["contenu"], {})} for r in rows]
-
-    def ecrire_livrets_importes(self, liste: list) -> None:
-        with self._conn() as conn:
-            conn.execute("DELETE FROM livrets_de_sequence")
-            # v0.14.6.b.2 — Table `livret_exercices` supprimée.
-            conn.execute("DELETE FROM livret_revisions")
-            for l in liste:
-                lid = l.get("id", nouveau_id_livret())
-                niveau   = l.get("niveau", "")
-                sequence = l.get("sequence", "")
-                extra = {k: v for k, v in l.items()
-                         if k not in ("id","niveau","sequence")}
-                conn.execute("INSERT INTO livrets_de_sequence VALUES (?,?,?,?)",
-                    (lid, niveau, sequence, _j(extra)))
-
-                # v0.14.6.b.2 — Peuplement de `livret_exercices` supprimé.
-                # Cette table était écrite à partir de `exercice_objectifs`
-                # (v1) pour résoudre `objectif_id`. Les deux tables ayant
-                # disparu, et l'information « ordre d'apparition d'un
-                # exercice dans un livret » étant désormais portée par
-                # `objectif_exos.ordre` (v2), il n'y a plus rien à faire
-                # ici. Le contenu détaillé du livret reste accessible via
-                # le champ JSON `contenu` de `livrets_de_sequence` (extra).
-
-                # v0.6.3e : peupler livret_revisions depuis prerequis.exercices_revision
-                prereq = l.get("prerequis") or {}
-                revisions = prereq.get("exercices_revision", []) or []
-                for ordre, rev in enumerate(revisions):
-                    if not isinstance(rev, dict):
-                        continue
-                    niveau_src = rev.get("niveau", "")
-                    seq_src    = rev.get("sequence", "")
-                    serie_src  = rev.get("serie", "")
-                    num_src    = rev.get("num")
-                    if not (niveau_src and seq_src and serie_src and num_src is not None):
-                        continue
-                    try:
-                        num_src_int = int(num_src)
-                    except (TypeError, ValueError):
-                        continue
-                    conn.execute(
-                        "INSERT OR IGNORE INTO livret_revisions "
-                        "(livret_id, niveau_source, seq_source, serie, num, ordre) "
-                        "VALUES (?,?,?,?,?,?)",
-                        (lid, niveau_src, seq_src, serie_src, num_src_int, ordre)
-                    )
 
     # ── Référentiels versionnés ──────────────────────────────────────────────
 
@@ -3679,7 +3451,6 @@ class SqliteStore:
         """
         with self._conn() as conn:
             # 1. Tables filles des livrets et exercices
-            conn.execute("DELETE FROM livret_revisions")
             # v0.14.6.b.2 — `livret_exercices` et `exercice_objectifs` (v1)
             # supprimées.
             conn.execute("DELETE FROM objectif_exos")        # RESTRICT sur exercices
@@ -3698,14 +3469,12 @@ class SqliteStore:
             # v0.6.4 — atome_section_items est cascadé via atome_sections
             conn.execute("DELETE FROM atome_sections")
             conn.execute("DELETE FROM annexes")
-            conn.execute("DELETE FROM livrets_de_sequence")
         return [
-            "livret_revisions",
             "objectif_exos", "partie_precedences", "objectifs",
             "sequence_parties", "sequences_par_niveau", "methode_notions",
             "exercices", "methodes", "notions",
             "atome_sections", "atome_section_items",
-            "annexes", "livrets_de_sequence",
+            "annexes",
         ]
 
     def reset_suivi(self) -> list[str]:
@@ -3721,14 +3490,12 @@ class SqliteStore:
             # déjà une partie mais on est explicite pour la lisibilité.
             conn.execute("DELETE FROM niveaux")
             conn.execute("DELETE FROM suivi")
-            conn.execute("DELETE FROM versions_classes")
-            conn.execute("DELETE FROM versions")
             conn.execute("DELETE FROM creneau_objectifs_exos")
             conn.execute("DELETE FROM creneaux")
             conn.execute("DELETE FROM progressions")
             conn.execute("DELETE FROM eleves_classes")
             conn.execute("DELETE FROM eleves")
             conn.execute("DELETE FROM classes")
-        return ["niveaux", "suivi", "versions_classes", "versions",
+        return ["niveaux", "suivi",
                 "creneau_objectifs_exos", "creneaux", "progressions",
                 "eleves_classes", "eleves", "classes"]

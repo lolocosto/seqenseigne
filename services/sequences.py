@@ -15,20 +15,11 @@ from typing import Optional
 def build_sequences(niveau: str, yaml_store, json_store, csv_store) -> list:
     """
     Retourne la liste des séquences d'un niveau, prête pour l'API.
-    Stratégie :
-      1. Lire le YAML du niveau.
-      2. Si absent ou vide → reconstruire depuis les livrets importés,
-         persister le YAML généré, retourner le résultat.
+    Lit le YAML du niveau (v0.51.11 : plus de reconstruction depuis les
+    anciens livrets importés, retirés).
     """
     raw = yaml_store.lire_brut(niveau)
-    if raw:
-        return _parser_yaml(raw)
-
-    # Fallback : construire depuis les livrets importés
-    seqs = build_sequences_from_livrets(niveau, json_store, csv_store)
-    if seqs:
-        save_sequences_yaml(niveau, seqs, yaml_store)
-    return seqs
+    return _parser_yaml(raw) if raw else []
 
 
 def _parser_yaml(raw: dict) -> list:
@@ -162,84 +153,6 @@ def _normaliser_exercices(exos_src: dict) -> dict:
 
 
 # ── Construction depuis les livrets importés ───────────────────────────────────
-
-def build_sequences_from_livrets(niveau: str, json_store, csv_store) -> list:
-    """
-    Reconstruit les séquences d'un niveau depuis :
-      - livrets_importes.json  (structure notions/méthodes/exercices)
-      - methodes.json          (num_objectif, titre, critères, finCycle)
-      - exercices.json         (serie_code, num, objectifs_codes)
-      - C04_sequences.csv      (nom, theme)
-    """
-    c04 = csv_store.lire_c04_sequences()
-    livrets_data   = json_store.lire_livrets_importes()
-    methodes_data  = json_store.lire_methodes()
-    exercices_data = json_store.lire_exercices()
-
-    methodes_by_file = {m["fichier"]: m for m in methodes_data}
-
-    niveaux_livrets = sorted(
-        [l for l in livrets_data if l["niveau"] == niveau],
-        key=lambda l: l["sequence"],
-    )
-
-    result = []
-    for livret in niveaux_livrets:
-        seq_code = livret["sequence"]
-        c04_seq  = c04.get(seq_code, {})
-
-        objectifs = [_obj01()]
-
-        for fichier_methode in livret.get("methodes", []):
-            m = methodes_by_file.get(fichier_methode)
-            if not m:
-                continue
-            code_obj = m.get("num_objectif", "??")
-
-            exos_F = sorted([
-                int(e["num"]) for e in exercices_data
-                if e["niveau"] == niveau and e["sequence"] == seq_code
-                and e["serie_code"] == "F" and code_obj in e.get("objectifs_codes", [])
-            ])
-            exos_A = sorted([
-                int(e["num"]) for e in exercices_data
-                if e["niveau"] == niveau and e["sequence"] == seq_code
-                and e["serie_code"] == "A" and code_obj in e.get("objectifs_codes", [])
-            ])
-            exos_E = sorted([
-                int(e["num"]) for e in exercices_data
-                if e["niveau"] == niveau and e["sequence"] == seq_code
-                and e["serie_code"] == "E" and code_obj in e.get("objectifs_codes", [])
-            ])
-
-            criteres_src = m.get("criteres", {})
-            objectifs.append({
-                "code":      code_obj,
-                "nom":       m.get("titre", ""),
-                "is01":      False,
-                "fin_cycle": m.get("finCycle", False),
-                "criteres": {
-                    "2": criteres_src.get("fondamental", criteres_src.get("F", "")),
-                    "3": criteres_src.get("avancé",      criteres_src.get("A", "")),
-                    "4": criteres_src.get("exploration", criteres_src.get("E", "")),
-                },
-                "exercices": {
-                    "fondamental": exos_F,
-                    "avancé":      exos_A,
-                    "exploration": exos_E,
-                },
-            })
-
-        result.append({
-            "code":      seq_code,
-            "numero":    c04_seq.get("numero", 0),
-            "nom":       c04_seq.get("nom", seq_code),
-            "theme":     c04_seq.get("theme", ""),
-            "objectifs": objectifs,
-        })
-
-    return result
-
 
 # ── Persistance YAML ───────────────────────────────────────────────────────────
 

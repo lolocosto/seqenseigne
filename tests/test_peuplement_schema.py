@@ -112,15 +112,6 @@ class TestMigrationInitiale:
     # v0.14.6.b.2 — test_colonnes_ajoutees_dans_objectifs supprimé : la
     # table `objectifs` (v1) n'existe plus.
 
-    def test_table_livret_revisions_creee(self, base_pre_v063e):
-        migrer(base_pre_v063e)
-        conn = sqlite3.connect(str(base_pre_v063e))
-        tables = {r[0] for r in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        )}
-        conn.close()
-        assert "livret_revisions" in tables
-
     def test_index_crees(self, base_pre_v063e):
         rapport = migrer(base_pre_v063e)
         # v0.14.6.b.2 — Compteur passé de 7 à 6 : idx_objectifs_niv_seq
@@ -159,7 +150,7 @@ class TestIdempotence:
         r2 = migrer(base_pre_v063e)
         # Premier passage : tout à créer
         assert r1["colonnes_ajoutees"]
-        assert r1["tables_creees"]
+        assert r1["tables_creees"] == []      # v0.51.11 : plus de table à créer
         # Deuxième passage : rien à créer
         assert r2["colonnes_ajoutees"] == {}
         assert r2["tables_creees"] == []

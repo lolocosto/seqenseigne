@@ -514,8 +514,6 @@ def importer_classe_historique(
         "etablissement": etablissement,
         "eleves":        eleves,
         "progression_id": progression["id"],
-        "versions_actives":      {},
-        "sequences_verouillees": [],
     }
 
     return {

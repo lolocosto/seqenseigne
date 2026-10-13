@@ -38,13 +38,13 @@ def api_scanner_detail():
     notions_ex   = {n.get("fichier", "") for n in js.lire_notions()}
     methodes_ex  = {m.get("fichier", "") for m in js.lire_methodes()}
     exercices_ex = {e.get("fichier", "") for e in js.lire_exercices()}
-    livrets_ex   = {(l["niveau"], l["sequence"]) for l in js.lire_livrets_importes()}
 
     return jsonify({
         "notions":   [{**n, "_statut": "existant" if n.get("fichier") in notions_ex   else "nouveau"} for n in data["notions"]],
         "methodes":  [{**m, "_statut": "existant" if m.get("fichier") in methodes_ex  else "nouveau"} for m in data["methodes"]],
         "exercices": [{**e, "_statut": "existant" if e.get("fichier") in exercices_ex else "nouveau"} for e in data["exercices"]],
-        "livrets":   [{**l, "_statut": "existant" if (l["niveau"], l["sequence"]) in livrets_ex else "nouveau"} for l in data["livrets"]],
+        # v0.51.11 — anciens livrets importés retirés : toujours « nouveaux ».
+        "livrets":   [{**l, "_statut": "nouveau"} for l in data["livrets"]],
         "erreurs":   data["erreurs"],
     })
 

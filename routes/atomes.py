@@ -248,23 +248,3 @@ _enregistrer_routes_atome(
 # supprimée définitivement avec le chantier de suppression de v1.
 # L'atelier exercice actuel utilise l'API `/api/objectifs-v2/...` qui
 # lit directement la table `objectifs`.
-
-
-# ── Livrets de séquence ────────────────────────────────────────────────────────
-
-
-@bp.route("/api/atomes/livrets", methods=["GET"])
-def api_get_livrets():
-    """
-    Retourne les livrets de séquence importés.
-    Filtres optionnels : niveau=N11, sequence=S01
-    """
-    js = _js()
-    livrets  = js.lire_livrets_importes()
-    niveau   = request.args.get("niveau")
-    sequence = request.args.get("sequence")
-    if niveau:
-        livrets = [l for l in livrets if l.get("niveau") == niveau]
-    if sequence:
-        livrets = [l for l in livrets if l.get("sequence") == sequence]
-    return jsonify(livrets)

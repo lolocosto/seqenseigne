@@ -2198,156 +2198,6 @@ document.addEventListener('keydown', (ev) => {
 
 
 // ════════════════════════════════════════════════════════════════
-// ONGLET LIVRETS — gestion des versions
-// ════════════════════════════════════════════════════════════════
-
-let livSeqList = [];   // séquences du niveau courant
-let livVersions = {};  // versions chargées { tag, date, label, objectifs, connaissances }
-
-async function initLivrets() {
-  await onLivNiveauChange();
-}
-
-async function onLivNiveauChange() {
-  const niveau = document.getElementById('liv-niveau').value;
-  const seqs = await api('/api/sequences?niveau=' + niveau);
-  livSeqList = seqs;
-  const sel = document.getElementById('liv-seq');
-  sel.innerHTML = seqs.map(s => `<option value="${s.code}">${s.code} — ${s.nom}</option>`).join('');
-  await onLivSeqChange();
-}
-
-async function onLivSeqChange() {
-  const niveau = document.getElementById('liv-niveau').value;
-  const seq    = document.getElementById('liv-seq').value;
-  const seq_obj = livSeqList.find(s => s.code === seq);
-  document.getElementById('liv-titre').textContent =
-    seq ? `${seq} — ${seq_obj?.nom || ''}` : 'Versions disponibles';
-
-  // Tag par défaut = date du jour
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('liv-tag').value = today;
-
-  await chargerVersions(niveau, seq);
-}
-
-async function chargerVersions(niveau, seq) {
-  livVersions = await api(`/api/versions?niveau=${niveau}&seq=${seq}`);
-  renderVersionsList(niveau, seq);
-  renderAffectationClasses(niveau, seq);
-}
-
-function renderVersionsList(niveau, seq) {
-  const div = document.getElementById('liv-versions-list');
-  if (!livVersions.length) {
-    div.innerHTML = '<div class="card" style="color:#999;font-size:12px">Aucune version déclarée pour cette séquence.</div>';
-    return;
-  }
-  div.innerHTML = livVersions.slice().reverse().map(v => {
-    const nbObj  = v.objectifs?.length || 0;
-    const nbExos = v.objectifs?.reduce((acc, o) =>
-      acc + (o.exercices?.fondamentaux?.length||0)
-          + (o.exercices?.autonomes?.length||0)
-          + (o.exercices?.enrichissement?.length||0), 0) || 0;
-    const date = v.date ? new Date(v.date).toLocaleDateString('fr-FR') : '';
-    const objList = (v.objectifs||[])
-      .filter(o => o.exercices?.fondamentaux?.length || o.exercices?.autonomes?.length || o.exercices?.enrichissement?.length)
-      .map(o => `<div style="font-size:11px;color:#555;padding:2px 0">
-        <span style="font-weight:500">obj.${o.code}</span>
-        <span style="color:#5a8a1a;margin-left:6px">F: ${(o.exercices.fondamentaux||[]).join(',')||'—'}</span>
-        <span style="color:#1d5fa8;margin-left:4px">A: ${(o.exercices.autonomes||[]).join(',')||'—'}</span>
-        <span style="color:#5b4ab3;margin-left:4px">E: ${(o.exercices.enrichissement||[]).join(',')||'—'}</span>
-      </div>`).join('');
-
-    return `<div class="card" style="margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <span style="font-weight:600;font-size:14px">${v.tag}</span>
-        <span style="font-size:12px;color:#666">${v.label !== v.tag ? v.label : ''}</span>
-        <span style="margin-left:auto;font-size:11px;color:#aaa">${date} · ${nbObj} obj · ${nbExos} exos</span>
-        <button class="btn-danger" style="padding:2px 8px;font-size:11px"
-          onclick="supprimerVersion('${niveau}','${seq}','${v.tag}')">Supprimer</button>
-      </div>
-      <div style="border-top:0.5px solid #e8e8e4;padding-top:6px">${objList||'<span style="font-size:11px;color:#aaa">Pas d\'exercices renseignés</span>'}</div>
-    </div>`;
-  }).join('');
-}
-
-function renderAffectationClasses(niveau, seq) {
-  const card = document.getElementById('liv-affectation-card');
-  const div  = document.getElementById('liv-affectation-list');
-  const classesNiveau = CLASSES.filter(c => c.niveau === niveau);
-  if (!classesNiveau.length || !livVersions.length) {
-    card.style.display = 'none'; return;
-  }
-  card.style.display = '';
-  const key = `${niveau}_${seq}`;
-  div.innerHTML = classesNiveau.map(c => {
-    const actif    = c.versions_actives?.[key] || null;
-    const verrouille = (c.sequences_verouillees||[]).includes(key);
-    const opts = ['<option value="">— Aucune version —</option>']
-      .concat(livVersions.map(v =>
-        `<option value="${v.tag}" ${actif===v.tag?'selected':''}>${v.tag} — ${v.label}</option>`
-      )).join('');
-    const cadenas = verrouille
-      ? '<span title="Verrouillée (résultats saisis)" style="color:#dc2626;font-size:14px;margin-left:6px">🔒</span>'
-      : '';
-    return `<div class="eleve-item">
-      <span class="nom">${c.nom}${cadenas}</span>
-      <select style="font-size:12px;border:1px solid #d0cfc8;border-radius:5px;padding:3px 6px;background:#fff"
-        ${verrouille ? 'disabled title="Verrouillée"' : ''}
-        onchange="setVersionClasse('${c.id}','${niveau}','${seq}',this.value)">
-        ${opts}
-      </select>
-    </div>`;
-  }).join('');
-}
-
-async function creerVersion() {
-  const niveau = document.getElementById('liv-niveau').value;
-  const seq    = document.getElementById('liv-seq').value;
-  const tag    = document.getElementById('liv-tag').value.trim();
-  const label  = document.getElementById('liv-label').value.trim();
-  const status = document.getElementById('liv-create-status');
-
-  if (!tag) { status.textContent = 'Le tag est requis.'; status.style.color='#dc2626'; return; }
-
-  status.textContent = 'Création…'; status.style.color = '#666';
-  const res = await api('/api/versions/creer', { method:'POST',
-    body: JSON.stringify({ niveau, seq, tag, label }) });
-
-  if (res.error) {
-    status.textContent = 'Erreur : ' + res.error; status.style.color = '#dc2626'; return;
-  }
-  status.textContent = `Version "${tag}" créée.`; status.style.color = '#2d6a0a';
-  document.getElementById('liv-label').value = '';
-  await chargerVersions(niveau, seq);
-}
-
-async function supprimerVersion(niveau, seq, tag) {
-  if (!confirm(`Supprimer la version "${tag}" ?`)) return;
-  const res = await api('/api/versions/supprimer', { method:'POST',
-    body: JSON.stringify({ niveau, seq, tag }) });
-  if (res.error) { alert('Erreur : ' + res.error); return; }
-  await chargerVersions(niveau, seq);
-}
-
-async function setVersionClasse(cid, niveau, seq, tag) {
-  const res = await api(`/api/classes/${cid}/version`, { method:'POST',
-    body: JSON.stringify({ niveau, seq, tag: tag || null }) });
-  if (res.error) { alert(res.error); return; }
-  // Mettre à jour le cache local
-  const c = CLASSES.find(x => x.id === cid);
-  if (c) {
-    c.versions_actives = c.versions_actives || {};
-    c.versions_actives[`${niveau}_${seq}`] = tag || null;
-  }
-  renderAffectationClasses(niveau, seq);
-}
-
-// (initLivrets déclenché via le gestionnaire central)
-
-
-// ════════════════════════════════════════════════════════════════
 // ONGLET COMPOSER — conception de livrets
 // ════════════════════════════════════════════════════════════════
 
@@ -3446,7 +3296,6 @@ const ATL_INITS = {
   // (remplacés par Référentiel > Documents à publier)
   evaluation:        'atelEvalInit',        // v0.13.5.2.4
   referentiel:       'atelRefInit',         // v0.13.5.1
-  referentiel_externe: 'rxtInit',           // v0.25.0
   fiche:             'atelFicheInit',  // v0.10.5
   carte_automatisme: 'atelCarteCharger',    // v0.13.6.1
   // v0.13.6.17 — notion/methode/exercice ont besoin de se recharger à
@@ -3779,7 +3628,7 @@ let ADMIN_FILTRE = 'tous';
 
 // v0.51.0 — Premier sous-onglet d'administration visible dans le profil.
 const ADMIN_SOUS_ONGLETS = ['importref', 'importpaquet', 'images', 'importfiches',
-  'importpub', 'bdd', 'importsuivi'];   // v0.51.3 : importpub
+  'importpub', 'importusage', 'bdd', 'importsuivi'];   // v0.51.3 : importpub ; v0.51.11 : importusage
 function _adminPremierSousOnglet() {
   for (const s of ADMIN_SOUS_ONGLETS) {
     if (profilAffiche(document.getElementById('admin-' + s + '-btn'))) return s;
@@ -3805,6 +3654,7 @@ function adminSousOnglet(nom) {
   });
   if (nom === 'bdd') adminBddStatut();
   if (nom === 'importpub' && typeof impPubInit === 'function') impPubInit();   // v0.51.3
+  if (nom === 'importusage' && typeof impUsageInit === 'function') impUsageInit();   // v0.51.11
   // v0.9 — pré-remplissage des chemins Admin depuis Préférences
   if (nom === 'importref'    && typeof adminPreremplirChemins === 'function') adminPreremplirChemins('importref');
   if (nom === 'importpaquet' && typeof adminPreremplirChemins === 'function') adminPreremplirChemins('importpaquet');

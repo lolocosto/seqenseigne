@@ -19,8 +19,17 @@ const RPE = { liste: [], ouverts: new Set(), types: [], criteres: new Set() };
 const _RPE_API = '/api/referentiels-principaux-externes';
 
 function _rpeE(s) { return escapeHtml(String(s == null ? '' : s)); }
-function _rpeNiveau() { return (typeof _rxtNiveau === 'function') ? _rxtNiveau() : 'N09'; }
-function _rpeAnnee() { return (typeof _rxtAnnee === 'function') ? _rxtAnnee() : ''; }
+function _rpeNiveau() {
+  try {
+    if (typeof ATL_SELECTIONS !== 'undefined' && ATL_SELECTIONS.niveau)
+      return ATL_SELECTIONS.niveau.niveau || 'N09';
+  } catch (e) {}
+  return 'N09';
+}
+function _rpeAnnee() {
+  return (typeof ANNEE_ACTIVE !== 'undefined' && ANNEE_ACTIVE)
+    || (typeof anneeScolaireCourante === 'function' ? anneeScolaireCourante() : '');
+}
 function _rpeStatus(msg, err) {
   const s = document.getElementById('rpe-status');
   if (!s) return;
@@ -422,70 +431,11 @@ function prefTypesDocsDeplacer(id, sens) {
 }
 
 
-// ── v0.48.4 — Écran unifié : liste à gauche (principaux + MER), détail à droite
-
-const RXA = { sel: null };       // 'P:<id>' (principal) ou 'M:<id>' (MER)
-
-function _rxaPastille(etat) {
-  const c = { utilise: '#276749', valide: '#276749', verrouille: '#3730a3' }[etat] || '#976100';
-  return `<span class="rxa-pastille" style="background:${c}"></span>`;
-}
-
+// v0.49.2 — Le rendu passe par l'onglet unique (static/referentiel_unifie.js).
+// v0.51.11 — L'écran intermédiaire (liste + détail) et l'ancien modèle de MER
+// sont retirés.
 function rxaRendre() {
-  if (typeof refuRendre === 'function') refuRendre();     // v0.49.2 — onglet unique
-  const liste = document.getElementById('rxa-liste');
-  const detail = document.getElementById('rxa-detail');
-  if (!liste || !detail) return;
-  const items = [
-    ...RPE.liste.map(r => ({ cle: 'P:' + r.id, nom: r.nom, desc: r.description,
-                             etat: r.utilise ? 'utilise' : r.etat })),
-    // v0.49.0 — Ancien modèle de MER (en retrait) : lisible tant qu'il n'est pas recréé.
-    ...((typeof RXT_LISTE !== 'undefined') ? RXT_LISTE : []).map(r => ({
-      cle: 'M:' + r.id, nom: (r.nom || '(sans nom)') + ' — ancien modèle', desc: r.description || '',
-      etat: r.etat })),
-  ];
-  if (RXA.sel && !items.some(i => i.cle === RXA.sel)) RXA.sel = null;
-  if (!RXA.sel && items.length) RXA.sel = items[0].cle;
-  liste.innerHTML = items.length ? items.map(i => `
-    <div class="asm-item asm-item--clickable${i.cle === RXA.sel ? ' active' : ''}" onclick="rxaChoisir('${i.cle}')">
-      <div class="atl-item-id" style="display:flex;align-items:center;gap:6px">
-        ${_rxaPastille(i.etat)}<span>${_rpeE(i.nom)}</span>
-      </div>
-      ${i.desc ? `<div class="rxa-item-desc">${_rpeE(i.desc)}</div>` : ''}
-    </div>`).join('')
-    : '<div style="padding:14px;font-size:12px;color:var(--text-muted)">Aucun référentiel externe pour ce niveau.</div>';
-  if (!RXA.sel) {
-    detail.innerHTML = '<p class="rpe-vide">Choisissez un référentiel dans la liste, ou créez-en un.</p>';
-    return;
-  }
-  const [k, id] = [RXA.sel.slice(0, 1), RXA.sel.slice(2)];
-  if (k === 'P') {
-    const r = RPE.liste.find(x => x.id === id);
-    RPE.ouverts.add(id);
-    detail.innerHTML = r ? `<div class="rxa-aide">Thèmes → séquences (regroupées par thème) → parties (durée = somme des séances des objectifs) → objectifs
-      (connaissance du cours, capacités ; critères F/A/E) ; documents par séquence ou par partie.
-      Une séquence commencée ne se modifie plus (libellés et ajout de documents seulement).</div>${_rpeRef(r)}` : '';
-  } else {
-    const r = RXT_LISTE.find(x => x.id === id);
-    detail.innerHTML = (r && typeof rxtRenderRef === 'function') ? rxtRenderRef(r) : '';
-  }
-}
-
-function rxaChoisir(cle) { RXA.sel = cle; rxaRendre(); }
-
-async function rxaCreer() {
-  const type = document.getElementById('rxa-type').value;
-  const desc = document.getElementById('rxa-desc');
-  try {
-    let r;
-    // v0.49.0 — Principal et MER : même modèle (structure figée), même éditeur.
-    r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
-      niveau: _rpeNiveau(), annee: _rpeAnnee(), description: desc.value, type_ref: type }) });
-    RXA.sel = 'P:' + r.id;
-    await rpeCharger();
-    desc.value = '';
-    _rpeStatus('Référentiel créé.');
-  } catch (e) { _rpeStatus(e.message, true); }
+  if (typeof refuRendre === 'function') refuRendre();
 }
 
 
@@ -513,21 +463,6 @@ function rpePlacer(fid) {
   const n = parseInt((document.getElementById(pfx + '-seance') || {}).value || '0', 10) || 0;
   return _rpeAction(`${_RPE_API}/fichiers/${fid}/placement`, _rpeJ({ m: 'PUT', b: { seance_n: n, ...v } }));
 }
-
-// Type d'un document de référentiel externe de MER (static/referentiel_externe.js).
-function rxtTypeSelect(d) {
-  const opts = '<option value="">— type —</option>' + (RPE.types || []).map(t =>
-    `<option value="${t.id}"${t.id === d.type_id ? ' selected' : ''}>${_rpeE(t.libelle)}</option>`).join('');
-  return `<select class="rpe-type" onchange="rxtTyperDoc('${d.id}', this.value)">${opts}</select>`;
-}
-
-async function rxtTyperDoc(did, typeId) {
-  try {
-    await _rpeApi(`/api/referentiels-externes/docs/${did}/type`, _rpeJ({ m: 'PUT', b: { type_id: typeId } }));
-    if (typeof rxtCharger === 'function') await rxtCharger();
-  } catch (e) { _rpeStatus(e.message, true); }
-}
-
 
 // v0.49.0 — Libellé de partie (correction toujours permise).
 function rpeLibellerPartie(id, c, num, v) {

@@ -583,17 +583,6 @@ def api_qualite_methodes_sans_exemple():
     return jsonify(svc_atomes.methodes_sans_exemple(js.lire_methodes()))
 
 
-@bp.route("/api/admin/qualite/atomes-non-affectes", methods=["GET"])
-def api_qualite_atomes_non_affectes():
-    js, _, _ = _stores()
-    return jsonify(svc_atomes.atomes_non_affectes(
-        js.lire_notions(),
-        js.lire_methodes(),
-        js.lire_exercices(),
-        js.lire_livrets_importes(),
-    ))
-
-
 @bp.route("/api/referentiel/niveaux", methods=["GET"])
 def api_referentiel_niveaux():
     from services.niveaux import referentiel_api

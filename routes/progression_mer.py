@@ -49,7 +49,7 @@ def api_definir_ref():
             prog = svc.creer_ou_lire(conn, niveau, annee)
             prog = svc.definir_referentiel(
                 conn, prog["id"], b.get("ref_mer_id", ""),
-                b.get("ref_mer_source", "externe"))
+                b.get("ref_mer_source", "fige"))
         return jsonify(prog)
     except ProgMerErreur as e:
         return _err(e)
@@ -85,7 +85,7 @@ def api_poser_partie(prog_id):
         with _store()._conn() as conn:
             return jsonify(svc.poser_partie(
                 conn, prog_id, b.get("partie_id", ""),
-                b.get("partie_source", "externe")))
+                b.get("partie_source", "fige")))
     except ProgMerErreur as e:
         return _err(e)
 
@@ -155,12 +155,7 @@ def api_planning(classe_id):
 
 
 def _ref_nom(conn, prog) -> str:
-    """Nom du référentiel MER de la progression (ancien modèle « externe » ou
-    référentiel figé v0.49.0), '' sinon."""
-    if prog.get("ref_mer_id") and prog.get("ref_mer_source") == "externe":
-        r = conn.execute("SELECT nom FROM referentiel_externe WHERE id=?",
-                         (prog["ref_mer_id"],)).fetchone()
-        return r["nom"] if r else ""
+    """Nom du référentiel MER de la progression (référentiel figé), '' sinon."""
     if prog.get("ref_mer_id") and prog.get("ref_mer_source") == "fige":   # v0.49.0
         from services import referentiel_principal_externe as _rpe
         r = conn.execute("SELECT * FROM referentiel_niveaux WHERE id=?",

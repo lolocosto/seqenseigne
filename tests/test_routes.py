@@ -69,21 +69,6 @@ class TestRoutesClasses:
         eleves = next(c for c in classes if c["id"] == "5E1")["eleves"]
         assert not any(e["id"] == "e01" for e in eleves)
 
-    def test_version_active_refus_si_verrou(self, client):
-        # Créer classe
-        r = client.post("/api/classes", json={"nom": "5e1", "niveau": "N10"})
-        cid = r.get_json()["id"]
-        # Cocher un exercice pour verrouiller
-        client.post("/api/suivi/exo", json={
-            "classe": cid, "seq": "S01", "eleve_id": "e01",
-            "serie": "F", "num": 1, "checked": True,
-        })
-        # Tenter de changer la version → refus
-        r2 = client.post(f"/api/classes/{cid}/version",
-                         json={"niveau": "N10", "seq": "S01", "tag": "v1"})
-        assert r2.status_code == 409
-
-
 # ── /api/suivi ─────────────────────────────────────────────────────────────────
 
 class TestRoutesSuivi:
@@ -263,7 +248,7 @@ class TestRoutesAdmin:
         assert "referentiels" in data
         assert "yaml" not in data
         # Les sous-compteurs attendus sont bien présents.
-        for k in ("notions", "methodes", "exercices", "livrets", "referentiels"):
+        for k in ("notions", "methodes", "exercices", "referentiels"):
             assert k in data["reference"]
         for k in ("classes", "eleves", "progressions", "creneaux",
                   "niveaux_saisis", "exercices_coches"):
@@ -326,27 +311,3 @@ class TestRoutesSequences:
 
 # ── /api/versions ──────────────────────────────────────────────────────────────
 
-class TestRoutesVersions:
-
-    def test_creer_version(self, client, yaml_n10_minimal):
-        r = client.post("/api/versions/creer", json={
-            "niveau": "N10", "seq": "S01",
-            "tag": "2025-09-01", "label": "Rentrée"
-        })
-        assert r.status_code == 200
-        snap = r.get_json()
-        assert snap["tag"] == "2025-09-01"
-
-    def test_tag_duplique_409(self, client, yaml_n10_minimal):
-        body = {"niveau": "N10", "seq": "S01", "tag": "v1", "label": ""}
-        client.post("/api/versions/creer", json=body)
-        r = client.post("/api/versions/creer", json=body)
-        assert r.status_code == 409
-
-    def test_get_versions(self, client, yaml_n10_minimal):
-        client.post("/api/versions/creer", json={
-            "niveau": "N10", "seq": "S01", "tag": "v1", "label": ""
-        })
-        r = client.get("/api/versions?niveau=N10&seq=S01")
-        assert r.status_code == 200
-        assert len(r.get_json()) == 1
