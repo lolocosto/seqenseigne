@@ -280,7 +280,11 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   dans un dossier de sortie, mode confirmation / automatique, tampon de
   réception (un envoi hors séquence attend le manquant). Échange asynchrone :
   les deux applis n'ont pas à tourner en même temps.
-- v0.51.10 : bascule des données de classe vers une base « classe » séparée.
+- v0.51.10 : retours du premier essai (fait) — réglages des échanges dans
+  Système › Préférences › Échanges ; plus d'import manuel de retour d'usage
+  dans l'atelier (boîte aux lettres seulement) ; pas de retour d'usage sans
+  référentiel importé ; base partagée expliquée.
+- v0.51.11 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS. Transport des envois entre le PC et le serveur (la
   boîte aux lettres rend inutile l'API générale prévue au départ) — à

@@ -215,8 +215,15 @@ def _appliquer(store, data_dir: Path, type_: str, contenu: bytes) -> str:
         a = imp.importer(store._conn, data_dir, contenu)
         n = sum(1 for r in a["referentiels"] if r.get("importe"))
         ref = sum(1 for r in a["referentiels"] if r["statut"] == "refuse")
-        return (f"{n} référentiel(s) importé(s)" + (f", {ref} refusé(s)" if ref else "")
-                + f" sur {len(a['referentiels'])}")
+        ident = sum(1 for r in a["referentiels"] if r["statut"] == "identique")
+        texte = (f"{n} référentiel(s) importé(s)" + (f", {ident} identique(s)" if ident else "")
+                 + (f", {ref} refusé(s)" if ref else "") + f" sur {len(a['referentiels'])}")
+        if (a.get("echange") or {}).get("statut") == "meme_base":
+            # v0.51.10 — Atelier et appli en ligne sur la même base : les
+            # référentiels y sont déjà, il n'y a rien à importer.
+            texte += (" — base partagée avec l'atelier : les référentiels y sont déjà "
+                      "(lancez l'appli en ligne avec --base-classe pour un vrai échange)")
+        return texte
     from services import retour_usage as ru
     with store._conn() as conn:
         r = ru.importer(conn, data_dir, contenu)

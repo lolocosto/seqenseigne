@@ -200,11 +200,6 @@ async function tdbChargerPublication() {
       </div>
       <div id="tdb-pub-res" class="tdb-pub-res" role="status" aria-live="polite"></div>`
     + (journal ? `<details class="tdb-pub-journal"><summary>Dernières publications</summary><ul>${journal}</ul></details>` : '')
-    + `<div class="tdb-usage-import">
-        <label class="btn-sm">Importer un retour d'usage…<input type="file" accept=".json,application/json"
-          style="display:none" onchange="tdbUsageImporter(this)"></label>
-        <span id="tdb-usage-import-res" class="tdb-pub-res" role="status" aria-live="polite"></span>
-      </div>`
     + '<div id="tdb-depot"></div><div id="tdb-echanges"></div>';
   // v0.51.7 — Identité, appli en ligne liée, paquets numérotés (renvoi).
   if (typeof echRendre === 'function') echRendre('tdb-echanges', 'atelier');
@@ -264,34 +259,6 @@ window.tdbPubCreer = tdbPubCreer;
 
 // ── v0.51.8 — Retour d'usage ────────────────────────────────────────────────
 
-// Atelier : import d'un retour d'usage (séquence stricte, acquittements).
-async function tdbUsageImporter(input) {
-  const f = input.files && input.files[0];
-  const res = document.getElementById('tdb-usage-import-res');
-  if (!f) return;
-  const fd = new FormData();
-  fd.append('fichier', f);
-  if (res) res.textContent = 'Import…';
-  try {
-    const r = await fetch('/api/retour-usage/importer', { method: 'POST', body: fd });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.error || 'Erreur');
-    const nouv = (d.referentiels || []).reduce((n, x) => n + (x.nouvelles_sequences || []).length
-      + (x.nouvelles_parties_mer || []).length, 0);
-    const parts = [`Retour ${escapeHtml(d.nom || '')} importé : ${(d.referentiels || []).length} référentiel(s)`];
-    if (nouv) parts.push(`${nouv} nouvelle(s) séquence(s) ou partie(s) de MER en usage`);
-    if ((d.paquets_acquittes || []).length) parts.push(`paquet(s) n° ${d.paquets_acquittes.join(', ')} acquitté(s)`);
-    if ((d.inconnus || []).length) parts.push(`${d.inconnus.length} référentiel(s) inconnu(s) ici : ${d.inconnus.map(escapeHtml).join(', ')}`);
-    if (res) res.innerHTML = '✓ ' + parts.join(' ; ') + '.';
-    await tdbChargerPublication();
-    const res2 = document.getElementById('tdb-usage-import-res');
-    if (res2) res2.innerHTML = '✓ ' + parts.join(' ; ') + '.';
-  } catch (e) {
-    if (res) res.innerHTML = `<span class="tdb-pub-ko">✗ ${escapeHtml(e.message)}</span>`;
-  }
-  input.value = '';
-}
-
 // Classe : contenu du prochain retour, création (téléchargement), échanges.
 async function tdbChargerUsage() {
   const zone = document.getElementById('tdb-usage');
@@ -309,7 +276,9 @@ async function tdbChargerUsage() {
       planifiées (date du premier créneau), pour qu'elle les verrouille. Aucune donnée d'élève,
       de classe ni d'établissement.</p>
     ${refs.length ? `<ul class="tdb-usage-liste">${lignes}</ul>` : '<p style="font-size:13px;color:#888">Aucun référentiel importé.</p>'}
-    <div class="tdb-pub-actions"><button class="btn-prim" type="button" onclick="tdbUsageCreer()">Créer le retour d'usage (n° ${d.echange.numero})</button></div>
+    <div class="tdb-pub-actions">${refs.length
+      ? `<button class="btn-prim" type="button" onclick="tdbUsageCreer()">Créer le retour d'usage (n° ${d.echange.numero})</button>`
+      : '<span style="font-size:12px;color:#888">Rien à signaler tant qu\'aucun référentiel n\'a été importé.</span>'}</div>
     <div id="tdb-usage-res" class="tdb-pub-res" role="status" aria-live="polite"></div>
     <div id="tdb-usage-depot"></div><div id="tdb-usage-ech"></div>`;
   if (typeof echRendre === 'function') echRendre('tdb-usage-ech', 'classe');
@@ -336,6 +305,5 @@ async function tdbUsageCreer() {
   }
 }
 
-window.tdbUsageImporter = tdbUsageImporter;
 window.tdbChargerUsage = tdbChargerUsage;
 window.tdbUsageCreer = tdbUsageCreer;

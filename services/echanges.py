@@ -299,4 +299,9 @@ def etat(conn) -> dict:
             "envois": {t: envois(conn, t, 10) for t in TYPES},
             "recus": {t: recus(conn, t, 10) for t in TYPES},
             "prochain": {t: prochain_numero(conn, t) for t in TYPES},
+            # v0.51.10 — Un envoi de cette même base a été reçu : atelier et
+            # appli en ligne partagent la base (pas de vrai échange).
+            "base_partagee": conn.execute(
+                "SELECT 1 FROM echanges_recus WHERE emetteur=? LIMIT 1",
+                (instance(conn)["id"],)).fetchone() is not None,
             "attendu": {t: _dernier_recu(conn, t) + 1 for t in TYPES}}

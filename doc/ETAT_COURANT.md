@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.9** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.10** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -49,7 +49,9 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
   de synchronisation ; verrous de l'atelier = base locale + retours.
 - v0.51.9 livrée : boîte aux lettres (dossiers d'entrée et de sortie,
   relève au démarrage et périodique, confirmation / automatique).
-- À venir : v0.51.10 bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
+- v0.51.10 livrée : réglages des échanges dans les Préférences, boîte aux
+  lettres seule côté atelier, base partagée signalée.
+- À venir : v0.51.11 bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
   API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)

@@ -30,9 +30,7 @@ async function echRendre(zoneId, role) {
   const c = (d.correspondants || {})[autre];
   const corr = c
     ? `liée à <b>${_echE(c.nom || c.id)}</b> <span class="ech-id">${_echE(String(c.id).slice(5, 13))}</span>
-       depuis le ${_echE(_echDate(c.lie_le))}
-       <button class="btn-lien" type="button" title="Oublier ce correspondant (instance recréée, autre machine…)"
-         onclick="echDelier('${zoneId}', '${autre}')">délier</button>`
+       depuis le ${_echE(_echDate(c.lie_le))}`
     : `pas encore liée à une ${lib[autre]} (lien au premier échange reçu)`;
   let suite = '';
   if (role === 'atelier') {
@@ -55,9 +53,10 @@ async function echRendre(zoneId, role) {
         </li>`).join('')}</ul></details>` : '');
   }
   z.innerHTML = `<div class="ech-bloc">
-    <div class="ech-ligne">Cette instance :
-      <input class="ech-nom" value="${_echE(d.instance.nom)}" aria-label="Nom de cette instance"
-        onchange="echRenommer('${zoneId}', this.value)">
+    ${d.base_partagee ? `<div class="ech-ligne ech-alerte">⚠ Atelier et appli en ligne partagent la même
+      base : les référentiels y sont déjà, aucun échange n'est nécessaire. Pour un vrai échange,
+      lancez l'appli en ligne sur sa propre base (<code>lancer.bat classe --base-classe</code>).</div>` : ''}
+    <div class="ech-ligne">Cette instance : <b>${_echE(d.instance.nom)}</b>
       <span class="ech-id" title="${_echE(d.instance.id)}">${_echE(String(d.instance.id).slice(5, 13))}</span></div>
     <div class="ech-ligne">${corr}</div>
     ${suite}
@@ -72,21 +71,7 @@ function _echRecus(d, type, attendu, titre) {
       </ul></details>` : '');
 }
 
-async function echRenommer(zoneId, nom) {
-  try { await api('/api/echanges/instance', { method: 'PUT', body: JSON.stringify({ nom }) }); }
-  catch (e) { /* message dans la zone au rechargement */ }
-  await echRendre(zoneId, (ECH_ZONES[zoneId] || {}).role);
-}
-
-async function echDelier(zoneId, role) {
-  if (!confirm('Oublier ce correspondant ? Le prochain échange reçu liera la nouvelle instance.')) return;
-  try { await api('/api/echanges/correspondants/' + role, { method: 'DELETE' }); } catch (e) {}
-  await echRendre(zoneId, (ECH_ZONES[zoneId] || {}).role);
-}
-
 window.echRendre = echRendre;
-window.echRenommer = echRenommer;
-window.echDelier = echDelier;
 
 // ── v0.51.9 — Boîte aux lettres (dossier de dépôt) ──────────────────────────
 // depotRendre(zoneId) : dossier relevé, mode, envois en attente (« Traiter »
@@ -129,19 +114,7 @@ async function depotRendre(zoneId) {
       ${prets ? `<button class="btn-prim" type="button" onclick="depotRelever('${zoneId}', true)">Traiter (${prets})</button>` : ''}
       <span id="${zoneId}-res" class="tdb-pub-res" role="status" aria-live="polite"></span>
     </div>
-    <details class="ech-envois"><summary>Réglages</summary>
-      <div class="depot-reglages">
-        <label>Dossier d'entrée <input id="${zoneId}-entrants" value="${_echE(r.entrants)}"
-          placeholder="défaut : data\\echanges\\entrants"></label>
-        <label>Dossier de sortie (copie de chaque envoi) <input id="${zoneId}-sortants" value="${_echE(r.sortants)}"
-          placeholder="aucun"></label>
-        <label>Mode <select id="${zoneId}-mode">
-          <option value="confirmation"${r.mode !== 'automatique' ? ' selected' : ''}>confirmation</option>
-          <option value="automatique"${r.mode === 'automatique' ? ' selected' : ''}>automatique</option></select></label>
-        <label>Relève toutes les <input id="${zoneId}-periode" type="number" min="1" max="1440"
-          value="${r.periode_min}" style="width:60px"> min</label>
-        <button class="btn-sm" type="button" onclick="depotEnregistrer('${zoneId}')">Enregistrer</button>
-      </div></details>
+    <div class="ech-ligne rx-petit">Réglages : Système › Préférences › Échanges.</div>
     ${journal ? `<details class="ech-envois"><summary>Journal de la boîte aux lettres</summary><ul>${journal}</ul></details>` : ''}
   </div>`;
 }
@@ -168,19 +141,73 @@ async function depotRelever(zoneId, appliquer) {
   }
 }
 
-async function depotEnregistrer(zoneId) {
-  const v = (s) => (document.getElementById(`${zoneId}-${s}`) || {}).value;
-  const res = document.getElementById(zoneId + '-res');
-  const r = await fetch('/api/depot/reglages', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ entrants: v('entrants'), sortants: v('sortants'), mode: v('mode'),
-      periode_min: v('periode') }) });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) { if (res) res.innerHTML = `<span class="tdb-pub-ko">✗ ${_echE(d.error || 'Erreur')}</span>`; return; }
-  await depotRendre(zoneId);
-  const res2 = document.getElementById(zoneId + '-res');
-  if (res2) res2.textContent = 'Réglages enregistrés (la période s\'applique à la prochaine relève).';
+// ── v0.51.10 — Système › Préférences › Échanges ─────────────────────────────
+// Nom de cette instance, correspondant (délier), boîte aux lettres.
+async function prefEchangesCharger() {
+  const z = document.getElementById('pref-echanges');
+  if (!z) return;
+  let e, d;
+  try { [e, d] = await Promise.all([api('/api/echanges/etat'), api('/api/depot/etat')]); }
+  catch (err) { z.innerHTML = '<p style="font-size:12px;color:#c33">Erreur de chargement.</p>'; return; }
+  const r = d.reglages || {};
+  const lib = { atelier: 'Appli locale (atelier)', classe: 'Appli en ligne (classe)' };
+  const corr = Object.entries(e.correspondants || {}).filter(([, c]) => c).map(([role, c]) => `
+      <div class="ech-ligne">${lib[role]} liée : <b>${_echE(c.nom || c.id)}</b>
+        <span class="ech-id">${_echE(String(c.id).slice(5, 13))}</span> depuis le ${_echE(_echDate(c.lie_le))}
+        <button class="btn-sm" type="button" title="Oublier ce correspondant (instance recréée, autre machine…)"
+          onclick="prefEchangesDelier('${role}')">Délier</button></div>`).join('')
+    || '<div class="ech-ligne rx-petit">Aucune appli liée (le lien se fait au premier échange reçu).</div>';
+  z.innerHTML = `
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">
+      L'appli locale (atelier) et l'appli en ligne (classe) s'échangent des envois numérotés
+      (paquets de publication, retours d'usage) par une boîte aux lettres : chaque appli relève
+      son dossier d'entrée au démarrage puis périodiquement.</p>
+    <div class="depot-reglages">
+      <label>Nom de cette instance <input id="pref-ech-nom" value="${_echE(e.instance.nom)}">
+        <span class="ech-id" title="${_echE(e.instance.id)}">${_echE(String(e.instance.id).slice(5, 13))}</span></label>
+      ${corr}
+      <label>Dossier d'entrée (relevé) <input id="pref-ech-entrants" value="${_echE(r.entrants)}"
+        placeholder="défaut : ${_echE(r.entrants_effectif)}"></label>
+      <label>Dossier de sortie (copie de chaque envoi, facultatif) <input id="pref-ech-sortants"
+        value="${_echE(r.sortants)}" placeholder="aucun — par ex. le dossier d'entrée de l'autre appli"></label>
+      <label>Traitement des envois relevés <select id="pref-ech-mode">
+        <option value="confirmation"${r.mode !== 'automatique' ? ' selected' : ''}>confirmation (bouton « Traiter »)</option>
+        <option value="automatique"${r.mode === 'automatique' ? ' selected' : ''}>automatique</option></select></label>
+      <label>Relève toutes les <input id="pref-ech-periode" type="number" min="1" max="1440"
+        value="${r.periode_min}" style="width:70px"> minutes</label>
+      <button class="btn-prim" type="button" onclick="prefEchangesEnregistrer()">Enregistrer</button>
+      <span id="pref-ech-status" style="font-size:12px" role="status" aria-live="polite"></span>
+    </div>`;
 }
 
+async function prefEchangesEnregistrer() {
+  const v = (s) => (document.getElementById('pref-ech-' + s) || {}).value;
+  const st = () => document.getElementById('pref-ech-status');
+  const nom = (v('nom') || '').trim();
+  try {
+    if (nom) await fetch('/api/echanges/instance', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nom }) });
+    const r = await fetch('/api/depot/reglages', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entrants: v('entrants'), sortants: v('sortants'), mode: v('mode'),
+        periode_min: v('periode') }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+  } catch (err) {
+    if (st()) st().innerHTML = `<span style="color:#c33">✗ ${_echE(err.message)}</span>`;
+    return;
+  }
+  await prefEchangesCharger();
+  if (st()) st().textContent = '✓ Enregistré (la période s\'applique à la prochaine relève).';
+}
+
+async function prefEchangesDelier(role) {
+  if (!confirm('Oublier cette appli liée ? Le prochain échange reçu liera la nouvelle instance.')) return;
+  try { await api('/api/echanges/correspondants/' + role, { method: 'DELETE' }); } catch (e) {}
+  await prefEchangesCharger();
+}
+
+window.prefEchangesCharger = prefEchangesCharger;
+window.prefEchangesEnregistrer = prefEchangesEnregistrer;
+window.prefEchangesDelier = prefEchangesDelier;
 window.depotRendre = depotRendre;
 window.depotRelever = depotRelever;
-window.depotEnregistrer = depotEnregistrer;

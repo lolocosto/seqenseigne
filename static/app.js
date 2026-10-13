@@ -902,6 +902,8 @@ function _systemeSousOnglet() {
 
 function _prefInitialiser() {
   if (typeof prefCatInitEtats === 'function') prefCatInitEtats();
+  // v0.51.10 — Échanges (instance, boîte aux lettres) : les deux profils.
+  if (typeof prefEchangesCharger === 'function') prefEchangesCharger();
   // v0.51.0 — Les préférences de conception (chemins, LaTeX, compilation,
   // types de documents) n'existent que dans l'atelier.
   if (typeof profilPermet === 'function' && !profilPermet('atelier')) return;
