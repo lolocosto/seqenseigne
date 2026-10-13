@@ -89,6 +89,13 @@ Protocole sur le modèle des datagrammes acquittés (`services/echanges.py`) :
 L'atelier archive chaque paquet (`data/echanges/envoyes/`) pour pouvoir le
 renvoyer ; un paquet acquitté par un retour d'usage est retiré de l'archive.
 
+**Boîte aux lettres (v0.51.9)** : un envoi peut aussi être déposé dans le
+dossier d'entrée de l'appli destinataire (copie automatique par le dossier
+de sortie de l'émetteur). Relevé au démarrage puis périodiquement, il est
+traité dans l'ordre des numéros ; un envoi hors séquence **attend** dans le
+dossier l'arrivée du manquant (au lieu d'être refusé), un doublon va dans
+`traites/`, un envoi refusé dans `refuses/` avec sa raison.
+
 ## Règles de création
 
 - **Publiables** : référentiels internes **verrouillés ou utilisés** (les

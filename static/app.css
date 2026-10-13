@@ -4840,3 +4840,14 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .tdb-pub-badge.sync-desynchronise { background: #fee2e2; color: #b91c1c; }
 .tdb-usage-import { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; }
 .tdb-usage-liste { margin: 4px 0 8px; padding-left: 18px; font-size: 12px; }
+
+/* v0.51.9 — Boîte aux lettres. */
+.depot-liste { margin: 4px 0; padding-left: 18px; font-size: 12px; }
+.depot-badge { font-size: 11px; border-radius: 3px; padding: 0 5px; margin-right: 4px; white-space: nowrap; }
+.depot-badge.ok { background: #e8f5e9; color: #2e7d32; }
+.depot-badge.att { background: #fff1e0; color: #a14d00; }
+.depot-badge.neutre { background: #eee; color: #555; }
+.depot-badge.ko { background: #fee2e2; color: #b91c1c; }
+.depot-reglages { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.depot-reglages input:not([type=number]) { width: 100%; font-size: 12px; }
+.depot-reglages button { align-self: flex-start; }

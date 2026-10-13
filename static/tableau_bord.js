@@ -205,9 +205,11 @@ async function tdbChargerPublication() {
           style="display:none" onchange="tdbUsageImporter(this)"></label>
         <span id="tdb-usage-import-res" class="tdb-pub-res" role="status" aria-live="polite"></span>
       </div>`
-    + '<div id="tdb-echanges"></div>';
+    + '<div id="tdb-depot"></div><div id="tdb-echanges"></div>';
   // v0.51.7 — Identité, appli en ligne liée, paquets numérotés (renvoi).
   if (typeof echRendre === 'function') echRendre('tdb-echanges', 'atelier');
+  // v0.51.9 — Boîte aux lettres (retours d'usage déposés).
+  if (typeof depotRendre === 'function') depotRendre('tdb-depot');
 }
 
 function tdbPubCocher(id, oui) {
@@ -309,8 +311,9 @@ async function tdbChargerUsage() {
     ${refs.length ? `<ul class="tdb-usage-liste">${lignes}</ul>` : '<p style="font-size:13px;color:#888">Aucun référentiel importé.</p>'}
     <div class="tdb-pub-actions"><button class="btn-prim" type="button" onclick="tdbUsageCreer()">Créer le retour d'usage (n° ${d.echange.numero})</button></div>
     <div id="tdb-usage-res" class="tdb-pub-res" role="status" aria-live="polite"></div>
-    <div id="tdb-usage-ech"></div>`;
+    <div id="tdb-usage-depot"></div><div id="tdb-usage-ech"></div>`;
   if (typeof echRendre === 'function') echRendre('tdb-usage-ech', 'classe');
+  if (typeof depotRendre === 'function') depotRendre('tdb-usage-depot');   // v0.51.9
 }
 
 async function tdbUsageCreer() {

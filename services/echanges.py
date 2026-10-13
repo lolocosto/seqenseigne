@@ -167,6 +167,9 @@ def archiver(conn, data_dir: Path, en_tete: dict, nom_fichier: str, contenu: byt
                  "taille, destinataire) VALUES (?,?,?,?,?,?,?)",
                  (en_tete["type"], en_tete["numero"], _maintenant(), nom_fichier, rel,
                   len(contenu), en_tete.get("destinataire") or ""))
+    # v0.51.9 — Copie dans le dossier de sortie de la boîte aux lettres.
+    from services import depot
+    depot.copier_sortant(conn, nom_fichier, contenu)
 
 
 def envois(conn, type_: str, limite: int = 30) -> list[dict]:

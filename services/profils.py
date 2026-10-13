@@ -59,7 +59,8 @@ BP_CLASSE = frozenset({
 })
 BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord",
                        "echanges",         # v0.51.7 — protocole d'échange
-                       "retour_usage"})    # v0.51.8 — routes classées une par une
+                       "retour_usage",     # v0.51.8 — routes classées une par une
+                       "depot"})           # v0.51.9 — boîte aux lettres
 
 # Exceptions, route par route (prioritaires sur la catégorie du blueprint).
 ENDPOINTS = {

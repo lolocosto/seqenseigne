@@ -94,6 +94,7 @@ from routes.publication import bp as bp_publication  # v0.51.1
 from routes.import_publication import bp as bp_import_publication  # v0.51.3
 from routes.echanges import bp as bp_echanges  # v0.51.7
 from routes.retour_usage import bp as bp_retour_usage  # v0.51.8
+from routes.depot import bp as bp_depot  # v0.51.9
 
 def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask:
     """
@@ -152,7 +153,8 @@ def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask
                bp_publication,  # v0.51.1
                bp_import_publication,  # v0.51.3
                bp_echanges,  # v0.51.7
-               bp_retour_usage):  # v0.51.8
+               bp_retour_usage,  # v0.51.8
+               bp_depot):  # v0.51.9
         # v0.51.0 — Un blueprint étranger au profil n'est pas enregistré.
         if profils.blueprint_enregistre(bp.name, profil):
             app.register_blueprint(bp)
@@ -231,4 +233,10 @@ if __name__ == "__main__":
     if debug:
         print("  (mode debug ACTIVÉ via SEQ_DEBUG=1 — ne pas exposer)")
     print()
-    create_app(data_dir, profil=profil).run(debug=debug, port=port)
+    app = create_app(data_dir, profil=profil)
+    # v0.51.9 — Boîte aux lettres : relève au démarrage puis périodique (une
+    # seule fois si le rechargeur du mode debug relance le processus).
+    if not debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        from services import depot
+        depot.demarrer(app)
+    app.run(debug=debug, port=port)

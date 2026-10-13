@@ -264,7 +264,7 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   MER posées — sans donnée d'élève, ni classe, ni établissement ; verrous
   jamais perdus ; remplace la
   lecture directe des progressions par l'atelier (verrou des séquences
-  commencées, état « utilisé »). Par fichier, puis par l'API. Après v0.51.3.
+  commencées, état « utilisé »). Par fichier ou boîte aux lettres (v0.51.9).
 - Protocole d'échange (validé, sur le modèle des datagrammes acquittés) :
   identité de chaque instance (identifiant, nom), lien un atelier ↔ une
   appli en ligne, en-tête (émetteur, destinataire, numéro d'ordre, accusé),
@@ -275,9 +275,18 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   - v0.51.7 : protocole appliqué aux paquets (fait).
   - v0.51.8 : retour d'usage (classe → atelier) sur ce protocole ;
     acquittements ; états de synchronisation (fait, `doc/format_usage.md`).
-- v0.51.9 : bascule des données de classe vers une base « classe » séparée.
+- v0.51.9 : boîte aux lettres (fait) — dossier d'entrée relevé au
+  démarrage puis périodiquement (5 min par défaut), copie de chaque envoi
+  dans un dossier de sortie, mode confirmation / automatique, tampon de
+  réception (un envoi hors séquence attend le manquant). Échange asynchrone :
+  les deux applis n'ont pas à tourner en même temps.
+- v0.51.10 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
-  facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).
+  facteur), HTTPS, VPS. Transport des envois entre le PC et le serveur (la
+  boîte aux lettres rend inutile l'API générale prévue au départ) — à
+  choisir : dossier synchronisé (Syncthing, Nextcloud…, sans code) ou API
+  réduite à la boîte aux lettres (« déposer », « relever », jeton), l'atelier
+  poussant ses paquets et rapatriant les retours à chaque relève.
 - Tableau de bord atelier : pilotage de la conception (état des
   référentiels, compilation, publication) à enrichir dès la v0.51.2.
 - Import suivi (classes historiques) : profil complet seulement, à retirer
