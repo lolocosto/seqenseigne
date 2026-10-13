@@ -398,6 +398,10 @@ def importer(conn_fabrique, data_dir: Path, contenu: bytes,
     with conn_fabrique() as conn:
         ech.enregistrer_reception(conn, "paquet", manifeste.get("echange"),
                                   analyse["paquet"]["nom"])
+        # v0.51.8 — L'accusé du paquet acquitte les retours d'usage reçus par l'atelier.
+        if controle["statut"] == "attendu":
+            analyse["usages_acquittes"] = ech.acquitter(
+                conn, data_dir, "usage", (manifeste.get("echange") or {}).get("accuse"))
     return analyse
 
 

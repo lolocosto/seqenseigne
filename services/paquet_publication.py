@@ -97,7 +97,9 @@ def lister_publiables(conn, data_dir: Path | None) -> list[dict]:
         except fmt.FormatErreur as e:
             empreinte, erreurs = "", [str(e)]
         der = _derniere_publication(conn, r["id"])
-        out.append({"id": r["id"], "nom": nom_calcule(r), "niveau": r["niveau"],
+        from services import retour_usage as ru          # v0.51.8
+        synchro = ru.etat_synchro(conn, data_dir, r["id"], empreinte)
+        out.append({"synchro": synchro,"id": r["id"], "nom": nom_calcule(r), "niveau": r["niveau"],
                     "type": r.get("type_ref") or "principal",
                     "source": r.get("source") or "interne", "etat": r["etat"],
                     "empreinte": empreinte, "valide": not erreurs, "erreurs": erreurs[:5],

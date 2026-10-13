@@ -58,7 +58,8 @@ BP_CLASSE = frozenset({
     "import_publication",   # v0.51.3 — import des paquets de publication
 })
 BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord",
-                       "echanges"})        # v0.51.7 — protocole d'échange
+                       "echanges",         # v0.51.7 — protocole d'échange
+                       "retour_usage"})    # v0.51.8 — routes classées une par une
 
 # Exceptions, route par route (prioritaires sur la catégorie du blueprint).
 ENDPOINTS = {
@@ -79,6 +80,12 @@ ENDPOINTS = {
     "tableau_bord.api_atomes_en_cours": "atelier",
     "tableau_bord.api_atomes_non_rattaches": "atelier",
     "tableau_bord.api_seances_semaine": "classe",
+    # v0.51.8 — Retour d'usage : produit en classe, importé dans l'atelier.
+    "retour_usage.api_creer": "classe",
+    "retour_usage.api_apercu": "classe",
+    "retour_usage.api_analyse": "atelier",
+    "retour_usage.api_importer": "atelier",
+    "retour_usage.api_etat": "atelier",
 }
 
 _LECTURE = frozenset({"GET", "HEAD", "OPTIONS"})

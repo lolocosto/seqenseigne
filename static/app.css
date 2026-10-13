@@ -4831,3 +4831,12 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .imppub-echange { font-size: 12px; margin-bottom: 6px; padding: 4px 8px; border-radius: 4px; }
 .imppub-echange.ok { background: #eef7ee; color: #2d6a2d; }
 .imppub-echange.ko { background: #fdecec; color: #a12; }
+
+/* v0.51.8 — États de synchronisation, retour d'usage. */
+.tdb-pub-badge.sync-synchronise { background: #e8f5e9; color: #2e7d32; }
+.tdb-pub-badge.sync-modifie { background: #fffbeb; color: #7a4f10; }
+.tdb-pub-badge.sync-en_attente { background: #e8eef7; color: #2E5090; }
+.tdb-pub-badge.sync-en_retard { background: #fff1e0; color: #a14d00; }
+.tdb-pub-badge.sync-desynchronise { background: #fee2e2; color: #b91c1c; }
+.tdb-usage-import { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+.tdb-usage-liste { margin: 4px 0 8px; padding-left: 18px; font-size: 12px; }

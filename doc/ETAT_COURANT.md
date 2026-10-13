@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.7** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.8** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -44,8 +44,10 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
   dépliable ; contenu identique à un autre référentiel signalé.
 - v0.51.7 livrée : protocole d'échange appliqué aux paquets (identité des
   instances, paquets numérotés, réception dans l'ordre, archive et renvoi).
-- À venir : v0.51.8 retour d'usage et états de synchronisation ; v0.51.9
-  bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
+- v0.51.8 livrée : retour d'usage (tuile de l'appli en ligne, import dans la
+  tuile Publication de l'atelier), acquittements dans les deux sens, états
+  de synchronisation ; verrous de l'atelier = base locale + retours.
+- À venir : v0.51.9 bascule ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
   API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)

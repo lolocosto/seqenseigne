@@ -42,13 +42,17 @@ async function echRendre(zoneId, role) {
           n° ${e.numero} — ${_echE(_echDate(e.cree_le))} — ${_echE(e.nom_fichier)}
           ${e.acquitte_le ? `<span class="ech-ok">acquitté</span>`
             : (e.archive ? `<a href="/api/echanges/envois/paquet/${e.numero}" download>Renvoyer</a>` : '')}
-        </li>`).join('')}</ul></details>` : '');
+        </li>`).join('')}</ul></details>` : '')
+      + _echRecus(d, 'usage', `Prochain retour d'usage attendu : n° ${d.attendu.usage}`, 'Retours d\'usage reçus');
   } else {
-    const recus = (d.recus || {}).paquet || [];
-    suite = `<div class="ech-ligne">Prochain paquet attendu : n° ${d.attendu.paquet}</div>`
-      + (recus.length ? `<details class="ech-envois"><summary>Paquets reçus</summary><ul>${recus.map(r => `<li>
-          ${r.numero ? 'n° ' + r.numero : 'sans numéro'} — ${_echE(_echDate(r.recu_le))} — ${_echE(r.nom_fichier)}</li>`).join('')}
-        </ul></details>` : '');
+    // v0.51.8 — Retours d'usage envoyés (renvoi tant qu'ils ne sont pas acquittés).
+    const envois = (d.envois || {}).usage || [];
+    suite = _echRecus(d, 'paquet', `Prochain paquet attendu : n° ${d.attendu.paquet}`, 'Paquets reçus')
+      + (envois.length ? `<details class="ech-envois"><summary>Retours d'usage envoyés</summary><ul>${envois.map(e => `<li>
+          n° ${e.numero} — ${_echE(_echDate(e.cree_le))} — ${_echE(e.nom_fichier)}
+          ${e.acquitte_le ? `<span class="ech-ok">acquitté</span>`
+            : (e.archive ? `<a href="/api/echanges/envois/usage/${e.numero}" download>Renvoyer</a>` : '')}
+        </li>`).join('')}</ul></details>` : '');
   }
   z.innerHTML = `<div class="ech-bloc">
     <div class="ech-ligne">Cette instance :
@@ -58,6 +62,14 @@ async function echRendre(zoneId, role) {
     <div class="ech-ligne">${corr}</div>
     ${suite}
   </div>`;
+}
+
+function _echRecus(d, type, attendu, titre) {
+  const recus = (d.recus || {})[type] || [];
+  return `<div class="ech-ligne">${_echE(attendu)}</div>`
+    + (recus.length ? `<details class="ech-envois"><summary>${_echE(titre)}</summary><ul>${recus.map(r => `<li>
+        ${r.numero ? 'n° ' + r.numero : 'sans numéro'} — ${_echE(_echDate(r.recu_le))} — ${_echE(r.nom_fichier)}</li>`).join('')}
+      </ul></details>` : '');
 }
 
 async function echRenommer(zoneId, nom) {

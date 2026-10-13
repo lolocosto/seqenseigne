@@ -274,7 +274,7 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   publication, publication en attente, en retard, désynchronisé).
   - v0.51.7 : protocole appliqué aux paquets (fait).
   - v0.51.8 : retour d'usage (classe → atelier) sur ce protocole ;
-    acquittements ; états de synchronisation.
+    acquittements ; états de synchronisation (fait, `doc/format_usage.md`).
 - v0.51.9 : bascule des données de classe vers une base « classe » séparée.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS ; puis API de publication (envoi du paquet par jeton).

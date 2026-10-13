@@ -226,10 +226,14 @@ def est_utilise(conn, rid: str) -> bool:
                     (rid,)).fetchone() is not None:
         return True
     try:                                            # v0.49.0 — progression de MER
-        return conn.execute("SELECT 1 FROM progression_mer WHERE ref_mer_id=? AND "
-                            "ref_mer_source='fige' LIMIT 1", (rid,)).fetchone() is not None
+        if conn.execute("SELECT 1 FROM progression_mer WHERE ref_mer_id=? AND "
+                        "ref_mer_source='fige' LIMIT 1", (rid,)).fetchone() is not None:
+            return True
     except Exception:
-        return False
+        pass
+    # v0.51.8 — Retour d'usage de l'appli en ligne (jamais perdu).
+    from services import retour_usage as ru
+    return ru.utilise(conn, rid)
 
 
 def supprimer(conn, rid: str, data_dir: Path | None = None) -> None:
@@ -271,7 +275,12 @@ def sequence_commencee(conn, rid: str, seq_code: str, aujourd_hui: date) -> bool
         "WHERE p.referentiel_id=? AND c.seq_code=? AND c.date_debut IS NOT NULL "
         "AND c.date_debut<>'' AND c.date_debut<=? LIMIT 1",
         (rid, seq_code, aujourd_hui.isoformat())).fetchone()
-    return r is not None
+    if r is not None:
+        return True
+    # v0.51.8 — Retour d'usage de l'appli en ligne : premier créneau passé
+    # (à la date de l'atelier) ou partie de MER posée.
+    from services import retour_usage as ru
+    return ru.sequence_commencee(conn, rid, seq_code, aujourd_hui)
 
 
 def _verifier_modifiable(conn, rid, seq_code, aujourd_hui):
