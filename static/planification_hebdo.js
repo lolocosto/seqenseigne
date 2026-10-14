@@ -23,8 +23,10 @@ function _planifDateFr(iso) {
   return m ? `${m[2]}/${m[1]}` : iso;
 }
 
+let PLANIF_CIBLE = null;      // v0.51.14 — semaine demandée (tableau de bord)
+
 async function planifInit() {
-  PLANIF_LUNDI = null;  // semaine courante
+  PLANIF_LUNDI = PLANIF_CIBLE || null;  // semaine courante, sauf semaine demandée
   await planifCharger();
 }
 
@@ -109,18 +111,12 @@ function planifRendreGrille() {
       if (!cases.length) {
         return `<td style="border:1px solid var(--border);height:52px;${fondFerie || 'background:#fafafa'}"></td>`;
       }
+      // v0.51.14 — Chaque séance : classe, MER, principale, documents.
       const pastilles = cases.map(c => {
         const coul = (typeof _edtCouleur === 'function') ? _edtCouleur(c.classe_id) : '#dbeafe';
-        const barre = c.indispo ? 'text-decoration:line-through;opacity:.6' : '';
-        const merTag = c.type_mer !== 'principale'
-          ? `<span style="font-size:9px;color:#555"> ${PLANIF_MER_LBL[c.type_mer] || ''}</span>` : '';
-        // Survol enrichi : classe + type MER (+ indispo).
-        const apercu = `${c.classe} — ${PLANIF_MER_LBL[c.type_mer] || 'Cours'}`
-          + (c.indispo ? ' — indisponible' : '');
-        return `<div onclick="planifOuvrirDetail('${c.classe_id}','${c.date}','${escapeHtml(c.creneau)}','${escapeHtml(c.classe)}')"
-          title="${escapeHtml(apercu)}"
-          style="cursor:pointer;background:${coul};border-radius:3px;padding:1px 5px;margin:1px 0;font-size:11px;${barre}">
-          ${escapeHtml(c.classe)}${merTag}${c.indispo ? ' ⛔' : ''}</div>`;
+        return `<div class="planif-seance${c.indispo ? ' indispo' : ''}" style="background:${coul}"
+          onclick="planifOuvrirDetail('${c.classe_id}','${c.date}','${escapeHtml(c.creneau)}','${escapeHtml(c.classe)}')"
+          title="${c.indispo ? 'Séance indisponible' : 'Détail de la séance'}">${planifResumeHtml(c)}</div>`;
       }).join('');
       return `<td style="border:1px solid var(--border);height:52px;padding:2px;vertical-align:top;${fondFerie}">${pastilles}</td>`;
     }).join('');
@@ -216,3 +212,33 @@ function _planifMajBornes() {
   // « suivante » désactivée si la semaine suivante commence après la fin.
   if (btnSuiv) btnSuiv.disabled = lundiSuiv > bornes.fin;
 }
+
+// ── v0.51.14 — Résumé d'une séance (planification hebdo, tuile Journée) ─────
+
+function planifResumeLignes(c) {
+  const r = c.resume || {};
+  const m = r.mer;
+  let mer = 'MER : aucune';
+  if (m && m.type === 'auto') {
+    mer = 'MER : automatismes' + ((m.enveloppes || []).length ? ` (${m.enveloppes.join(', ')})` : '');
+  } else if (m && m.type === 'prog') {
+    mer = m.partie
+      ? `MER : ${m.partie.libelle || 'partie'}${m.partie.nb ? ` (${m.partie.rang}/${m.partie.nb})` : ''}`
+      : 'MER : progression (aucune partie posée)';
+  }
+  const p = r.principale;
+  const princ = p
+    ? `Principale : ${[p.code, p.nom].filter(Boolean).join(' ')}${p.partie ? ` (partie ${p.partie})` : ''}`
+      + (p.rang && p.nb ? ` (${p.rang}/${p.nb})` : '')
+    : 'Principale : aucune';
+  const docs = (r.docs || []).length ? 'Docs : ' + r.docs.join(', ') : 'Docs : aucun';
+  return [{ cls: 'mer', texte: mer }, { cls: 'princ', texte: princ }, { cls: 'docs', texte: docs }];
+}
+
+function planifResumeHtml(c) {
+  return `<div class="planif-seance-classe">${escapeHtml(c.classe)}${c.indispo ? ' ⛔' : ''}</div>`
+    + planifResumeLignes(c).map(l =>
+      `<div class="planif-seance-ligne ${l.cls}">${escapeHtml(l.texte)}</div>`).join('');
+}
+window.planifResumeLignes = planifResumeLignes;
+window.planifResumeHtml = planifResumeHtml;

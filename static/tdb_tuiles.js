@@ -12,7 +12,6 @@
 
 const TDB_JOURS = ['lun', 'mar', 'mer', 'jeu', 'ven'];
 const TDB_JOUR_NOM = { lun: 'Lundi', mar: 'Mardi', mer: 'Mercredi', jeu: 'Jeudi', ven: 'Vendredi' };
-const TDB_TYPE_SEANCE = { principale: 'Cours', mer_auto: 'MER auto', mer_prog: 'MER prog' };
 let TDB_JOUR = null;            // date ISO affichée
 const TDB_SEMAINES = {};        // lundi ISO → données de la planification hebdo
 
@@ -106,13 +105,21 @@ function tdbRendreJournee(d) {
   const occupes = creneaux.map(c => !!parCreneau[c]);
   const i0 = occupes.indexOf(true), i1 = occupes.lastIndexOf(true);
   const lignes = creneaux.slice(i0, i1 + 1).map(cr => {
+    // v0.51.14 — Même résumé que la planification hebdo ; clic → Début de
+    // séance ; liens Observation, Travail, Compétences.
     const pastilles = (parCreneau[cr] || []).map(c => {
       const coul = (typeof _edtCouleur === 'function') ? _edtCouleur(c.classe_id) : '#dbeafe';
-      const type = c.type_mer !== 'principale' ? ` <span class="tdb-jour-type">${_tdbE(TDB_TYPE_SEANCE[c.type_mer] || '')}</span>` : '';
-      const titre = `${c.classe} — ${TDB_TYPE_SEANCE[c.type_mer] || 'Cours'}${c.indispo ? ' — indisponible' : ''}`;
-      return `<button type="button" class="tdb-jour-seance${c.indispo ? ' indispo' : ''}" style="background:${coul}"
-        title="${_tdbE(titre)}" onclick="tdbOuvrirSeance('${_tdbE(c.classe_id)}','${c.date}','${_tdbE(c.creneau)}','${_tdbE(c.classe)}')">
-        ${_tdbE(c.classe)}${type}${c.indispo ? ' ⛔' : ''}</button>`;
+      const args = `'${_tdbE(c.classe_id)}','${c.date}','${_tdbE(c.creneau)}'`;
+      const resume = (typeof planifResumeHtml === 'function') ? planifResumeHtml(c)
+        : `<div class="planif-seance-classe">${_tdbE(c.classe)}</div>`;
+      return `<div class="tdb-jour-seance${c.indispo ? ' indispo' : ''}" style="background:${coul}">
+        <button type="button" class="tdb-jour-ouvrir" title="Début de séance"
+          onclick="tdbOuvrirSuivi('debut',${args})">${resume}</button>
+        <div class="tdb-jour-liens">
+          <a href="#" onclick="tdbOuvrirSuivi('observation',${args});return false">Observation</a>
+          <a href="#" onclick="tdbOuvrirSuivi('travail',${args});return false">Travail</a>
+          <a href="#" onclick="tdbOuvrirSuivi('suivi',${args});return false">Compétences</a>
+        </div></div>`;
     }).join('');
     return `<div class="tdb-jour-ligne${pastilles ? '' : ' libre'}"><span class="tdb-jour-cr">${_tdbE(cr)}</span>
       <span class="tdb-jour-cases">${pastilles}</span></div>`;
@@ -122,22 +129,37 @@ function tdbRendreJournee(d) {
 
 // Détail d'une séance : celui de Planification hebdo (fenêtre ramenée au
 // niveau de la page pour être visible depuis le tableau de bord).
-function tdbOuvrirSeance(classeId, dateIso, creneau, classeNom) {
-  const m = document.getElementById('planif-modale');
-  if (m && m.parentElement !== document.body) document.body.appendChild(m);
-  if (typeof planifOuvrirDetail === 'function') planifOuvrirDetail(classeId, dateIso, creneau, classeNom);
+// v0.51.14 — Ouvre un sous-onglet du Suivi sur la séance : Début de séance,
+// Observation, Travail (séance choisie : classe, jour, créneau) ou
+// Compétences (classe choisie).
+function tdbOuvrirSuivi(sous, classeId, dateIso, creneau) {
+  if (sous === 'suivi') {
+    if (typeof selectClasse === 'function') selectClasse(classeId);
+    return;
+  }
+  if (typeof SC !== 'undefined') SC.cible = { classe: classeId, date: dateIso, creneau };
+  SUIVI_PORTEE_ACTIVE = 'suivi';
+  SUIVI_ATELIER_ACTIF = sous;
+  try {
+    localStorage.setItem('suivi-portee-active', 'suivi');
+    localStorage.setItem('suivi-atelier-actif', sous);
+  } catch (e) {}
+  const btn = document.querySelector('[data-tab="classe"]');
+  if (btn) btn.click();
 }
 
 function tdbOuvrirPlanifHebdo() {
   const lundi = _tdbLundi(TDB_JOUR || _tdbOuvre(_tdbIso(new Date()), 1));
+  if (typeof PLANIF_CIBLE !== 'undefined') PLANIF_CIBLE = lundi;   // lu par planifInit
+  SUIVI_PORTEE_ACTIVE = 'planification';
+  SUIVI_ATELIER_ACTIF = 'planif';
+  try {
+    localStorage.setItem('suivi-portee-active', 'planification');
+    localStorage.setItem('suivi-atelier-actif', 'planif');
+  } catch (e) {}
   const btn = document.querySelector('[data-tab="planification"]');
-  if (btn) btn.click();
-  if (typeof suiviSwitch === 'function') suiviSwitch('planif');
-  setTimeout(() => {
-    if (typeof planifCharger !== 'function') return;
-    PLANIF_LUNDI = lundi;
-    planifCharger();
-  }, 0);
+  if (btn) btn.click();            // planifInit lit PLANIF_CIBLE (une ou deux fois)
+  if (typeof PLANIF_CIBLE !== 'undefined') PLANIF_CIBLE = null;
 }
 
 // ── Classes ─────────────────────────────────────────────────────────────────
@@ -212,7 +234,7 @@ function tdbOuvrirPlanSalle(etabId, salleId) {
 
 window.tdbJour = tdbJour;
 window.tdbChargerJournee = tdbChargerJournee;
-window.tdbOuvrirSeance = tdbOuvrirSeance;
+window.tdbOuvrirSuivi = tdbOuvrirSuivi;
 window.tdbOuvrirPlanifHebdo = tdbOuvrirPlanifHebdo;
 window.tdbChargerClasses = tdbChargerClasses;
 window.tdbOuvrirClasse = tdbOuvrirClasse;

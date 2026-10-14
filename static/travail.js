@@ -30,7 +30,7 @@ function _twEch(e) { return e ? `${_scDateFr(e[0])} ${e[1]}` : '—'; }
 
 async function twInit() {
   if (typeof SC === 'undefined') return;
-  if (!SC.donnees) { await scInit(); return; }    // scCharger appelle twCharger
+  if (!SC.donnees || SC.cible) { await scInit(); return; }    // scCharger appelle twCharger  // v0.51.14 : séance choisie
   await twCharger();
 }
 

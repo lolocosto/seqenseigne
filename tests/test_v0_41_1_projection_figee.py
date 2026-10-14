@@ -160,6 +160,10 @@ def test_sorties_identiques_a_la_capture(client, app, monkeypatch):
     _calendrier_fictif(monkeypatch)
     actuel = capture_complete(client, app)
     attendu = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    # v0.51.14 — La planification hebdo ajoute le résumé de chaque séance
+    # (MER, principale, documents) : hors capture, la projection est inchangée.
+    for x in (actuel.get("planif_hebdo", {}).get("json") or {}).get("cases", []):
+        x.pop("resume", None)
     for cle in attendu:
         assert actuel[cle] == attendu[cle], f"Sortie modifiée : {cle}"
     assert set(actuel) == set(attendu)

@@ -110,6 +110,12 @@ def grille_semaine(conn, store, annee: str, lundi_iso: str | None,
         })
     cases.sort(key=lambda c: (c["date"], ordre_creneau.get(c["creneau"], 0),
                               c["classe"]))
+    # v0.51.14 — Résumé de chaque séance (MER, principale, documents),
+    # calculé une fois par classe.
+    from services import seances_resume as sr
+    resumes = sr.resumer(conn, store, annee, cases)
+    for c in cases:
+        c["resume"] = resumes.get((c["classe_id"], c["date"], c["creneau"]))
     return {**sem, "creneaux": creneaux_grille, "cases": cases,
             "jours_info": jours_info, "semaine_vacances": semaine_vacances}
 

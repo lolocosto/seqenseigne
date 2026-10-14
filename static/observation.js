@@ -21,7 +21,7 @@ function _ovToast(m) { if (typeof showToast === 'function') showToast(m, true); 
 
 async function ovInit() {
   if (typeof SC === 'undefined') return;
-  if (!SC.donnees) { await scInit(); return; }   // scCharger appelle ovCharger
+  if (!SC.donnees || SC.cible) { await scInit(); return; }   // scCharger appelle ovCharger  // v0.51.14 : séance choisie
   await ovCharger();
 }
 

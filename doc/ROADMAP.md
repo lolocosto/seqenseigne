@@ -298,6 +298,9 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   simplifiées (détail dans un écran dédié), tuiles Établissements (salles,
   lien « plan »), Classes (liste des élèves, lien « plan »), Journée (modèle
   de la planification hebdo, flèches de navigation).
+- v0.51.14 : résumé des séances (fait) — planification hebdo et tuile Journée
+  (MER, principale, documents) ; Journée → Début de séance, Observation,
+  Travail, Compétences.
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS. Transport des envois entre le PC et le serveur (la
   boîte aux lettres rend inutile l'API générale prévue au départ) — à

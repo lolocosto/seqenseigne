@@ -46,6 +46,19 @@ async function _scApi(url, opts) {
 // Entrée dans le sous-onglet : séance en cours toutes classes confondues ; la
 // classe de cette séance devient la classe sélectionnée.
 async function scInit() {
+  // v0.51.14 — Séance choisie depuis le tableau de bord (tuile Journée).
+  if (SC.cible) {
+    const c = SC.cible;
+    SC.cible = null;
+    SC.date = c.date;
+    const inp = document.getElementById('sc-date');
+    if (inp) inp.value = SC.date;
+    await _scChargerJour();
+    _scSelectionnerClasse(c.classe);
+    SC.creneau = c.creneau;
+    await scCharger();
+    return;
+  }
   SC.date = _scAujourdhui();
   const inp = document.getElementById('sc-date');
   if (inp) inp.value = SC.date;

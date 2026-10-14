@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.13** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.14** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -61,6 +61,8 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.13 livrée : résidus `items_texte` et `objectifs_v2` retirés ;
   écran Système › Administration › Échanges ; tuiles Publication et Retour
   d'usage résumées ; tuiles Journée, Classes, Établissements (classe).
+- v0.51.14 livrée : résumé de chaque séance (MER, principale, documents) dans
+  la planification hebdo et la tuile Journée ; tuile Journée → Suivi.
 - À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
   envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 
