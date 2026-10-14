@@ -198,6 +198,9 @@ def _docs_internes(conn, niveau: str, sequence: str, annuels: bool) -> list:
     publies = _docs_internes_publies(conn, ref_id, sequence, annuels)
     if publies is not None:
         return publies
+    from services.repartition import table_existe
+    if not table_existe(conn, "referentiel_documents"):
+        return []                        # v0.51.12 — base classe, ref. non publié
     out = []
     try:
         documents = rd.lister_documents(conn, ref_id)

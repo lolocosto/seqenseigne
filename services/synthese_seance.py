@@ -109,7 +109,9 @@ def _texte(s: str) -> str:
 def candidats(conn, niveau: str, seq_code: str, partie_debut: int, partie_fin: int) -> dict:
     """{notions: [{id, titre}], methodes: [{id, titre}]} rattachées aux
     objectifs des parties [partie_debut, partie_fin] de la séquence."""
-    rows = conn.execute(
+    from services.repartition import table_existe
+    # v0.51.12 — Base classe : pas d'atomes (titres importés, plus bas).
+    rows = [] if not table_existe(conn, "objectifs") else conn.execute(
         "SELECT o.id, o.methode_id FROM objectifs o "
         "JOIN sequence_parties p ON p.id=o.partie_id "
         "JOIN sequences_par_niveau s ON s.id=p.sequence_par_niveau_id "

@@ -80,6 +80,9 @@ def _maintenant() -> str:
 
 def migrer(conn) -> None:
     conn.executescript(SCHEMA)
+    # v0.51.12 — Rôle de la base ('' avant la bascule ; 'atelier' | 'classe').
+    if "role" not in {r[1] for r in conn.execute("PRAGMA table_info(instance_locale)")}:
+        conn.execute("ALTER TABLE instance_locale ADD COLUMN role TEXT NOT NULL DEFAULT ''")
 
 
 # ── Identité ─────────────────────────────────────────────────────────────────

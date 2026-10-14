@@ -170,6 +170,11 @@ def lister_definitions(conn: sqlite3.Connection,
       des macros).
     """
     fichiers_out = []
+    # Table créée par l'import de la mise en forme LaTeX : absente tant qu'il
+    # n'a pas eu lieu (et dans une base classe).
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND "
+                        "name='paquet_definitions'").fetchone():
+        return {"fichiers": fichiers_out}
     for fichier, label in FICHIERS_EXPOSES.items():
         bloc = {
             "nom": fichier,

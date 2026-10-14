@@ -60,7 +60,8 @@ BP_CLASSE = frozenset({
 BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord",
                        "echanges",         # v0.51.7 — protocole d'échange
                        "retour_usage",     # v0.51.8 — routes classées une par une
-                       "depot"})           # v0.51.9 — boîte aux lettres
+                       "depot",            # v0.51.9 — boîte aux lettres
+                       "bascule"})         # v0.51.12 — routes classées « complet »
 
 # Exceptions, route par route (prioritaires sur la catégorie du blueprint).
 ENDPOINTS = {
@@ -87,6 +88,12 @@ ENDPOINTS = {
     "retour_usage.api_analyse": "atelier",
     "retour_usage.api_importer": "atelier",
     "retour_usage.api_etat": "atelier",
+    # v0.51.12 — Vues de conception des référentiels (atomes) : atelier.
+    "referentiels.api_arbre": "atelier",
+    "referentiels.api_eligibilite_validation": "atelier",
+    # v0.51.12 — Bascule de la base partagée : profil complet seulement.
+    "bascule.api_apercu": "complet",
+    "bascule.api_executer": "complet",
 }
 
 _LECTURE = frozenset({"GET", "HEAD", "OPTIONS"})

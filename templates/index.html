@@ -2678,6 +2678,7 @@
     <button class="sub-tab" id="admin-importusage-btn" data-profils="atelier" onclick="adminSousOnglet('importusage')">Import retours d'usage</button>
 <button class="sub-tab" id="admin-bdd-btn" data-profils="atelier classe" onclick="adminSousOnglet('bdd')">Base de données</button>
     <button class="sub-tab" id="admin-importsuivi-btn" data-profils="complet" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
+    <button class="sub-tab" id="admin-bascule-btn" data-profils="complet" onclick="adminSousOnglet('bascule')">Bascule</button>
   </div>
 
   <!-- ── Sous-onglet : import .tex ── -->
@@ -3127,6 +3128,27 @@
   </div><!-- /admin-bdd -->
 
   <!-- ── Sous-onglet : import suivi (classes historiques) ── -->
+  <!-- v0.51.12 — Bascule de la base partagée vers deux bases -->
+  <div id="admin-bascule" data-profils="complet" style="display:none;padding:24px;max-width:960px">
+    <h3 style="margin:0 0 4px">Bascule vers deux applis</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">
+      Sépare la base partagée en deux : <b>data_atelier\</b> (conception, LaTeX,
+      publication) et <b>data_classe\</b> (établissements, classes, élèves,
+      planification, suivi). Les référentiels publiables passent de l'atelier à la
+      classe par un paquet de publication ; la classe répond par son premier retour
+      d'usage (séquences commencées). Chaque base ne garde que ses tables.
+      <b>data\ n'est pas modifié</b> : il reste la sauvegarde d'avant la bascule.
+    </p>
+    <div class="card" style="margin-bottom:12px">
+      <div id="bsc-apercu"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+        <button class="btn-sm" type="button" onclick="bscInit()">Actualiser l'aperçu</button>
+        <button class="btn-prim" type="button" id="bsc-executer" onclick="bscExecuter()" disabled>Basculer</button>
+        <span id="bsc-status" style="font-size:12px" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+
   <div id="admin-importsuivi" style="display:none;padding:24px;max-width:860px">
 
     <div style="margin-bottom:20px">
@@ -3778,6 +3800,7 @@
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>
 <script src="/static/import_publication.js"></script>
+<script src="/static/bascule.js"></script>
 <script src="/static/echanges.js"></script>
 <script src="/static/planification_hebdo.js"></script>
 <script src="/static/progression_mer.js"></script>

@@ -93,6 +93,7 @@ from routes.import_publication import bp as bp_import_publication  # v0.51.3
 from routes.echanges import bp as bp_echanges  # v0.51.7
 from routes.retour_usage import bp as bp_retour_usage  # v0.51.8
 from routes.depot import bp as bp_depot  # v0.51.9
+from routes.bascule import bp as bp_bascule  # v0.51.12
 
 def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask:
     """
@@ -118,6 +119,10 @@ def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask
     # c'est en fait une instance de SqliteStore) et current_app.yaml_store,
     # current_app.csv_store.
     app.json_store = SqliteStore(data_dir)
+    # v0.51.12 — Une base basculée ne s'ouvre qu'avec le profil de son rôle.
+    from services import bascule as _bascule
+    with app.json_store._conn() as _c:
+        _bascule.verifier_profil(_c, profil)
     app.yaml_store = YamlStore(data_dir)
     app.csv_store  = CsvStore(data_dir)
 
@@ -152,7 +157,8 @@ def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask
                bp_import_publication,  # v0.51.3
                bp_echanges,  # v0.51.7
                bp_retour_usage,  # v0.51.8
-               bp_depot):  # v0.51.9
+               bp_depot,  # v0.51.9
+               bp_bascule):  # v0.51.12
         # v0.51.0 — Un blueprint étranger au profil n'est pas enregistré.
         if profils.blueprint_enregistre(bp.name, profil):
             app.register_blueprint(bp)
@@ -215,8 +221,14 @@ if __name__ == "__main__":
     # création, on y copie les fichiers de référence de data/ (CSV, YAML) —
     # jamais la base ni la configuration.
     data_dir = None
-    if os.environ.get("SEQ_DATA"):
-        racine = Path(__file__).parent
+    racine = Path(__file__).parent
+    if not os.environ.get("SEQ_DATA"):
+        # v0.51.12 — Après la bascule, chaque profil a son dossier :
+        # data_atelier\ (atelier), data_classe\ (classe) ; data\ sinon.
+        from services.bascule import dossier_par_defaut
+        data_dir = dossier_par_defaut(racine, profil)
+        print(f"  Données : {data_dir}")
+    else:
         data_dir = (racine / os.environ["SEQ_DATA"]).resolve()
         if not data_dir.exists():
             data_dir.mkdir(parents=True)
@@ -231,7 +243,12 @@ if __name__ == "__main__":
     if debug:
         print("  (mode debug ACTIVÉ via SEQ_DEBUG=1 — ne pas exposer)")
     print()
-    app = create_app(data_dir, profil=profil)
+    from services.bascule import BasculeErreur
+    try:
+        app = create_app(data_dir, profil=profil)
+    except BasculeErreur as e:                       # v0.51.12 — base d'un autre rôle
+        print(f"  [X] {e}\n")
+        raise SystemExit(1)
     # v0.51.9 — Boîte aux lettres : relève au démarrage puis périodique (une
     # seule fois si le rechargeur du mode debug relance le processus).
     if not debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":

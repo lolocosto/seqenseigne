@@ -288,8 +288,9 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   et anciens livrets (`livrets_de_sequence`, `livret_revisions`, `versions`,
   `versions_classes`), contenu sauvegardé en JSON ; onglet Administration ›
   « Import retours d'usage » dans l'atelier.
-- v0.51.12 : bascule (répartition validée table par table : 43 tables classe,
-  31 atelier, 22 des deux côtés) — rôle de chaque base, structures absentes
+- v0.51.12 : bascule (fait ; répartition validée table par table : 43 tables
+  classe, 33 atelier, 18 des deux côtés ; dossiers `data_atelier\` et
+  `data_classe\`, `data\` intact) — rôle de chaque base, structures absentes
   de chaque côté (gardes sur les lectures croisées), outil (aperçu,
   sauvegarde, paquet n° 1, retour d'usage, nettoyage), tests des données
   attendues côté classe (titres, noms et PDF des documents, cases du suivi).

@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.11** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.12** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -54,7 +54,11 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.11 livrée : retrait de l'ancien modèle de MER et des anciens livrets
   (sauvegarde JSON dans `data\sauvegardes\`) ; onglet « Import retours
   d'usage » (atelier).
-- À venir : v0.51.12 bascule ; v0.51.13 tuiles du tableau de bord ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
+- v0.51.12 livrée : bascule de la base partagée vers `data_atelier\` et
+  `data_classe\` (Système › Administration › Bascule, profil complet ;
+  `data\` intact) ; rôle de chaque base, tables de l'autre côté retirées au
+  démarrage ; chaque profil ouvre son dossier.
+- À venir : v0.51.13 tuiles du tableau de bord ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
   API de publication.
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)

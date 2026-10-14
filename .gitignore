@@ -23,6 +23,10 @@ data/referentiels_externes/
 data/referentiels_fichiers/
 # v0.51.3 — base séparée du profil classe (lancer.bat classe --base-classe)
 data_classe/
+# v0.51.12 — bases des deux applis après la bascule (+ dossiers d'essai renommés)
+data_atelier/
+data_atelier_*/
+data_classe_*/
 # static/vendor/ (pdf.js) est versionné depuis v0.41.0 : un clone neuf doit
 # avoir un viewer PDF fonctionnel. Cohérent avec push-to-github.html.
 log/

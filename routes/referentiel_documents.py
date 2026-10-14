@@ -40,6 +40,17 @@ def api_lister(ref_id: str):
                 "error": "referentiel_introuvable",
                 "message": f"Référentiel {ref_id} introuvable",
             }), 404
+        # v0.51.12 — Appli de classe : pas de documents compilables, les
+        # livrets reçus par le paquet de publication (déjà compilés).
+        from services.repartition import table_existe
+        if not table_existe(conn, "referentiel_documents"):
+            return jsonify({"documents": [
+                {"type_document": r[0], "etat_effectif": "ok", "cibles": [], "publie": True}
+                for r in conn.execute(
+                    "SELECT type_document FROM referentiel_docs_publies WHERE "
+                    "referentiel_id=? GROUP BY type_document ORDER BY MIN(ordre)",
+                    (ref_id,)).fetchall()]
+                if table_existe(conn, "referentiel_docs_publies") else []})
         documents = svc.lister_documents(conn, ref_id, data_dir=store.data_dir)
         # v0.32.4 — Ajouter les cibles à chaque document pour que le client
         # sache s'il est multi-cible (et générer un lien PDF par cible).

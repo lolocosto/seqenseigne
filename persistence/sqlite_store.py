@@ -170,6 +170,14 @@ class SqliteStore:
             # Chaque établissement sans créneau reçoit les 8 créneaux par
             # défaut (M1..M4, S1..S4 — modèle Hautes Ourmes). Idempotent.
             self._peupler_grille_horaire_si_vide(conn)
+            # ── v0.51.12 — Base basculée (rôle atelier ou classe) : les tables
+            # de l'autre côté sont retirées (vides seulement), après toutes les
+            # créations de tables ci-dessus.
+            try:
+                from services import repartition as _rep
+                _rep.elaguer(conn)
+            except Exception as _e:                   # pragma: no cover
+                print(f"  [répartition] élagage impossible : {_e}")
 
     def _migrer_schema(self, conn):
         """Applique les migrations de schéma de manière idempotente."""
@@ -3412,6 +3420,10 @@ class SqliteStore:
 
     def lire_annees_disponibles(self) -> list[str]:
         with self._conn() as conn:
+            # v0.51.12 — Pas de classes dans une base atelier.
+            if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND "
+                                "name='classes'").fetchone():
+                return []
             rows = conn.execute(
                 "SELECT DISTINCT annee FROM classes WHERE annee!='' ORDER BY annee DESC"
             ).fetchall()

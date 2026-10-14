@@ -4853,3 +4853,22 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 
 /* v0.51.10 — Base partagée signalée. */
 .ech-alerte { background: #fffbeb; color: #7a4f10; padding: 4px 6px; border-radius: 4px; }
+
+/* ── v0.51.12 — Bascule vers deux bases (profil complet) ─────────────────── */
+.bsc-cibles { font-size: 13px; margin-bottom: 10px; display: grid; gap: 2px; }
+.bsc-refs { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+.bsc-refs th, .bsc-refs td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.bsc-publie { color: var(--success); }
+.bsc-garde { color: var(--warning-text); }
+.bsc-atelier { color: var(--text-secondary); }
+.bsc-tables { font-size: 12px; margin: 4px 0; }
+.bsc-tables summary { cursor: pointer; }
+.bsc-liste { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0 2px 14px;
+  color: var(--text-secondary); }
+.bsc-avert { font-size: 12px; background: var(--warning-bg); border-left: 3px solid var(--warning);
+  padding: 5px 8px; margin: 6px 0; }
+.bsc-refus { font-size: 13px; background: var(--danger-bg); border-left: 3px solid var(--danger);
+  padding: 6px 8px; margin-bottom: 8px; }
+.bsc-ok { font-size: 13px; background: var(--success-bg); border-left: 3px solid var(--success);
+  padding: 6px 8px; margin-bottom: 6px; }
+.bsc-rapport { font-size: 13px; margin: 4px 0 8px 18px; padding: 0; }

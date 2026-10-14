@@ -213,8 +213,11 @@ def modifier(conn, rid: str, description: str) -> dict:
 
 
 def est_utilise(conn, rid: str) -> bool:
-    if conn.execute("SELECT 1 FROM progressions WHERE referentiel_id=? LIMIT 1",
-                    (rid,)).fetchone() is not None:
+    from services.repartition import table_existe
+    # v0.51.12 — Base atelier : pas de progressions (retour d'usage seul).
+    if table_existe(conn, "progressions") and conn.execute(
+            "SELECT 1 FROM progressions WHERE referentiel_id=? LIMIT 1",
+            (rid,)).fetchone() is not None:
         return True
     try:                                            # v0.49.0 — progression de MER
         if conn.execute("SELECT 1 FROM progression_mer WHERE ref_mer_id=? AND "
@@ -261,11 +264,13 @@ def sequence_commencee(conn, rid: str, seq_code: str, aujourd_hui: date) -> bool
             return True
     except Exception:
         pass
+    from services.repartition import table_existe
     r = conn.execute(
         "SELECT 1 FROM creneaux c JOIN progressions p ON p.id=c.progression_id "
         "WHERE p.referentiel_id=? AND c.seq_code=? AND c.date_debut IS NOT NULL "
         "AND c.date_debut<>'' AND c.date_debut<=? LIMIT 1",
-        (rid, seq_code, aujourd_hui.isoformat())).fetchone()
+        (rid, seq_code, aujourd_hui.isoformat())).fetchone() \
+        if table_existe(conn, "creneaux") else None       # v0.51.12 — base atelier
     if r is not None:
         return True
     # v0.51.8 — Retour d'usage de l'appli en ligne : premier créneau passé
@@ -491,9 +496,10 @@ def deplacer_sequence(conn, rid: str, code: str, sens: int, aujourd_hui: date) -
 def supprimer_sequence(conn, rid: str, code: str, aujourd_hui: date,
                        data_dir: Path | None = None) -> None:
     _verifier_modifiable(conn, rid, code, aujourd_hui)
-    if conn.execute("SELECT 1 FROM creneaux c JOIN progressions p ON p.id=c.progression_id "
-                    "WHERE p.referentiel_id=? AND c.seq_code=? LIMIT 1",
-                    (rid, code)).fetchone():
+    from services.repartition import table_existe
+    if table_existe(conn, "creneaux") and conn.execute(
+            "SELECT 1 FROM creneaux c JOIN progressions p ON p.id=c.progression_id "
+            "WHERE p.referentiel_id=? AND c.seq_code=? LIMIT 1", (rid, code)).fetchone():
         raise RefExtErreur(f"La séquence {code} est placée dans une progression : "
                            "retirez d'abord ses créneaux.")
     for f in conn.execute("SELECT id FROM referentiel_fichiers WHERE referentiel_id=? AND "

@@ -19,6 +19,18 @@ Nettoyage post-R4e4b :
 from __future__ import annotations
 
 
+
+def _sauf_absente(fn, defaut):
+    """v0.51.12 — Valeur de `fn()`, ou `defaut` si une table qu'elle lit est
+    absente de cette base (base atelier ou classe après la bascule)."""
+    import sqlite3
+    try:
+        return fn()
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            return defaut
+        raise
+
 def statut_bdd(json_store, yaml_store, csv_store) -> dict:
     """Retourne un état synthétique de la base (compteurs SQLite + C04)."""
     # Référentiels versionnés (SqliteStore uniquement)
@@ -43,8 +55,8 @@ def statut_bdd(json_store, yaml_store, csv_store) -> dict:
     except Exception:
         pass
 
-    # Classes + élèves
-    classes = json_store.lire_classes().get("classes", [])
+    # Classes + élèves (v0.51.12 : tables absentes d'une base atelier)
+    classes = _sauf_absente(lambda: json_store.lire_classes().get("classes", []), [])
     nb_classes = len(classes)
     nb_eleves_total = sum(len(c.get("eleves", [])) for c in classes)
 
@@ -114,9 +126,10 @@ def statut_bdd(json_store, yaml_store, csv_store) -> dict:
 
     return {
         "reference": {
-            "notions":      len(json_store.lire_notions()),
-            "methodes":     len(json_store.lire_methodes()),
-            "exercices":    len(json_store.lire_exercices()),
+            # v0.51.12 — tables de conception absentes d'une base classe
+            "notions":      len(_sauf_absente(json_store.lire_notions, [])),
+            "methodes":     len(_sauf_absente(json_store.lire_methodes, [])),
+            "exercices":    len(_sauf_absente(json_store.lire_exercices, [])),
             "referentiels": len(referentiels),
         },
         "paquet": paquet,

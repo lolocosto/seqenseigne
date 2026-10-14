@@ -34,6 +34,12 @@ REM
 REM  v0.51.3 - Base separee pour le profil classe (essai de l'import de
 REM  paquets sur une base vide, dossier data_classe\, cree au besoin) :
 REM     .\lancer.bat classe --base-classe
+REM
+REM  v0.51.12 - Apres la bascule (Systeme > Administration > Bascule, profil
+REM  complet), chaque profil ouvre son dossier : data_atelier\ pour atelier,
+REM  data_classe\ pour classe ; data\ (base partagee d'avant la bascule)
+REM  reste celui du profil complet. Pour forcer la base partagee :
+REM     .\lancer.bat classe --base-partagee
 REM ============================================================================
 
 echo.
@@ -53,6 +59,7 @@ if /I "%~1"=="complet"       set "SEQ_PROFIL=complet"
 if /I "%~1"=="atelier"       set "SEQ_PROFIL=atelier"
 if /I "%~1"=="classe"        set "SEQ_PROFIL=classe"
 if /I "%~1"=="--base-classe" set "SEQ_DATA=data_classe"
+if /I "%~1"=="--base-partagee" set "SEQ_DATA=data"
 shift
 goto :lire_params
 :params_lus
