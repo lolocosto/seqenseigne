@@ -3628,7 +3628,7 @@ let ADMIN_FILTRE = 'tous';
 
 // v0.51.0 — Premier sous-onglet d'administration visible dans le profil.
 const ADMIN_SOUS_ONGLETS = ['importref', 'importpaquet', 'images', 'importfiches',
-  'importpub', 'importusage', 'bdd', 'importsuivi', 'bascule'];   // v0.51.3 : importpub ; v0.51.11 : importusage ; v0.51.12 : bascule
+  'echanges', 'bdd', 'importsuivi', 'bascule'];   // v0.51.12 : bascule ; v0.51.13 : échanges (imports de référentiels et de retours d'usage compris)
 function _adminPremierSousOnglet() {
   for (const s of ADMIN_SOUS_ONGLETS) {
     if (profilAffiche(document.getElementById('admin-' + s + '-btn'))) return s;
@@ -3653,8 +3653,7 @@ function adminSousOnglet(nom) {
     if (btn) btn.classList.toggle('active', s === nom);
   });
   if (nom === 'bdd') adminBddStatut();
-  if (nom === 'importpub' && typeof impPubInit === 'function') impPubInit();   // v0.51.3
-  if (nom === 'importusage' && typeof impUsageInit === 'function') impUsageInit();   // v0.51.11
+  if (nom === 'echanges' && typeof echangesInit === 'function') echangesInit();   // v0.51.13
   if (nom === 'bascule' && typeof bscInit === 'function') bscInit();   // v0.51.12
   // v0.9 — pré-remplissage des chemins Admin depuis Préférences
   if (nom === 'importref'    && typeof adminPreremplirChemins === 'function') adminPreremplirChemins('importref');
@@ -4176,7 +4175,11 @@ async function adminBddStatut() {
           : ''}
       </div>`;
 
-    zone.innerHTML = refGrid + paquetGrid + suiviGrid + referentielsBloc + c04Info;
+    // v0.51.13 — Chaque appli n'affiche que ses compteurs (conception côté
+    // atelier, suivi côté classe ; tout en profil complet).
+    const voit = (c) => (typeof profilPermet === 'function' ? profilPermet(c) : true);
+    zone.innerHTML = (voit('atelier') ? refGrid + paquetGrid : '')
+      + (voit('classe') ? suiviGrid : '') + referentielsBloc + c04Info;
   } catch(e) {
     zone.innerHTML = `<span style="color:var(--danger)">Erreur : ${e.message}</span>`;
   } finally {

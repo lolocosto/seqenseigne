@@ -54,11 +54,40 @@
       <button class="btn-sm" onclick="tdbOuvrirParametres()" style="font-size:13px">⚙ Paramètres</button>
     </div>
     <div id="tdb-tuiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
-      <!-- Tuile : séances de la semaine -->
-      <div class="card" style="margin:0" data-profils="classe">
-        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Séances de la semaine
-          <span id="tdb-semaine-dates" style="font-weight:normal;color:#888;font-size:12px"></span></div>
-        <div id="tdb-seances"></div>
+      <!-- v0.51.13 — Tuile : journée (modèle de la planification hebdo) -->
+      <div class="card tdb-tuile" style="margin:0" data-profils="classe">
+        <div class="tdb-tete"><span class="tdb-titre">Journée</span>
+          <span id="tdb-jour-lbl" class="tdb-sous"></span>
+          <span class="tdb-nav">
+            <button class="btn-sm" type="button" id="tdb-jour-prec" onclick="tdbJour(-1)" aria-label="Jour précédent">‹</button>
+            <button class="btn-sm" type="button" onclick="tdbJour(0)">Aujourd'hui</button>
+            <button class="btn-sm" type="button" id="tdb-jour-suiv" onclick="tdbJour(1)" aria-label="Jour suivant">›</button>
+          </span></div>
+        <div id="tdb-journee"></div>
+        <div class="tdb-lien"><a href="#" onclick="tdbOuvrirPlanifHebdo();return false">Planification hebdo →</a></div>
+      </div>
+      <!-- v0.51.13 — Tuile : classes de l'année -->
+      <div class="card tdb-tuile" style="margin:0" data-profils="classe">
+        <div class="tdb-tete"><span class="tdb-titre">Classes</span>
+          <span id="tdb-classes-annee" class="tdb-sous"></span></div>
+        <div id="tdb-classes"></div>
+      </div>
+      <!-- v0.51.13 — Tuile : établissements et salles -->
+      <div class="card tdb-tuile" style="margin:0" data-profils="classe">
+        <div class="tdb-tete"><span class="tdb-titre">Établissements</span></div>
+        <div id="tdb-etabs"></div>
+      </div>
+      <!-- v0.51.8 — Tuile : retour d'usage (vers l'appli locale) ; v0.51.13 : résumé -->
+      <div class="card tdb-tuile" style="margin:0" data-profils="classe">
+        <div class="tdb-tete"><span class="tdb-titre">Retour d'usage</span>
+          <span class="tdb-sous">pour l'appli locale</span></div>
+        <div id="tdb-usage"></div>
+      </div>
+      <!-- v0.51.2 — Tuile : publication des référentiels ; v0.51.13 : résumé -->
+      <div class="card tdb-tuile" style="margin:0" data-profils="atelier">
+        <div class="tdb-tete"><span class="tdb-titre">Publication</span>
+          <span class="tdb-sous">pour l'appli en ligne</span></div>
+        <div id="tdb-publication"></div>
       </div>
       <!-- Tuile : atomes en cours (conception) -->
       <div class="card" style="margin:0" data-profils="atelier">
@@ -69,16 +98,6 @@
       <div class="card" style="margin:0" data-profils="atelier">
         <div style="font-size:14px;font-weight:600;margin-bottom:8px">Conception — éléments non rattachés</div>
         <div id="tdb-non-rattaches"></div>
-      </div>
-      <!-- v0.51.8 — Tuile : retour d'usage (vers l'appli locale) -->
-      <div class="card" style="margin:0" data-profils="classe">
-        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Retour d'usage — pour l'appli locale</div>
-        <div id="tdb-usage"></div>
-      </div>
-      <!-- v0.51.2 — Tuile : publication des référentiels (paquet vers l'appli en ligne) -->
-      <div class="card" style="margin:0" data-profils="atelier">
-        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Publication — paquet pour l'appli en ligne</div>
-        <div id="tdb-publication"></div>
       </div>
     </div>
   </div>
@@ -2674,8 +2693,7 @@
     <button class="sub-tab" id="admin-importpaquet-btn" data-profils="atelier" onclick="adminSousOnglet('importpaquet')">Import mise en forme</button>
     <button class="sub-tab" id="admin-images-btn" data-profils="atelier" onclick="adminSousOnglet('images')">Images</button>
     <button class="sub-tab" id="admin-importfiches-btn" data-profils="atelier" onclick="adminSousOnglet('importfiches')">Import fiches</button>
-    <button class="sub-tab" id="admin-importpub-btn" data-profils="classe" onclick="adminSousOnglet('importpub')">Import référentiels</button>
-    <button class="sub-tab" id="admin-importusage-btn" data-profils="atelier" onclick="adminSousOnglet('importusage')">Import retours d'usage</button>
+    <button class="sub-tab" id="admin-echanges-btn" data-profils="atelier classe" onclick="adminSousOnglet('echanges')">Échanges</button>
 <button class="sub-tab" id="admin-bdd-btn" data-profils="atelier classe" onclick="adminSousOnglet('bdd')">Base de données</button>
     <button class="sub-tab" id="admin-importsuivi-btn" data-profils="complet" onclick="adminSousOnglet('importsuivi')">Import suivi</button>
     <button class="sub-tab" id="admin-bascule-btn" data-profils="complet" onclick="adminSousOnglet('bascule')">Bascule</button>
@@ -2935,7 +2953,26 @@
        l'appli locale, reçus ici en lecture seule). -->
   <!-- v0.51.11 — Import d'un retour d'usage (atelier ; pendant de l'import de
        référentiels côté appli en ligne). static/import_publication.js. -->
-  <div id="admin-importusage" style="display:none;padding:24px;max-width:960px">
+  <!-- v0.51.13 — Échanges : détail de la publication (atelier) ou du retour
+       d'usage (classe), boîte aux lettres et identité, imports à la main. -->
+  <div id="admin-echanges" style="display:none;padding:24px;max-width:960px">
+    <h3 style="margin:0 0 4px">Échanges
+      <span class="ech-sous" data-profils="atelier">— avec l'appli en ligne (classe)</span>
+      <span class="ech-sous" data-profils="classe">— avec l'appli locale (atelier)</span></h3>
+    <div class="card" style="margin:8px 0 12px" data-profils="atelier">
+      <div class="ech-titre">Publication des référentiels</div>
+      <div id="ech-publication"></div>
+    </div>
+    <div class="card" style="margin:8px 0 12px" data-profils="classe">
+      <div class="ech-titre">Retour d'usage</div>
+      <div id="ech-usage"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div id="ech-depot"></div>
+      <div id="ech-instance" style="margin-top:8px"></div>
+    </div>
+
+  <div id="admin-importusage" data-profils="atelier" style="margin-top:20px">
     <h3 style="margin:0 0 4px">Import de retours d'usage</h3>
     <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">
       L'appli en ligne produit des <b>retours d'usage</b> numérotés (référentiels
@@ -2958,11 +2995,11 @@
     </div>
   </div>
 
-  <div id="admin-importpub" style="display:none;padding:24px;max-width:960px">
+  <div id="admin-importpub" data-profils="classe" style="margin-top:20px">
     <h3 style="margin:0 0 4px">Import de référentiels</h3>
     <p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">
       Les référentiels se conçoivent dans l'appli locale (profil atelier), qui
-      produit un <b>paquet de publication</b> (tableau de bord › Publication).
+      produit un <b>paquet de publication</b> (tableau de bord, tuile Publication).
       L'import vérifie tout le paquet avant d'écrire quoi que ce soit ; une
       séquence déjà commencée n'est jamais retirée, une association de document
       devenue orpheline est signalée, jamais supprimée.
@@ -2975,8 +3012,6 @@
         <span id="imppub-status" style="font-size:12px" role="status" aria-live="polite"></span>
       </div>
       <div id="imppub-analyse" style="margin-top:10px"></div>
-      <!-- v0.51.7 — Identité, atelier lié, numéro attendu (static/echanges.js). -->
-      <div id="imppub-echanges" style="margin-top:10px"></div>
     </div>
     <div class="card">
       <div style="font-size:13px;font-weight:500;margin-bottom:8px">Référentiels importés</div>
@@ -2985,6 +3020,7 @@
         <div id="imppub-journal"></div></details>
     </div>
   </div>
+  </div><!-- /admin-echanges -->
 
   <div id="admin-bdd" style="display:none;padding:24px;max-width:860px">
 
@@ -3799,6 +3835,7 @@
 <script src="/static/indispo.js"></script>
 <script src="/static/mer.js"></script>
 <script src="/static/tableau_bord.js"></script>
+<script src="/static/tdb_tuiles.js"></script>
 <script src="/static/import_publication.js"></script>
 <script src="/static/bascule.js"></script>
 <script src="/static/echanges.js"></script>

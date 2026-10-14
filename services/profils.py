@@ -82,6 +82,8 @@ ENDPOINTS = {
     "tableau_bord.api_atomes_en_cours": "atelier",
     "tableau_bord.api_atomes_non_rattaches": "atelier",
     "tableau_bord.api_seances_semaine": "classe",
+    "tableau_bord.api_etablissements": "classe",       # v0.51.13
+    "tableau_bord.api_classes": "classe",              # v0.51.13
     # v0.51.8 — Retour d'usage : produit en classe, importé dans l'atelier.
     "retour_usage.api_creer": "classe",
     "retour_usage.api_apercu": "classe",

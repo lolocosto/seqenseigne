@@ -202,137 +202,58 @@ class TestMigrationReconciliationV0_15_0_1:
     migration auto le remplace pour tous les cas pratiques.
     """
 
-    def test_reconciliation_quand_objectifs_vide(self, tmp_path):
-        """Cas du bug v0.14.7 : objectifs_v2 peuplée, objectifs vide.
-        La migration doit copier les 2 lignes.
-        """
-        from persistence.sqlite_store import SqliteStore
+    # v0.51.13 — La réconciliation est retirée : objectifs_v2 (et
+    # items_texte) sont des résidus retirés au démarrage, contenu sauvegardé.
 
-        data_dir = tmp_path / "data"
-        data_dir.mkdir()
-
-        # 1ère instanciation : crée le schéma normal (objectifs vide)
-        SqliteStore(data_dir)
-
-        # On reproduit l'état pathologique : on crée objectifs_v2 et on
-        # la peuple, comme si la migration v0.14.7 n'avait pas tourné.
-        # NB : les partie_id doivent référencer une partie existante pour
-        # que l'INSERT dans la nouvelle table `objectifs` (FK enforcement)
-        # passe. On crée donc la pile sn → partie d'abord.
-        db_path = data_dir / "seqenseigne.db"
-        conn = sqlite3.connect(str(db_path))
-        conn.executescript("""
-            INSERT INTO sequences_par_niveau
-                (id, niveau, sequence_code)
-            VALUES ('sn_test', 'N10', 'S01');
-            INSERT INTO sequence_parties
-                (id, sequence_par_niveau_id, numero)
-            VALUES ('pt_test', 'sn_test', 1);
-
-            CREATE TABLE objectifs_v2 (
-                id         TEXT PRIMARY KEY,
-                partie_id  TEXT NOT NULL,
-                code       TEXT NOT NULL,
-                nom        TEXT NOT NULL DEFAULT '',
-                methode_id TEXT,
-                critere_F  TEXT NOT NULL DEFAULT '',
-                critere_A  TEXT NOT NULL DEFAULT '',
-                critere_E  TEXT NOT NULL DEFAULT '',
-                fin_cycle  TEXT NOT NULL DEFAULT 'N',
-                nb_seances REAL NOT NULL DEFAULT 0,
-                UNIQUE (partie_id, code)
-            );
-            INSERT INTO objectifs_v2
-                (id, partie_id, code, nom, critere_F, critere_A,
-                 critere_E, fin_cycle, nb_seances)
-            VALUES
-                ('ob_test1', 'pt_test', '02', 'Obj 02',
-                 'cf', 'ca', 'ce', 'N', 1.0),
-                ('ob_test2', 'pt_test', '03', 'Obj 03',
-                 'cf', 'ca', 'ce', 'N', 0.5);
-        """)
-        conn.commit()
-        n_avant = conn.execute(
-            "SELECT COUNT(*) FROM objectifs"
-        ).fetchone()[0]
-        conn.close()
-        assert n_avant == 0, "Précondition : objectifs doit être vide"
-
-        # 2e instanciation : déclenche la migration auto
-        SqliteStore(data_dir)
-
-        # Vérification : les 2 lignes ont été copiées
-        conn = sqlite3.connect(str(db_path))
-        conn.row_factory = sqlite3.Row
-        n_apres = conn.execute("SELECT COUNT(*) FROM objectifs").fetchone()[0]
-        # On ne supprime pas objectifs_v2 (dette technique différée)
-        n_v2 = conn.execute("SELECT COUNT(*) FROM objectifs_v2").fetchone()[0]
-        rows = conn.execute(
-            "SELECT id, code, nb_seances FROM objectifs ORDER BY id"
-        ).fetchall()
-        conn.close()
-
-        assert n_apres == 2
-        assert n_v2 == 2, "objectifs_v2 doit rester intacte (filet)"
-        assert rows[0]["id"] == "ob_test1"
-        assert rows[0]["code"] == "02"
-        assert rows[0]["nb_seances"] == 1.0
-        assert rows[1]["id"] == "ob_test2"
-
-    def test_idempotence_sur_base_deja_reconciliee(self, tmp_path):
-        """Si objectifs et objectifs_v2 contiennent les mêmes données
-        (cas normal après réparation), la migration doit être un no-op.
-        """
+    def test_residus_retires_avec_sauvegarde(self, tmp_path):
+        import json
         from persistence.sqlite_store import SqliteStore
 
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         SqliteStore(data_dir)
         db_path = data_dir / "seqenseigne.db"
-
-        # On peuple les deux tables à l'identique (avec FK valides)
         conn = sqlite3.connect(str(db_path))
         conn.executescript("""
-            INSERT INTO sequences_par_niveau
-                (id, niveau, sequence_code)
-            VALUES ('sn_test', 'N10', 'S01');
-            INSERT INTO sequence_parties
-                (id, sequence_par_niveau_id, numero)
-            VALUES ('pt_test', 'sn_test', 1);
-
-            CREATE TABLE objectifs_v2 (
-                id         TEXT PRIMARY KEY,
-                partie_id  TEXT NOT NULL,
-                code       TEXT NOT NULL,
-                nom        TEXT NOT NULL DEFAULT '',
-                methode_id TEXT,
-                critere_F  TEXT NOT NULL DEFAULT '',
-                critere_A  TEXT NOT NULL DEFAULT '',
-                critere_E  TEXT NOT NULL DEFAULT '',
-                fin_cycle  TEXT NOT NULL DEFAULT 'N',
-                nb_seances REAL NOT NULL DEFAULT 0,
-                UNIQUE (partie_id, code)
-            );
-            INSERT INTO objectifs_v2
-                (id, partie_id, code, nom, critere_F, critere_A,
-                 critere_E, fin_cycle, nb_seances)
-            VALUES ('obA', 'pt_test', '02', 'X', '', '', '', 'N', 0);
-            INSERT INTO objectifs
-                (id, partie_id, code, nom, critere_F, critere_A,
-                 critere_E, fin_cycle, nb_seances)
-            VALUES ('obA', 'pt_test', '02', 'X', '', '', '', 'N', 0);
+            CREATE TABLE objectifs_v2 (id TEXT PRIMARY KEY, partie_id TEXT, code TEXT);
+            INSERT INTO objectifs_v2 VALUES ('ob1', 'pt', '02');
+            CREATE TABLE items_texte (id TEXT PRIMARY KEY, categorie TEXT, texte TEXT);
+            INSERT INTO items_texte VALUES ('it1', 'exemple', 'Un exemple');
         """)
         conn.commit()
         conn.close()
-
-        # Relancer SqliteStore : migration doit être un no-op
-        SqliteStore(data_dir)
-
+        SqliteStore(data_dir)                       # redémarrage : retrait
         conn = sqlite3.connect(str(db_path))
-        n = conn.execute("SELECT COUNT(*) FROM objectifs").fetchone()[0]
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         conn.close()
-        # Une seule ligne, pas de doublon créé par la migration
-        assert n == 1
+        assert not ({"objectifs_v2", "items_texte"} & tables) and "objectifs" in tables
+        sauv = list((data_dir / "sauvegardes").glob("retrait_residus_*.json"))
+        assert len(sauv) == 1
+        contenu = json.loads(sauv[0].read_text(encoding="utf-8"))["tables"]
+        assert contenu["objectifs_v2"][0]["id"] == "ob1"
+        assert contenu["items_texte"][0]["texte"] == "Un exemple"
+        SqliteStore(data_dir)                       # idempotent
+        assert len(list((data_dir / "sauvegardes").glob("retrait_residus_*.json"))) == 1
+
+    def test_residu_reference_par_une_cle_garde(self, tmp_path):
+        from persistence.sqlite_store import SqliteStore
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        SqliteStore(data_dir)
+        db_path = data_dir / "seqenseigne.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.executescript("""
+            CREATE TABLE objectifs_v2 (id TEXT PRIMARY KEY);
+            CREATE TABLE lien_v2 (x TEXT REFERENCES objectifs_v2(id));
+        """)
+        conn.commit()
+        conn.close()
+        SqliteStore(data_dir)
+        conn = sqlite3.connect(str(db_path))
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        conn.close()
+        assert "objectifs_v2" in tables
 
     def test_pas_de_migration_si_objectifs_v2_absente(self, tmp_path):
         """Sur une BDD fraîche (post-v0.14.7 propre), objectifs_v2 n'existe

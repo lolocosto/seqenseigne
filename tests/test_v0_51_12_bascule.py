@@ -158,7 +158,7 @@ def test_apercu_signale_un_non_publiable_utilise(partagee):
 
 # ── Exécution ───────────────────────────────────────────────────────────────
 
-def test_bascule_complete(partagee):
+def test_bascule_complete(partagee, capsys):
     p = partagee
     racine = p["data"].parent
     avant = _empreinte(p["data"] / "seqenseigne.db")
@@ -170,6 +170,7 @@ def test_bascule_complete(partagee):
     assert {r["statut"] for r in rapport["paquet"]["referentiels"]} == {"mise_a_jour"}
     assert "notions" in rapport["classe"]["tables_retirees"]
     assert "classes" in rapport["atelier"]["tables_retirees"]
+    assert "[répartition]" not in capsys.readouterr().out          # v0.51.13
     atelier, classe = _cote(racine, "atelier"), _cote(racine, "classe")
     with atelier.json_store._conn() as ca, classe.json_store._conn() as cc:
         ta, tc = rep.tables(ca), rep.tables(cc)

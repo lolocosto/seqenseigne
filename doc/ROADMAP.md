@@ -294,7 +294,7 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
   de chaque côté (gardes sur les lectures croisées), outil (aperçu,
   sauvegarde, paquet n° 1, retour d'usage, nettoyage), tests des données
   attendues côté classe (titres, noms et PDF des documents, cases du suivi).
-- v0.51.13 : tableau de bord — tuiles Publication / Retour d'usage
+- v0.51.13 : tableau de bord (fait) — tuiles Publication / Retour d'usage
   simplifiées (détail dans un écran dédié), tuiles Établissements (salles,
   lien « plan »), Classes (liste des élèves, lien « plan »), Journée (modèle
   de la planification hebdo, flèches de navigation).

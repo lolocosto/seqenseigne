@@ -119,7 +119,6 @@ function _impErreur(e) {
 }
 
 async function impPubChargerEtat() {
-  if (typeof echRendre === 'function') echRendre('imppub-echanges', 'classe');
   const zi = document.getElementById('imppub-importes');
   const zj = document.getElementById('imppub-journal');
   let d;

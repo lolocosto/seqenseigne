@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.12** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.13** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -58,8 +58,11 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
   `data_classe\` (Système › Administration › Bascule, profil complet ;
   `data\` intact) ; rôle de chaque base, tables de l'autre côté retirées au
   démarrage ; chaque profil ouvre son dossier.
-- À venir : v0.51.13 tuiles du tableau de bord ; v0.52 mise en ligne (authentification, HTTPS, VPS) puis
-  API de publication.
+- v0.51.13 livrée : résidus `items_texte` et `objectifs_v2` retirés ;
+  écran Système › Administration › Échanges ; tuiles Publication et Retour
+  d'usage résumées ; tuiles Journée, Classes, Établissements (classe).
+- À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
+  envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)
 

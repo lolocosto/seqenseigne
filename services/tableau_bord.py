@@ -146,3 +146,43 @@ def seances_de_la_semaine(conn, store, annee: str,
         j["seances"].sort(key=lambda s: (s["creneau"], s["classe"]))
     return {"lundi": lundi.isoformat(), "vendredi": vendredi.isoformat(),
             "jours": jours}
+
+
+# ── v0.51.13 — Tuiles Établissements et Classes (appli de classe) ───────────
+
+def _table(conn, nom: str) -> bool:
+    return conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                        (nom,)).fetchone() is not None
+
+
+def etablissements_et_salles(conn, aujourd_hui: date | None = None) -> list:
+    """[{id, nom, salles: [{id, nom, plan}]}] — salles non archivées ; `plan`
+    : le plan en vigueur a des places."""
+    from services import salles as sal
+    aujourd_hui = aujourd_hui or date.today()
+    out = []
+    for e in conn.execute("SELECT id, nom FROM etablissements ORDER BY nom COLLATE NOCASE"):
+        salles = []
+        if _table(conn, "salles"):
+            salles = [{"id": s["id"], "nom": s["nom"], "plan": s["nb_places"] > 0}
+                      for s in sal.lister(conn, e["id"], aujourd_hui) if not s["archivee"]]
+        out.append({"id": e["id"], "nom": e["nom"], "salles": salles})
+    return out
+
+
+def classes_de_l_annee(conn, store, annee: str) -> list:
+    """[{id, nom, niveau, etablissement_id, etablissement, effectif, plan}] —
+    `plan` : un plan de classe a été saisi (au moins un élève placé)."""
+    avec_plan = set()
+    if _table(conn, "plans_classe") and _table(conn, "plan_placements"):
+        avec_plan = {r[0] for r in conn.execute(
+            "SELECT DISTINCT p.classe_id FROM plans_classe p JOIN plan_placements x "
+            "ON x.plan_id=p.id")}
+    out = []
+    for c in store.lire_classes(annee=annee or None).get("classes", []):
+        out.append({"id": c["id"], "nom": c["nom"], "niveau": c.get("niveau", ""),
+                    "etablissement_id": c.get("etablissement_id", ""),
+                    "etablissement": c.get("etablissement", ""),
+                    "effectif": len(c.get("eleves") or []), "plan": c["id"] in avec_plan})
+    out.sort(key=lambda c: (c["etablissement"].casefold(), c["nom"].casefold()))
+    return out

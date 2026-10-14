@@ -36,3 +36,19 @@ def api_seances_semaine():
     with store._conn() as conn:
         data = tb.seances_de_la_semaine(conn, store, annee)
     return jsonify(data)
+
+
+# ── v0.51.13 — Tuiles Établissements et Classes ─────────────────────────────
+
+@bp.route("/api/tableau-bord/etablissements", methods=["GET"])
+def api_etablissements():
+    with _store()._conn() as conn:
+        return jsonify({"etablissements": tb.etablissements_et_salles(conn)})
+
+
+@bp.route("/api/tableau-bord/classes", methods=["GET"])
+def api_classes():
+    annee = request.args.get("annee") or annees_scolaires.courante()
+    store = _store()
+    with store._conn() as conn:
+        return jsonify({"annee": annee, "classes": tb.classes_de_l_annee(conn, store, annee)})

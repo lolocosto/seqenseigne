@@ -54,8 +54,8 @@ async function echRendre(zoneId, role) {
   }
   z.innerHTML = `<div class="ech-bloc">
     ${d.base_partagee ? `<div class="ech-ligne ech-alerte">⚠ Atelier et appli en ligne partagent la même
-      base : les référentiels y sont déjà, aucun échange n'est nécessaire. Pour un vrai échange,
-      lancez l'appli en ligne sur sa propre base (<code>lancer.bat classe --base-classe</code>).</div>` : ''}
+      base : les référentiels y sont déjà, aucun échange n'est nécessaire. Pour séparer les deux
+      applis : Système › Administration › Bascule (profil complet).</div>` : ''}
     <div class="ech-ligne">Cette instance : <b>${_echE(d.instance.nom)}</b>
       <span class="ech-id" title="${_echE(d.instance.id)}">${_echE(String(d.instance.id).slice(5, 13))}</span></div>
     <div class="ech-ligne">${corr}</div>
@@ -134,11 +134,8 @@ async function depotRelever(zoneId, appliquer) {
       + `${(r.refuses || []).length} refusé(s), ${(r.en_attente || []).length} restant(s).`;
   }
   // Les tuiles voisines (publication, retour d'usage) reflètent le traitement.
-  if (appliquer && (r.traites || []).length) {
-    if (typeof tdbChargerPublication === 'function' && document.getElementById('tdb-publication')
-        && zoneId === 'tdb-depot') tdbChargerPublication();
-    if (typeof tdbChargerUsage === 'function' && zoneId === 'tdb-usage-depot') tdbChargerUsage();
-  }
+  // v0.51.13 — Écran Échanges : détail, identité et imports suivent.
+  if (appliquer && (r.traites || []).length && zoneId === 'ech-depot') echangesInit();
 }
 
 // ── v0.51.10 — Système › Préférences › Échanges ─────────────────────────────
@@ -211,3 +208,18 @@ window.prefEchangesEnregistrer = prefEchangesEnregistrer;
 window.prefEchangesDelier = prefEchangesDelier;
 window.depotRendre = depotRendre;
 window.depotRelever = depotRelever;
+
+// ── v0.51.13 — Système › Administration › Échanges ─────────────────────────
+// Détail de la publication (atelier) ou du retour d'usage (classe), boîte
+// aux lettres, identité et correspondant, imports à la main.
+async function echangesInit() {
+  const permet = (c) => (typeof profilPermet === 'function' ? profilPermet(c) : true);
+  const role = permet('atelier') ? 'atelier' : 'classe';
+  if (permet('atelier') && typeof tdbChargerPublication === 'function') tdbChargerPublication();
+  if (permet('classe') && typeof tdbChargerUsage === 'function') tdbChargerUsage();
+  depotRendre('ech-depot');
+  echRendre('ech-instance', role);
+  if (permet('atelier') && typeof impUsageInit === 'function') impUsageInit();
+  if (permet('classe') && typeof impPubInit === 'function') impPubInit();
+}
+window.echangesInit = echangesInit;

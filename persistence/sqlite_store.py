@@ -1000,55 +1000,8 @@ class SqliteStore:
         except Exception as e:
             print(f"[seqenseigne] ⚠ migration cartes_automatisme.nom → titre : {e}")
 
-        # ── v0.15.0.1 — Réconciliation objectifs ← objectifs_v2 ─────────────
-        #
-        # Contexte : en v0.14.7 le renommage devait être effectué par
-        # `scripts/renommer_objectifs_v2.py` lancé manuellement AVANT le
-        # premier démarrage post-déploiement. Si l'utilisateur lançait
-        # `lancer.bat` d'abord, le `CREATE TABLE IF NOT EXISTS objectifs`
-        # de schema.sql créait une table `objectifs` vide tandis que
-        # `objectifs_v2` (avec les vraies données) restait intacte à côté.
-        # Le script de renommage refusait ensuite de tourner (conflit
-        # « la table de destination existe déjà »), laissant l'utilisateur
-        # avec une table `objectifs` vide silencieusement.
-        #
-        # Détection : `objectifs_v2` existe ET `objectifs` est vide ET
-        # `objectifs_v2` n'est pas vide → on copie. Idempotent.
-        #
-        # NB : la suppression définitive de `objectifs_v2` est différée
-        # (dette technique). Tant que la table existe, cette migration
-        # tourne au démarrage. Comme elle est idempotente et que le
-        # COUNT(*) est rapide sur 245 lignes, le coût est négligeable.
-        try:
-            tables = {r["name"] for r in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()}
-            if "objectifs_v2" in tables and "objectifs" in tables:
-                n_actif = conn.execute(
-                    "SELECT COUNT(*) AS n FROM objectifs"
-                ).fetchone()["n"]
-                n_v2 = conn.execute(
-                    "SELECT COUNT(*) AS n FROM objectifs_v2"
-                ).fetchone()["n"]
-                if n_actif == 0 and n_v2 > 0:
-                    cur = conn.execute(
-                        "INSERT OR IGNORE INTO objectifs "
-                        "    (id, partie_id, code, nom, methode_id, "
-                        "     critere_F, critere_A, critere_E, "
-                        "     fin_cycle, nb_seances) "
-                        "SELECT id, partie_id, code, nom, methode_id, "
-                        "       critere_F, critere_A, critere_E, "
-                        "       fin_cycle, nb_seances "
-                        "FROM objectifs_v2"
-                    )
-                    conn.commit()
-                    print(
-                        "[seqenseigne] ✓ migration v0.15.0.1 : "
-                        f"{cur.rowcount} objectif(s) reconciliés depuis "
-                        "objectifs_v2 (cf. note v0.14.7 incomplète)"
-                    )
-        except Exception as e:
-            print(f"[seqenseigne] ⚠ migration v0.15.0.1 objectifs : {e}")
+        # v0.15.0.1 — Réconciliation objectifs ← objectifs_v2 : retirée en
+        # v0.51.13 (objectifs_v2 est retirée par services/retraits.py).
 
         # ── v0.19.1.4 — Mode de séances + table des séances par série ─────────
         # Deux régimes de saisie des séances coexistent désormais :

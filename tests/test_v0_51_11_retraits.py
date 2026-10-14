@@ -88,7 +88,8 @@ def test_routes_retirees_et_onglet_atelier(data_dir):
     assert cl.get("/api/referentiels-externes?niveau=N09").status_code == 404
     assert cl.get("/api/atomes/livrets").status_code == 404
     html = (RACINE / "templates" / "index.html").read_text(encoding="utf-8")
-    assert 'id="admin-importusage"' in html and 'data-profils="atelier" onclick="adminSousOnglet(\'importusage\')"' in html
+    # v0.51.13 — L'import des retours d'usage est dans Administration › Échanges.
+    assert 'id="admin-importusage" data-profils="atelier"' in html
     assert "referentiel_externe.js" not in html
     atelier = create_app(data_dir, profil="atelier")
     assert atelier.test_client().get("/api/retour-usage/etat").status_code == 200

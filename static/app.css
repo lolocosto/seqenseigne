@@ -4872,3 +4872,46 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .bsc-ok { font-size: 13px; background: var(--success-bg); border-left: 3px solid var(--success);
   padding: 6px 8px; margin-bottom: 6px; }
 .bsc-rapport { font-size: 13px; margin: 4px 0 8px 18px; padding: 0; }
+
+/* ── v0.51.13 — Tuiles du tableau de bord ───────────────────────────────── */
+.tdb-tuile { display: flex; flex-direction: column; gap: 6px; }
+.tdb-tete { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tdb-titre { font-size: 14px; font-weight: 600; }
+.tdb-sous { font-size: 12px; color: var(--text-secondary); font-weight: normal; }
+.tdb-nav { margin-left: auto; display: inline-flex; gap: 4px; }
+.tdb-nav .btn-sm { padding: 1px 8px; }
+.tdb-lien, .tdb-actions { font-size: 12px; margin-top: auto; padding-top: 4px; }
+.tdb-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tdb-actions a { margin-left: auto; }
+.tdb-vide { font-size: 13px; color: var(--text-muted); margin: 0; }
+.tdb-erreur { font-size: 12px; color: var(--danger); margin: 0; }
+.tdb-ligne { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center;
+  gap: 6px; flex-wrap: wrap; }
+.tdb-ligne .btn-sm, .tdb-ligne .btn-prim { padding: 1px 8px; font-size: 11px; }
+.tdb-chiffres { display: flex; flex-wrap: wrap; gap: 6px; }
+.tdb-chiffre { font-size: 12px; border: 1px solid var(--border); border-radius: 12px; padding: 2px 9px;
+  color: var(--text-secondary); }
+.tdb-chiffre b { color: var(--text-primary, #222); }
+.tdb-chiffre.ok { background: var(--success-bg); border-color: transparent; }
+.tdb-chiffre.att { background: var(--warning-bg); border-color: var(--warning); }
+.tdb-chiffre.ko { background: var(--danger-bg); border-color: transparent; }
+.tdb-groupe { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; }
+.tdb-liste { list-style: none; margin: 2px 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px;
+  font-size: 13px; }
+.tdb-liste li { display: inline-flex; align-items: baseline; gap: 5px; }
+.tdb-plan { font-size: 11px; border: 1px solid var(--border); border-radius: 3px; padding: 0 5px;
+  text-decoration: none; }
+.tdb-jour { display: grid; gap: 2px; }
+.tdb-jour-ligne { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 6px;
+  min-height: 24px; border-bottom: 1px solid var(--border-light, #eee); }
+.tdb-jour-ligne.libre .tdb-jour-cr { color: var(--text-muted); }
+.tdb-jour-cr { font-size: 11px; color: var(--text-secondary); text-align: right; }
+.tdb-jour-cases { display: flex; flex-wrap: wrap; gap: 3px; }
+.tdb-jour-seance { font-size: 12px; border: 0; border-radius: 3px; padding: 1px 7px; cursor: pointer; }
+.tdb-jour-seance.indispo { text-decoration: line-through; opacity: .6; }
+.tdb-jour-type { font-size: 10px; color: #555; }
+.tdb-jour-vac, .tdb-jour-ferie { font-size: 13px; margin: 0 0 4px; padding: 4px 8px; border-radius: 4px; }
+.tdb-jour-vac { background: #fdecea; color: #a12a1e; }
+.tdb-jour-ferie { background: #fff6e5; color: #8a5300; }
+.ech-titre { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.ech-sous { font-size: 13px; font-weight: normal; color: var(--text-secondary); }

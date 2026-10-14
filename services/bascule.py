@@ -291,13 +291,15 @@ def _retirer_referentiels(conn, data_dir: Path, rids: list[str]) -> None:
 def _finir(store_cls, dossier: Path, role: str, avant: set) -> dict:
     """Vide puis retire les tables de l'autre côté (`avant` : tables de la
     base partagée), préférences comprises."""
-    st = store_cls(dossier)
-    with st._conn() as conn:
+    # v0.51.13 — Connexion directe : rouvrir la base par le store relancerait
+    # l'élagage du démarrage avant le vidage (faux message « gardées »).
+    conn = sqlite3.connect(dossier / NOM_DB)
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
         faits = rep.vider(conn, rep.tables_de(rep.autre(role)))
         elague = rep.elaguer(conn, role)
         restantes = rep.tables(conn)
-    conn = sqlite3.connect(dossier / NOM_DB)
-    try:
+        conn.commit()
         conn.execute("VACUUM")
     finally:
         conn.close()
