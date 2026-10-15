@@ -301,6 +301,11 @@ en ligne « classe » (suivi, sans LaTeX), un seul code, trois profils.
 - v0.51.14 : résumé des séances (fait) — planification hebdo et tuile Journée
   (MER, principale, documents) ; Journée → Début de séance, Observation,
   Travail, Compétences.
+- v0.51.16 : échange automatique par API (fait) — l'atelier appelle l'appli
+  de classe (adresse + jeton à expiration, montré une fois), envoi immédiat
+  des paquets, retours d'usage produits et rapatriés automatiquement,
+  secours par dossiers ; cible multi-enseignants : appli de classe
+  multi-utilisateur (plus tard).
 - v0.52.x : mise en ligne — compte unique (mot de passe haché, second
   facteur), HTTPS, VPS. Transport des envois entre le PC et le serveur (la
   boîte aux lettres rend inutile l'API générale prévue au départ) — à

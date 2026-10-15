@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.15** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.16** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -65,6 +65,8 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
   la planification hebdo et la tuile Journée ; tuile Journée → Suivi.
 - v0.51.15 livrée : ordre des créneaux = position dans la journée (une
   indisponibilité « de M4 à M5 » ne raye plus l'après-midi).
+- v0.51.16 livrée : échange automatique par API (l'atelier appelle l'appli
+  de classe avec un jeton à expiration ; `doc/api_boite.md`).
 - À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
   envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 

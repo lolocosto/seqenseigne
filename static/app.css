@@ -4925,3 +4925,9 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .planif-seance-classe { font-weight: 600; font-size: 12px; }
 .planif-seance-ligne { color: #333; }
 .planif-seance-ligne.docs { color: #555; }
+
+/* ── v0.51.16 — Échange par l'API ───────────────────────────────────────── */
+.ech-alerte-api { font-size: 12px; background: var(--warning-bg); border-left: 3px solid var(--warning);
+  padding: 4px 8px; margin: 4px 0; }
+.ech-jeton { background: var(--success-bg); border-left: 3px solid var(--success); padding: 6px 8px;
+  margin: 6px 0; font-size: 13px; }

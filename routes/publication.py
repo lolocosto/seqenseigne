@@ -95,7 +95,13 @@ def api_paquet():
     except pqt.PaquetErreur as e:
         return jsonify({"error": str(e), "code": e.code, "rapport": e.rapport}), 422
     rapport = manifeste["rapport"]
+    # v0.51.16 — Envoi immédiat à l'appli de classe par l'API, si réglée.
+    from services import api_client
+    envoi = api_client.synchroniser(store, "atelier", recevoir=False, relever=False)
+    envoi = {"configuree": envoi["configuree"], "ok": envoi["ok"],
+             "livre": manifeste["echange"]["numero"] in envoi["livres"], "erreur": envoi["erreur"]}
     return Response(contenu, mimetype="application/zip", headers={
+        "X-Paquet-Envoi": json.dumps(envoi, ensure_ascii=True),
         "Content-Disposition": f'attachment; filename="{manifeste["nom"]}"',
         # Résumé lisible par l'écran (le manifeste complet est dans le zip).
         "X-Paquet-Resume": json.dumps({

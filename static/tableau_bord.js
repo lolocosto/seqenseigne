@@ -208,20 +208,28 @@ async function tdbPubCreer(idsImposes) {
         + (err ? '<br>' + err : '');
       return;
     }
-    let resume = {};
+    let resume = {}, envoi = {};
     try { resume = JSON.parse(r.headers.get('X-Paquet-Resume') || '{}'); } catch (e) {}
+    try { envoi = JSON.parse(r.headers.get('X-Paquet-Envoi') || '{}'); } catch (e) {}
     const blob = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = resume.nom || 'paquet.zip';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    // v0.51.16 — Livré par l'API : pas de téléchargement ; sinon le fichier
+    // (boîte aux lettres par dossiers, import à la main).
+    if (!envoi.livre) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = resume.nom || 'paquet.zip';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }
     TDB_PUB.sel.clear();
     await tdbChargerPublication();
     await tdbResumePublication();
     if (typeof echRendre === 'function' && document.getElementById('ech-instance')) echRendre('ech-instance', 'atelier');
     const res2 = document.getElementById(idsImposes ? 'tdb-pubr-res' : 'tdb-pub-res');
-    if (res2) res2.innerHTML = `<span class="tdb-pub-ok">✓ ${escapeHtml(resume.nom || 'Paquet créé')}</span> — `
+    if (res2) res2.innerHTML = `<span class="tdb-pub-ok">✓ ${escapeHtml(resume.nom || 'Paquet créé')}</span>`
+      + (envoi.livre ? ' envoyé à l\'appli de classe' : (envoi.configuree
+        ? ` <span class="tdb-pub-ko">non envoyé (${escapeHtml(envoi.erreur || 'appli injoignable')}) : il partira à la prochaine synchronisation</span>` : ''))
+      + ' — '
       + `${resume.nb_referentiels} référentiel(s), ${resume.nb_fichiers} fichier(s), `
       + `${(resume.taille / 1048576).toFixed(1)} Mo`
       + (resume.documents_sans_pdf ? ` — ${resume.documents_sans_pdf} document(s) sans PDF non publiés` : '')
@@ -266,17 +274,22 @@ async function tdbUsageCreer(depuisTuile) {
     const r = await fetch('/api/retour-usage/creer', { method: 'POST' });
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Erreur');
     const resume = JSON.parse(r.headers.get('X-Usage-Resume') || '{}');
+    const viaApi = r.headers.get('X-Usage-Api') === '1';      // v0.51.16
     const blob = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = resume.nom || 'usage.json';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    if (!viaApi) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = resume.nom || 'usage.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }
     await tdbChargerUsage();
     await tdbResumeUsage();
     if (typeof echRendre === 'function' && document.getElementById('ech-instance')) echRendre('ech-instance', 'classe');
     const res2 = document.getElementById(depuisTuile ? 'tdb-usager-res' : 'tdb-usage-res');
-    if (res2) res2.textContent = `✓ ${resume.nom} créé (${resume.nb_referentiels} référentiel(s)) : il part par la boîte aux lettres vers l'appli locale.`;
+    if (res2) res2.textContent = `✓ ${resume.nom} créé (${resume.nb_referentiels} référentiel(s)) : `
+      + (viaApi ? 'l\'atelier le relèvera à sa prochaine synchronisation.'
+        : 'il part par la boîte aux lettres vers l\'appli locale.');
   } catch (e) {
     if (res) res.innerHTML = `<span class="tdb-pub-ko">✗ ${escapeHtml(e.message)}</span>`;
   }
@@ -320,6 +333,22 @@ async function tdbBoite(appliquer, zoneRes) {
     : 'Boîte relevée.';
 }
 
+// v0.51.16 — Échange par l'API : atelier (dernier contact, alertes)…
+function _tdbApiLigne(e) {
+  if (!e || !e.configuree) return '';
+  return `<div class="tdb-ligne">🔁 Appli de classe (API) : ${e.derniere_reussite
+      ? 'dernier contact le ' + escapeHtml(_tdbDateHeure(e.derniere_reussite)) : 'pas encore de contact'}</div>`
+    + (typeof echApiAlertes === 'function' ? echApiAlertes(e) : '');
+}
+// … et classe (jeton de l'atelier).
+function _tdbJetonLigne(j) {
+  if (!j || !j.expire_le) return '';
+  if (j.expire) return `<div class="ech-alerte-api">⚠ Jeton de l'atelier expiré : générez-en un nouveau (Préférences › Échanges).</div>`;
+  return `<div class="tdb-ligne">🔁 Atelier (API) : ${j.dernier_usage
+      ? 'dernier contact le ' + escapeHtml(_tdbDateHeure(j.dernier_usage)) : 'pas encore de contact'}</div>`
+    + (j.expire_bientot ? `<div class="ech-alerte-api">⚠ Le jeton de l'atelier expire dans ${j.jours_restants} jour(s).</div>` : '');
+}
+
 async function _tdbJson(url) {
   try { return await api(url); } catch (e) { return null; }
 }
@@ -328,7 +357,8 @@ async function tdbResumePublication() {
   const zone = document.getElementById('tdb-publication');
   if (!zone) return;
   zone.innerHTML = '<p class="tdb-vide">Calcul des empreintes…</p>';
-  const [d, dep] = await Promise.all([_tdbJson('/api/publication/publiables'), _tdbJson('/api/depot/etat')]);
+  const [d, dep, apiE] = await Promise.all([_tdbJson('/api/publication/publiables'),
+    _tdbJson('/api/depot/etat'), _tdbJson('/api/api-client/etat')]);
   if (!d) { zone.innerHTML = '<p class="tdb-erreur">Erreur de chargement.</p>'; return; }
   const refs = d.referentiels || [];
   const aPublier = refs.filter(r => r.valide && (!r.derniere_publication || r.modifie_depuis));
@@ -345,6 +375,7 @@ async function tdbResumePublication() {
       ${chiffre(attente, 'en attente de retour', 'neutre')}${chiffre(verifier, 'à vérifier', 'ko')}</div>
     <div class="tdb-ligne">Dernier paquet : ${der ? `n° ${der.numero || '—'} le ${escapeHtml(_tdbDateHeure(der.cree_le))}`
       : 'aucun'}</div>
+    ${_tdbApiLigne(apiE)}
     ${_tdbBoite(dep, 'tdb-pubr-res')}
     <div class="tdb-actions">${aPublier.length
       ? `<button class="btn-prim" type="button" onclick='tdbPubCreer(${JSON.stringify(aPublier.map(r => r.id))})'>Publier les ${aPublier.length} à publier</button>` : ''}
@@ -357,8 +388,8 @@ async function tdbResumePublication() {
 async function tdbResumeUsage() {
   const zone = document.getElementById('tdb-usage');
   if (!zone) return;
-  const [d, e, dep] = await Promise.all([_tdbJson('/api/retour-usage/apercu'),
-    _tdbJson('/api/echanges/etat'), _tdbJson('/api/depot/etat')]);
+  const [d, e, dep, jet] = await Promise.all([_tdbJson('/api/retour-usage/apercu'),
+    _tdbJson('/api/echanges/etat'), _tdbJson('/api/depot/etat'), _tdbJson('/api/jeton')]);
   if (!d || !e) { zone.innerHTML = '<p class="tdb-erreur">Erreur de chargement.</p>'; return; }
   const refs = d.referentiels || [];
   const recu = ((e.recus || {}).paquet || [])[0];
@@ -371,6 +402,7 @@ async function tdbResumeUsage() {
     <div class="tdb-ligne">Dernier retour envoyé : ${envoye
       ? `n° ${envoye.numero} le ${escapeHtml(_tdbDateHeure(envoye.cree_le))} — ${envoye.acquitte_le ? 'acquitté' : 'pas encore acquitté'}`
       : 'aucun'}</div>
+    ${_tdbJetonLigne(jet)}
     ${_tdbBoite(dep, 'tdb-usager-res')}
     <div class="tdb-actions">${refs.length
       ? `<button class="btn-prim" type="button" onclick="tdbUsageCreer(true)">Créer le retour d'usage n° ${d.echange.numero}</button>` : ''}

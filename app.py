@@ -94,6 +94,8 @@ from routes.echanges import bp as bp_echanges  # v0.51.7
 from routes.retour_usage import bp as bp_retour_usage  # v0.51.8
 from routes.depot import bp as bp_depot  # v0.51.9
 from routes.bascule import bp as bp_bascule  # v0.51.12
+from routes.api_boite import bp as bp_api_boite  # v0.51.16
+from routes.api_client import bp as bp_api_client  # v0.51.16
 
 def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask:
     """
@@ -158,7 +160,8 @@ def create_app(data_dir: Path | None = None, profil: str | None = None) -> Flask
                bp_echanges,  # v0.51.7
                bp_retour_usage,  # v0.51.8
                bp_depot,  # v0.51.9
-               bp_bascule):  # v0.51.12
+               bp_bascule,  # v0.51.12
+               bp_api_boite, bp_api_client):  # v0.51.16
         # v0.51.0 — Un blueprint étranger au profil n'est pas enregistré.
         if profils.blueprint_enregistre(bp.name, profil):
             app.register_blueprint(bp)

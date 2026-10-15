@@ -325,6 +325,16 @@ def demarrer(app) -> threading.Thread | None:
 
     def boucle():
         while not arret.is_set():
+            # v0.51.16 — Atelier : synchronisation avec l'appli de classe par
+            # l'API (envoi des paquets, retours d'usage rapatriés), si réglée.
+            if profil == "atelier":
+                try:
+                    from services import api_client
+                    s = api_client.synchroniser(store, profil, relever=False)
+                    if s["configuree"] and not s["ok"]:
+                        print(f"  [api] {s['erreur']}")
+                except Exception as e:                  # pragma: no cover
+                    print(f"  [api] synchronisation impossible : {e}")
             try:
                 rapport = relever(store, profil)
                 n = len(rapport["traites"])

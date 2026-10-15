@@ -44,6 +44,7 @@ BP_ATELIER = frozenset({
     "evaluations", "cartes_automatisme", "referentiel_documents_compilation",
     "paquet", "images", "recherche",
     "publication",          # v0.51.1 — format d'échange des référentiels
+    "api_client",           # v0.51.16 — client de la boîte aux lettres par API
 })
 BP_STRUCTURE = frozenset({
     "referentiels", "referentiel_principal_externe",
@@ -56,6 +57,7 @@ BP_CLASSE = frozenset({
     "leitner", "progression_mer", "progression_doc", "planification_hebdo",
     "calendrier",
     "import_publication",   # v0.51.3 — import des paquets de publication
+    "api_boite",            # v0.51.16 — boîte aux lettres par API (jeton)
 })
 BP_COMMUN = frozenset({"annees_scolaires", "preferences", "tableau_bord",
                        "echanges",         # v0.51.7 — protocole d'échange

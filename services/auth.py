@@ -30,7 +30,8 @@ from flask import (request, session, redirect, url_for, render_template_string,
                    current_app)
 
 # Chemins toujours accessibles sans authentification.
-_CHEMINS_LIBRES = ("/login", "/static/", "/favicon.ico")
+# v0.51.16 — La boîte aux lettres par API a sa propre authentification (jeton).
+_CHEMINS_LIBRES = ("/login", "/static/", "/favicon.ico", "/api/boite/v1/")
 
 
 def mot_de_passe_configure() -> str | None:

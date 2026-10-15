@@ -117,6 +117,9 @@ def creer(conn, data_dir: Path) -> tuple[str, bytes, dict]:
     doc["nom"] = nom
     contenu = json.dumps(doc, ensure_ascii=False, indent=1).encode("utf-8")
     ech.archiver(conn, data_dir, doc["echange"], nom, contenu)
+    # v0.51.16 — Empreinte de l'usage envoyé (retour automatique par l'API).
+    from services import api_boite
+    api_boite.noter_usage_cree(conn, doc)
     return nom, contenu, doc
 
 

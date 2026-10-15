@@ -37,7 +37,10 @@ def api_creer():
     store = _store()
     with store._conn() as conn:
         nom, contenu, doc = ru.creer(conn, store.data_dir)
+        from services import api_boite
+        api = api_boite.etat_jeton(conn)["actif"]      # v0.51.16 — l'atelier le relèvera
     return Response(contenu, mimetype="application/json", headers={
+        "X-Usage-Api": "1" if api else "0",
         "Content-Disposition": f'attachment; filename="{nom}"',
         "X-Usage-Resume": json.dumps({"nom": nom, "numero": doc["echange"]["numero"],
                                       "nb_referentiels": len(doc["referentiels"])})})
