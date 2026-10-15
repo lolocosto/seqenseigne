@@ -170,6 +170,12 @@ class SqliteStore:
             # Chaque établissement sans créneau reçoit les 8 créneaux par
             # défaut (M1..M4, S1..S4 — modèle Hautes Ourmes). Idempotent.
             self._peupler_grille_horaire_si_vide(conn)
+            # ── v0.51.15 — Ordre des créneaux = position dans la journée ──────
+            try:
+                from services import grille_horaire as _gh
+                _gh.renumeroter_tout(conn)
+            except Exception as _e:                   # pragma: no cover
+                print(f"  [grille horaire] renumérotation impossible : {_e}")
             # ── v0.51.12 — Base basculée (rôle atelier ou classe) : les tables
             # de l'autre côté sont retirées (vides seulement), après toutes les
             # créations de tables ci-dessus.

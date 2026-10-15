@@ -96,12 +96,44 @@ def peupler_defauts_si_vide(conn, etablissement_id: str) -> int:
     return crees
 
 
+# v0.51.15 — Position d'un créneau dans la journée : heure de début, puis
+# ordre de saisie (créneaux sans heure à la fin). `ordre` est renuméroté selon
+# cette position à chaque création ou modification : un créneau ajouté après
+# coup (M5 créé après S4) trouve sa place, et une indisponibilité « de M4 à
+# M5 » ne couvre plus l'après-midi.
+_TRI = "(heure_debut = ''), heure_debut, ordre, code"
+
+
+def renumeroter(conn, etablissement_id: str) -> int:
+    """Renumérote `ordre` (10, 20, …) selon l'heure de début. Renvoie le
+    nombre de créneaux dont l'ordre a changé."""
+    rows = conn.execute(
+        "SELECT id, ordre FROM grille_horaire_creneaux WHERE etablissement_id=? "
+        f"ORDER BY {_TRI}", (etablissement_id,)).fetchall()
+    n = 0
+    for i, r in enumerate(rows, start=1):
+        if r[1] != i * 10:
+            conn.execute("UPDATE grille_horaire_creneaux SET ordre=? WHERE id=?",
+                         (i * 10, r[0]))
+            n += 1
+    return n
+
+
+def renumeroter_tout(conn) -> int:
+    """Migration (démarrage) : toutes les grilles horaires."""
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND "
+                    "name='grille_horaire_creneaux'").fetchone() is None:
+        return 0
+    return sum(renumeroter(conn, r[0]) for r in conn.execute(
+        "SELECT DISTINCT etablissement_id FROM grille_horaire_creneaux").fetchall())
+
+
 def lister(conn, etablissement_id: str) -> list[dict]:
-    """Liste les créneaux d'un établissement, triés par ordre."""
+    """Liste les créneaux d'un établissement, dans l'ordre de la journée."""
     rows = conn.execute(
         "SELECT id, etablissement_id, code, libelle, heure_debut, heure_fin, "
         "demi_journee, ordre FROM grille_horaire_creneaux "
-        "WHERE etablissement_id=? ORDER BY heure_debut, ordre, code",
+        f"WHERE etablissement_id=? ORDER BY {_TRI}",
         (etablissement_id,)).fetchall()
     return [dict(r) for r in rows]
 
@@ -147,6 +179,9 @@ def creer(conn, etablissement_id: str, code: str, *,
         " demi_journee, ordre) VALUES (?,?,?,?,?,?,?,?)",
         (new_id, etablissement_id, code, (libelle or code).strip(),
          _valider_heure(heure_debut), _valider_heure(heure_fin), dj, ordre))
+    renumeroter(conn, etablissement_id)                     # v0.51.15
+    ordre = conn.execute("SELECT ordre FROM grille_horaire_creneaux WHERE id=?",
+                         (new_id,)).fetchone()[0]
     return {"id": new_id, "etablissement_id": etablissement_id, "code": code,
             "libelle": (libelle or code).strip(),
             "heure_debut": _valider_heure(heure_debut),
@@ -180,6 +215,9 @@ def modifier(conn, creneau_id: str, champs: dict) -> dict:
         "heure_fin=?, demi_journee=?, ordre=? WHERE id=?",
         (c["libelle"], c["heure_debut"], c["heure_fin"], c["demi_journee"],
          c["ordre"], creneau_id))
+    renumeroter(conn, c["etablissement_id"])                # v0.51.15
+    c["ordre"] = conn.execute("SELECT ordre FROM grille_horaire_creneaux WHERE id=?",
+                              (creneau_id,)).fetchone()[0]
     return c
 
 
