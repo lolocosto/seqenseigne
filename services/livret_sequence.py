@@ -69,6 +69,7 @@ from services.latex_rendu_atome import (
 )
 from services.preambule_atome import construire_preambule
 from services.paquet_parseur import extraire_utilisations
+from services.numerotation_livret import CODES_SERIES, numeroter_sequence
 from services.v2_lecture import lire_sequence_par_niveau
 # v0.11.2 — On réutilise la version « continue » du corps d'exercice de
 # livret_recap_exos qui produit juste le \begin{seqExercice}...\end{seqExercice}
@@ -875,49 +876,16 @@ def generer_livret_sequence(conn: sqlite3.Connection,
         "R": [], "AE": [], "F": [], "A": [], "E": [],
     }
     if opts["exercices"]["inclure"]:
-        # Révisions : exos extraits de partie_exos_revision_approche (R + EA).
-        # On agrège l'ordre par partie puis par ordre dans la partie.
-        ids_vus: set[str] = set()
-        for partie in parties:
-            era = partie.get("exos_revision_approche", {}) or {}
-            for typ in ("R", "EA"):
-                for entry in era.get(typ, []):
-                    ex_id = entry.get("exercice_id")
-                    if not ex_id or ex_id in ids_vus:
-                        continue
-                    ids_vus.add(ex_id)
-                    atome = charger_atome(conn, "exercice", ex_id)
-                    if _atome_a_remediation(atome):
-                        a_au_moins_une_remediation = True
-                    exos_par_serie["R"].append(
-                        _generer_corps_exercice_continu(
-                            atome, inclure_remediation=True, conn=conn))
-
-        # Séries pédagogiques : EA, F, (A si activé), E.
-        # On prend les exos liés via objectif_exos (objectif → série).
-        # AE est mappée comme "AE" en BDD mais "EA" dans v2_lecture.
-        ids_par_serie: dict[str, set[str]] = {"AE": set(), "F": set(), "A": set(), "E": set()}
-        for partie in parties:
-            for obj in partie.get("objectifs", []):
-                eps = obj.get("exos_par_serie", {}) or {}
-                # eps a les clés EA, F, A, E (cf. SERIES_V2 post-3-light).
-                # On mappe EA → AE pour l'ordre d'affichage du paquet.
-                for serie_v2, mots in (("EA", "AE"), ("F", "F"), ("A", "A"), ("E", "E")):
-                    for entry in eps.get(serie_v2, []):
-                        ex_id = entry.get("exercice_id")
-                        if ex_id:
-                            ids_par_serie[mots].add(ex_id)
-
-        # Toggle série A
-        if not opts["exercices"]["serie_A"]:
-            ids_par_serie["A"] = set()
-
-        # Charger les corps des exos pour les séries ouvertes
-        for code in ("AE", "F", "A", "E"):
-            for ex_id in sorted(ids_par_serie[code]):
-                if ex_id in ids_vus:
-                    # déjà inclus en révision — ne pas dupliquer
-                    continue
+        # v0.51.18 — Ordre commun au livret et au plan de travail
+        # (services/numerotation_livret.py) : partie → objectif → rang,
+        # au lieu d'un tri par identifiant (aléatoire depuis les ids
+        # `ex_xxxxxxxx`, d'où des séries mélangées). Révisions (R + EA de
+        # partie) d'abord, exos de révision non repris dans les séries,
+        # série A selon le toggle.
+        numerotation = numeroter_sequence(
+            conn, sn["id"], serie_A=opts["exercices"]["serie_A"])
+        for code in CODES_SERIES:
+            for ex_id in numerotation.ordre[code]:
                 atome = charger_atome(conn, "exercice", ex_id)
                 if _atome_a_remediation(atome):
                     a_au_moins_une_remediation = True

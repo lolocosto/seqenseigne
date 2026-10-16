@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.17.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.18** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -75,6 +75,9 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.17.1 livrée : correctif — `\seqContenuAvantSerie` recopiée dans le
   préambule du livret (liste `FRAGMENT_SQUELETTE_LIVRET`, test
   `TestSqueletteLivret` avec paquet indexé simulé).
+- v0.51.18 livrée : livret de séquence, exercices dans l'ordre des
+  objectifs (plus de tri par identifiant) ; plan de travail aux numéros du
+  livret — numérotation commune `services/numerotation_livret.py`.
 - À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
   envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 

@@ -52,6 +52,7 @@ import sqlite3
 
 from services.preambule_atome import construire_preambule
 from services.param_niveaux import lire_cycle
+from services.numerotation_livret import NumerotationLivret, numeroter_sequence
 
 
 # ── Libellés de niveau pour la page de titre ─────────────────────────────────
@@ -115,8 +116,30 @@ def _lire_sequences_du_niveau(conn: sqlite3.Connection,
     return [dict(r) for r in cur.fetchall()]
 
 
+def _numerotation_de_sequence(conn: sqlite3.Connection,
+                              sn_id: str) -> NumerotationLivret:
+    """v0.51.18 — Numéros des exercices tels que le livret de séquence les
+    affiche (services/numerotation_livret.py, source commune). Le plan
+    n'a pas d'option « série A » : on numérote la série A comme le livret
+    par défaut (les séries F et E n'en dépendent pas)."""
+    return numeroter_sequence(conn, sn_id)
+
+
+def _numerotation_de_partie(conn: sqlite3.Connection,
+                            partie_id: str) -> NumerotationLivret:
+    row = conn.execute(
+        "SELECT sequence_par_niveau_id FROM sequence_parties WHERE id = ?",
+        (partie_id,),
+    ).fetchone()
+    if row is None:
+        return NumerotationLivret()
+    return _numerotation_de_sequence(conn, row["sequence_par_niveau_id"])
+
+
 def _lire_parties_de_sequence(conn: sqlite3.Connection,
-                                sn_id: str) -> list[dict]:
+                                sn_id: str,
+                                numerotation: NumerotationLivret | None = None,
+                                ) -> list[dict]:
     """Liste les parties d'une séquence-niveau, ordonnées par numéro,
     avec leur nb_seances_R_AE et leurs exos R+EA.
 
@@ -126,8 +149,8 @@ def _lire_parties_de_sequence(conn: sqlite3.Connection,
             'partie_id': str,
             'numero': int,
             'nb_seances_R_AE': float,
-            'exos_R': list[int],   # numéros d'ordre des exos R dans la partie
-            'exos_EA': list[int],  # idem pour EA
+            'exos_R': list[int],   # numéros des exos R dans le livret
+            'exos_EA': list[int],  # idem pour EA (« Découverte »)
           }, …
         ]
     """
@@ -138,23 +161,27 @@ def _lire_parties_de_sequence(conn: sqlite3.Connection,
         WHERE sequence_par_niveau_id = ?
         ORDER BY numero
     """, (sn_id,))
+    if numerotation is None:
+        numerotation = _numerotation_de_sequence(conn, sn_id)
     parties = []
     for r in cur.fetchall():
         partie_id = r['id']
-        # Exos R + EA dans l'ordre d'assemblage (rang dans la partie)
+        # v0.51.18 — Numéros du livret (série 0, continue sur la séquence),
+        # plus le rang dans la partie.
         cur_ra = conn.execute("""
-            SELECT type, ordre
+            SELECT type, exercice_id
             FROM partie_exos_revision_approche
             WHERE partie_id = ?
             ORDER BY type, ordre
         """, (partie_id,))
-        exos_R = []
-        exos_EA = []
+        ids_R, ids_EA = [], []
         for rr in cur_ra.fetchall():
             if rr['type'] == 'R':
-                exos_R.append(rr['ordre'])
+                ids_R.append(rr['exercice_id'])
             elif rr['type'] == 'EA':
-                exos_EA.append(rr['ordre'])
+                ids_EA.append(rr['exercice_id'])
+        exos_R = numerotation.numeros('R', ids_R)
+        exos_EA = numerotation.numeros('R', ids_EA)
         parties.append({
             'partie_id': partie_id,
             'numero': r['numero'],
@@ -166,7 +193,9 @@ def _lire_parties_de_sequence(conn: sqlite3.Connection,
 
 
 def _lire_objectifs_de_partie(conn: sqlite3.Connection,
-                                partie_id: str) -> list[dict]:
+                                partie_id: str,
+                                numerotation: NumerotationLivret | None = None,
+                                ) -> list[dict]:
     """Liste les objectifs d'une partie, ordonnés par code.
 
     Pour chaque objectif :
@@ -176,7 +205,7 @@ def _lire_objectifs_de_partie(conn: sqlite3.Connection,
           'nom': str,
           'nb_seances': float,
           'notions_titres': list[str],  # noms des notions liées (ordre)
-          'exos_F': list[int],   # numéros d'ordre dans la série F
+          'exos_F': list[int],   # numéros dans la série F du livret (v0.51.18)
           'exos_A': list[int],
           'exos_E': list[int],
         }
@@ -188,6 +217,8 @@ def _lire_objectifs_de_partie(conn: sqlite3.Connection,
         WHERE partie_id = ?
         ORDER BY code
     """, (partie_id,))
+    if numerotation is None:
+        numerotation = _numerotation_de_partie(conn, partie_id)
     objectifs = []
     for r in cur.fetchall():
         obj_id = r['id']
@@ -203,21 +234,21 @@ def _lire_objectifs_de_partie(conn: sqlite3.Connection,
             row['titre'] for row in cur_n.fetchall()
             if row['titre']  # ignore les notions à titre vide
         ]
-        # Exos par série, dans l'ordre d'assemblage
+        # v0.51.18 — Numéros du livret de séquence (continus sur la
+        # séquence), pas le rang dans l'objectif.
         cur_e = conn.execute("""
-            SELECT serie, ordre
+            SELECT serie, exercice_id
             FROM objectif_exos
             WHERE objectif_id = ?
             ORDER BY serie, ordre
         """, (obj_id,))
-        exos_F, exos_A, exos_E = [], [], []
+        ids = {'F': [], 'A': [], 'E': []}
         for re in cur_e.fetchall():
-            if re['serie'] == 'F':
-                exos_F.append(re['ordre'])
-            elif re['serie'] == 'A':
-                exos_A.append(re['ordre'])
-            elif re['serie'] == 'E':
-                exos_E.append(re['ordre'])
+            if re['serie'] in ids:
+                ids[re['serie']].append(re['exercice_id'])
+        exos_F = numerotation.numeros('F', ids['F'])
+        exos_A = numerotation.numeros('A', ids['A'])
+        exos_E = numerotation.numeros('E', ids['E'])
         objectifs.append({
             'id': obj_id,
             'code': r['code'],
@@ -714,13 +745,15 @@ def generer_livret_plans_de_travail(conn: sqlite3.Connection,
     L.append('')
     # 4. Une page par (séquence-niveau, partie)
     for seq in sequences:
-        parties = _lire_parties_de_sequence(conn, seq['sn_id'])
+        numerotation = _numerotation_de_sequence(conn, seq['sn_id'])
+        parties = _lire_parties_de_sequence(conn, seq['sn_id'], numerotation)
         if not parties:
             # Séquence-niveau créée mais sans aucune partie : on saute.
             continue
         parties_count = len(parties)
         for partie in parties:
-            objectifs = _lire_objectifs_de_partie(conn, partie['partie_id'])
+            objectifs = _lire_objectifs_de_partie(
+                conn, partie['partie_id'], numerotation)
             L.extend(_emettre_page_partie(
                 seq, partie, objectifs, parties_count,
             ))
@@ -780,7 +813,8 @@ def generer_plan_de_travail_sequence(conn: sqlite3.Connection,
             niveau, sequence_code,
             "non trouvée dans sequences_par_niveau"
         )
-    parties = _lire_parties_de_sequence(conn, seq['sn_id'])
+    numerotation = _numerotation_de_sequence(conn, seq['sn_id'])
+    parties = _lire_parties_de_sequence(conn, seq['sn_id'], numerotation)
     if not parties:
         raise SequenceParNiveauIntrouvable(
             niveau, sequence_code,
@@ -842,7 +876,8 @@ def generer_plan_de_travail_sequence(conn: sqlite3.Connection,
     # 3. Une page par partie de la séquence (pas de page de titre).
     parties_count = len(parties)
     for partie in parties:
-        objectifs = _lire_objectifs_de_partie(conn, partie['partie_id'])
+        objectifs = _lire_objectifs_de_partie(
+            conn, partie['partie_id'], numerotation)
         L.extend(_emettre_page_partie(
             seq, partie, objectifs, parties_count,
         ))

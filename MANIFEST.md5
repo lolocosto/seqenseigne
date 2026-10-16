@@ -1,4 +1,7 @@
-e35b7f95f96c26a6022f97759631f164  56272  services\livret_sequence.py
-9bcdb62950320b31201837bba173ccde  65630  tests\test_livret_sequence.py
-1fd2557c7ea0a401c97715143d82479c  1442  doc\redemarrage_v0_51_17_1.md
-bc67c5c1b09815a280553d647b8f63a6  13940  doc\ETAT_COURANT.md
+8fe9ac1d3fca83b8afc5cab0d105d5e0  6781  services\numerotation_livret.py
+cecbbe49b39a1927b6099b437df3b5e3  54750  services\livret_sequence.py
+35f6688d2f14dfb75b9b775ee44555fd  36827  services\livret_plans_de_travail.py
+a3d32c4e21227422ef6296510ee1cb77  10956  tests\test_v0_51_18_numerotation_livret.py
+b0eaba6175532854f3141fae2d6ea0a1  32806  tests\test_v0_12_1_livret_plans_de_travail.py
+8b527534f0ca5db4935702e7b056f60f  2448  doc\redemarrage_v0_51_18.md
+afac638cc3476a1c7476f3caeab34379  14153  doc\ETAT_COURANT.md

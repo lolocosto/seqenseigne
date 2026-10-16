@@ -370,8 +370,11 @@ class TestLireParties:
     def test_exos_R_et_EA(self, base):
         seqs = _lire_sequences_du_niveau(base, 'N10', 'C04')
         parties = _lire_parties_de_sequence(base, seqs[0]['sn_id'])
+        # v0.51.18 — Numéros du livret, pas le rang dans la partie : R et
+        # EA de partie forment la série 0 (« Révisions ») du livret, EA à
+        # la suite des R. ex_1 (R) est l'exercice 1, ex_2 (EA) le 2.
         assert parties[0]['exos_R'] == [1]
-        assert parties[0]['exos_EA'] == [1]
+        assert parties[0]['exos_EA'] == [2]
 
 
 class TestLireObjectifs:
@@ -389,7 +392,10 @@ class TestLireObjectifs:
     def test_exos_par_serie(self, base):
         objs = _lire_objectifs_de_partie(base, 'pt_A1')
         ob_02 = next(o for o in objs if o['code'] == '02')
-        assert ob_02['exos_F'] == [1, 2]
+        # v0.51.18 (cadrage D5) — ex_1 et ex_2 sont aussi en révision /
+        # découverte de la partie : le livret ne les émet qu'en série 0,
+        # le plan ne les cite donc pas en série fondamentale.
+        assert ob_02['exos_F'] == []
         assert ob_02['exos_A'] == [1]
         assert ob_02['exos_E'] == [1]
 
