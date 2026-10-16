@@ -127,6 +127,9 @@ MACROS_STRUCTURELLES: set[str] = {
     # ── Macros de livret jamais utilisables dans un atome ─────────────────
     '\\seqTitreLivret',
     '\\seqTitreLivretAuto',
+    # v0.51.17 — crochet d'insertion après le titre d'une série
+    # (Prérequis sous « Révisions » dans le livret de séquence).
+    '\\seqContenuAvantSerie',
 }
 
 

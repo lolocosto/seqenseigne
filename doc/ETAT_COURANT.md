@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.16** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.17** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -67,6 +67,11 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
   indisponibilité « de M4 à M5 » ne raye plus l'après-midi).
 - v0.51.16 livrée : échange automatique par API (l'atelier appelle l'appli
   de classe avec un jeton à expiration ; `doc/api_boite.md`).
+- v0.51.17 livrée : livret de séquence — objectifs en page 1, une boîte
+  par partie (titrée « 1re partie »…), même sans critères ; prérequis sous
+  « Révisions » via le crochet paquet `\seqContenuAvantSerie`
+  (`doc/redemarrage_v0_51_17.md` ; exige `seqenseigne-theme` et
+  `seqenseigne-core-exos` à jour).
 - À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
   envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 

@@ -613,7 +613,8 @@ def _generer_tableau_prerequis(conn: sqlite3.Connection,
                                 niveau: str,
                                 sequence_code: str,
                                 precedences: list[dict]) -> str:
-    """Produit le bloc LaTeX « Prérequis » à inliner après la boîte de titre.
+    """Produit le bloc LaTeX « Prérequis » (v0.51.17 : émis sous le titre
+    « Révisions », cf. generer_livret_sequence section 5).
 
     Format (v0.11.3) : groupé par séquence de précédence. Pour chaque
     précédence, un sous-titre indique « Séquence S01 — Représentations
@@ -686,67 +687,85 @@ def _generer_tableau_prerequis(conn: sqlite3.Connection,
     return "\n".join(L)
 
 
+def _ordinal_partie(numero: int) -> str:
+    """« 1\\textsuperscript{re} », « 2\\textsuperscript{e} », … (v0.51.17)."""
+    suffixe = "re" if numero == 1 else "e"
+    return f"{numero}\\textsuperscript{{{suffixe}}}"
+
+
+def _compter_parties(conn: sqlite3.Connection,
+                     niveau: str,
+                     sequence_code: str) -> int:
+    row = conn.execute(
+        """
+        SELECT COUNT(*) AS n
+        FROM sequences_par_niveau sn
+        JOIN sequence_parties sp ON sp.sequence_par_niveau_id = sn.id
+        WHERE sn.niveau = ? AND sn.sequence_code = ?
+        """,
+        (niveau, sequence_code),
+    ).fetchone()
+    return int(row["n"] or 0)
+
+
 def _generer_tableau_objectifs(conn: sqlite3.Connection,
                                 niveau: str,
                                 sequence_code: str) -> str:
-    """Produit le bloc LaTeX « Objectifs » à inliner après les Prérequis.
+    """Produit le bloc LaTeX « Objectifs », émis en page 1 sous la boîte
+    de titre.
 
-    Format (v0.11.3) : un tableau tabularray avec 4 colonnes :
-        Objectif | À consolider | Satisfaisant | Très bon
-    soit, en termes de critères saisis :
-        nom      | critere_F     | critere_A    | critere_E
+    v0.51.17 (cadrage D2) — Une boîte `\\seqRenduTableauObjectifs` PAR
+    PARTIE de séquence, pour séparer nettement les parties. Titre de la
+    boîte (argument optionnel du paquet, seqenseigne-theme ≥ v0.51.17) :
+      - séquence à une seule partie : titre par défaut « Objectifs »
+        (pas d'argument optionnel) ;
+      - sinon « Objectifs — 1\\textsuperscript{re} partie », etc.
+    Une partie sans objectif n'a pas de boîte.
 
-    On regroupe par partie (sous-titre) si la séquence en a plusieurs,
-    sinon on rend un tableau unique. Si aucun objectif n'a de critère
-    saisi, on n'affiche pas la table — c'est le cas où ça n'apporterait
-    rien à l'élève.
+    Les tableaux sont émis même si aucun critère F/A/E n'est saisi
+    (décision Laurent v0.51.17 : ils ouvrent le livret et annoncent les
+    objectifs ; les cellules vides restent vides).
+
+    Colonnes (en-tête fixe côté paquet) :
+        Objectif | À consolider | Satisfaisant | Très bien
+        nom      | critere_F    | critere_A    | critere_E
     """
     objs = _lire_objectifs_de_sequence(conn, niveau, sequence_code)
     if not objs:
         return ""
 
-    # On n'affiche le tableau que s'il y a au moins un objectif avec au
-    # moins un critère renseigné. Sinon le tableau serait vide et inutile.
-    if not any(o["critere_F"] or o["critere_A"] or o["critere_E"] for o in objs):
-        return ""
+    # Regroupement par partie, dans l'ordre (la requête trie déjà par
+    # numéro de partie puis code d'objectif).
+    par_partie: dict[int, list[dict]] = {}
+    for o in objs:
+        par_partie.setdefault(o["partie_numero"], []).append(o)
+
+    plusieurs_parties = _compter_parties(conn, niveau, sequence_code) > 1
 
     L: list[str] = []
-    # v0.13.2 — Le tableau d'objectifs est désormais émis via la commande
-    # `\seqRenduTableauObjectifs{...}` du paquet seqenseigne-theme. La
-    # commande encapsule les lignes dans une boîte tcolorbox avec
-    # le titre « Objectifs », gère elle-même le tabularx (via la clé
-    # tcolorbox `tabularx*={}{X|X|X|X}`) et insère un en-tête à 2
-    # niveaux fixe (« Niveau de maîtrise » couvrant les 3 colonnes
-    # critères, puis « À consolider | Satisfaisant | Très bien »).
-    #
-    # Côté Python, on n'émet plus que les lignes de données :
-    #   Objectif & critère_F & critère_A & critère_E \\\hline
-    # La dernière ligne ne porte PAS de \hline final (sinon trait
-    # redondant avec la frame de la boîte).
-    L.append(r"%% Objectifs générés depuis la BDD (v0.11.3) — remplace "
-             r"\seqRenduTableauObjectifs du paquet legacy.")
-    L.append(r"%% v0.13.2 — Émis comme argument de la commande paquet "
-             r"\seqRenduTableauObjectifs (boîte tcolorbox + tabularx intégré).")
-    # Construire les lignes (séparées par \\\hline sauf la dernière)
-    lignes_data: list[str] = []
-    for o in objs:
-        code = o["code"]
-        nom  = o["nom"]
-        cf, ca, ce = o["critere_F"], o["critere_A"], o["critere_E"]
-        prefixe = f"\\textbf{{{_echapper_simple(code)}.}} " if code else ""
-        cellule_obj = prefixe + _echapper_simple(nom)
-        lignes_data.append(
-            cellule_obj + " & "
-            + _echapper_simple(cf) + " & "
-            + _echapper_simple(ca) + " & "
-            + _echapper_simple(ce)
-        )
-    # Joindre avec \\\hline entre lignes (pas après la dernière, pour
-    # éviter un trait redondant avec la frame de la boîte tcolorbox).
-    contenu_tableau = " \\\\\\hline\n  ".join(lignes_data)
-    L.append(r"\seqRenduTableauObjectifs{%")
-    L.append("  " + contenu_tableau)
-    L.append(r"}")
+    L.append(r"%% Objectifs générés depuis la BDD — v0.51.17 : une boîte "
+             r"par partie, en page 1.")
+    for numero, objs_partie in par_partie.items():
+        lignes_data: list[str] = []
+        for o in objs_partie:
+            code = o["code"]
+            prefixe = f"\\textbf{{{_echapper_simple(code)}.}} " if code else ""
+            lignes_data.append(
+                prefixe + _echapper_simple(o["nom"]) + " & "
+                + _echapper_simple(o["critere_F"]) + " & "
+                + _echapper_simple(o["critere_A"]) + " & "
+                + _echapper_simple(o["critere_E"])
+            )
+        # Pas de \\hline après la dernière ligne (trait redondant avec
+        # le cadre de la boîte).
+        contenu_tableau = " \\\\\\hline\n  ".join(lignes_data)
+        if plusieurs_parties:
+            titre = "Objectifs — " + _ordinal_partie(numero) + " partie"
+            L.append(r"\seqRenduTableauObjectifs[" + titre + "]{%")
+        else:
+            L.append(r"\seqRenduTableauObjectifs{%")
+        L.append("  " + contenu_tableau)
+        L.append(r"}")
     return "\n".join(L)
 
 
@@ -1096,24 +1115,26 @@ def generer_livret_sequence(conn: sqlite3.Connection,
     L.append(r"\end{boiteTitreGen}")
     L.append("")
 
-    # ── v0.11.3 — Bloc « Prérequis » ───────────────────────────────────────
+    # ── v0.51.17 — Bloc « Objectifs » en page 1 (cadrage D1/D2) ───────────
+    # Une boîte par partie, sous la boîte de titre, toujours émise dès
+    # qu'il existe au moins un objectif (même sans critère saisi).
+    # Historique : v0.11.3 après les Prérequis, v0.13.3 après les
+    # Révisions/AE.
+    bloc_objs = _generer_tableau_objectifs(conn, niveau, sequence_code)
+    if bloc_objs:
+        L.append(bloc_objs)
+        L.append("")
+
+    # ── v0.11.3 / v0.51.17 — Bloc « Prérequis » ────────────────────────────
     # Inliné depuis la BDD (table sequence_par_niveau_precedences +
-    # objectifs.nom des séquences référencées). Remplace la macro
-    # \seqRenduTableauPrerequis du paquet seqenseigne (marquée STATUT_IGNORE).
-    # Si pas de précédence enregistrée, ou que toutes pointent vers des
-    # séquences vides en BDD, le bloc est silencieusement omis.
+    # objectifs.nom des séquences référencées). Omis silencieusement si
+    # pas de précédence ou séquences vides.
+    # v0.51.17 (cadrage D4) — Émis SOUS le titre « Révisions » (section 5
+    # ci-dessous), plus en page 1.
     precedences = data.get("precedences") or []
     bloc_prereq = _generer_tableau_prerequis(
         conn, niveau, sequence_code, precedences,
     )
-    if bloc_prereq:
-        L.append(bloc_prereq)
-        L.append("")
-
-    # v0.13.3 — Le bloc « Objectifs » a été DÉPLACÉ ci-dessous,
-    # après les Révisions/Activités d'approche (cadrage Laurent
-    # v0.13.3 : ordre pédagogique modifié → Prérequis, Révisions,
-    # puis Objectifs, puis Cours, puis Exos F/A/E).
 
     # Helper : émet un seqSerieExos pour les exos d'un code donné.
     # Variables au top-level avant \begin{seqSerieExos} (cf.
@@ -1137,45 +1158,47 @@ def generer_livret_sequence(conn: sqlite3.Connection,
         L.append(r"\end{seqSerieExos}")
         L.append("")
 
-    # ── 5. Révisions et Activités d'approche (numéro 0 du paquet) ──────────
+    # ── 5. Révisions : Prérequis + exos R/AE (numéro 0 du paquet) ─────────
     # Doivent venir AVANT le bloc Cours (cf. cadrage Laurent v0.11.2 :
     # ordre pédagogique = on commence par les révisions/AP, puis on
     # introduit le cours, puis on enchaîne sur les exercices F/A/E).
+    #
+    # v0.51.17 (cadrage D4) — La boîte Prérequis est placée sous le titre
+    # « Révisions ». Ce titre est émis par seqSerieExos lui-même
+    # (\seqTitreSection dans seqenseigne-core-exos) : on passe donc la
+    # boîte par le crochet \seqContenuAvantSerie{...} (paquet ≥ v0.51.17),
+    # consommé une seule fois juste après le titre de la série suivante.
+    # Sans exos R/AE, on émet nous-mêmes \seqTitreSection{Révisions} puis
+    # la boîte : même rendu.
+    entries_rev: list[tuple[str, str]] = []
     if opts["exercices"]["inclure"]:
         # R et AE partagent le même numéro de série paquet (0 = Révisions)
         # mais sont stockés séparément côté Python pour faciliter la
         # désactivation indépendante future. Pour l'émission, on les
         # fusionne dans un seul \begin{seqSerieExos}{0}.
         entries_rev = exos_par_serie.get("R", []) + exos_par_serie.get("AE", [])
-        if entries_rev:
-            # v0.11.3 — \clearpage avant chaque série d'exercices.
-            L.append(r"\clearpage")
-            for variables, _ in entries_rev:
-                if variables:
-                    L.append(variables)
-                    L.append("")
-            L.append(r"\begin{seqSerieExos}{0}")
-            for _, bloc in entries_rev:
-                L.append(bloc)
-            L.append(r"\end{seqSerieExos}")
-            L.append("")
-
-    # ── v0.11.3 / déplacé v0.13.3 — Bloc « Objectifs » ─────────────────────
-    # Inliné depuis la BDD (objectifs + critère_F/A/E). Remplace la
-    # macro \seqRenduTableauObjectifs du paquet (marquée STATUT_IGNORE).
-    # Mapping critères → niveaux de maîtrise affichés :
-    #   critere_F → "À consolider"
-    #   critere_A → "Satisfaisant"
-    #   critere_E → "Très bien"
-    # Le bloc est omis si aucun objectif n'a de critère renseigné.
-    #
-    # v0.13.3 : déplacé APRÈS les Révisions/AE (cadrage Laurent : on
-    # introduit la séquence par ses prérequis et révisions avant
-    # d'annoncer ses objectifs concrets, puis le cours et les
-    # exercices d'application).
-    bloc_objs = _generer_tableau_objectifs(conn, niveau, sequence_code)
-    if bloc_objs:
-        L.append(bloc_objs)
+    if entries_rev:
+        # v0.11.3 — \clearpage avant chaque série d'exercices.
+        L.append(r"\clearpage")
+        for variables, _ in entries_rev:
+            if variables:
+                L.append(variables)
+                L.append("")
+        if bloc_prereq:
+            L.append(r"%% v0.51.17 — Prérequis sous le titre « Révisions » "
+                     r"(crochet du paquet, consommé par seqSerieExos).")
+            L.append(r"\seqContenuAvantSerie{%")
+            L.append(bloc_prereq)
+            L.append(r"}")
+        L.append(r"\begin{seqSerieExos}{0}")
+        for _, bloc in entries_rev:
+            L.append(bloc)
+        L.append(r"\end{seqSerieExos}")
+        L.append("")
+    elif bloc_prereq:
+        L.append(r"\clearpage")
+        L.append(r"\seqTitreSection{Révisions}")
+        L.append(bloc_prereq)
         L.append("")
 
     # ── 6. Bloc Cours ──────────────────────────────────────────────────────

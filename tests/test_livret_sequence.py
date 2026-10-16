@@ -575,16 +575,15 @@ class TestTableauObjectifs:
         assert "A appris la définition." in tex
         assert "Utilise la notion en autonomie." in tex
 
-    def test_tableau_objectifs_omis_si_aucun_critere(self, app_avec_seq):
-        """Dans la fixture app_avec_seq, ob_01 et ob_02 n'ont pas de
-        critères saisis (chaînes vides par défaut). Le tableau ne doit
-        pas être émis.
-
-        v0.13.2 — On vérifie l'absence de la commande
-        \\seqRenduTableauObjectifs."""
+    def test_tableau_objectifs_emis_meme_sans_aucun_critere(self, app_avec_seq):
+        """v0.51.17 — Le tableau d'objectifs ouvre désormais le livret :
+        il annonce les objectifs de la séquence à l'élève, critères
+        saisis ou non (décision Laurent). Avant v0.51.17, il était omis
+        quand aucun critère F/A/E n'était saisi — c'est ce cas (ob_01 et
+        ob_02 de app_avec_seq, sans critères) que l'on protège ici."""
         with _conn(app_avec_seq) as conn:
             tex = generer_livret_sequence(conn, "N11", "S01")
-        assert r"\seqRenduTableauObjectifs{" not in tex
+        assert r"\seqRenduTableauObjectifs{" in tex
         assert r"\seqTitreSection{Objectifs}" not in tex
 
     def test_tableau_objectifs_emet_lignes_meme_partielles(self, app_avec_criteres):
@@ -1075,20 +1074,22 @@ class TestV0132CommandesPaquet:
         avant_fin = contenu[max(0, idx_fin - idx_debut - 50):idx_fin - idx_debut + 3]
         assert r"\\\hline" not in avant_fin
 
-    def test_prerequis_avant_objectifs_dans_le_livret(self,
+    def test_objectifs_avant_prerequis_dans_le_livret(self,
                                                      app_avec_precedence):
-        """Les prérequis sont présentés avant les objectifs dans le
-        livret. Cet ordre est inchangé par v0.13.2."""
+        """v0.51.17 (cadrage D1) — Ordre inversé par rapport à v0.13.2 :
+        les objectifs sont en page 1, juste sous la boîte de titre ; les
+        prérequis passent sous le titre « Révisions ». Les objectifs
+        sont toujours émis (même sans critère), donc les deux blocs sont
+        présents sur app_avec_precedence."""
         with _conn(app_avec_precedence) as conn:
             tex = generer_livret_sequence(conn, "N11", "S01")
 
-        idx_prereq = tex.find(r"\seqRenduTableauPrerequis{")
+        idx_titre = tex.find(r"\end{boiteTitreGen}")
         idx_obj = tex.find(r"\seqRenduTableauObjectifs{")
-        # Sur app_avec_precedence il n'y a pas forcément de critères F/A/E
-        # donc Objectifs peut ne pas être émis. On vérifie l'ordre seulement
-        # si les deux sont présents.
-        if idx_prereq >= 0 and idx_obj >= 0:
-            assert idx_prereq < idx_obj
+        idx_prereq = tex.find(r"\seqRenduTableauPrerequis{")
+        assert 0 <= idx_titre < idx_obj < idx_prereq
+        # Rien ne sépare la boîte de titre des objectifs (même page).
+        assert r"\clearpage" not in tex[idx_titre:idx_obj]
 
     def test_aucune_trace_des_anciens_marqueurs(self, app_avec_criteres):
         """Régression : v0.13.2 supprime explicitement les anciens
@@ -1124,3 +1125,121 @@ class TestV0132CommandesPaquet:
         with _conn(app_avec_criteres) as conn:
             tex = generer_livret_sequence(conn, "N11", "S01")
         assert r"\usepackage{tabularx}" in tex
+
+
+# ── Tests v0.51.17 — Objectifs par partie en page 1, Prérequis sous « Révisions »
+
+def _ajouter_partie_2(app):
+    """Ajoute une 2e partie (avec un objectif) à la séquence N11/S01."""
+    with app.json_store._conn() as conn:
+        conn.executescript("""
+            INSERT INTO sequence_parties (id, sequence_par_niveau_id, numero)
+                VALUES ('pt_p2', 'sn_n11_s01', 2);
+            INSERT INTO objectifs (id, partie_id, code, nom, methode_id)
+                VALUES ('ob_p2_01', 'pt_p2', '03', 'Objectif de la partie 2', NULL);
+        """)
+        conn.commit()
+
+
+class TestV05117ObjectifsParPartie:
+
+    def test_une_seule_partie_titre_par_defaut(self, app_avec_seq):
+        """Séquence à une partie : une seule boîte, sans argument
+        optionnel, donc titrée « Objectifs » par le paquet. Numéroter
+        « 1re partie » quand il n'y en a qu'une n'apporterait rien."""
+        with _conn(app_avec_seq) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01")
+        assert tex.count(r"\seqRenduTableauObjectifs") == 1
+        assert r"\seqRenduTableauObjectifs[" not in tex
+        assert "partie" not in tex[tex.find(r"\seqRenduTableauObjectifs"):][:60]
+
+    def test_une_boite_par_partie_titree(self, app_avec_seq):
+        """Plusieurs parties : une boîte par partie, titrée par l'argument
+        optionnel du paquet (séparation nette entre parties, cadrage D2).
+        Chaque objectif est dans la boîte de SA partie."""
+        _ajouter_partie_2(app_avec_seq)
+        with _conn(app_avec_seq) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01")
+        t1 = r"\seqRenduTableauObjectifs[Objectifs — 1\textsuperscript{re} partie]{"
+        t2 = r"\seqRenduTableauObjectifs[Objectifs — 2\textsuperscript{e} partie]{"
+        i1, i2 = tex.find(t1), tex.find(t2)
+        assert 0 <= i1 < i2
+        assert tex.count(r"\seqRenduTableauObjectifs") == 2
+        i_obj_p2 = tex.find("Objectif de la partie 2")
+        assert i2 < i_obj_p2
+        assert "Objectif de la partie 2" not in tex[i1:i2]
+
+    def test_partie_sans_objectif_sans_boite(self, app_avec_seq):
+        """Une partie encore vide (en conception) n'a pas de boîte, mais
+        la numérotation des autres parties reste celle de la séquence
+        (on ne renumérote pas : « 1re partie » reste la 1re)."""
+        with app_avec_seq.json_store._conn() as conn:
+            conn.execute(
+                "INSERT INTO sequence_parties (id, sequence_par_niveau_id, numero) "
+                "VALUES ('pt_p2', 'sn_n11_s01', 2)")
+            conn.commit()
+        with _conn(app_avec_seq) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01")
+        assert tex.count(r"\seqRenduTableauObjectifs") == 1
+        assert "1\\textsuperscript{re} partie" in tex
+        assert "2\\textsuperscript{e} partie" not in tex
+
+
+class TestV05117PrerequisSousRevisions:
+
+    def test_prerequis_par_le_crochet_avant_la_serie_0(self, app_avec_precedence):
+        """Avec des exos R/AE : le titre « Révisions » est émis par
+        seqSerieExos lui-même (paquet). Pour placer la boîte Prérequis
+        SOUS ce titre sans doublon, on la passe par le crochet
+        \seqContenuAvantSerie, juste avant \begin{seqSerieExos}{0}, et
+        on n'émet PAS de \seqTitreSection{Révisions} nous-mêmes."""
+        with app_avec_precedence.json_store._conn() as conn:
+            conn.executescript("""
+                INSERT INTO exercices (id, serie, titre, niveau, sequence, num,
+                                       serie_code, fichier, enonce, corrige)
+                    VALUES ('ex_rev', 'fondamental', 'Rev', 'N10', 'S01', 1, 'F',
+                            'N10S01F01.tex', 'Énoncé révision', 'Corrigé révision');
+                INSERT INTO partie_exos_revision_approche (partie_id, type, exercice_id, ordre,
+                                                           origin_niveau, origin_seq, origin_serie, origin_num)
+                    VALUES ('pt_n11_p1', 'R', 'ex_rev', 1, 'N10', 'S01', 'F', 1);
+            """)
+            conn.commit()
+        with _conn(app_avec_precedence) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01")
+        i_crochet = tex.find(r"\seqContenuAvantSerie{")
+        i_prereq = tex.find(r"\seqRenduTableauPrerequis{")
+        i_serie0 = tex.find(r"\begin{seqSerieExos}{0}")
+        assert 0 <= i_crochet < i_prereq < i_serie0
+        assert r"\seqTitreSection{Révisions}" not in tex
+        # Le crochet ne sert qu'une fois, pour la série 0.
+        assert tex.count(r"\seqContenuAvantSerie") == 1
+
+    def test_prerequis_sans_revisions_titre_emis_par_l_appli(self, app_avec_precedence):
+        """Sans exos R/AE, aucune seqSerieExos{0} ne porte le titre :
+        l'appli émet \seqTitreSection{Révisions} puis la boîte, ce qui
+        donne le même rendu. Le crochet n'est pas utilisé (sinon il
+        resterait armé et apparaîtrait sous « Série fondamentale »)."""
+        with _conn(app_avec_precedence) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01")
+        assert r"\begin{seqSerieExos}{0}" not in tex
+        assert r"\seqContenuAvantSerie" not in tex
+        i_titre = tex.find(r"\seqTitreSection{Révisions}")
+        i_prereq = tex.find(r"\seqRenduTableauPrerequis{")
+        assert 0 <= i_titre < i_prereq
+
+    def test_prerequis_avec_exercices_desactives(self, app_avec_precedence):
+        """Livret sans exercices : les prérequis restent sous un titre
+        « Révisions » émis par l'appli (pas de série pour les porter)."""
+        with _conn(app_avec_precedence) as conn:
+            tex = generer_livret_sequence(
+                conn, "N11", "S01", {"exercices": {"inclure": False}})
+        assert r"\seqContenuAvantSerie" not in tex
+        assert tex.find(r"\seqTitreSection{Révisions}") < tex.find(r"\seqRenduTableauPrerequis{")
+        assert r"\seqRenduTableauPrerequis{" in tex
+
+    def test_pas_de_revisions_sans_prerequis_ni_exos(self, app_avec_criteres):
+        """Ni prérequis ni exos R/AE : pas de section Révisions vide."""
+        with _conn(app_avec_criteres) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01")
+        assert r"\seqTitreSection{Révisions}" not in tex
+        assert r"\seqContenuAvantSerie" not in tex
