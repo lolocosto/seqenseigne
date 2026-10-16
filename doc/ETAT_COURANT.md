@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.17** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.17.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -72,6 +72,9 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
   « Révisions » via le crochet paquet `\seqContenuAvantSerie`
   (`doc/redemarrage_v0_51_17.md` ; exige `seqenseigne-theme` et
   `seqenseigne-core-exos` à jour).
+- v0.51.17.1 livrée : correctif — `\seqContenuAvantSerie` recopiée dans le
+  préambule du livret (liste `FRAGMENT_SQUELETTE_LIVRET`, test
+  `TestSqueletteLivret` avec paquet indexé simulé).
 - À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
   envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 

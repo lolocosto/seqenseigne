@@ -1243,3 +1243,96 @@ class TestV05117PrerequisSousRevisions:
             tex = generer_livret_sequence(conn, "N11", "S01")
         assert r"\seqTitreSection{Révisions}" not in tex
         assert r"\seqContenuAvantSerie" not in tex
+
+
+# ── Test v0.51.17 (correctif) — Tout ce que le squelette émet est inliné ────
+
+class TestSqueletteLivret:
+    r"""Le livret ne charge pas seqenseigne.sty : son préambule est
+    reconstruit par `construire_preambule`, qui n'inline QUE les
+    définitions de `paquet_definitions` atteintes depuis le texte analysé
+    (corps d'atomes + FRAGMENT_SQUELETTE_LIVRET). Une macro du paquet
+    émise par le squelette mais oubliée dans le fragment compile en
+    « Undefined control sequence » — même avec un paquet MiKTeX à jour.
+    C'est arrivé en v0.51.17 avec \seqContenuAvantSerie (les autres tests
+    passaient : leur paquet_definitions est vide).
+
+    Le test simule un paquet indexé : chaque macro / environnement
+    `seq…` ou `boite…` présent dans le document reçoit une définition
+    factice ; on vérifie qu'elle est bien recopiée dans le préambule.
+    On couvre les branches du squelette : objectifs à plusieurs parties
+    (argument optionnel), prérequis via le crochet (exos R/AE), et
+    prérequis sans série 0 (titre émis par l'appli)."""
+
+    @staticmethod
+    def _noms_du_document(tex: str) -> set[str]:
+        import re
+        corps = tex.split(r"\begin{document}", 1)[1]
+        macros = {"\\" + m for m in re.findall(r"\\((?:seq|boite)[A-Za-z]+)", corps)}
+        envs = set(re.findall(r"\\begin\{((?:seq|boite)[A-Za-z]+)\}", corps))
+        return macros | envs
+
+    @staticmethod
+    def _indexer_paquet_factice(app, noms: set[str]) -> None:
+        import json
+        with app.json_store._conn() as conn:
+            for nom in sorted(noms):
+                est_env = not nom.startswith("\\")
+                marque = "DEFFACTICE" + nom.lstrip("\\")
+                if est_env:
+                    texte = r"\newenvironment{" + nom + "}{" + marque + "}{}"
+                else:
+                    texte = r"\newcommand{" + nom + "}{" + marque + "}"
+                conn.execute(
+                    "INSERT OR REPLACE INTO paquet_definitions "
+                    "(nom, type_latex, args_spec, corps, texte_complet, "
+                    " fichier_source, ligne_debut, macros_appelees, "
+                    " environnements_utilises, statut_rendu_atome, contenu_atome) "
+                    "VALUES (?, ?, '', '', ?, 'seqenseigne-core.sty', 1, ?, ?, "
+                    " 'reutilise', ?)",
+                    (nom, "environment" if est_env else "command", texte,
+                     json.dumps([]), json.dumps([]), texte),
+                )
+            conn.commit()
+
+    def _verifier(self, app, options=None):
+        with _conn(app) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01", options)
+        noms = self._noms_du_document(tex)
+        self._indexer_paquet_factice(app, noms)
+        with _conn(app) as conn:
+            tex = generer_livret_sequence(conn, "N11", "S01", options)
+        preambule = tex.split(r"\begin{document}", 1)[0]
+        manquants = sorted(n for n in noms
+                           if "DEFFACTICE" + n.lstrip("\\") not in preambule)
+        assert not manquants, (
+            "Émis par le livret mais non inlinés dans le préambule "
+            f"(à ajouter à FRAGMENT_SQUELETTE_LIVRET) : {manquants}")
+        return noms
+
+    def test_prerequis_par_le_crochet_et_plusieurs_parties(self, app_avec_precedence):
+        with app_avec_precedence.json_store._conn() as conn:
+            conn.executescript("""
+                INSERT INTO exercices (id, serie, titre, niveau, sequence, num,
+                                       serie_code, fichier, enonce, corrige)
+                    VALUES ('ex_rev', 'fondamental', 'Rev', 'N10', 'S01', 1, 'F',
+                            'N10S01F01.tex', 'Énoncé révision', 'Corrigé révision');
+                INSERT INTO partie_exos_revision_approche (partie_id, type, exercice_id, ordre,
+                                                           origin_niveau, origin_seq, origin_serie, origin_num)
+                    VALUES ('pt_n11_p1', 'R', 'ex_rev', 1, 'N10', 'S01', 'F', 1);
+                INSERT INTO sequence_parties (id, sequence_par_niveau_id, numero)
+                    VALUES ('pt_n11_p2', 'sn_n11_s01', 2);
+                INSERT INTO objectifs (id, partie_id, code, nom, methode_id)
+                    VALUES ('ob_n11_02', 'pt_n11_p2', '02', 'Partie 2', NULL);
+            """)
+            conn.commit()
+        noms = self._verifier(app_avec_precedence)
+        # Le cas qui a planté en v0.51.17 est bien couvert.
+        assert "\\seqContenuAvantSerie" in noms
+
+    def test_prerequis_sans_serie_0(self, app_avec_precedence):
+        noms = self._verifier(app_avec_precedence)
+        assert "\\seqTitreSection" in noms
+
+    def test_livret_complet(self, app_avec_seq):
+        self._verifier(app_avec_seq)

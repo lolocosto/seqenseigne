@@ -1,5 +1,4 @@
-4b3fac3a422fe31328e55558d33954d9  56182  services\livret_sequence.py
-ccb9018629f81a8655bc196ec5306e02  9380  services\paquet_expose.py
-a50999cd871536e836aef28f49147b8b  60819  tests\test_livret_sequence.py
-c6ec38eef29d6c94f329bdfbd8de636b  3532  doc\redemarrage_v0_51_17.md
-24935ae6bbc51f904d33e2747eb1b262  13741  doc\ETAT_COURANT.md
+e35b7f95f96c26a6022f97759631f164  56272  services\livret_sequence.py
+9bcdb62950320b31201837bba173ccde  65630  tests\test_livret_sequence.py
+1fd2557c7ea0a401c97715143d82479c  1442  doc\redemarrage_v0_51_17_1.md
+bc67c5c1b09815a280553d647b8f63a6  13940  doc\ETAT_COURANT.md

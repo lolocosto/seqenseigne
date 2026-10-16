@@ -769,6 +769,33 @@ def _generer_tableau_objectifs(conn: sqlite3.Connection,
     return "\n".join(L)
 
 
+# Macros et environnements émis par le squelette du livret lui-même (en
+# plus des corps d'atomes). `construire_preambule` n'inline QUE les
+# définitions du paquet atteintes depuis le texte qu'on lui donne : le
+# livret ne charge pas seqenseigne.sty. Une macro émise par
+# generer_livret_sequence mais absente d'ici compile en « Undefined
+# control sequence », même avec un paquet MiKTeX à jour (v0.51.17 :
+# \seqContenuAvantSerie oublié). Protégé par
+# test_livret_sequence.TestSqueletteLivret.
+#
+# On peut sans risque inclure des macros qui ne seraient finalement pas
+# émises (selon les toggles) — `construire_preambule` se contentera
+# d'inliner leur définition, ce qui est gratuit.
+FRAGMENT_SQUELETTE_LIVRET = r"""
+\seqCreeCompteurs
+\seqSetCodeNiveau{X}\seqSetCodeSequence{X}\seqSetColorsTheme{X}
+\seqInitCorriges\seqInitAnnexes\seqAfficheAnnexes\seqAfficheCorriges
+\seqInitRemediation\seqAfficheRemediations\seqAfficheCorrigesRemediation
+\seqRemediation{X}{X}\seqCadreReponse{1}
+\seqTitreSection{X}
+\seqStyleObjectifsHeader{X}
+\seqRenduTableauPrerequis{X}\seqRenduTableauObjectifs{X}
+\seqContenuAvantSerie{X}
+\begin{seqSerieExos}{0}\end{seqSerieExos}
+\begin{boiteTitreGen}{X}\end{boiteTitreGen}
+"""
+
+
 # ── Génération principale ────────────────────────────────────────────────────
 
 def generer_livret_sequence(conn: sqlite3.Connection,
@@ -919,30 +946,8 @@ def generer_livret_sequence(conn: sqlite3.Connection,
             tous_textes.append(bloc)
     for _, t in fiches_tex:   tous_textes.append(t)
 
-    # Macros et environnements émis par le squelette du livret lui-même
-    # (en plus des corps d'atomes). Sans cet ajout, `construire_preambule`
-    # n'inlinerait pas les définitions de \seqTitreLivret, \seqTitreSection,
-    # \seqAfficheCorriges, \seqInitAnnexes, etc., et la compilation
-    # planterait avec « Undefined control sequence ».
-    #
-    # NB : cette liste doit rester synchronisée avec les macros que
-    # generer_livret_sequence émet effectivement (cf. assemblage du .tex
-    # plus bas). On peut sans risque inclure des macros qui ne seraient
-    # finalement pas émises (selon les toggles) — `construire_preambule`
-    # se contentera d'inliner leur définition, ce qui est gratuit.
-    fragment_squelette_livret = r"""
-\seqCreeCompteurs
-\seqSetCodeNiveau{X}\seqSetCodeSequence{X}\seqSetColorsTheme{X}
-\seqInitCorriges\seqInitAnnexes\seqAfficheAnnexes\seqAfficheCorriges
-\seqInitRemediation\seqAfficheRemediations\seqAfficheCorrigesRemediation
-\seqRemediation{X}{X}\seqCadreReponse{1}
-\seqTitreSection{X}
-\seqStyleObjectifsHeader{X}
-\seqRenduTableauPrerequis{X}\seqRenduTableauObjectifs{X}
-\begin{seqSerieExos}{0}\end{seqSerieExos}
-\begin{boiteTitreGen}{X}\end{boiteTitreGen}
-"""
-    tous_textes.append(fragment_squelette_livret)
+    # Macros émises par le squelette du livret (cf. FRAGMENT_SQUELETTE_LIVRET).
+    tous_textes.append(FRAGMENT_SQUELETTE_LIVRET)
     texte_global = "\n".join(tous_textes)
 
     macros_utilisees, envs_utilises = extraire_utilisations(texte_global)
