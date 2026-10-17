@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.51.18** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.51.19** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -78,6 +78,9 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.18 livrée : livret de séquence, exercices dans l'ordre des
   objectifs (plus de tri par identifiant) ; plan de travail aux numéros du
   livret — numérotation commune `services/numerotation_livret.py`.
+- v0.51.19 livrée : fiches de résumé — zone d'exemple de N lignes sous
+  chaque zone de texte (fiche sur plusieurs pages), zone « Exemples » de
+  fin de page optionnelle (cochée par défaut).
 - À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
   envois : dossier synchronisé ou API réduite à la boîte aux lettres).
 

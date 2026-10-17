@@ -1549,6 +1549,15 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.51.19 — Fiches de résumé : zones d'exemple par zone de texte,
+        #    zone « Exemples » de fin de page optionnelle ─────────────────────
+        try:
+            from services import fiches_resume as _fr
+            _fr.migrer(conn)
+            conn.commit()
+        except Exception:
+            pass
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

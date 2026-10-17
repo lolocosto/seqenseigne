@@ -318,7 +318,10 @@ CREATE TABLE IF NOT EXISTS atome_sections (
                                      -- 'Démonstration de la réciproque',
                                      -- 'Démonstration de la contraposée',
                                      -- 'Propriété'
-    ordre        INTEGER NOT NULL DEFAULT 0
+    ordre        INTEGER NOT NULL DEFAULT 0,
+    -- v0.51.19 — Fiches : zone d'exemple de N lignes après la zone
+    -- (NULL = aucune). Ignoré pour les notions et méthodes.
+    exemple_lignes INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_atome_sections
     ON atome_sections (entite_type, entite_id, ordre);
@@ -846,7 +849,9 @@ CREATE TABLE IF NOT EXISTS fiches_resume (
     niveau       TEXT NOT NULL DEFAULT '',
     sequence     TEXT NOT NULL DEFAULT '',
     fichier      TEXT NOT NULL DEFAULT '',
-    etat_code    TEXT NOT NULL DEFAULT 'en_cours'
+    etat_code    TEXT NOT NULL DEFAULT 'en_cours',
+    -- v0.51.19 — 1 = boîte « Exemples » jusqu'au bas de la dernière page.
+    exemple_fin_page INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_fiches_resume_objectif
     ON fiches_resume (objectif_id);

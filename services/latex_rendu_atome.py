@@ -134,6 +134,10 @@ class Atome:
     remed_corrige: str = ''
     cadre_reponse_lignes_principal: int = 0
     cadre_reponse_lignes_remed: int = 0
+    # v0.51.19 — Fiche : boîte « Exemples » jusqu'au bas de la dernière
+    # page (True = comportement historique). Les zones d'exemple par zone
+    # de texte sont portées par sections[i]['exemple_lignes'].
+    exemple_fin_page: bool = True
 
 
 def lire_codes_objectifs_de_exercice(conn: sqlite3.Connection,
@@ -252,9 +256,11 @@ def charger_atome(conn: sqlite3.Connection, type_atome: str, atome_id: str) -> A
     # lié, utilisé en fallback dans generer_corps_fiche si le titre est
     # vide. LEFT JOIN parce qu'une fiche peut être créée sans objectif
     # (pendant l'édition) ; dans ce cas objectif_nom reste vide.
+    cols_f = {r[1] for r in conn.execute("PRAGMA table_info(fiches_resume)")}
+    col_fin = "f.exemple_fin_page" if "exemple_fin_page" in cols_f else "1"
     row = conn.execute(
         "SELECT f.id, f.niveau, f.sequence, f.fichier, f.titre, "
-        "       COALESCE(o.nom, '') AS objectif_nom "
+        f"       COALESCE(o.nom, '') AS objectif_nom, {col_fin} "
         "FROM fiches_resume f "
         "LEFT JOIN objectifs o ON o.id = f.objectif_id "
         "WHERE f.id = ?", (atome_id,)
@@ -268,6 +274,7 @@ def charger_atome(conn: sqlite3.Connection, type_atome: str, atome_id: str) -> A
         titre=row[4] or '',
         objectif_nom=row[5] or '',
         sections=_charger_sections(conn, 'fiche_resume', row[0]),
+        exemple_fin_page=(row[6] is None or bool(row[6])),
     )
 
 
@@ -280,8 +287,12 @@ def _charger_sections(conn: sqlite3.Connection,
     de la liste est l'ordre d'affichage. Les items contiennent du LaTeX
     brut, prêt à être inséré dans le rendu sans modification.
     """
+    # v0.51.19 — exemple_lignes (fiches) : colonne absente des bases
+    # anciennes et des schémas de test minimaux → NULL.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(atome_sections)")}
+    col_ex = "exemple_lignes" if "exemple_lignes" in cols else "NULL"
     sections_rows = conn.execute(
-        "SELECT id, titre FROM atome_sections "
+        f"SELECT id, titre, {col_ex} FROM atome_sections "
         "WHERE entite_type = ? AND entite_id = ? ORDER BY ordre",
         (entite_type, entite_id),
     ).fetchall()
@@ -292,10 +303,13 @@ def _charger_sections(conn: sqlite3.Connection,
             "WHERE section_id = ? ORDER BY ordre",
             (sr[0],),
         ).fetchall()
-        out.append({
+        sec = {
             'titre': sr[1],
             'items': [ir[0] for ir in items_rows],
-        })
+        }
+        if sr[2]:
+            sec['exemple_lignes'] = int(sr[2])
+        out.append(sec)
     return out
 
 
@@ -1189,12 +1203,34 @@ def generer_corps_fiche(atome: Atome) -> str:
             if t:
                 parties.append(t)
         parties.append(r'\end{seqBoiteContenuFlashcard}')
+        # v0.51.19 — Zone d'exemple de N lignes sous la zone de texte :
+        # même boîte que la zone finale (titre par défaut « Exemples » du
+        # paquet), espace blanc pour écrire ou tracer. Les boîtes ne se
+        # coupent pas : une zone qui ne tient plus passe à la page
+        # suivante (fiche sur plusieurs pages).
+        n_lignes = sec.get('exemple_lignes')
+        if n_lignes:
+            parties.append(_zone_exemple_lignes(int(n_lignes)))
 
     # Boîte fill finale — même quand 0 sections (cas dégénéré : fiche
     # créée sans contenu, le fill évite une page vide insolite).
-    parties.append(r'\begin{seqBoiteFillContenuFlashcard}\end{seqBoiteFillContenuFlashcard}')
+    # v0.51.19 — Optionnelle (case « Ajouter une zone exemple jusqu'au bas
+    # de page », cochée par défaut). Décochée : simple saut de page, pour
+    # que la fiche suivante commence toujours sur une nouvelle page comme
+    # avec la boîte (qui contient son propre \newpage).
+    if atome.exemple_fin_page:
+        parties.append(r'\begin{seqBoiteFillContenuFlashcard}\end{seqBoiteFillContenuFlashcard}')
+    else:
+        parties.append(r'\newpage')
 
     return '\n'.join(parties)
+
+
+def _zone_exemple_lignes(n_lignes: int) -> str:
+    """v0.51.19 — Boîte « Exemples » de `n_lignes` lignes (espace blanc)."""
+    return (r'\begin{seqBoiteContenuFlashcard}[titre=Exemples]'
+            '\n' + rf'\vspace*{{{n_lignes}\baselineskip}}' + '\n'
+            r'\end{seqBoiteContenuFlashcard}')
 
 
 def generer_corps(atome: Atome, conn=None) -> str:

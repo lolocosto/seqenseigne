@@ -48,6 +48,7 @@ _CODE_HTTP = {
     "objectif_deja_lie":     409,
     "fiche_deja_presente":   409,
     "type_atome_invalide":   400,
+    "zone_exemple_invalide": 400,   # v0.51.19
 }
 
 
@@ -157,6 +158,7 @@ def api_creer_fiche():
                 sequence=sequence,
                 titre=payload.get("titre", ""),
                 sections=payload.get("sections"),
+                exemple_fin_page=bool(payload.get("exemple_fin_page", True)),
             )
     except FicheErreur as e:
         return _erreur(e)
@@ -196,6 +198,8 @@ def api_modifier_fiche(fiche_id: str):
                 titre=payload.get("titre"),
                 sections=payload.get("sections"),
                 objectif_id=payload.get("objectif_id"),
+                exemple_fin_page=(bool(payload["exemple_fin_page"])
+                                  if "exemple_fin_page" in payload else None),
             )
     except FicheErreur as e:
         return _erreur(e)

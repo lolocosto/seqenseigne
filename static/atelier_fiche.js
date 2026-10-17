@@ -227,9 +227,12 @@ class AtelierFiche extends AtelierEditeur {
     const titre = (this.$('titre') || {}).value.trim() || '';
     // Synchroniser this.sections avec le DOM
     this._capturerSectionsDepuisDom();
+    // v0.51.19 — Boîte « Exemples » jusqu'au bas de la dernière page.
+    const finPage = this.$('exemple-fin-page');
     return {
       titre,
       sections: this.sections,
+      exemple_fin_page: finPage ? !!finPage.checked : true,
     };
   }
 
@@ -242,9 +245,12 @@ class AtelierFiche extends AtelierEditeur {
     this.sections = (f.sections || []).map(s => ({
       titre: s.titre || '',
       items: [...(s.items || [])],
+      // v0.51.19 — null = pas de zone d'exemple (même forme qu'à la
+      // collecte : la détection « modifié » compare les deux).
+      exemple_lignes: parseInt(s.exemple_lignes, 10) || null,
     }));
     if (this.sections.length === 0) {
-      this.sections = [{ titre: '', items: [''] }];
+      this.sections = [{ titre: '', items: [''], exemple_lignes: null }];
     }
 
     // v0.13.6.14 — Plus de sélecteur d'objectif à peupler.
@@ -252,6 +258,10 @@ class AtelierFiche extends AtelierEditeur {
     // Titre
     const inputTitre = this.$('titre');
     if (inputTitre) inputTitre.value = f.titre || '';
+
+    // v0.51.19 — Zone « Exemples » de fin de page (cochée par défaut).
+    const finPage = this.$('exemple-fin-page');
+    if (finPage) finPage.checked = f.exemple_fin_page !== false;
 
     // Rendre les zones de texte
     this._renderSections();
@@ -367,6 +377,7 @@ class AtelierFiche extends AtelierEditeur {
       out.push({
         titre: inputTitre ? (inputTitre.value || '') : '',
         items: [textarea ? (textarea.value || '') : ''],
+        exemple_lignes: AtelierFiche.lireZoneExemple(bloc),
       });
     });
     this.sections = out;
@@ -376,7 +387,7 @@ class AtelierFiche extends AtelierEditeur {
     const cont = this.$('sections');
     if (!cont) return;
     if (this.sections.length === 0) {
-      this.sections = [{ titre: '', items: [''] }];
+      this.sections = [{ titre: '', items: [''], exemple_lignes: null }];
     }
     // v0.13.6.16 — Le sélecteur « Initialiser depuis » a été retiré
     // (il s'appuyait sur /api/methodes et /api/notions sans filtre,
@@ -412,6 +423,7 @@ class AtelierFiche extends AtelierEditeur {
                            resize:vertical"
                     placeholder="Contenu LaTeX de la zone"
           >${Atelier.escHtml(corps)}</textarea>
+          ${AtelierFiche.htmlZoneExemple(sec.exemple_lignes)}
         </div>`;
     }).join('');
     // v0.13.6.16 — Plus de querySelectorAll('.atl-fiche-section-init')
@@ -424,9 +436,14 @@ class AtelierFiche extends AtelierEditeur {
     if (window.EditeurLatex) window.EditeurLatex.scan(cont);
   }
 
+  /** v0.51.19 — Case « zone d'exemple » : affiche/masque la hauteur. */
+  toggleZoneExemple(caseEl) {
+    AtelierFiche.basculerZoneExemple(caseEl);
+  }
+
   ajouterSection() {
     this._capturerSectionsDepuisDom();
-    this.sections.push({ titre: '', items: [''] });
+    this.sections.push({ titre: '', items: [''], exemple_lignes: null });
     this._renderSections();
     this.marquerModifie();
   }
@@ -434,7 +451,7 @@ class AtelierFiche extends AtelierEditeur {
   supprimerSection(idx) {
     this._capturerSectionsDepuisDom();
     if (this.sections.length <= 1) {
-      this.sections = [{ titre: '', items: [''] }];
+      this.sections = [{ titre: '', items: [''], exemple_lignes: null }];
     } else {
       this.sections.splice(idx, 1);
     }
@@ -472,6 +489,58 @@ class AtelierFiche extends AtelierEditeur {
 }
 
 // ── Instance singleton et exposition globale ──────────────────────────────
+
+// ── v0.51.19 — Zone d'exemple sous chaque zone de texte ─────────────────────
+// Même présentation que le « Cadre de réponse » de l'atelier Exercice
+// (classes atl-cadre-rep-*) : case à cocher + hauteur en lignes.
+// Bornes alignées sur le serveur (services/fiches_resume.py).
+AtelierFiche.EXEMPLE_LIGNES_DEFAUT = 6;
+AtelierFiche.EXEMPLE_LIGNES_MIN = 1;
+AtelierFiche.EXEMPLE_LIGNES_MAX = 40;
+
+/** HTML de la ligne « Inclure une zone d'exemple » d'une zone de texte. */
+AtelierFiche.htmlZoneExemple = function (lignes) {
+  const n = parseInt(lignes, 10) || 0;
+  const actif = n > 0;
+  const valeur = actif ? n : AtelierFiche.EXEMPLE_LIGNES_DEFAUT;
+  return `
+          <div class="atl-field atl-cadre-rep-row atl-fiche-section-ex" style="margin-top:6px">
+            <label class="atl-cadre-rep-toggle">
+              <input type="checkbox" class="atl-fiche-section-ex-actif"
+                     ${actif ? 'checked' : ''}
+                     onchange="ATELIER_FICHE.toggleZoneExemple(this)">
+              <span>Inclure une zone d'exemple</span>
+              <span style="font-weight:400;color:var(--text-muted);font-size:var(--font-xs)">(espace laissé sous cette zone pour écrire ou tracer)</span>
+            </label>
+            <span class="atl-cadre-rep-lignes atl-fiche-section-ex-lignes-wrap"
+                  style="${actif ? '' : 'display:none'}">
+              <label style="font-size:var(--font-sm)">Hauteur :</label>
+              <input type="number" class="atl-fiche-section-ex-lignes"
+                     min="${AtelierFiche.EXEMPLE_LIGNES_MIN}"
+                     max="${AtelierFiche.EXEMPLE_LIGNES_MAX}"
+                     step="1" value="${valeur}" style="width:60px">
+              <span style="font-size:var(--font-sm);color:var(--text-muted)">lignes</span>
+            </span>
+          </div>`;
+};
+
+/** Affiche ou masque le champ de hauteur selon la case. */
+AtelierFiche.basculerZoneExemple = function (caseEl) {
+  const ligne = caseEl && caseEl.closest('.atl-fiche-section-ex');
+  const wrap = ligne && ligne.querySelector('.atl-fiche-section-ex-lignes-wrap');
+  if (wrap) wrap.style.display = caseEl.checked ? '' : 'none';
+};
+
+/** Lit la zone d'exemple d'un bloc de zone : null si décochée, sinon le
+ *  nombre de lignes saisi (la validation des bornes est faite par le
+ *  serveur, qui répond 400 avec un message explicite). */
+AtelierFiche.lireZoneExemple = function (blocEl) {
+  const c = blocEl && blocEl.querySelector('.atl-fiche-section-ex-actif');
+  if (!c || !c.checked) return null;
+  const champ = blocEl.querySelector('.atl-fiche-section-ex-lignes');
+  const n = parseInt(champ ? champ.value : '', 10);
+  return Number.isNaN(n) ? null : n;
+};
 
 const ATELIER_FICHE = new AtelierFiche();
 window.ATELIER_FICHE = ATELIER_FICHE;

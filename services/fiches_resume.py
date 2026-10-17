@@ -60,6 +60,62 @@ class FicheDejaPresente(FicheErreur):
         )
 
 
+class ZoneExempleInvalide(FicheErreur):
+    """v0.51.19 — Nombre de lignes d'une zone d'exemple hors bornes."""
+    def __init__(self, valeur):
+        super().__init__(
+            f"Zone d'exemple : nombre de lignes invalide ({valeur!r}), "
+            f"attendu un entier de {EXEMPLE_LIGNES_MIN} à {EXEMPLE_LIGNES_MAX}.",
+            "zone_exemple_invalide", valeur=valeur,
+        )
+
+
+# ── v0.51.19 — Zones d'exemple ──────────────────────────────────────────────
+#
+# Chaque zone de texte d'une fiche peut être suivie d'une zone d'exemple
+# (espace blanc encadré, titré « Exemples ») de N lignes :
+# atome_sections.exemple_lignes (NULL = pas de zone). La boîte « Exemples »
+# finale qui remplit le bas de la dernière page devient optionnelle :
+# fiches_resume.exemple_fin_page (1 par défaut = comportement historique).
+
+EXEMPLE_LIGNES_MIN = 1
+EXEMPLE_LIGNES_MAX = 40
+
+
+def migrer(conn) -> None:
+    """Ajoute les colonnes v0.51.19 aux bases existantes (idempotent)."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(atome_sections)")}
+    if cols and "exemple_lignes" not in cols:
+        conn.execute("ALTER TABLE atome_sections ADD COLUMN exemple_lignes INTEGER")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(fiches_resume)")}
+    if cols and "exemple_fin_page" not in cols:
+        conn.execute("ALTER TABLE fiches_resume ADD COLUMN exemple_fin_page "
+                     "INTEGER NOT NULL DEFAULT 1")
+
+
+def normaliser_exemple_lignes(valeur) -> int | None:
+    """Absente (None, '', 0) → pas de zone ; sinon un entier (ou une
+    chaîne de chiffres) dans [EXEMPLE_LIGNES_MIN, EXEMPLE_LIGNES_MAX].
+    Lève ZoneExempleInvalide (400) pour toute autre valeur."""
+    if valeur is None or valeur == "" or (type(valeur) is int and valeur == 0):
+        return None
+    if type(valeur) is int:
+        n = valeur
+    elif isinstance(valeur, str) and valeur.strip().isdigit():
+        n = int(valeur.strip())
+        if n == 0:
+            return None
+    else:
+        raise ZoneExempleInvalide(valeur)
+    if not EXEMPLE_LIGNES_MIN <= n <= EXEMPLE_LIGNES_MAX:
+        raise ZoneExempleInvalide(valeur)
+    return n
+
+
+def _a_colonne(conn, table: str, colonne: str) -> bool:
+    return colonne in {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+
+
 # ── Helpers internes ─────────────────────────────────────────────────────────
 
 
@@ -107,6 +163,7 @@ def creer_fiche(
     sequence: str | None = None,
     titre: str = "",
     sections: list[dict] | None = None,
+    exemple_fin_page: bool = True,
 ) -> dict:
     """Crée une nouvelle fiche.
 
@@ -172,7 +229,11 @@ def creer_fiche(
 
     # Sections : si rien fourni, créer une zone vide par défaut.
     sections_a_ecrire = sections or [{"titre": "", "items": [""]}]
+    _valider_sections(sections_a_ecrire)
     _ecrire_sections_fiche(conn, fiche_id, sections_a_ecrire)
+    if not exemple_fin_page and _a_colonne(conn, "fiches_resume", "exemple_fin_page"):
+        conn.execute("UPDATE fiches_resume SET exemple_fin_page = 0 WHERE id = ?",
+                     (fiche_id,))
 
     return lire_fiche(conn, fiche_id)
 
@@ -197,6 +258,9 @@ def lire_fiche(conn, fiche_id: str) -> dict:
         "sequence":    row["sequence"] or "",
         "fichier":     row["fichier"] or "",
         "etat_code":   row["etat_code"] or "en_cours",
+        # v0.51.19 — 1 par défaut (bases sans la colonne : historique).
+        "exemple_fin_page": bool(row["exemple_fin_page"])
+                            if "exemple_fin_page" in row.keys() else True,
         "sections":    _lire_sections_fiche(conn, fiche_id),
     }
 
@@ -249,6 +313,7 @@ def modifier_fiche(
     titre: str | None = None,
     sections: list[dict] | None = None,
     objectif_id: str | None = None,
+    exemple_fin_page: bool | None = None,
 ) -> dict:
     """Modifie les champs fournis d'une fiche existante.
 
@@ -301,7 +366,13 @@ def modifier_fiche(
     )
 
     if sections is not None:
+        _valider_sections(sections)
         _ecrire_sections_fiche(conn, fiche_id, sections)
+
+    if exemple_fin_page is not None and _a_colonne(
+            conn, "fiches_resume", "exemple_fin_page"):
+        conn.execute("UPDATE fiches_resume SET exemple_fin_page = ? WHERE id = ?",
+                     (1 if exemple_fin_page else 0, fiche_id))
 
     return lire_fiche(conn, fiche_id)
 
@@ -327,9 +398,17 @@ def supprimer_fiche(conn, fiche_id: str) -> None:
 # ── Helpers sections (équivalents v0.6.4 mais pour fiche_resume) ────────────
 
 
+def _valider_sections(sections) -> None:
+    """Valide (avant toute écriture) les zones d'exemple des sections."""
+    for sec in sections or []:
+        normaliser_exemple_lignes((sec or {}).get("exemple_lignes"))
+
+
 def _lire_sections_fiche(conn, fiche_id: str) -> list[dict]:
+    col_ex = ("exemple_lignes" if _a_colonne(conn, "atome_sections",
+                                             "exemple_lignes") else "NULL")
     rows = conn.execute(
-        "SELECT id, titre FROM atome_sections "
+        f"SELECT id, titre, {col_ex} AS exemple_lignes FROM atome_sections "
         "WHERE entite_type = 'fiche_resume' AND entite_id = ? "
         "ORDER BY ordre",
         (fiche_id,),
@@ -344,6 +423,7 @@ def _lire_sections_fiche(conn, fiche_id: str) -> list[dict]:
         out.append({
             "titre": sr["titre"] or "",
             "items": [ir["corps"] for ir in items],
+            "exemple_lignes": sr["exemple_lignes"] or None,
         })
     return out
 
@@ -356,6 +436,7 @@ def _ecrire_sections_fiche(conn, fiche_id: str,
         "WHERE entite_type = 'fiche_resume' AND entite_id = ?",
         (fiche_id,),
     )
+    avec_ex = _a_colonne(conn, "atome_sections", "exemple_lignes")
     for i, sec in enumerate(sections or []):
         section_id = _rowid()
         conn.execute(
@@ -364,6 +445,12 @@ def _ecrire_sections_fiche(conn, fiche_id: str,
             "VALUES (?, 'fiche_resume', ?, ?, ?)",
             (section_id, fiche_id, sec.get("titre", "") or "", i),
         )
+        if avec_ex:
+            conn.execute(
+                "UPDATE atome_sections SET exemple_lignes = ? WHERE id = ?",
+                (normaliser_exemple_lignes(sec.get("exemple_lignes")),
+                 section_id),
+            )
         for j, corps in enumerate(sec.get("items", []) or []):
             conn.execute(
                 "INSERT INTO atome_section_items "
