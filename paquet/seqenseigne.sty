@@ -17,6 +17,7 @@
 % écrasant silencieusement la valeur fixée ici — ne pas reproduire ce pattern.
 \newif\ifdocstd\docstdtrue
 \newif\ifseq@loadflashcard\seq@loadflashcardfalse
+\newif\ifseq@loadsixieme\seq@loadsixiemefalse
 \DeclareOption{ltxdoc}{\docstdfalse
     \PassOptionsToPackage{ltxdoc}{seqenseigne-data}
     \PassOptionsToPackage{ltxdoc}{seqenseigne-theme}
@@ -42,6 +43,10 @@
     \seq@loadflashcardtrue
     \PassOptionsToPackage{paysage}{seqenseigne-flashcard}%
 }
+% Option sixieme (v0.52) : charge seqenseigne-style6e après les modules de base
+% (visuel des documents de l'équipe de 6e). À combiner avec [geometrie] pour
+% les figures tkz-euclide :  \usepackage[sixieme,geometrie]{seqenseigne}
+\DeclareOption{sixieme}{\seq@loadsixiemetrue}
 % Option geometrie : charge tkz-euclide, tkz-base, tkz-tab via seqenseigne-core.
 % A utiliser dans les livrets et exercices de géométrie :
 %   \usepackage[geometrie]{seqenseigne}
@@ -101,6 +106,12 @@
 % avec les livrets, évaluations ou plans de travail.
 \ifseq@loadflashcard
     \RequirePackage{seqenseigne-flashcard}
+\fi
+
+% 6. Module STYLE6E - chargé uniquement avec l'option sixieme (v0.52).
+%    Visuel des documents de 6e ; n'écrase aucune macro des autres modules.
+\ifseq@loadsixieme
+    \RequirePackage{seqenseigne-style6e}
 \fi
 
 % Module DOC non chargé automatiquement (uniquement pour documentation)

@@ -1,0 +1,436 @@
+%%
+%% This is file `seqenseigne-style6e.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% seqenseigne-style6e.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2025 by Laurent Coste
+%% 
+%% This file may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3 or later is part of all distributions of
+%% LaTeX version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{seqenseigne-style6e}
+    [2026/10/18 v0.4 seqenseigne : style des documents de 6e]
+\RequirePackage{xcolor}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\RequirePackage{tikz}
+\usetikzlibrary{calc}
+\RequirePackage{enumitem}
+\RequirePackage{xparse}
+\RequirePackage{array}
+\RequirePackage{pifont}
+\RequirePackage{graphicx}
+\definecolor{seqSixMauve}{HTML}{E8D5E8}
+\definecolor{seqSixMauveBord}{HTML}{6B3D6B}
+\definecolor{seqSixRouge}{HTML}{D7191C}
+\definecolor{seqSixBleu}{HTML}{1F5FA8}
+\definecolor{seqSixVert}{HTML}{2E8B3A}
+\definecolor{seqSixPointilles}{HTML}{2E8B3A}
+\definecolor{seqSixGrisTexte}{HTML}{6E6E6E}
+\definecolor{seqSixEnteteTab}{HTML}{F6C9D6}
+\newif\ifseq@corrige \seq@corrigefalse
+\newcommand{\seqVersionCorrigee}{\seq@corrigetrue}
+\newcommand{\seqVersionEleve}{\seq@corrigefalse}
+\newcommand{\seqVersionComplete}{\seq@corrigetrue}
+\newcommand{\seqVersionACompleter}{\seq@corrigefalse}
+\NewDocumentCommand{\seqTrous}{O{3cm}}{%
+  \leavevmode\hbox to #1{\leaders\hbox to 0.45em{\hss.\hss}\hfill}}
+\NewDocumentCommand{\seqPointilles}{O{1} O{seqSixPointilles}}{%
+  \par\begingroup\color{#2}%
+  \foreach \seq@i in {1,...,#1}{%
+    \noindent\leaders\hbox to 0.6em{\hss.\hss}\hfill\kern0pt\par
+    \vspace{0.35\baselineskip}}%
+  \endgroup}
+\newlength{\seq@larg}
+\NewDocumentCommand{\seqACompleter}{O{} m}{%
+  \ifmmode\mbox{\seq@acompleter{#1}{#2}}\else\seq@acompleter{#1}{#2}\fi}
+\newcommand{\seq@acompleter}[2]{%
+  \ifseq@corrige{\bfseries\color{seqSixRouge}#2}%
+  \else
+    \if\relax\detokenize{#1}\relax
+      \settowidth{\seq@larg}{\bfseries #2}%
+      \seqTrous[\dimexpr\seq@larg+1.2em\relax]%
+    \else\seqTrous[#1]\fi
+  \fi}
+\NewDocumentCommand{\seqReponse}{O{1} m}{%
+  \ifseq@corrige
+    \par{\bfseries\color{seqSixRouge}#2}\par
+    \vspace{\numexpr#1-1\relax\baselineskip}%
+  \else\seqPointilles[#1]\fi}
+\NewDocumentCommand{\seqCase}{O{1.2cm} o}{%
+  \fbox{\makebox[#1]{\strut\ifseq@corrige\IfValueT{#2}{\color{seqSixRouge}#2}\fi}}}
+\NewDocumentCommand{\seqCaseCocher}{o m}{%
+  \ifseq@corrige\IfValueTF{#1}{{\color{seqSixRouge}$\boxtimes$}}{$\square$}%
+  \else$\square$\fi\ #2\quad}
+\newcommand{\seqCouvertureLivretSix}[2]{%
+  \noindent\begin{minipage}[t]{0.5\linewidth}\small
+    NOM : \seqTrous[4cm]\\[2pt]Prénom : \seqTrous[3.6cm]\\[2pt]
+    6\textsuperscript{e}\ \seqTrous[1.2cm]\end{minipage}\par
+  \begin{center}{\huge\bfseries #1}\\[2pt]
+    {\LARGE\bfseries Niveau 6\textsuperscript{e}}\end{center}
+  \noindent{\bfseries\underline{Objectifs du chapitre :}}
+  \begin{itemize}[itemsep=0pt,topsep=2pt]
+    \foreach \seq@c/\seq@t in {#2}{\item\textit{\seq@c\ : \seq@t}}
+  \end{itemize}}
+\newcommand{\seqBandeauCapacite}[2]{%
+  \par\addvspace{0.6\baselineskip}%
+  \begin{tcolorbox}[enhanced, colback=white, colframe=black, boxrule=1.2pt,
+      sharp corners, halign=center, fontupper=\bfseries\itshape,
+      top=3pt, bottom=3pt]
+    #1 : #2\end{tcolorbox}}
+\newcounter{seqActiviteSix}
+\NewDocumentEnvironment{seqActiviteSix}{m}{%
+  \par\addvspace{0.8\baselineskip}\stepcounter{seqActiviteSix}%
+  \begin{tcolorbox}[enhanced, breakable, blanker,
+      borderline west={2pt}{0pt}{seqSixBleu}, left=8pt,
+      before upper={\noindent\tikz[baseline=(a.base)]\node[fill=seqSixBleu,
+        text=white, font=\bfseries\small, rounded corners=2pt, inner sep=3pt](a)
+        {Activité \theseqActiviteSix};\ {\bfseries #1}\par\medskip}]}{%
+  \end{tcolorbox}\par\addvspace{0.5\baselineskip}}
+\NewDocumentEnvironment{seqFicheResumeSix}{m}{%
+  \begin{tcolorbox}[enhanced, breakable, colback=white, colframe=seqSixRouge,
+      boxrule=1.2pt, arc=2pt, left=5pt, right=5pt,
+      title={\ifseq@corrige Fiche de cours\else Fiche de résumé
+             à compléter\fi\ --- #1},
+      coltitle=white, colbacktitle=seqSixRouge, fonttitle=\bfseries\small]}{%
+  \end{tcolorbox}}
+\newcommand{\seqNumSix}[2]{%
+  \tikz[baseline=(n.base)]\node[draw=seqSixMauveBord, fill=seqSixMauve,
+    rounded corners=2pt, line width=0.8pt, minimum size=1.5em, inner sep=1pt,
+    font=\bfseries](n){#1};%
+  \if\relax\detokenize{#2}\relax\else\ \textbf{(#2)}\fi}
+\newcounter{seqExoSix}
+\NewDocumentEnvironment{seqExoSix}{O{O} o}{%
+  \par\addvspace{0.8\baselineskip}\stepcounter{seqExoSix}%
+  \noindent\seqNumSix{\theseqExoSix}{#1}%
+  \IfValueT{#2}{\ \textit{#2}}\par\nopagebreak\vspace{2pt}%
+  \begingroup\leftskip=1.9em\relax}{\par\endgroup}
+\newcounter{seqItemCM}
+\newcounter{seq@cm@col}
+\newcommand{\seqTitreCM}{CALCUL MENTAL}
+\NewDocumentEnvironment{seqCalculMental}{m m m O{3}}{%
+  \def\seq@cm@nb{#3}\def\seq@cm@cols{#4}\setcounter{seq@cm@col}{0}%
+  \par\addvspace{0.5\baselineskip}\noindent
+  \fbox{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}%
+    {\seqTitreCM\ #1 -- \textbf{#2}}}%
+  \par\smallskip\noindent}{%
+  \par\vspace{-0.3\baselineskip}%
+  \hfill\seqScore{\seq@cm@nb}\par\addvspace{0.8\baselineskip}}
+\NewDocumentCommand{\seqItemCM}{m o}{%
+  \stepcounter{seqItemCM}\stepcounter{seq@cm@col}%
+  \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em}
+    \theseqItemCM.\ \ $#1 =$ {\color{seqSixRouge}%
+      \IfValueTF{#2}{\seqACompleter[1.4cm]{$#2$}}{\seqTrous[1.4cm]}}\par
+    {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
+  \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
+    \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
+\newcommand{\seqScore}[1]{%
+  \tikz[baseline]\node[fill=seqSixMauve!60, rounded corners=1pt, inner sep=3pt,
+    font=\sffamily\bfseries\small]{SCORE : \seqTrous[1.2cm] / #1};}
+\newlength{\seq@bande}
+\newcounter{seq@bande@n}
+\def\seq@bande@max{1}
+\newcommand{\seq@traitcoupe}{\par\noindent\makebox[\linewidth]{%
+  \color{seqSixGrisTexte}\scriptsize\ding{34}\,%
+  \leaders\hbox to 0.5em{\hss-\hss}\hfill}\par}
+\newcommand{\seq@hauteurbande}[1]{\setlength{\seq@bande}{%
+  \dimexpr(\textheight-\numexpr#1-1\relax\dimexpr2\baselineskip\relax)/#1
+  -\baselineskip\relax}}
+\NewDocumentEnvironment{seqPlancheFiches}{m}{%
+  \clearpage\def\seq@bande@max{#1}\seq@hauteurbande{#1}%
+  \setcounter{seq@bande@n}{0}}{\clearpage}
+\NewDocumentEnvironment{seqBande}{}{%
+  \ifnum\value{seq@bande@n}=\seq@bande@max\relax
+    \clearpage\setcounter{seq@bande@n}{0}\fi
+  \ifnum\value{seq@bande@n}>0 \seq@traitcoupe\fi
+  \stepcounter{seq@bande@n}%
+  \noindent\begin{minipage}[t][\seq@bande][t]{\linewidth}}{\end{minipage}}
+\newcommand{\seq@sauvecpt}{\edef\seq@cpts{%
+  \noexpand\setcounter{seqItemCM}{\the\value{seqItemCM}}%
+  \noexpand\setcounter{seqExoSix}{\the\value{seqExoSix}}%
+  \noexpand\setcounter{seqActiviteSix}{\the\value{seqActiviteSix}}%
+  \noexpand\setcounter{seqExoEval}{\the\value{seqExoEval}}}}
+\NewDocumentEnvironment{seqCopies}{m +b}{%
+  \clearpage\seq@hauteurbande{#1}\seq@sauvecpt
+  \foreach \seq@k in {1,...,#1}{\seq@cpts
+    \noindent\begin{minipage}[t][\seq@bande][t]{\linewidth}#2\end{minipage}%
+    \ifnum\seq@k<#1\relax\seq@traitcoupe\fi}%
+  \clearpage}{}
+\newcommand{\seqIdentEleve}[1][6e]{%
+  \noindent\small Nom : \seqTrous[4cm]\hfill Prénom : \seqTrous[4cm]\hfill
+  #1 \seqTrous[1cm]\hfill Date : \seqTrous[2.5cm]\par\normalsize}
+\newcommand{\seqTitreEvalSix}[2]{%
+  \par\medskip\begin{center}{\Large\bfseries #1}\\[2pt]
+  {\small\itshape\color{seqSixGrisTexte}#2}\end{center}}
+\newcommand{\seqBaremeCompetences}[2]{%
+  \par\noindent\begin{tikzpicture}
+    \foreach \seq@c/\seq@p [count=\seq@k] in {#1}{\xdef\seq@nb{\seq@k}}
+    \pgfmathsetmacro{\seq@w}{\linewidth/1cm/(\seq@nb+1)}
+    \foreach \seq@c/\seq@p [count=\seq@k from 0] in {#1,Total/#2}{%
+      \draw[fill=seqSixEnteteTab] (\seq@k*\seq@w,0) rectangle ++(\seq@w,0.5)
+        node[midway,font=\small\bfseries]{\seq@c};
+      \draw (\seq@k*\seq@w,-0.55) rectangle ++(\seq@w,0.55)
+        node[midway,font=\small]{\dots\ /\seq@p};}
+  \end{tikzpicture}\par}
+\newcounter{seqExoEval}
+\newcommand{\seqExoEval}[2]{%
+  \par\addvspace{\baselineskip}\stepcounter{seqExoEval}\noindent
+  {\color{seqSixBleu}\bfseries Exercice \theseqExoEval\quad #1}\quad
+  {\small\itshape\color{seqSixGrisTexte}(#2)}\par\smallskip}
+\newcommand{\seqItemRond}[1]{\tikz[baseline=(c.base)]\node[draw,circle,
+  inner sep=0.8pt,minimum size=1.1em,font=\small](c){#1};}
+\newcommand{\seqTitreFicheSix}[1]{%
+  \begin{center}{\large\bfseries\color{seqSixVert}\underline{#1}}\end{center}}
+\newcommand{\seqSectionFicheSix}[1]{%
+  \par\addvspace{0.4\baselineskip}\noindent
+  {\bfseries\color{seqSixBleu}\underline{#1}}\par\smallskip}
+\newcommand{\seqMotCle}[1]{{\bfseries\color{seqSixRouge}#1}}
+\newtcolorbox{seqEncadreDefSix}{enhanced, colback=white, colframe=seqSixRouge,
+  boxrule=1pt, sharp corners, left=3pt, right=3pt, top=2pt, bottom=2pt}
+\NewDocumentCommand{\seqTitreTravailSix}{o m m m}{%
+  \noindent\small Nom : \seqTrous[4cm]\hfill Prénom : \seqTrous[4cm]\hfill
+  6e \seqTrous[1cm]\IfValueT{#1}{\hfill\textbf{#1}}\normalsize
+  \begin{center}{\large\bfseries\color{seqSixVert}#2}\\[2pt]{\bfseries #3}\\[2pt]
+  {\small\itshape #4}\end{center}}
+\newtcolorbox{seqEncadreIntroSix}{enhanced, colback=white, colframe=seqSixBleu,
+  boxrule=1pt, arc=2pt}
+\newcommand{\seqPartieSix}[1]{\par\addvspace{0.5\baselineskip}\noindent
+  {\bfseries\color{seqSixBleu}\underline{#1}}\par\smallskip}
+\newcounter{seqComplSix}
+\newcommand{\seqTitreComplementSix}[2]{%
+  \stepcounter{seqComplSix}%
+  \noindent\small Nom : \seqTrous[4.5cm]\hfill Prénom : \seqTrous[4.5cm]\hfill
+  6e \seqTrous[1cm]\normalsize
+  \begin{center}{\large\bfseries\color{seqSixVert}Activité complémentaire
+    \theseqComplSix\ \ \ding{72}}\\[2pt]
+  {\Large\bfseries #1}\\[2pt]
+  {\small\itshape\color{seqSixGrisTexte}#2 --- pour ceux qui ont terminé}\end{center}}
+\NewDocumentCommand{\seqDemiDroite}{O{12cm} m m m m O{}}{%
+  \begin{tikzpicture}[x=#1/(#4)]
+    \draw[thick,->] (0,0) -- (#4+0.6,0);
+    \foreach \seq@i in {0,...,#4}{\draw (\seq@i,-0.12) -- (\seq@i,0.12);}
+    \pgfmathtruncatemacro{\seq@sub}{#4*#5}
+    \ifnum#5>1 \foreach \seq@j in {0,...,\seq@sub}{%
+      \draw (\seq@j/#5,-0.06) -- (\seq@j/#5,0.06);}\fi
+    \node[below] at (0,-0.12) {\small #2};
+    \node[below] at (1,-0.12) {\small #3};
+    \foreach \seq@x/\seq@l in {#6}{%
+      \node[font=\bfseries] at (\seq@x,0.35) {\seq@l};
+      \node at (\seq@x,0) {$\times$};}
+  \end{tikzpicture}}
+\newcommand{\seqFiguresSix}{%
+  \tkzSetUpPoint[shape=cross out, size=3pt, color=black, line width=0.6pt]%
+  \tkzSetUpLine[line width=0.6pt, color=black]%
+  \tkzSetUpLabel[font=\bfseries\small]}
+\AtBeginDocument{\@ifpackageloaded{tkz-euclide}{\seqFiguresSix}{}}
+\usetikzlibrary{shapes.geometric}
+
+\usetikzlibrary{matrix}
+
+%% --- Bascule élève / corrigé (enveloppe publique de \ifseq@corrige) ---------
+%% \seqLocSiCorrige{version corrigée}{version élève}
+\newcommand{\seqLocSiCorrige}[2]{\ifseq@corrige#1\else#2\fi}
+
+%% --- Réponse sans pointillés, pour une cellule de tableau ou une case -------
+%% \seqLocCellule{réponse} : vide (même largeur) en version élève.
+\newcommand{\seqLocCellule}[1]{\leavevmode\seqLocSiCorrige
+  {{\bfseries\color{seqSixRouge}#1}}{\phantom{\bfseries #1}}}
+
+%% --- « Entoure » : la réponse est entourée en rouge dans le corrigé ---------
+%% \seqLocEntoure{texte} : à utiliser seulement pour les bonnes réponses.
+%% \seqLocEntoure[couleur]{texte} (couleur par défaut : seqSixRouge).
+\NewDocumentCommand{\seqLocEntoure}{O{seqSixRouge} m}{\ifseq@corrige\def\seq@entc{#1}\else
+  \def\seq@entc{none}\fi\tikz[baseline=(e.base)]\node[ellipse,
+  inner sep=1.5pt, draw=\seq@entc, line width=0.9pt](e){#2};}
+
+%% --- Explications du corrigé (champ « corrige » de l'appli) ---------------
+\newcommand{\seqLocExplication}[1]{\ifseq@corrige\par\smallskip
+  \begin{tcolorbox}[enhanced, breakable, width=\dimexpr\linewidth-\leftskip\relax, colback=seqSixMauve!25,
+    colframe=seqSixMauveBord!60, boxrule=0.5pt, arc=1pt, left=4pt, right=4pt,
+    top=2pt, bottom=2pt, fontupper=\small]
+  \textbf{Explications.} #1\end{tcolorbox}\fi}
+
+%% --- Tableau de numération coloré (gabarit des livrets 2026 de l'équipe) ---
+\definecolor{seqLocMillions}{HTML}{F7A8F7}
+\definecolor{seqLocMilliers}{HTML}{5BEB86}
+\definecolor{seqLocUnites}{HTML}{72CDFA}
+\definecolor{seqLocDecimale}{HTML}{FFF0A0}
+\newcommand{\seqLoc@rot}[1]{\rotatebox{90}{\small\bfseries #1\ }}
+%% \seqLocTableauNumeration{lignes} : 12 colonnes (milliards -> unités).
+%% Chaque ligne : 12 cellules séparées par &, terminée par \\ \hline.
+\newcommand{\seqLocTableauNumeration}[1]{%
+  \begin{center}\renewcommand{\arraystretch}{1.25}\small
+  \begin{tabular}{|*{3}{>{\centering\arraybackslash}p{0.62cm}|}*{3}{>{\columncolor{seqLocMillions!45}\centering\arraybackslash}p{0.62cm}|}%
+      *{3}{>{\columncolor{seqLocMilliers!45}\centering\arraybackslash}p{0.62cm}|}*{3}{>{\columncolor{seqLocUnites!45}\centering\arraybackslash}p{0.62cm}|}}
+  \hline
+  \multicolumn{3}{|c|}{\bfseries Milliards}&
+  \multicolumn{3}{c|}{\cellcolor{seqLocMillions}\bfseries Millions}&
+  \multicolumn{3}{c|}{\cellcolor{seqLocMilliers}\bfseries Milliers}&
+  \multicolumn{3}{c|}{\cellcolor{seqLocUnites}\bfseries Unités}\\ \hline
+  \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}&
+  \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}&
+  \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}&
+  \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}\\ \hline
+  #1
+  \end{tabular}\end{center}}
+%% \seqLocTableauDecimal{lignes} : classe des milliers, classe des unités,
+%% virgule, dixièmes, centièmes, millièmes (10 cellules par ligne).
+\newcommand{\seqLocTableauDecimal}[1]{%
+  \begin{center}\renewcommand{\arraystretch}{1.25}\small
+  \begin{tabular}{|*{3}{>{\columncolor{seqLocMilliers!45}\centering\arraybackslash}p{0.62cm}|}%
+      *{3}{>{\columncolor{seqLocUnites!45}\centering\arraybackslash}p{0.62cm}|}>{\centering\arraybackslash}p{0.2cm}|%
+      *{3}{>{\columncolor{seqLocDecimale!60}\centering\arraybackslash}p{0.62cm}|}}
+  \hline
+  \multicolumn{3}{|c|}{\cellcolor{seqLocMilliers}\bfseries Milliers}&
+  \multicolumn{3}{c|}{\cellcolor{seqLocUnites}\bfseries Unités}& &
+  \multicolumn{3}{c|}{\cellcolor{seqLocDecimale}\bfseries Partie décimale}\\ \hline
+  \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}&
+  \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}& &
+  \seqLoc@rot{dixièmes}&\seqLoc@rot{centièmes}&\seqLoc@rot{millièmes}\\ \hline
+  #1
+  \end{tabular}\end{center}}
+
+%% --- Hiéroglyphes égyptiens (images extraites du TP1 de l'équipe) ----------
+%% \seqLocHiero{k}{n} : n fois le symbole de valeur 10^k (k = 0 à 6).
+\newcommand{\seqLocHiero}[2]{\ifnum#2>0\relax\foreach \seq@h in {1,...,#2}{%
+  \includegraphics[height=1.15em]{hiero-#1.png}\hspace{1pt}}\fi}
+%% \seqLocHieroNombre{millions}{c. de mille}{d. de mille}{milliers}{centaines}{dizaines}{unités}
+\newcommand{\seqLocHieroNombre}[7]{\mbox{\raisebox{-0.25em}{%
+  \seqLocHiero{6}{#1}\seqLocHiero{5}{#2}\seqLocHiero{4}{#3}\seqLocHiero{3}{#4}%
+  \seqLocHiero{2}{#5}\seqLocHiero{1}{#6}\seqLocHiero{0}{#7}}}}
+
+%% --- Bande unité partagée (fractions) ---------------------------------------
+%% \seqLocBande[longueur]{nombre de parts}{parts coloriées}
+\NewDocumentCommand{\seqLocBande}{O{6cm} m m}{%
+  \begin{tikzpicture}[x=#1/#2]
+    \ifnum#3>0\relax\fill[seqSixBleu!25] (0,0) rectangle (#3,0.5);\fi
+    \foreach \seq@b in {1,...,#2}{\draw (\seq@b-1,0) rectangle (\seq@b,0.5);}
+    \draw[thick] (0,0) rectangle (#2,0.5);
+  \end{tikzpicture}}
+
+%% --- Demi-droites graduées (S02) -------------------------------------------
+%% \seqLocCroix{x}{nom} : point marqué d'une croix et nommé au-dessus (dans un tikzpicture).
+\newcommand{\seqLocCroix}[2]{\node at (#1,0) {$\times$};
+  \node[above,font=\bfseries] at (#1,0.14) {#2};}
+%% \seqLocSurligne{x1}{x2} : surligne la partie [x1 ; x2] d'un axe (zooms successifs).
+\newcommand{\seqLocSurligne}[2]{\fill[seqSixBleu!45] (#1,-0.12) rectangle (#2,0.12);}
+
+%% --- Opérations posées (S03) -------------------------------------------------
+%% Repère commun : une colonne de chiffres = \seqLocCol, une ligne = \seqLocLig ;
+%% la ligne k est à l'ordonnée k (vers le bas), la colonne c occupe [c ; c+1].
+\newlength{\seqLocCol}\setlength{\seqLocCol}{0.34cm}
+\newlength{\seqLocLig}\setlength{\seqLocLig}{0.5cm}
+\newcount\seqLoc@x
+%% \seqLocChiffres{colonne}{ligne}{chaîne} (dans un tikzpicture de ce repère) :
+%% un caractère par colonne, à partir de la colonne donnée. Codes : _ case vide,
+%% * signe fois, - signe moins, + signe plus ; la virgule ne prend pas de colonne : elle est
+%% placée en bas à droite du chiffre qui la précède.
+\def\seqLoc@fin{\seqLoc@fin}
+\newcommand{\seqLocChiffres}[3]{\def\seqLoc@y{#2}\seqLoc@x=#1\relax
+  \seqLoc@parse#3\seqLoc@fin}
+\def\seqLoc@parse#1{\ifx#1\seqLoc@fin\else\seqLoc@car{#1}\expandafter\seqLoc@parse\fi}
+\def\seqLoc@car#1{%
+  \if#1,\node[inner sep=0pt,anchor=north] at (\the\seqLoc@x,\seqLoc@y+0.12) {,};%
+  \else\if#1_\advance\seqLoc@x by 1\relax
+  \else\node[inner sep=0pt] at (\the\seqLoc@x+0.5,\seqLoc@y) {\strut\seqLoc@sym{#1}};%
+    \advance\seqLoc@x by 1\relax\fi\fi}
+\def\seqLoc@sym#1{\if#1*$\times$\else\if#1-$-$\else\if#1+$+$\else#1\fi\fi\fi}
+%% \seqLocTrait{c1}{c2}{ligne} : trait d'opération sous la ligne, de la colonne c1 à c2 (incluses).
+\newcommand{\seqLocTrait}[3]{\draw[line width=0.9pt] (#1,#3+0.5) -- (#2+1,#3+0.5);}
+%% \seqLocGrilleOp{colonnes}{lignes}{visible}{corrigé} : opération posée sur un
+%% quadrillage (gabarit des grilles de multiplication de l'équipe). Le contenu
+%% visible (facteurs) est toujours affiché ; le corrigé (en rouge) seulement
+%% dans la version corrigée.
+\NewDocumentCommand{\seqLocGrilleOp}{m m m m}{%
+  \begin{tikzpicture}[x=\seqLocCol,y=-\seqLocLig,baseline={(0,0)}]
+    \begin{scope}[seqSixBleu!35,line width=0.4pt]
+      \foreach \seqLoc@i in {0,...,#1}{\draw (\seqLoc@i,-0.5) -- (\seqLoc@i,#2-0.5);}
+      \foreach \seqLoc@j in {0,...,#2}{\draw (0,\seqLoc@j-0.5) -- (#1,\seqLoc@j-0.5);}
+    \end{scope}
+    #3
+    \seqLocSiCorrige{\begin{scope}[color=seqSixRouge,font=\bfseries]#4\end{scope}}{}
+  \end{tikzpicture}}
+%% \seqLocPotence[lignes]{colonnes}{dividende}{diviseur}{quotient}{corrigé}
+%% Potence de division. Le dividende (chaîne de \seqLocChiffres) commence à la
+%% colonne 1 ; la barre verticale est après la colonne <colonnes>. Le corrigé
+%% (étapes, en rouge) et le quotient n'apparaissent que dans la version corrigée ;
+%% en version élève, la place est réservée (<lignes> lignes, 5 par défaut).
+\newlength{\seqLoc@la}\newlength{\seqLoc@lb}
+\NewDocumentCommand{\seqLocPotence}{O{5} m m m m m}{%
+  \settowidth{\seqLoc@la}{#4}\settowidth{\seqLoc@lb}{\bfseries #5}%
+  \ifdim\seqLoc@lb>\seqLoc@la\seqLoc@la=\seqLoc@lb\fi
+  \addtolength{\seqLoc@la}{1.2em}%
+  \begin{tikzpicture}[x=\seqLocCol,y=-\seqLocLig,baseline={(0,0.1)}]
+    \seqLocChiffres{1}{0}{#3}
+    \draw[line width=0.9pt] (#2+0.4,-0.5) -- (#2+0.4,#1+0.4);
+    \draw[line width=0.9pt] (#2+0.4,0.5) -- ++(\the\seqLoc@la,0);
+    \node[anchor=west,inner sep=0pt] at (#2+0.8,0) {\strut #4};
+    \ifseqLoc@visible
+      \node[anchor=west,inner sep=0pt] at (#2+0.8,1) {\strut #5};#6
+    \else
+    \seqLocSiCorrige{\node[anchor=west,inner sep=0pt,text=seqSixRouge,font=\bfseries]
+      at (#2+0.8,1) {\strut #5};
+      \begin{scope}[color=seqSixRouge,font=\bfseries]#6\end{scope}}{}\fi
+  \end{tikzpicture}}
+%% \seqLocPotenceVisible : mêmes arguments, mais tout est affiché (en noir) dans les
+%% deux versions : division donnée en exemple, ou division à analyser.
+\newif\ifseqLoc@visible
+\NewDocumentCommand{\seqLocPotenceVisible}{O{5} m m m m m}{{\seqLoc@visibletrue
+  \seqLocPotence[#1]{#2}{#3}{#4}{#5}{#6}}}
+
+%% --- Ordre de grandeur (S03) -------------------------------------------------
+%% \seqLocFlechesOG{terme 1}{opération}{terme 2}{arrondi 1}{arrondi 2}{résultat}
+%% Calcul en haut, flèches vers les nombres « ronds » choisis, ordre de grandeur du
+%% résultat. Les trois réponses passent par \seqACompleter.
+\NewDocumentCommand{\seqLocFlechesOG}{m m m m m m}{%
+  \begin{tikzpicture}[baseline={(0,0)},every node/.style={inner sep=1pt}]
+    \node (a) at (0,0) {\strut #1}; \node at (1.35,0) {\strut #2};
+    \node (b) at (2.7,0) {\strut #3}; \node at (3.9,0) {\strut $=$};
+    \node (c) at (4.9,0) {\strut ?};
+    \node (a2) at (0,-1) {\strut\seqACompleter[1.4cm]{#4}};
+    \node at (1.35,-1) {\strut #2};
+    \node (b2) at (2.7,-1) {\strut\seqACompleter[1.4cm]{#5}};
+    \node at (3.9,-1) {\strut $\approx$};
+    \node (c2) at (4.9,-1) {\strut\seqACompleter[1.4cm]{#6}};
+    \foreach \seqLoc@h/\seqLoc@b in {a/a2,b/b2,c/c2}{\draw[->,seqSixBleu,thick]
+      (\seqLoc@h.south) -- (\seqLoc@b.north);}
+    \draw[seqSixGrisTexte,rounded corners=3pt] (-1.2,0.45) rectangle (5.6,-1.45);
+  \end{tikzpicture}}
+%% \seqLocTableauOG{lignes} : tableau « Opération / Ordre de grandeur des termes /
+%% Ordre de grandeur du résultat / Résultat exact ». Cellules séparées par \&,
+%% lignes terminées par \\ ; les réponses passent par \seqLocCellule.
+\newcommand{\seqLocTableauOG}[1]{%
+  \begin{tikzpicture}
+    \matrix[matrix of nodes, ampersand replacement=\&, nodes in empty cells,
+      column sep=-\pgflinewidth, row sep=-\pgflinewidth,
+      nodes={draw, minimum height=0.85cm, align=center, anchor=center, inner sep=2pt, font=\small},
+      column 1/.style={nodes={text width=3.3cm}},
+      column 2/.style={nodes={text width=3.6cm}},
+      column 3/.style={nodes={text width=2.6cm}},
+      column 4/.style={nodes={text width=2.6cm}},
+      row 1/.style={nodes={fill=seqSixEnteteTab, font=\small\bfseries, minimum height=1.25cm}}]{
+      Opération \& Ordre de grandeur des termes \& Ordre de grandeur du résultat \& Résultat exact\\
+      #1};
+  \end{tikzpicture}}
+
+%% --- Écran de calculatrice (S03) ---------------------------------------------
+%% \seqLocEcran{calcul} : petit écran affichant un calcul (chiffres cachés, etc.).
+\newcommand{\seqLocEcran}[1]{\tikz[baseline=(e.base)]\node[draw=seqSixGrisTexte,
+  line width=0.8pt, rounded corners=3pt, fill=seqSixBleu!8, inner sep=5pt,
+  font=\ttfamily\large](e){#1};}
+\endinput
+%%
+%% End of file `seqenseigne-style6e.sty'.

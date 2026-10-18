@@ -85,6 +85,11 @@
 \newcommand{\seqCouleurRosePale}{magenta!10!white}%
 \newcommand{\seqCouleurLimeModere}{lime!50!white}%
 \newcommand{\seqCouleurLimePale}{lime!10!white}%
+%% ---- Proportionnalité (cycle 3, thème E) -- v0.52 : canard vif, orange pâle
+\newcommand{\seqCouleurCanardVif}{teal!85!black}%
+\newcommand{\seqCouleurCanardMoyen}{teal!25!white}%
+\newcommand{\seqCouleurCanardModereVif}{teal!50!white}%
+\newcommand{\seqCouleurCanardTresPale}{teal!10!white}%
 %% ---- Autre
 \newcommand{\seqCouleurNoirVif}{black!85!black}%
 \newcommand{\seqCouleurNoirMoyen}{black!25!white}%
@@ -144,12 +149,23 @@
 \def\seq@couleurii@pale{\seqCouleurLimePale}%
 }%
 {%
+\ifthenelse{ \equal{#1}{proportionnalite} }%
+{%
+\def\seq@couleuri@vif{\seqCouleurCanardVif}%
+\def\seq@couleuri@moyen{\seqCouleurCanardMoyen}%
+\def\seq@couleuri@modere{\seqCouleurCanardModereVif}%
+\def\seq@couleuri@pale{\seqCouleurCanardTresPale}%
+\def\seq@couleurii@modere{\seqCouleurOrangeModere}%
+\def\seq@couleurii@pale{\seqCouleurOrangePale}%
+}%
+{%
 \def\seq@couleuri@vif{\seqCouleurNoirVif}%
 \def\seq@couleuri@moyen{\seqCouleurNoirMoyen}%
 \def\seq@couleuri@modere{\seqCouleurNoirModere}%
 \def\seq@couleuri@pale{\seqCouleurNoirPale}%
 \def\seq@couleurii@modere{\seqCouleurGrisModere}%
 \def\seq@couleurii@pale{\seqCouleurGrisPale}%
+}%
 }%
 }%
 }%
