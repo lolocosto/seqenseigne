@@ -568,3 +568,102 @@ def test_modele_programme_du_cycle_sans_archives_ni_objectifs_csv_d_une_autre_se
     # Seule S01 a des objectifs N09 dans l'atelier ; S04 « Pré-algèbre » ne
     # reçoit pas les objectifs CSV de l'ancienne S04 ; aucune archive.
     assert [s["nom"] for s in m["sequences"]] == ["Nombres entiers et décimaux, fractions"]
+
+
+# ── Bases d'avant v0.14.7 : clés étrangères restées sur objectifs_v2 ─────────
+# Cas réel (base atelier de Laurent, 18 octobre) : le renommage
+# objectifs_v2 → objectifs de v0.14.7 n'avait pas réécrit les références des
+# tables de liens. L'import plantait sur « FOREIGN KEY constraint failed »
+# dès le premier lien objectif ↔ exercice d'un objectif nouvellement créé.
+
+TABLES_V2 = ("objectif_exos", "objectif_notions", "objectif_fiches", "objectif_cartes",
+             "fiches_resume", "evaluation_objectifs", "ui_etat_atelier_sequence")
+
+
+def _vieillir(db, orphelin=False):
+    """Remet la base dans l'état des bases anciennes : une table objectifs_v2
+    (copie de objectifs) et les tables de liens qui pointent dessus."""
+    c = sqlite3.connect(db)
+    ddl = c.execute("SELECT sql FROM sqlite_master WHERE name='objectifs'").fetchone()[0]
+    c.execute(ddl.replace("CREATE TABLE objectifs", "CREATE TABLE objectifs_v2", 1))
+    c.execute("INSERT INTO objectifs_v2 SELECT * FROM objectifs")
+    if orphelin:
+        # Lien vers un objectif qui n'existe que dans objectifs_v2 (supprimé
+        # depuis de objectifs) : invisible pour l'appli, mais il violerait la
+        # contrainte une fois redirigée.
+        c.execute("INSERT INTO objectifs_v2 (id, partie_id, code, nom) "
+                  "VALUES ('ob_fantome', 'pt_n10', '99', 'fantôme')")
+        c.execute("INSERT INTO objectif_exos (objectif_id, serie, exercice_id, ordre) "
+                  "VALUES ('ob_fantome', 'F', 'ex_n10_f1', 1)")
+        c.commit()
+    v = c.execute("PRAGMA schema_version").fetchone()[0]
+    c.execute("PRAGMA writable_schema = ON")
+    for t in TABLES_V2:
+        sql = c.execute("SELECT sql FROM sqlite_master WHERE name=?", (t,)).fetchone()[0]
+        c.execute("UPDATE sqlite_master SET sql=? WHERE name=?",
+                  (sql.replace("REFERENCES objectifs(", "REFERENCES objectifs_v2("), t))
+    c.execute(f"PRAGMA schema_version = {v + 1}")
+    c.commit()
+    c.execute("PRAGMA writable_schema = OFF")
+    c.close()
+
+
+def _cibles_fk(db, cible):
+    c = sqlite3.connect(db)
+    try:
+        return sorted(t for (t,) in c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+                      if any(r[2] == cible for r in c.execute(f'PRAGMA foreign_key_list("{t}")')))
+    finally:
+        c.close()
+
+
+def test_base_ancienne_reproduit_l_echec_de_lien_vers_un_objectif_neuf(base):
+    _vieillir(base)
+    c = sqlite3.connect(base)
+    c.execute("PRAGMA foreign_keys = ON")
+    _ins(c, "objectifs", id="ob_neuf", partie_id="pt_n10", code="03", nom="neuf")
+    with pytest.raises(sqlite3.IntegrityError):
+        _ins(c, "objectif_exos", objectif_id="ob_neuf", serie="F", exercice_id="ex_n10_f1",
+             ordre=2)
+    c.close()
+
+
+def test_import_sur_base_ancienne_redirige_les_cles_puis_importe(base, lots):
+    _vieillir(base)
+    r = _essai(base, lots)
+    assert any("objectifs_v2" in i for i in r.infos)
+    assert len(_cibles_fk(base, "objectifs_v2")) == len(TABLES_V2)   # essai : base intacte
+    _appliquer(base, lots)
+    assert _cibles_fk(base, "objectifs_v2") == []
+    assert set(TABLES_V2) <= set(_cibles_fk(base, "objectifs"))
+    c = _conn(base)
+    assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert c.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+    assert c.execute("SELECT COUNT(*) FROM objectif_exos WHERE objectif_id='ob_n10'").fetchone()[0] == 1
+    c.close()
+    _appliquer(base, lots)                                               # idempotent
+
+
+def test_redirection_sauvegarde_puis_retire_les_liens_orphelins(base, tmp_path):
+    from services import retraits
+    _vieillir(base, orphelin=True)
+    c = _conn(base)
+    res = retraits.rediriger_objectifs_v2(c, tmp_path)
+    assert res["orphelins"] == {"objectif_exos.objectif_id": 1}
+    sauve = json.loads(Path(res["sauvegarde"]).read_text(encoding="utf-8"))
+    assert sauve["orphelins"]["objectif_exos.objectif_id"][0]["objectif_id"] == "ob_fantome"
+    assert c.execute("SELECT COUNT(*) FROM objectif_exos WHERE objectif_id='ob_fantome'"
+                     ).fetchone()[0] == 0
+    assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert retraits.rediriger_objectifs_v2(c, tmp_path) is None          # idempotent
+    c.close()
+
+
+def test_demarrage_de_l_appli_repare_puis_retire_objectifs_v2(base):
+    _vieillir(base)
+    create_app(base.parent, profil="atelier")
+    c = sqlite3.connect(base)
+    assert c.execute("SELECT name FROM sqlite_master WHERE name='objectifs_v2'").fetchone() is None
+    assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+    c.close()
+    assert _cibles_fk(base, "objectifs_v2") == []

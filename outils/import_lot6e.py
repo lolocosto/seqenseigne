@@ -839,10 +839,24 @@ def ecrire_documents(lots: list[dict], ref: dict, sortie: Path, rapport: Rapport
 # ── Orchestration ────────────────────────────────────────────────────────────
 
 def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
-             ecrire_fichiers: bool, racine: Path = RACINE_APPLI) -> None:
+             ecrire_fichiers: bool, racine: Path = RACINE_APPLI,
+             data_dir: Path | None = None) -> None:
     """Toutes les opérations de base, dans la transaction de `conn` (le
-    commit est fait par l'appelant)."""
+    commit est fait par l'appelant).
+
+    Exception : la réparation des clés étrangères vers `objectifs_v2`
+    (bases d'avant v0.14.7, cf. services.retraits.rediriger_objectifs_v2)
+    est validée à part, avant l'import : c'est la même réparation que l'appli
+    fait à son démarrage en v0.52.0, et sans elle aucun lien vers un objectif
+    nouvellement créé ne passe."""
     conn.row_factory = sqlite3.Row
+    from services import retraits
+    rep = retraits.rediriger_objectifs_v2(conn, data_dir)
+    if rep:
+        rapport.infos.append(
+            "Réparation de la base : clés étrangères vers l'ancienne table objectifs_v2 "
+            f"redirigées vers objectifs ({', '.join(rep['tables'])})"
+            + (f" ; liens orphelins retirés : {rep['orphelins']}" if rep["orphelins"] else ""))
     conn.execute("PRAGMA foreign_keys = ON")
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
@@ -966,11 +980,11 @@ def main(argv=None) -> int:
     conn = sqlite3.connect(db)
     rapport = Rapport()
     try:
-        executer(conn, lots, ref, rapport, images, ecrire_fichiers=False)
+        executer(conn, lots, ref, rapport, images, ecrire_fichiers=False, data_dir=db.parent)
         conn.commit()
     except Exception as e:
         conn.rollback()
-        print(f"\nErreur, rien n'a été écrit dans la base : {e}")
+        print(f"\nErreur, rien de l'import n'a été écrit dans la base : {e}")
         return 3
     finally:
         conn.close()

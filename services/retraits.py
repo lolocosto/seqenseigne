@@ -13,6 +13,9 @@ Retrait de structures abandonnées, au démarrage (idempotent) :
     par `atome_sections` / `atome_section_items` en v0.6.4) et `objectifs_v2`
     (remplacée par `objectifs` en v0.14.7). Une table encore référencée par
     une clé étrangère d'une autre table n'est pas retirée (signalé).
+  - v0.52.0 — **clés étrangères vers `objectifs_v2`** redirigées vers
+    `objectifs` (bases d'avant v0.14.7) ; `objectifs_v2` n'est alors plus
+    référencée et part avec les résidus.
 
 Avant toute suppression, le contenu des tables est sauvegardé en JSON dans
 `data/sauvegardes/retrait_<nom>_<date>.json` (lisible, réimportable à la
@@ -22,6 +25,7 @@ main au besoin). Rien n'est fait si les tables n'existent plus.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -122,7 +126,97 @@ def retirer_residus(conn, data_dir: Path) -> dict | None:
     return res
 
 
+# Tables de l'appli dont la clé vers les objectifs a pu rester sur
+# objectifs_v2. Une table inconnue qui la référence n'est pas touchée (et
+# objectifs_v2 est alors gardée, comme avant).
+LIENS_OBJECTIFS = ("evaluation_objectifs", "fiches_resume", "objectif_cartes", "objectif_exos",
+                   "objectif_fiches", "objectif_notions", "ui_etat_atelier_sequence")
+
+_RE_REF_V2 = re.compile(r'REFERENCES\s+(?:"objectifs_v2"|\[objectifs_v2\]|`objectifs_v2`|objectifs_v2)\s*\(',
+                        re.IGNORECASE)
+
+
+def rediriger_objectifs_v2(conn, data_dir: Path | None) -> dict | None:
+    """v0.52.0 — Répare les bases antérieures à v0.14.7 dont des tables
+    (objectif_exos, objectif_notions, objectif_fiches, objectif_cartes,
+    fiches_resume, evaluation_objectifs, ui_etat_atelier_sequence) ont gardé
+    une clé étrangère vers `objectifs_v2` au lieu de `objectifs` : le
+    renommage de v0.14.7 n'a pas réécrit ces références. Tant que la
+    réconciliation objectifs ← objectifs_v2 existait (retirée en v0.51.13),
+    cela passait inaperçu ; depuis, tout lien vers un objectif créé après
+    coup échoue (FOREIGN KEY constraint failed).
+
+    Seule la contrainte change (pas le format des lignes) : on réécrit le
+    `CREATE TABLE` dans sqlite_master (procédure documentée par SQLite pour
+    les changements de contraintes), en incrémentant schema_version.
+    Les lignes qui ne visent aucun objectif de `objectifs` sont d'abord
+    sauvegardées en JSON (si `data_dir`) puis retirées (ou mises à NULL pour
+    ui_etat_atelier_sequence), sans quoi la contrainte serait violée.
+    Idempotent : rien n'est fait s'il ne reste aucune référence à objectifs_v2."""
+    existantes = _tables(conn)
+    if "objectifs" not in existantes:
+        return None
+    cibles = []
+    for t in LIENS_OBJECTIFS:
+        if t not in existantes:
+            continue
+        cols = [r[3] for r in conn.execute(f'PRAGMA foreign_key_list("{t}")')
+                if r[2] == "objectifs_v2"]
+        if cols:
+            cibles.append((t, cols))
+    if not cibles:
+        return None
+    orphelins = {}
+    for t, cols in cibles:
+        for c in cols:
+            rows = [dict(zip([d[0] for d in cur.description], r)) for cur in
+                    [conn.execute(f'SELECT * FROM "{t}" WHERE "{c}" IS NOT NULL AND "{c}" NOT IN '
+                                  '(SELECT id FROM objectifs)')] for r in cur.fetchall()]
+            if rows:
+                orphelins[f"{t}.{c}"] = rows
+    sauvegarde = ""
+    if orphelins and data_dir is not None:
+        sauvegarde = str(_sauvegarder(conn, data_dir, "liens_objectifs_v2", (),
+                                      {"orphelins": orphelins}))
+    conn.commit()
+    for t, cols in cibles:
+        for c in cols:
+            if f"{t}.{c}" not in orphelins:
+                continue
+            notnull = any(r[1] == c and r[3] for r in conn.execute(f'PRAGMA table_info("{t}")'))
+            if notnull:
+                conn.execute(f'DELETE FROM "{t}" WHERE "{c}" NOT IN (SELECT id FROM objectifs)')
+            else:
+                conn.execute(f'UPDATE "{t}" SET "{c}" = NULL WHERE "{c}" IS NOT NULL AND "{c}" '
+                             'NOT IN (SELECT id FROM objectifs)')
+    conn.commit()
+    version = conn.execute("PRAGMA schema_version").fetchone()[0]
+    conn.execute("PRAGMA writable_schema = ON")
+    try:
+        for t, _ in cibles:
+            sql = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=?",
+                               (t,)).fetchone()[0]
+            conn.execute("UPDATE sqlite_master SET sql=? WHERE type='table' AND name=?",
+                         (_RE_REF_V2.sub("REFERENCES objectifs(", sql), t))
+        conn.execute(f"PRAGMA schema_version = {version + 1}")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.execute("PRAGMA writable_schema = OFF")
+    restantes = [t for t, _ in cibles
+                 if any(r[2] == "objectifs_v2" for r in conn.execute(f'PRAGMA foreign_key_list("{t}")'))]
+    ok = conn.execute("PRAGMA quick_check").fetchone()[0]
+    if restantes or ok != "ok":
+        raise RuntimeError(f"redirection objectifs_v2 incomplète : {restantes} / {ok}")
+    return {"tables": [t for t, _ in cibles],
+            "orphelins": {k: len(v) for k, v in orphelins.items()},
+            "sauvegarde": sauvegarde}
+
+
 def appliquer(conn, data_dir: Path) -> dict:
     return {"ancien_modele_mer": retirer_ancien_modele_mer(conn, data_dir),
             "anciens_livrets": retirer_anciens_livrets(conn, data_dir),
+            "liens_objectifs_v2": rediriger_objectifs_v2(conn, data_dir),
             "residus": retirer_residus(conn, data_dir)}

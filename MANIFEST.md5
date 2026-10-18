@@ -1,12 +1,13 @@
-83da0c7ff24a296e8dcd079b6f09b0e7  47133  outils\import_lot6e.py
+4a8704d35db702d4f56fd2feb1156427  47949  outils\import_lot6e.py
 604043949de1737aa9365e84fe9d7a38  10340  outils\objectifs_6e.json
 af7b419b3dd366fe24822bc5cef579f6  17868  services\modeles_referentiel.py
 dedb9decc222a929a73d1a13c2f1d895  2543  services\couleurs_themes.py
 b9894e211c3ea564241c46d39e036059  66372  services\latex_rendu_atome.py
 b96c665fdcec8f0c1b544f7bbafd1d67  56079  services\referentiel_principal_externe.py
+d739a2dd28131e49392ea18bd3f7ee67  10585  services\retraits.py
 737cb51f96c0f1ed0b705c04f702b375  26857  static\referentiel_pe.js
 309c64164bbf3a94f0f5e7b1131187bc  56672  static\ateliers_seqniv_v2_edit.js
-42ff23218d8227111097570018580c33  29487  tests\test_v0_52_0_import_lot6e.py
+b0dfc1de4569d2a19cb7ddf246f5df81  34205  tests\test_v0_52_0_import_lot6e.py
 55a988a8dd4c92b1a3fc6ebe59323a9a  8728  tests\test_R2_themes_routes.py
-e018e659784e099a719acc5f85b36d10  5748  doc\redemarrage_v0_52_0.md
-eb90e514ac3773e14d77ccd92adda394  16091  doc\ETAT_COURANT.md
+0b241c0a9635871933e480de37c75b62  7515  doc\redemarrage_v0_52_0.md
+96fab3566fc99e892358c108825b3ce9  16553  doc\ETAT_COURANT.md

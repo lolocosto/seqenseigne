@@ -96,3 +96,33 @@ et la couleur `proportionnalite` de `seqenseigne-theme`, livrés à part dans
 3. `..\outils\python\python.exe .\outils\import_lot6e.py --apply`
 4. Documents hors base : `..\reference\lot6e\documents_tex\Snn\` (compiler
    deux fois les versions élève et corrigée).
+
+## Correctif du 18 octobre (soir) — clés étrangères restées sur `objectifs_v2`
+
+Symptôme chez Laurent : l'essai à blanc s'arrête sur
+`sqlite3.IntegrityError: FOREIGN KEY constraint failed` en posant le premier
+lien objectif ↔ exercice.
+
+Cause : dans les bases créées avant v0.14.7, le renommage
+`objectifs_v2` → `objectifs` n'avait pas réécrit les clés étrangères de sept
+tables (`objectif_exos`, `objectif_notions`, `objectif_fiches`,
+`objectif_cartes`, `fiches_resume`, `evaluation_objectifs`,
+`ui_etat_atelier_sequence`), qui visaient encore `objectifs_v2`. La
+réconciliation objectifs ← objectifs_v2 masquait le problème ; depuis son
+retrait (v0.51.13), tout lien vers un objectif créé après coup échoue — dans
+l'outil comme dans l'appli. `retraits.retirer_residus` gardait
+`objectifs_v2` parce qu'elle était encore référencée.
+
+Correction (`services/retraits.py`, `rediriger_objectifs_v2`) : pour ces sept
+tables seulement, réécriture de la contrainte dans `sqlite_master`
+(procédure SQLite pour un changement de contrainte seule, schema_version
+incrémenté, quick_check ensuite). Les liens qui ne visent aucun objectif de
+`objectifs` sont sauvegardés en JSON (`sauvegardes\retrait_liens_objectifs_v2_*.json`)
+puis retirés (mis à NULL pour `ui_etat_atelier_sequence`). Appelée au
+démarrage de l'appli (avant `retirer_residus`, qui retire alors
+`objectifs_v2`) et en tête de l'import 6e (validée à part, avant l'import).
+Une table inconnue qui viserait `objectifs_v2` n'est pas touchée.
+
+Vérifié sur une copie de la base atelier de Laurent : 0 lien orphelin,
+essai à blanc puis `--apply` deux fois sans erreur, `foreign_key_check` vide,
+`integrity_check` ok ; au démarrage suivant, `objectifs_v2` est retirée.

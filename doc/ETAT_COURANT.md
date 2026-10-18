@@ -20,6 +20,12 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   travaux personnels, activités complémentaires, séances d'atelier et
   évaluations écrits en `.tex` (hors base). Exige `seqenseigne-style6e` v0.4
   et l'option `sixieme` du paquet (livrés à part dans `paquet/`).
+- Correctif v0.52.0 (18 octobre, soir) : `services/retraits.py`
+  (`rediriger_objectifs_v2`) redirige vers `objectifs` les clés étrangères de
+  7 tables de liens restées sur `objectifs_v2` dans les bases d'avant v0.14.7
+  (cause du « FOREIGN KEY constraint failed » de l'import 6e, et de tout lien
+  vers un objectif créé depuis v0.51.13) ; `objectifs_v2` est ensuite retirée
+  au démarrage. Détails : `doc/redemarrage_v0_52_0.md`, dernière section.
 - À venir : v0.52.1 livret de séquence au style de l'équipe de 6e ; lots
   S04 à S10 ; mises en route M01 à M07. La mise en ligne (prévue en v0.52)
   prendra le numéro suivant.
