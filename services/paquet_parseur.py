@@ -846,6 +846,10 @@ MACROS_PAQUETS_EXTERNES = {
     '\\BODY': 'environ',
 }
 
+# v0.52.0 — Module de 6e, chargé en entier (cf. services/style6e.py).
+from services.style6e import correspondances as _correspondances_style6e  # noqa: E402
+MACROS_PAQUETS_EXTERNES.update(_correspondances_style6e())
+
 
 def extraire_macros_definies_localement(texte: str) -> set[str]:
     r"""Retourne les noms de macros définies par l'atome lui-même via

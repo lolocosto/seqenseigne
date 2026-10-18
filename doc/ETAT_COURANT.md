@@ -25,7 +25,12 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   7 tables de liens restées sur `objectifs_v2` dans les bases d'avant v0.14.7
   (cause du « FOREIGN KEY constraint failed » de l'import 6e, et de tout lien
   vers un objectif créé depuis v0.51.13) ; `objectifs_v2` est ensuite retirée
-  au démarrage. Détails : `doc/redemarrage_v0_52_0.md`, dernière section.
+  au démarrage. Détails : `doc/redemarrage_v0_52_0.md`.
+- Correctif 2 v0.52.0 : `services/style6e.py` — le module
+  `seqenseigne-style6e` est chargé en entier par `\usepackage` quand ses
+  macros sont utilisées (pas importé par « Import mise en forme ») ;
+  `reference\paquet` ajouté au TEXINPUTS ; dossier `Remediation\` créé avant
+  pdflatex ; titres de section de fiche avec virgule entre accolades.
 - À venir : v0.52.1 livret de séquence au style de l'équipe de 6e ; lots
   S04 à S10 ; mises en route M01 à M07. La mise en ligne (prévue en v0.52)
   prendra le numéro suivant.

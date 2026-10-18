@@ -256,6 +256,21 @@ def _ouvrir_workdir(workdir: Path | None):
         yield workdir
 
 
+def dossier_paquet_effectif(dossier_paquet: Path | None,
+                            racine_appli: Path | None) -> Path | None:
+    """Dossier du paquet à mettre dans le TEXINPUTS : celui donné, sinon
+    `<racine_appli>/../reference/paquet` (valeur par défaut de
+    `chemin_paquet` dans services/configuration.py) s'il existe."""
+    if dossier_paquet is not None:
+        p = Path(dossier_paquet)
+        return p if p.is_dir() else None
+    if racine_appli is not None:
+        p = Path(racine_appli).resolve().parent / 'reference' / 'paquet'
+        if p.is_dir():
+            return p
+    return None
+
+
 def compiler_atome(
     tex_source: str,
     racine_sources: Path | None = None,
@@ -266,6 +281,7 @@ def compiler_atome(
     dossier_images: Path | None = None,
     workdir: Path | None = None,
     on_passe_demarree=None,
+    dossier_paquet: Path | None = None,
 ) -> ResultatCompilation:
     """Compile un .tex d'atome et retourne le résultat.
 
@@ -368,6 +384,10 @@ def compiler_atome(
         # que pdflatex ne les ouvre : tcbverbatimwrite ne les crée pas.
         (tmpdir / 'Corriges').mkdir(exist_ok=True)
         (tmpdir / 'Annexes').mkdir(exist_ok=True)
+        # v0.52.0 — Idem pour les remédiations (\seqInitRemediation écrit
+        # Remediation/reNeM.tex) : sans ce dossier, un livret qui contient
+        # des remédiations s'arrête sur « I can't write on file ».
+        (tmpdir / 'Remediation').mkdir(exist_ok=True)
 
         # TEXINPUTS : permet à pdflatex de trouver les .sty et les fichiers
         # inclus via \input, y compris depuis la racine des sources.
@@ -380,6 +400,13 @@ def compiler_atome(
             # Le dossier images est plat, mais on garde le // par robustesse
             # au cas où Laurent organise plus tard des sous-dossiers.
             texinputs_parts.append(str(dossier_images) + os.sep + os.sep)
+        # v0.52.0 — Dossier du paquet seqenseigne (.sty) : les modules
+        # chargés en entier par \usepackage (seqenseigne-style6e, cf.
+        # services/style6e.py) doivent être trouvés sans installation dans
+        # MiKTeX. Par défaut <racine>\reference\paquet, à côté de appli\.
+        paquet = dossier_paquet_effectif(dossier_paquet, racine_appli)
+        if paquet is not None:
+            texinputs_parts.append(str(paquet))
         texinputs_parts.append('')  # conserve le TEXINPUTS par défaut
         env = os.environ.copy()
         env['TEXINPUTS'] = os.pathsep.join(texinputs_parts) + (

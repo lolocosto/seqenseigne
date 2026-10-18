@@ -1191,9 +1191,14 @@ def generer_corps_fiche(atome: Atome) -> str:
         # seqBoiteContenuFlashcard : la clé `titre` accepte le titre brut ;
         # si vide, on génère sans la clé pour laisser le paquet utiliser
         # son rendu par défaut (boîte sans bandeau).
+        # v0.52.0 — Titre contenant , = ou ] (« Multiplier par 10, 100,
+        # 1 000 ») : mis entre accolades, sinon xkeyval le coupe en clés
+        # inconnues. Les autres titres sortent comme avant (rendu
+        # historique inchangé au caractère près).
         if titre_sec:
+            t = f'{{{titre_sec}}}' if any(c in titre_sec for c in ',=]') else titre_sec
             parties.append(
-                f'\\begin{{seqBoiteContenuFlashcard}}[titre={titre_sec}]'
+                f'\\begin{{seqBoiteContenuFlashcard}}[titre={t}]'
             )
         else:
             parties.append(r'\begin{seqBoiteContenuFlashcard}')

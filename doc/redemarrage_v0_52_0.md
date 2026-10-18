@@ -126,3 +126,39 @@ Une table inconnue qui viserait `objectifs_v2` n'est pas touchée.
 Vérifié sur une copie de la base atelier de Laurent : 0 lien orphelin,
 essai à blanc puis `--apply` deux fois sans erreur, `foreign_key_check` vide,
 `integrity_check` ok ; au démarrage suivant, `objectifs_v2` est retirée.
+
+## Correctif 2 (18 octobre, nuit) — livret N09 : module de 6e introuvable
+
+Symptôme : la compilation du livret N09/S01 s'arrête sur
+`Undefined control sequence \seqLocCellule` ; « Import mise en forme »
+n'affiche pas `seqenseigne-style6e.sty`.
+
+Cause : l'import de la mise en forme (`scripts/peuplement_14…`) lit une
+liste fixe de `.sty`, et son parseur est écrit pour la syntaxe des modules
+du cycle 4 : sur style6e il ne verrait que 49 définitions sur ~80.
+
+Correction (décision : charger le module en entier) :
+- `services/style6e.py` : noms publics du module v0.4 (macros et
+  environnements), ajoutés à `MACROS_PAQUETS_EXTERNES` → un atome ou un
+  livret qui en utilise un reçoit `\usepackage{seqenseigne-style6e}`. Le
+  module est autonome (couleurs, compteurs, macros internes définis chez
+  lui, aucun nom commun avec les autres modules) ; rien ne change pour le
+  cycle 4. Il n'est **pas** ajouté à l'import de la mise en forme.
+- `services/compilateur_pdf.py` : le dossier du paquet
+  (`<racine>\reference\paquet`, à côté de `appli\`) est ajouté au
+  TEXINPUTS, pour que pdflatex trouve le `.sty` sans installation dans
+  MiKTeX.
+
+Deux défauts trouvés sur les mêmes livrets, corrigés au passage :
+- dossier `Remediation\` non créé avant pdflatex (le commentaire de
+  `latex_rendu_atome` l'annonçait) : un livret avec remédiations s'arrêtait
+  sur « I can't write on file `Remediation/…` » ;
+- titre de section de fiche contenant `,` `=` ou `]` : mis entre accolades
+  dans `[titre=…]` (sinon xkeyval le coupe) ; les autres titres sortent
+  comme avant, au caractère près.
+
+Vérifié : livrets N09 S01, S02, S03 générés par l'appli sur une copie de
+la base atelier de Laurent (import appliqué), compilés par le compilateur
+de l'appli : 45, 30 et 48 pages, sans erreur. La mise en page reste celle
+du cycle 4 (deux colonnes, trop étroites pour certains tableaux de 6e) :
+le livret au style de l'équipe est l'objet de v0.52.1.
