@@ -1,0 +1,626 @@
+%%
+%% This is file `seqenseigne-theme.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% seqenseigne-theme.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2025 by Laurent Coste
+%% 
+%% This file may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3 or later is part of all distributions of
+%% LaTeX version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-theme}%
+[2025/10/24 v1.0-dev seqenseigne theme module]
+
+\RequirePackage{adjustbox}%
+\RequirePackage[theorems,breakable,skins]{tcolorbox}%
+\RequirePackage{xcolor}%
+\RequirePackage{tikz}%
+\RequirePackage{adjustbox}%
+\RequirePackage{multirow}%
+\RequirePackage{colortbl}%
+\RequirePackage{datetime}%
+\RequirePackage{geometry}%
+\RequirePackage{fancyhdr}%
+\RequirePackage{multicol}%
+\RequirePackage{pifont}%
+\RequirePackage[inline]{enumitem}%
+\RequirePackage{xkeyval}%
+\RequirePackage{xifthen}%
+
+%% ------------------------------------------------------------------
+%% ---- Traitement des options --------------------------------------
+%% ------------------------------------------------------------------
+\newif\ifdocstd\docstdtrue
+\DeclareOption{ltxdoc}{\docstdfalse}%
+\ProcessOptions\relax
+
+%% ------------------------------------------------------------------
+%% ---- Définition des couleurs -------------------------------------
+%% ------------------------------------------------------------------
+%% ---- Nombres et calcul
+\newcommand{\seqCouleurRougeVif}{red!85!black}%
+\newcommand{\seqCouleurRougeModere}{red!50!white}%
+\newcommand{\seqCouleurRougeMoyen}{red!25!white}%
+\newcommand{\seqCouleurRougePale}{red!10!white}%
+\newcommand{\seqCouleurJauneModere}{yellow!50!white}%
+\newcommand{\seqCouleurJaunePale}{yellow!10!white}%
+%% ---- Organisation des données et fonction
+\newcommand{\seqCouleurBleuVif}{blue!85!black}%
+\newcommand{\seqCouleurBleuModere}{blue!50!white}%
+\newcommand{\seqCouleurBleuMoyen}{blue!25!white}%
+\newcommand{\seqCouleurBleuPale}{blue!10!white}%
+\newcommand{\seqCouleurCanardModere}{teal!50!white}%
+\newcommand{\seqCouleurCanardPale}{teal!10!white}%
+%% ---- Grandeurs et mesures
+\newcommand{\seqCouleurMarronVif}{brown!85!black}%
+\newcommand{\seqCouleurMarronModere}{brown!50!white}%
+\newcommand{\seqCouleurMarronMoyen}{brown!25!white}%
+\newcommand{\seqCouleurMarronPale}{brown!10!white}%
+\newcommand{\seqCouleurOrangeModere}{orange!50!white}%
+\newcommand{\seqCouleurOrangePale}{orange!10!white}%
+%% ---- Espace et géométrie
+\newcommand{\seqCouleurVioletVif}{violet!85!black}%
+\newcommand{\seqCouleurVioletMoyen}{violet!25!white}%
+\newcommand{\seqCouleurVioletModere}{violet!50!white}%
+\newcommand{\seqCouleurVioletPale}{violet!10!white}%
+\newcommand{\seqCouleurVertModere}{green!50!white}%
+\newcommand{\seqCouleurVertPale}{green!10!white}%
+%% ---- Algorithmique et programmation
+\newcommand{\seqCouleurRoseVif}{magenta!85!black}%
+\newcommand{\seqCouleurRoseMoyen}{magenta!25!white}%
+\newcommand{\seqCouleurRoseModere}{magenta!50!white}%
+\newcommand{\seqCouleurRosePale}{magenta!10!white}%
+\newcommand{\seqCouleurLimeModere}{lime!50!white}%
+\newcommand{\seqCouleurLimePale}{lime!10!white}%
+%% ---- Autre
+\newcommand{\seqCouleurNoirVif}{black!85!black}%
+\newcommand{\seqCouleurNoirMoyen}{black!25!white}%
+\newcommand{\seqCouleurNoirModere}{black!50!white}%
+\newcommand{\seqCouleurNoirPale}{black!10!white}%
+\newcommand{\seqCouleurGrisModere}{gray!50!white}%
+\newcommand{\seqCouleurGrisPale}{gray!10!white}%
+
+\newcommand{\seq@setColors}[1]{%
+\ifthenelse{ \equal{#1}{nombres} }%
+{%
+\def\seq@couleuri@vif{\seqCouleurRougeVif}%
+\def\seq@couleuri@moyen{\seqCouleurRougeMoyen}%
+\def\seq@couleuri@modere{\seqCouleurRougeModere}%
+\def\seq@couleuri@pale{\seqCouleurRougePale}%
+\def\seq@couleurii@modere{\seqCouleurJauneModere}%
+\def\seq@couleurii@pale{\seqCouleurJaunePale}%
+}%
+{%
+\ifthenelse{ \equal{#1}{donnees} }%
+{%
+\def\seq@couleuri@vif{\seqCouleurBleuVif}%
+\def\seq@couleuri@moyen{\seqCouleurBleuMoyen}%
+\def\seq@couleuri@modere{\seqCouleurBleuModere}%
+\def\seq@couleuri@pale{\seqCouleurBleuPale}%
+\def\seq@couleurii@modere{\seqCouleurCanardModere}%
+\def\seq@couleurii@pale{\seqCouleurCanardPale}%
+}%
+{%
+\ifthenelse{ \equal{#1}{grandeurs} }%
+{%
+\def\seq@couleuri@vif{\seqCouleurMarronVif}%
+\def\seq@couleuri@moyen{\seqCouleurMarronMoyen}%
+\def\seq@couleuri@modere{\seqCouleurMarronModere}%
+\def\seq@couleuri@pale{\seqCouleurMarronPale}%
+\def\seq@couleurii@modere{\seqCouleurOrangeModere}%
+\def\seq@couleurii@pale{\seqCouleurOrangePale}%
+}%
+{%
+\ifthenelse{ \equal{#1}{geometrie} }%
+{%
+\def\seq@couleuri@vif{\seqCouleurVioletVif}%
+\def\seq@couleuri@moyen{\seqCouleurVioletMoyen}%
+\def\seq@couleuri@modere{\seqCouleurVioletModere}%
+\def\seq@couleuri@pale{\seqCouleurVioletPale}%
+\def\seq@couleurii@modere{\seqCouleurVertModere}%
+\def\seq@couleurii@pale{\seqCouleurVertPale}%
+}%
+{%
+\ifthenelse{ \equal{#1}{algorithmique} }%
+{%
+\def\seq@couleuri@vif{\seqCouleurRoseVif}%
+\def\seq@couleuri@moyen{\seqCouleurRoseMoyen}%
+\def\seq@couleuri@modere{\seqCouleurRoseModere}%
+\def\seq@couleuri@pale{\seqCouleurRosePale}%
+\def\seq@couleurii@modere{\seqCouleurLimeModere}%
+\def\seq@couleurii@pale{\seqCouleurLimePale}%
+}%
+{%
+\def\seq@couleuri@vif{\seqCouleurNoirVif}%
+\def\seq@couleuri@moyen{\seqCouleurNoirMoyen}%
+\def\seq@couleuri@modere{\seqCouleurNoirModere}%
+\def\seq@couleuri@pale{\seqCouleurNoirPale}%
+\def\seq@couleurii@modere{\seqCouleurGrisModere}%
+\def\seq@couleurii@pale{\seqCouleurGrisPale}%
+}%
+}%
+}%
+}%
+}%
+}%
+
+%% ---- Couleur des lignes de séparation dans les tableaux
+\newcommand{\seq@rule@color}[1]{ \def\CT@arc@{\color{#1}} }%
+
+%% ---- Couleur du tableau d'objectifs
+\newcolumntype{Y}{>{\columncolor{\seq@couleurii@pale}}X}%
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}%
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}%
+
+%% ------------------------------------------------------------------
+%% ---- Macro pour fiches à compléter -------------------------------
+%% ------------------------------------------------------------------
+\newcommand{\acompleter}[1]{\;\underline{\phantom{#1}}\;}%
+
+%% ------------------------------------------------------------------
+%% ---- Encadrés colorés pour mise en valeur -----------------------
+%% ------------------------------------------------------------------
+\newcommand{\seqBoiteJaune}[1]{%
+    \adjustbox{cframe={\seq@couleurii@modere} 2pt 2pt 2pt,bgcolor=\seq@couleurii@modere}{#1}%
+}%
+%% Alias historique — certains livrets appellent \boiteJauneModere
+%% (même effet, nom non préfixé seq). Maintenu pour compatibilité.
+\newcommand{\boiteJauneModere}[1]{%
+    \adjustbox{cframe={\seqCouleurJauneModere} 2pt 2pt 2pt,bgcolor=\seqCouleurJauneModere}{#1}%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Différentes boites ------------------------------------------
+%% ------------------------------------------------------------------
+\newtcolorbox{boiteTitreGen}[1]{%
+title=#1,
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt}%
+}%
+\newtcolorbox{boiteTitreSection}{%
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif
+}%
+\newtcolorbox{boiteTitreSousSection}{%
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif,
+width=0.6\linewidth
+}%
+\newtcolorbox{boiteTitreSerie}{%
+colback=\seq@couleurii@modere,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif
+}%
+\newtcolorbox{boiteTitreSerieCorrige}{%
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif,
+width=0.5\linewidth
+}%
+\newtcolorbox{boiteTitreGroupe}{%
+colback=\seq@couleurii@modere,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif
+}%
+\newtcolorbox{boiteTitreExo}{%
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif
+}%
+\newtcolorbox{boiteNumExo}{%
+width=100pt,
+colback=\seq@couleuri@pale,
+colframe=\seq@couleuri@vif,
+coltext=\seq@couleuri@vif,
+after={},
+box align=center,
+boxsep=2pt,
+halign=right
+}%
+\newtcolorbox{boitePaleNoBreak}[1]{%
+title=#1,
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt}%
+}%
+\newtcolorbox{boitePaleBreak}[1]{%
+title=#1,
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+breakable,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt},
+height fixed for=all,
+pad after break=20pt
+}%
+\newtcolorbox{boitePaleBreakFitHeight}[1]{%
+title=#1,
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+breakable,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt},
+pad after break=20pt
+}%
+\newtcolorbox{boitePaleBreakNoTitle}{%
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+breakable,
+enhanced,
+height fixed for=all
+}%
+\newtcolorbox{boitePaleNoBreakNoTitle}{%
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif
+}%
+\newtcolorbox{boitePaleVariable}[1]{%
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+width=#1
+}%
+\newtcolorbox{boitePaleVariableNobeforeafter}[1]{%
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+nobeforeafter,
+width=#1
+}%
+\newtcolorbox{boiteVariableTitre}[2]{%
+title={\footnotesize #1},
+colback=white,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt},
+width=#2
+}%
+\newtcolorbox{boiteVariableWidthHeightTitre}[3]{%
+title={\footnotesize #1},
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt},
+width=#2, height=#3
+}%
+\newtcolorbox{boitePaleNoBreakHeightNoTitle}[1]{%
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+height=#1
+}%
+
+\newtcolorbox{seq@boite@prerequis}{%
+title=Prérequis,
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+breakable,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt},
+pad after break=20pt
+}%
+\newcommand{\seqRenduTableauPrerequis}[1]{%
+\begin{seq@boite@prerequis}%
+#1%
+\end{seq@boite@prerequis}%
+}%
+
+\newtcolorbox{seq@boite@objectifs}[1]{%
+title={#1},
+colback=\seq@couleurii@pale,
+colframe=\seq@couleuri@vif,
+colbacktitle=\seq@couleuri@vif,
+breakable,
+fonttitle=\bfseries,
+enhanced,
+attach boxed title to top left={yshift=-5pt,xshift=20pt},
+pad after break=20pt,
+tabularx*={}{X|X|X|X}%
+}%
+\newcommand{\seqRenduTableauObjectifs}[2][Objectifs]{%
+\begingroup
+\newcolumntype{C}{>{\centering\arraybackslash}X}%
+\begin{seq@boite@objectifs}{#1}%
+\multirow{2}{\hsize}{} & \multicolumn{3}{|>{\hsize=3\hsize}C|}{Niveau de maîtrise} \\\cline{2-4}%
+& \`A consolider & Satisfaisant & Très bien \\\hline
+#2
+\end{seq@boite@objectifs}%
+\endgroup
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Cellules dans les tableaux d'objectif -----------------------
+%% ------------------------------------------------------------------
+\newcommand\cellVertUn[1]{%
+\multirow{4}{*}{%
+\begin{minipage}{1em}%
+\adjustbox{angle=90,valign=M}{\color{\seq@couleuri@vif} \textbf{#1}}%
+\end{minipage}%
+}%
+}%
+\newcommand\cellVert[1]{%
+\adjustbox{angle=90,valign=M}{\color{\seq@couleuri@vif} \textbf{#1}}%
+}%
+\newcommand{\seq@headcol}{%
+\rowcolor{\seq@couleurii@pale}%
+}%
+\newcommand{\seq@headtextcol}{%
+\color{\seq@couleuri@vif}%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Pour les flashcards -----------------------------------------
+%% ------------------------------------------------------------------
+\newcommand{\seqBoiteFlashcardVide}{%
+\begin{tcolorbox}[title=\begin{minipage}{0.8\textwidth}\Large\phantom{Vide!}\end{minipage}%
+,height fill
+,colback=\seq@couleurii@pale
+,colframe=\seq@couleuri@vif
+,colbacktitle=\seq@couleuri@vif
+,fonttitle=\bfseries
+,enhanced
+,attach boxed title to top left={yshift=-5pt,xshift=20pt}%
+]
+\end{tcolorbox}%
+\newpage
+}%
+\newcommand{\seqBoiteTitreFlashcard}[2]{%
+\stepcounter{flashcardnb}%
+\begin{tcolorbox}[title=\begin{minipage}{0.8\textwidth}\Large \seq@code@sequence: \seqSequenceGetNom\end{minipage}%
+,height fill
+,colback=\seq@couleurii@pale
+,colframe=\seq@couleuri@vif
+,colbacktitle=\seq@couleuri@vif
+,fonttitle=\bfseries
+,enhanced
+,attach boxed title to top left={yshift=-5pt,xshift=20pt}%
+]
+\begin{minipage}[t][9em]{\textwidth-20pt}Classe de \seqNiveauGetNomCourt{\seq@code@niveau}\hfill Fiche numéro \theflashcardnb\end{minipage}\par
+\begin{minipage}[c][7em]{\textwidth-20pt}\begin{center}\huge\seqObjectifGetNom{#1}\end{center}\end{minipage}\par
+\begin{minipage}[b][6em]{\textwidth-20pt}\hfill #2\end{minipage}\par
+\begin{minipage}[b][6em]{\textwidth-20pt}Version de \datemoisannee\today \hfill Nom et prénom: \acompleter{un très long nom et un prénom aussi}\end{minipage}%
+\end{tcolorbox}%
+\newpage
+}%
+%% Options
+%% Environnement contenu de flashcard
+\define@cmdkey[seq]{boiteContenuFlashcard}{titre}[Exemples]{}%
+\newenvironment{seqBoiteContenuFlashcard}[1][]{%
+\setkeys[seq]{boiteContenuFlashcard}{titre,#1}%
+\begin{tcolorbox}[title=\cmdseq@boiteContenuFlashcard@titre
+,natural height
+,colback=\seq@couleurii@pale
+,colframe=\seq@couleuri@vif
+,colbacktitle=\seq@couleuri@vif
+,fonttitle=\bfseries
+,enhanced
+,attach boxed title to top left={yshift=-5pt,xshift=20pt}%
+]
+}{%
+\end{tcolorbox}%
+}%
+%% Options
+\define@cmdkey[seq]{boiteFillContenuFlashcard}{titre}[Exemples]{}%
+%% Environnement contenu de flashcard
+\newenvironment{seqBoiteFillContenuFlashcard}[1][]{%
+\setkeys[seq]{boiteFillContenuFlashcard}{titre,#1}%
+\begin{tcolorbox}[title=\cmdseq@boiteFillContenuFlashcard@titre
+,height fill
+,colback=\seq@couleurii@pale
+,colframe=\seq@couleuri@vif
+,colbacktitle=\seq@couleuri@vif
+,fonttitle=\bfseries
+,enhanced
+,attach boxed title to top left={yshift=-5pt,xshift=20pt}%
+]
+}{%
+\end{tcolorbox}%
+\newpage
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Blocs de niveau 1 et 2 --------------------------------------
+%% ------------------------------------------------------------------
+\newenvironment{seqBloc}[1]{%
+\begin{boiteTitreSection}%
+\begin{minipage}[c][12pt][c]{\linewidth}%
+\centering \large \textbf{#1}%
+\end{minipage}%
+\end{boiteTitreSection}%
+\begin{boitePaleNoBreakNoTitle}%
+\begin{minipage}{\linewidth}%
+\begin{dinglist}{224}%
+}{%
+\end{dinglist}%
+\end{minipage}%
+\end{boitePaleNoBreakNoTitle}%
+}%
+
+\newenvironment{seqBlocN2}{%
+\begin{dinglist}{118}%
+}{%
+\end{dinglist}%
+}%
+
+%% Options
+\define@cmdkey[seq]{colEnum}{nbCols}[2]{}%
+\define@cmdkey[seq]{colEnum}{label}[\arabic*)]{}%
+\newenvironment{seqColEnum}[1][]{%
+\setkeys[seq]{colEnum}{nbCols,label,#1}%
+\removelastskip
+\ifthenelse{\cmdseq@colEnum@nbCols > 1}%
+{\begin{multicols}{\cmdseq@colEnum@nbCols}}{}%
+\begin{enumerate}[label=\cmdseq@colEnum@label]
+}{%
+\end{enumerate}%
+\ifthenelse{\cmdseq@colEnum@nbCols > 1}{\end{multicols}}{}%
+}%
+
+%% Options
+\define@cmdkey[seq]{colItem}{nbCols}[2]{}%
+\define@cmdkey[seq]{colItem}{label}[$\bullet$]{}%
+\newenvironment{seqColItem}[1][]{%
+\setkeys[seq]{colItem}{nbCols,label,#1}%
+\ifthenelse{\cmdseq@colItem@nbCols > 1}%
+{\begin{multicols}{\cmdseq@colItem@nbCols}}{}%
+\begin{itemize}[label=\cmdseq@colItem@label]
+}{%
+\end{itemize}%
+\ifthenelse{\cmdseq@colItem@nbCols > 1}{\end{multicols}}{}%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Pour Tikz ---------------------------------------------------
+%% ------------------------------------------------------------------
+\tikzstyle{axe}=[line width=0.3mm, ->, color=black, line cap=rect]
+
+\newcommand{\seqOrigine}{\draw (0,0) node[below left] {\small $0$};}%
+
+%% Options
+\define@cmdkey[seq]{axeX}{ord}[0]{}%
+\define@cmdkey[seq]{axeX}{absMin}{}%
+\define@cmdkey[seq]{axeX}{absMax}{}%
+\define@cmdkey[seq]{axeX}{absList}{}%
+\define@cmdkey[seq]{axeX}{libelle}{}%
+\newcommand{\seqAxeX}[1][]{%
+\setkeys[seq]{axeX}{ord,#1}%
+\draw[axe] (\cmdseq@axeX@absMin,\cmdseq@axeX@ord)--
+(\cmdseq@axeX@absMax,\cmdseq@axeX@ord)
+\ifx\cmdseq@axeX@libelle\undefined\else
+node[above] {\textit{\cmdseq@axeX@libelle}}%
+\fi;
+\foreach \x in \cmdseq@axeX@absList {%
+\draw[thin] (\x,\cmdseq@axeX@ord) node {\small $+$};
+\draw (\x,\cmdseq@axeX@ord) node[below] {\small $\x$};
+}%
+}%
+
+%% Options
+\define@cmdkey[seq]{axeY}{abs}[0]{}%
+\define@cmdkey[seq]{axeY}{ordMin}{}%
+\define@cmdkey[seq]{axeY}{ordMax}{}%
+\define@cmdkey[seq]{axeY}{ordList}{}%
+\define@cmdkey[seq]{axeY}{libelle}{}%
+\newcommand{\seqAxeY}[1][]{%
+\setkeys[seq]{axeY}{abs,#1}%
+\draw[axe] (\cmdseq@axeY@abs,\cmdseq@axeY@ordMin)--
+(\cmdseq@axeY@abs,\cmdseq@axeY@ordMax)
+\ifx\cmdseq@axeY@libelle\undefined\else
+node[right] {\textit{\cmdseq@axeY@libelle}}%
+\fi;
+\foreach \y in \cmdseq@axeY@ordList {%
+\draw[thin] (\cmdseq@axeY@abs, \y) node {\small $+$};
+\draw (\cmdseq@axeY@abs, \y) node[left] {\small $\y$};
+}%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Réglages généraux -------------------------------------------
+%% ------------------------------------------------------------------
+%% ---- Format de date
+\newdateformat{datemoisannee}{\monthname\;\THEYEAR}%
+%% ---- Espacement autour des fractions
+\newcommand\TopStrut{\rule{0pt}{2.6ex}}       % Top strut
+\newcommand\BottomStrut{\rule[-1.2ex]{0pt}{0pt}} % Bottom strut
+%% ---- Expansion des options dans les fichiers de corrigé
+\newcommand\eue{\expandafter\unexpanded\expandafter}%
+%% ---- Taille des marges
+\ifdocstd \geometry{left=35pt,right=35pt,top=50pt,bottom=70pt,head=30pt,foot=10pt}%
+\else \geometry{left=100pt,right=50pt,top=70pt,bottom=70pt,head=30pt,foot=10pt}%
+\fi
+%% ---- Pas d'indentation des paragraphes
+\setlength{\parindent}{0pt}%
+%% ---- Espacement avant le pied de page
+\setlength{\footskip}{15.0pt}%
+%% ---- Pas de trait sous l'entête
+\renewcommand{\headrulewidth}{0pt}%
+%% ---- Pas de trait au dessus du pied de page
+\renewcommand{\footrulewidth}{0pt}%
+
+%% ------------------------------------------------------------------
+%% ---- Pour tabularray ---------------------------------------------
+%% ------------------------------------------------------------------
+%% ---- Texte de continuation des longs tableaux
+\DefTblrTemplate{contfoot-text}{normal}{Suite page suivante}%
+\SetTblrTemplate{contfoot-text}{normal}%
+\DefTblrTemplate{conthead-text}{normal}{(suite)}%
+\SetTblrTemplate{conthead-text}{normal}%
+
+%% ---- Titre vertical de colonne (tableaux étroits à entête long)
+%% Usage : \seqTitreTabV{Libellé long} dans une cellule d'entête.
+\newcommand{\seqTitreTabV}[1]{%
+    \rotatebox{70}{\begin{minipage}{8em}#1\end{minipage}}%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Pour multicols ----------------------------------------------
+%% ------------------------------------------------------------------
+%% ---- Pas de ligne verticale entre les colonnes
+\renewcommand{\columnseprule}{0pt}%
+%% ---- Séparation par défaut entre les colonnes
+\setlength{\columnsep}{10pt}%
+%% ---- Espace avant et après multicols réduit de moitié
+\setlength{\multicolsep}{6.0pt plus 2.0pt minus 1.5pt}%
+
+
+%% ---- Série Fondamentale (F) : ambre — à consolider
+\newcommand{\seqCouleurSerieF}{orange!18!white}%
+\newcommand{\seqCouleurSerieFCadre}{orange!65!black}%
+%% ---- Série Avancée (A) : bleu clair — satisfaisant
+\newcommand{\seqCouleurSerieA}{blue!12!white}%
+\newcommand{\seqCouleurSerieACadre}{blue!55!black}%
+%% ---- Série Exploration (E) : vert clair — très bon
+\newcommand{\seqCouleurSerieE}{green!15!white}%
+\newcommand{\seqCouleurSerieECadre}{green!50!black}%
+\newtcolorbox{seqPPRE@boite}[3]{%
+    title          = {#1},%
+    colback        = {#2},%
+    colframe       = {#3},%
+    colbacktitle   = {#3},%
+    coltitle       = white,%
+    fonttitle      = \bfseries\small,%
+    enhanced,%
+    attach boxed title to top left={yshift=-4pt, xshift=8pt},%
+    top            = 8pt,%
+    bottom         = 4pt,%
+    left           = 4pt,%
+    right          = 4pt,%
+    before skip    = 6pt,%
+    after skip     = 4pt,%
+}%
+
+\newcommand{\seqStyleObjectifsHeader}[1]{%
+    \color{\seq@couleuri@vif}\textbf{#1}%
+}%
+
+\endinput
+%%
+%% End of file `seqenseigne-theme.sty'.

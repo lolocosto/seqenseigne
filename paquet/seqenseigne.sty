@@ -1,0 +1,108 @@
+% seqenseigne.sty
+% Package principal pour la création de documents pédagogiques en mathématiques
+% Auteur : Laurent Coste
+% Version : 1.0-dev
+% Date : 2025-01-11
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{seqenseigne}
+[2025/01/11 v1.0-dev Package seqenseigne - enseignement des mathématiques]
+
+% =============================================================================
+% Gestion des options
+% =============================================================================
+% \ifdocstd est déclaré ICI UNIQUEMENT.
+% Les sous-modules (core, theme, legacy, data) le consomment sans le redéclarer.
+% Règle : \newif\ifdocstd dans un sous-module réinitialise le flag à false,
+% écrasant silencieusement la valeur fixée ici — ne pas reproduire ce pattern.
+\newif\ifdocstd\docstdtrue
+\newif\ifseq@loadflashcard\seq@loadflashcardfalse
+\DeclareOption{ltxdoc}{\docstdfalse
+    \PassOptionsToPackage{ltxdoc}{seqenseigne-data}
+    \PassOptionsToPackage{ltxdoc}{seqenseigne-theme}
+    \PassOptionsToPackage{ltxdoc}{seqenseigne-core}
+    \PassOptionsToPackage{ltxdoc}{seqenseigne-core-exos}
+    \PassOptionsToPackage{ltxdoc}{seqenseigne-core-eval}
+    \PassOptionsToPackage{ltxdoc}{seqenseigne-legacy}
+}
+% Option flashcard : charge seqenseigne-flashcard après les modules de base.
+% ATTENTION : incompatible avec les livrets et évaluations dans le même document.
+% Trois variantes :
+%   \usepackage[flashcard]{seqenseigne}           → format A6 portrait (défaut)
+%   \usepackage[flashcard-portrait]{seqenseigne}  → format A6 portrait explicite
+%   \usepackage[flashcard-paysage]{seqenseigne}   → format demi-A4 paysage
+\DeclareOption{flashcard}{%
+    \seq@loadflashcardtrue
+}
+\DeclareOption{flashcard-portrait}{%
+    \seq@loadflashcardtrue
+    \PassOptionsToPackage{portrait}{seqenseigne-flashcard}%
+}
+\DeclareOption{flashcard-paysage}{%
+    \seq@loadflashcardtrue
+    \PassOptionsToPackage{paysage}{seqenseigne-flashcard}%
+}
+% Option geometrie : charge tkz-euclide, tkz-base, tkz-tab via seqenseigne-core.
+% A utiliser dans les livrets et exercices de géométrie :
+%   \usepackage[geometrie]{seqenseigne}
+\DeclareOption{geometrie}{%
+    \PassOptionsToPackage{geometrie}{seqenseigne-core}
+}
+% Option scratch : charge scratch3 via seqenseigne-core.
+% A utiliser dans les livrets d'algorithmique (S09 typiquement) :
+%   \usepackage[scratch]{seqenseigne}
+\DeclareOption{scratch}{%
+    \PassOptionsToPackage{scratch}{seqenseigne-core}
+}
+\ProcessOptions\relax
+
+% =============================================================================
+% Chargement des modules dans l'ordre de dépendance
+% =============================================================================
+
+% 1. Module DATA - doit être chargé en premier (fournit les données)
+\RequirePackage{seqenseigne-data}
+
+% 2. Module THEME - dépend potentiellement de data pour les couleurs
+\RequirePackage{seqenseigne-theme}
+
+% 3. Module CORE - dépend de data et theme
+\RequirePackage{seqenseigne-core}
+
+% 3bis. Module CORE-EXOS - macros liées aux exercices et à la remédiation
+%       (extraites de core en v0.11.5). Dépend de core (compteurs, boîtes,
+%       \seqTitreSection, \seqTitreSectionCorrige).
+%       v0.13.5.2 étape 1 : reçoit l'environnement qcm et les helpers QCM
+%       partagés.
+%       v0.13.5.2 étape 2 : qcm renommé en seqQcm (environnement enfant),
+%       commande \seqQcmQuestion qui produit le numéro auto via \therownum,
+%       helpers internes préfixés seq@qcm@... Désactivation globale des
+%       templates caption de tabularray pour tous les longtblr du
+%       document (cf. core pour les déclarations de compteurs).
+\RequirePackage{seqenseigne-core-exos}
+
+% 3ter. Module CORE-EVAL - macros liées aux évaluations sommatives
+%       (extraites de core en v0.13.5.2 étape 1). Dépend de core
+%       (\corrfileeval, boîtes de titre, \seq@setColors, compteur
+%       seqExoEvalNum) et de core-exos (environnement seqQcm utilisable
+%       à l'intérieur de seqEvalExercice).
+%       v0.13.5.2 étape 2 : renommages \titreEval → \seqTitreEval,
+%       \corrigeExoEval → \seqEvalCorrigeExo.
+\RequirePackage{seqenseigne-core-eval}
+
+% 4. Module LEGACY - charge les alias de compatibilité (en dernier)
+%    v0.13.5.2 étape 1 : héberge aussi le modèle Bilan 2021 (\seqBilan...)
+%    déplacé depuis core. Dépend de core (\corrfileeval, boîtes,
+%    compteur seqBilanExoNum) et de core-exos (helpers QCM partagés).
+\RequirePackage{seqenseigne-legacy}
+
+% 5. Module FLASHCARD - chargé uniquement si l'option flashcard est activée
+% Ce module redéfinit la géométrie de page et ne doit pas être mélangé
+% avec les livrets, évaluations ou plans de travail.
+\ifseq@loadflashcard
+    \RequirePackage{seqenseigne-flashcard}
+\fi
+
+% Module DOC non chargé automatiquement (uniquement pour documentation)
+
+\endinput

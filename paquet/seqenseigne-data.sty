@@ -1,0 +1,663 @@
+%%
+%% This is file `seqenseigne-data.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% seqenseigne-data.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2025 by Laurent Coste
+%% 
+%% This file may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3 or later is part of all distributions of
+%% LaTeX version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-data}%
+[2025/10/24 v1.0-dev seqenseigne data module]
+
+\RequirePackage{datatool}%
+\RequirePackage{xkeyval}%
+\RequirePackage{xifthen}%
+\RequirePackage{tabularray}%
+\def\seq@var@datapath{../../}%
+\def\seq@var@cycle{C00}%
+\def\seq@var@niveau{N00}%
+\def\seq@var@sequence{S00}%
+\DTLnewdb{seq@objectifs@anneeun}%
+\DTLnewdb{seq@objectifs@anneedeux}%
+\DTLnewdb{seq@objectifs@anneetrois}%
+\DTLnewdb{seq@objectifs@sequence}%
+\DTLnewdb{seq@connaissances@anneeun}%
+\DTLnewdb{seq@connaissances@anneedeux}%
+\DTLnewdb{seq@connaissances@anneetrois}%
+\DTLnewdb{seq@connaissances@sequence}%
+\newcounter{seq@tmp@i}%
+\newcommand{\seq@maxsequences}{16}%
+\setcounter{seq@tmp@i}{1}%
+\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
+\DTLnewdb{seq@objectifs@s\arabic{seq@tmp@i}}%
+\stepcounter{seq@tmp@i}%
+}%
+\newcommand{\seq@seqcode@tonumber}[2]{%
+\edef\seq@tmp@stripped{\expandafter\@gobble\expandafter\@empty#2}%
+\edef#1{\number\seq@tmp@stripped}%
+}%
+\newcommand{\seqSetDataPath}[1]{%
+\gdef\seq@var@datapath{#1}%
+}%
+\newcommand{\seqLoadData}{%
+\input{\seq@var@datapath param_niveaux.dbtex}%
+\input{\seq@var@datapath C03_themes.dbtex}%
+\input{\seq@var@datapath C03_sequences.dbtex}%
+\input{\seq@var@datapath C03_connaissances.dbtex}%
+\input{\seq@var@datapath C03_objectifs.dbtex}%
+\input{\seq@var@datapath C04_themes.dbtex}%
+\input{\seq@var@datapath C04_sequences.dbtex}%
+\input{\seq@var@datapath C04_attendus_fin_C03.dbtex}%
+\input{\seq@var@datapath C04_connaissances.dbtex}%
+\input{\seq@var@datapath C04_objectifs.dbtex}%
+}%
+\newcommand{\seqLoadDataSuivi}[1]{%
+\DTLloaddb[keys={Numero}]{eleves}{liste_eleves.csv}%
+\DTLloaddb{periodes}{periodes.csv}%
+\DTLforeach*{periodes}{\Periode=Periode}{%
+\DTLloaddb{sequencesPeriode\Periode}{\Periode -sequences.csv}%
+\DTLloaddb[keys={Numero}]{bilanPeriode\Periode}{\Periode bilan.csv}%
+}%
+\input{param_niveaux.dbtex}%
+\seqDTLfetchsave{\tmp@codeCycle}{param_niveaux}{Code}{#1}{CodeCycle}%
+\ifthenelse{\equal{\tmp@codeCycle}{C03}}{%
+\input{C03_themes.dbtex}%
+\input{C03_sequences.dbtex}%
+\input{C03_objectifs.dbtex}%
+\input{C03_connaissances.dbtex}%
+\gdef\seq@var@cycle{C03}%
+\seq@bases@filter@cycle{C03}{N07}{N08}{N09}%
+\DTLforeach*{C03_sequences}{\tmp@codesequence=Code}{%
+\DTLloaddb[keys={Numero}]{Suivi\tmp@codesequence}{./\tmp@codesequence Suivi.csv}%
+}%
+}{%
+\ifthenelse{\equal{\tmp@codeCycle}{C04}}{%
+\input{C04_themes.dbtex}%
+\input{C04_sequences.dbtex}%
+\input{C04_objectifs.dbtex}%
+\input{C04_connaissances.dbtex}%
+\gdef\seq@var@cycle{C04}%
+\seq@bases@filter@cycle{C04}{N10}{N11}{N12}%
+\DTLforeach*{C04_sequences}{\tmp@codesequence=Code}{%
+\DTLloaddb[keys={Numero}]{Suivi\tmp@codesequence}{./\tmp@codesequence Suivi.csv}%
+}%
+}{% Code cycle inconnu : générer une erreur
+}%
+}%
+}%
+\newcommand{\seqDTLfetchsave}[5]{%
+\edtlgetrowforvalue{#2}{\dtlcolumnindex{#2}{#3}}{#4}%
+\dtlgetentryfromcurrentrow{\dtlcurrentvalue}{\dtlcolumnindex{#2}{#5}}%
+\let#1\dtlcurrentvalue
+}%
+\newcommand{\seqNiveauGetNomCourt}[1]{%
+\DTLfetch{param_niveaux}{Code}{#1}{NomCourt}%
+}%
+\newcommand{\seqNiveauGetNomLong}[1]{%
+\DTLfetch{param_niveaux}{Code}{#1}{NomLong}%
+}%
+\newcommand{\seqNiveauGetCodeCycle}[1]{%
+\DTLfetch{param_niveaux}{Code}{#1}{CodeCycle}%
+}%
+\newcommand{\seqThemeGetNom}[2]{%
+\DTLfetch{#1_themes}{Code}{#2}{Nom}%
+}%
+\newcommand{\seqThemeGetCodeCouleur}[2]{%
+\DTLfetch{#1_themes}{Code}{#2}{CodeCouleur}%
+}%
+\newcommand{\seqThemeGetDescription}[2]{%
+\DTLfetch{#1_themes}{Code}{#2}{Description}%
+}%
+\newcommand{\seqSequenceGetNom}{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\DTLfetch{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Nom}%
+}%
+\newcommand{\seqSequenceGetNomOf}[2]{%
+    \seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{#1}{CodeCycle}%
+    \DTLfetch{\tmp@codecycle _sequences}{Code}{#2}{Nom}%
+}%
+\newcommand{\seqSequenceSaveNom}[1]{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Nom}%
+}%
+\newcommand{\seqSequenceGetNumero}{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\DTLfetch{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Numero}%
+}%
+\newcommand{\seqSequenceSaveNumero}[1]{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Numero}%
+}%
+\newcommand{\seqSequenceGetTheme}{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\DTLfetch{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Theme}%
+}%
+\newcommand{\seqSequenceSaveTheme}[1]{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Theme}%
+}%
+\newcommand{\seqSequenceSaveThemeOf}[3]{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{#2}{CodeCycle}%
+\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{#3}{Theme}%
+}%
+\newcommand{\seqObjectifGetNom}[1]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{Nom}%
+}%
+\newcommand{\seqObjectifGetFinCycle}[1]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{FinCycle}%
+}%
+\newcommand{\seqObjectifGetMaitriseTB}[1]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{MaitriseTB}%
+}%
+\newcommand{\seqObjectifGetMaitriseS}[1]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{MaitriseS}%
+}%
+\newcommand{\seqObjectifGetMaitriseF}[1]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{MaitriseF}%
+}%
+\newcommand{\seqConnaissanceGetNom}[1]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\DTLfetch{seq@connaissances@sequence}{CodeConnaissance}{#1}{Nom}%
+}%
+\newcommand{\seqTableauObjectifs}[1][]{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\seq@rule@color{\seq@couleuri@vif}%
+\begin{center}%
+\begin{xltabular}{0.9\linewidth}{L{0.36\linewidth} *{3}{L{0.18\linewidth}}}%
+\toprule[1pt]
+\multirow{2}{*}{\centering \color{\seq@couleuri@vif}\textbf{Objectif}} &
+\multicolumn{3}{c}{\color{\seq@couleuri@vif}\textbf{Niveau de maîtrise}} \\
+\cmidrule[1pt]{2-4}%
+& \color{\seq@couleuri@vif} Très bon &
+\color{\seq@couleuri@vif} Satisfaisant &
+\color{\seq@couleuri@vif} À consolider \\
+\toprule[1pt]
+\DTLforeach*{seq@objectifs@sequence}{%
+\objCode=CodeObjectif,%
+\objNom=Nom,%
+\objMaitriseTB=MaitriseTB,%
+\objMaitriseS=MaitriseS,%
+\objMaitriseF=MaitriseF%
+}{%
+\textbf{\objCode}\newline\objNom &
+\objMaitriseTB & \objMaitriseS & \objMaitriseF \\
+\DTLiflastrow{\bottomrule[1pt]}{\midrule}%
+}%
+\end{xltabular}%
+\end{center}%
+}%
+\define@cmdkey [seq]{TableauPrerequis}{niveau}{}%
+\define@cmdkey [seq]{TableauPrerequis}{sequence}{}%
+\newcommand{\seqTableauPrerequis}[1][]{%
+\setkeys[seq]{TableauPrerequis}{#1}%
+\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N09}}{%
+\seq@prerequis@annee{N07}{\cmdseq@TableauPrerequis@sequence}%
+\seq@prerequis@annee{N08}{\cmdseq@TableauPrerequis@sequence}%
+}{%
+\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N10}}{%
+\seq@prerequis@attenduscycleprecedent{\cmdseq@TableauPrerequis@niveau}{\cmdseq@TableauPrerequis@sequence}%
+}{%
+\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N11}}{%
+\seq@prerequis@annee{N10}{\cmdseq@TableauPrerequis@sequence}%
+}{%
+\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N12}}{%
+\seq@prerequis@annee{N10}{\cmdseq@TableauPrerequis@sequence}%
+\seq@prerequis@annee{N11}{\cmdseq@TableauPrerequis@sequence}%
+}{%
+}%
+}%
+}%
+}%
+}%
+\newcommand{\seqMaitriseGetNom}[1]{%
+\ifthenelse{\equal{#1}{I}}{Insuffisant}{%
+\ifthenelse{\equal{#1}{F}}{\`A consolider}{%
+\ifthenelse{\equal{#1}{A}}{Satisfaisant}{%
+\ifthenelse{\equal{#1}{E}}{Très bon}{%
+\ifthenelse{\equal{#1}{NE}}{Non évalué}{%
+#1 % inconnu: on renvoie la même chose
+}%
+}%
+}%
+}%
+}%
+}%
+\define@cmdkey[seq]{suiviAnnuelParEleve}{niveau}{}%
+\newcommand{\seqSuiviAnnuelParEleve}[1][]{%
+\setkeys[seq]{suiviAnnuelParEleve}{#1}%
+\seq@basesobjectifs@filter@niveau{\cmdseq@suiviAnnuelParEleve@niveau}%
+\DTLforeach*{eleves}{\tmp@numEleve=Numero,\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+\def\tblrbody{}%
+\edef\tblrbody{\tblrbody \SetCell[c=2]{c} \tmp@nomEleve\;\tmp@prenomEleve & \\}%
+\DTLforeach*{periodes}{\tmp@periode=Periode}{%
+\edef\tblrbody{\tblrbody \SetRow{bg=blue!30!white} Bilan\;\tmp@periode \\}%
+\DTLforeach*{sequencesPeriode\tmp@periode}{\tmp@codeSequence=Code,\tmp@nomSequence=Nom}{%
+\edef\tblrbody{\tblrbody \tmp@codeSequence\;-\;\tmp@nomSequence & }%
+\seqDTLfetchsave{\tmp@niveauMaitrise}{bilanPeriode\tmp@periode}{Numero}{\tmp@numEleve}{\tmp@codeSequence}%
+\seq@tblrcell@decodemaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \\}%
+}%
+}%
+\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{\cmdseq@suiviAnnuelParEleve@niveau}{AnneeDansCycle}%
+\DTLforeach*{C04_sequences}{\tmp@codeSequence=Code,\tmp@nomSequence=Nom,\tmp@codeTheme=Theme}{%
+\edef\tblrbody{\tblrbody \SetRow{bg=blue!30!white} \tmp@codeSequence\;-\;\tmp@nomSequence \\}%
+\seq@seqcode@tobasename{\tmp@nombase}{\tmp@codeSequence}%
+\DTLforeach*{\tmp@nombase}{%
+\tmp@codeObjectif=CodeObjectif,\tmp@nomObjectif=Nom}{%
+\edef\tblrbody{\tblrbody \tmp@nomObjectif &}%
+\seqDTLfetchsave{\tmp@niveauMaitrise}{Suivi\tmp@codeSequence}{Numero}{\tmp@numEleve}{\tmp@codeObjectif}%
+\seq@tblrcell@decodemaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \\}%
+}%
+}%
+\begin{longtblr}[expand=\tblrbody]{%
+width=0.95\linewidth,colspec={X[4]X[c]},hlines,
+rows={valign=m},
+rowhead=1
+}%
+\tblrbody
+\end{longtblr}%
+\cleardoublepage
+}%
+}%
+\define@cmdkey[seq]{suiviAnnuelParSequence}{niveau}{}%
+\define@cmdkey[seq]{suiviAnnuelParSequence}{sequence}{}%
+\newcommand{\seqSuiviAnnuelParSequence}[1][]{%
+%% ---- Options
+\setkeys[seq]{suiviAnnuelParSequence}{#1}%
+\seq@basesobjectifs@filter@niveau{\cmdseq@suiviAnnuelParSequence@niveau}%
+\def\tblrbody{}%
+\DTLforeach*{eleves}{\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+\edef\tblrbody{\tblrbody & \rotatebox{90}{\tmp@nomEleve\;\tmp@prenomEleve}}%
+}%
+\edef\tblrbody{\tblrbody \\}%
+\seq@seqcode@tobasename{\tmp@nombase}{\cmdseq@suiviAnnuelParSequence@sequence}%
+\DTLforeach*{\tmp@nombase}{\tmp@codeObj=CodeObjectif,\tmp@nomObj=Nom}{%
+\edef\tblrbody{\tblrbody Objectif \tmp@codeObj \newline \tmp@nomObj &}%
+\DTLforeach*{eleves}{\tmp@numEleve=Numero,\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+\seqDTLfetchsave{\tmp@niveauMaitrise}{Suivi\cmdseq@suiviAnnuelParSequence@sequence}{Numero}{\tmp@numEleve}{\tmp@codeObj}%
+\seq@tblrcell@coloremaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \tmp@niveauMaitrise}%
+\DTLiflastrow{}{\edef\tblrbody{\tblrbody &}}%
+}%
+\edef\tblrbody{\tblrbody \\}%
+}%
+\begin{center}%
+\begin{longtblr}[expand=\tblrbody]{%
+width=0.9\linewidth,colspec={X[8]*{25}{X[c]}},hlines,vlines,
+rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={font={\normalsize}}}%
+\tblrbody
+\end{longtblr}%
+\end{center}%
+}%
+\define@cmdkey[seq]{suiviPeriodiqueParSequence}{periode}{}%
+\define@cmdkey[seq]{suiviPeriodiqueParSequence}{niveau}{}%
+\newcommand{\seqSuiviPeriodiqueParSequence}[1][]{%
+%% ---- Options
+\setkeys[seq]{suiviPeriodiqueParSequence}{#1}%
+\seq@basesobjectifs@filter@niveau{\cmdseq@suiviPeriodiqueParSequence@niveau}%
+\def\tblrbody{}%
+\DTLforeach*{eleves}{\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+\edef\tblrbody{\tblrbody & \rotatebox{90}{\tmp@nomEleve\;\tmp@prenomEleve}}%
+}%
+\edef\tblrbody{\tblrbody \\}%
+\DTLforeach*{sequencesPeriode\cmdseq@suiviPeriodiqueParSequence@periode}{\tmp@codesequence=Code,\tmp@nomsequence=Nom}{%
+\edef\tblrbody{\tblrbody \tmp@codesequence\;-\;\tmp@nomsequence & }%
+\DTLforeach*{eleves}{\tmp@numEleve=Numero}{%
+\seqDTLfetchsave{\tmp@niveauMaitrise}{bilanPeriode\cmdseq@suiviPeriodiqueParSequence@periode}{Numero}{\tmp@numEleve}{\tmp@codesequence}%
+\seq@tblrcell@coloremaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \tmp@niveauMaitrise}%
+\DTLiflastrow{}{\edef\tblrbody{\tblrbody &}}%
+}%
+\edef\tblrbody{\tblrbody \\}%
+}%
+\begin{center} \begin{longtblr}[expand=\tblrbody]{%
+width=0.9\linewidth,colspec={X[8]*{25}{X[c]}},hlines,vlines,
+rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={font={\normalsize}}}%
+\tblrbody
+\end{longtblr} \end{center}%
+\bigskip\par
+\centerline{\Large{\phantom{test}\hfill Dates des séquences \hfill}}%
+\medskip\par
+\DTLforeach*{sequencesPeriode\cmdseq@suiviPeriodiqueParSequence@periode}{\tmp@codeSequence=Code,\tmp@nomSequence=Nom,\tmp@dateDebut=Debut,\tmp@dateFin=Fin}{%
+\large{\phantom{test}\qquad\tmp@codeSequence\;-\;\tmp@nomSequence: du \tmp@dateDebut{} au \tmp@dateFin}\smallskip\par
+}%
+}%
+\define@cmdkey[seq]{blocReperesNiveaux}{objCours}[01]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{objExosFirst}[02]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{objExosLast}[09]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{dateDeb}[\ldots/\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{dateFin}[\ldots/\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesTotal}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesRevisions}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesCours}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj02}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj03}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj04}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj05}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj06}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj12}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj13}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj14}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj15}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj16}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj22}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj23}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj24}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj25}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj26}[\ldots]{}%
+\newcommand{\seqPlanReperesNiveaux}[1][]{%
+\setkeys[seq]{blocReperesNiveaux}{objCours,objExosFirst,objExosLast,dateDeb,dateFin,seancesTotal,seancesRevisions,seancesCours,#1}%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+\begin{multicols}{2}%
+\begin{blocReperesNiveaux}{Repères temporels}%
+\item Dates: du \cmdseq@blocReperesNiveaux@dateDeb~au~\cmdseq@blocReperesNiveaux@dateFin
+\item Travail en classe: \cmdseq@blocReperesNiveaux@seancesTotal~séances
+\begin{seqColItem}[nbCols=1,label=\ding{51}]
+\item Révisions: \cmdseq@blocReperesNiveaux@seancesRevisions~séances
+\item Cours: \cmdseq@blocReperesNiveaux@seancesCours~séances
+\DTLforeach[\DTLisiclosedbetween{\codeObjectif}{\cmdseq@blocReperesNiveaux@objExosFirst}{\cmdseq@blocReperesNiveaux@objExosLast}]
+{seq@objectifs@sequence}{\codeObjectif=CodeObjectif}{%
+\item Objectif \codeObjectif: \csname cmdseq@blocReperesNiveaux@seancesObj\codeObjectif\endcsname~séances
+}%
+\end{seqColItem}%
+\end{blocReperesNiveaux}%
+\columnbreak
+\begin{blocReperesNiveaux}{Niveaux atteints}%
+\DTLforeach[\DTLisiclosedbetween{\codeObjectif}{\cmdseq@blocReperesNiveaux@objCours}{\cmdseq@blocReperesNiveaux@objExosLast}]
+{seq@objectifs@sequence}{\codeObjectif=CodeObjectif}{%
+\item Objectif \codeObjectif: \ldots
+}%
+\item \begin{minipage}[c][3em][c]{\linewidth} \textbf{Note équivalente: \ldots/20} \end{minipage}%
+\end{blocReperesNiveaux}%
+\end{multicols}%
+}%
+\newcommand{\seqForeachTheme}[5]{%
+    \seqDTLfetchsave{\seq@iter@cycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+    \DTLforeach*{\seq@iter@cycle _themes}{%
+        #1=Code,%
+        #2=Nom,%
+        #3=Description,%
+        #4=CodeCouleur%
+    }{#5}%
+}%
+\newcommand{\seqForeachSequence}[4]{%
+    \seqDTLfetchsave{\seq@iter@cycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+    \DTLforeach*{\seq@iter@cycle _sequences}{%
+        #1=Code,%
+        #2=Nom,%
+        #3=Theme%
+    }{#4}%
+}%
+\newcommand{\seq@iter@cycle}{}%
+
+\newcommand{\seqSetColors}{%
+\ifthenelse{\equal{\seq@code@niveau}{N00}}{\seq@setColors{gris}}{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+\seqDTLfetchsave{\tmp@codeTheme}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Theme}%
+\seqDTLfetchsave{\tmp@codeCouleur}{\tmp@codecycle _themes}{Code}{\tmp@codeTheme}{CodeCouleur}%
+\seq@setColors{\tmp@codeCouleur}%
+}%
+}%
+
+\newcommand{\seqSetColorsTheme}[1]{%
+\seq@setColors{#1}%
+}%
+
+\newcommand{\seqFiltreDonnees}{%
+\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+}%
+\newcommand{\seq@bases@filter}[2]{%
+\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{#1}{CodeCycle}%
+\ifthenelse{\equal{\tmp@codecycle}{C03}}{%
+\ifthenelse{\equal{\seq@var@cycle}{C03}}{%cache cycle 3 valide : rien à faire
+}{%mise à jour des bases filtrées pour le cycle 3
+\gdef\seq@var@cycle{C03}%
+\seq@bases@filter@cycle{C03}{N07}{N08}{N09}%
+}%
+}{%
+\ifthenelse{\equal{\tmp@codecycle}{C04}}{%
+\ifthenelse{\equal{\seq@var@cycle}{C04}}{%cache cycle 4 valide : rien à faire
+}{%mise à jour des bases filtrées pour le cycle 4
+\gdef\seq@var@cycle{C04}%
+\seq@bases@filter@cycle{C04}{N10}{N11}{N12}%
+}%
+}{%cycle inconnu: générer une erreur
+}%
+}%
+\ifthenelse{\equal{#1}{\seq@var@niveau}\and\equal{#2}{\seq@var@sequence}}{%cache niveau/séquence valide : rien à faire
+}{%mise à jour des bases filtrées pour #2 de #1
+\xdef\seq@var@niveau{#1}%
+\xdef\seq@var@sequence{#2}%
+\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{#1}{AnneeDansCycle}%
+\seq@bases@filter@sequence{seq@connaissances@\tmp@annee}{seq@objectifs@\tmp@annee}{#2}%
+}%
+}%
+\newcommand{\seq@bases@filter@cycle}[4]{%
+\DTLcleardb{seq@connaissances@anneeun}%
+\DTLcleardb{seq@connaissances@anneedeux}%
+\DTLcleardb{seq@connaissances@anneetrois}%
+\DTLforeach*{#1_connaissances}{%
+\CodeNiveau=CodeNiveau,%
+\CodeSequence=CodeSequence,%
+\CodeConnaissance=CodeConnaissance,%
+\Nom=Nom%
+}{%
+\dtlexpandnewvalue
+\DTLifstringeq{\CodeNiveau}{#2}{%
+\DTLnewrow{seq@connaissances@anneeun}%
+\DTLnewdbentry{seq@connaissances@anneeun}{CodeSequence}{\CodeSequence}%
+\DTLnewdbentry{seq@connaissances@anneeun}{CodeConnaissance}{\CodeConnaissance}%
+\DTLnewdbentry{seq@connaissances@anneeun}{Nom}{\Nom}%
+}{%
+\DTLifstringeq{\CodeNiveau}{#3}{%
+\DTLnewrow{seq@connaissances@anneedeux}%
+\DTLnewdbentry{seq@connaissances@anneedeux}{CodeSequence}{\CodeSequence}%
+\DTLnewdbentry{seq@connaissances@anneedeux}{CodeConnaissance}{\CodeConnaissance}%
+\DTLnewdbentry{seq@connaissances@anneedeux}{Nom}{\Nom}%
+}{%
+\DTLifstringeq{\CodeNiveau}{#4}{%
+\DTLnewrow{seq@connaissances@anneetrois}%
+\DTLnewdbentry{seq@connaissances@anneetrois}{CodeSequence}{\CodeSequence}%
+\DTLnewdbentry{seq@connaissances@anneetrois}{CodeConnaissance}{\CodeConnaissance}%
+\DTLnewdbentry{seq@connaissances@anneetrois}{Nom}{\Nom}%
+}{%
+}%
+}%
+}%
+}%
+\DTLcleardb{seq@objectifs@anneeun}%
+\DTLcleardb{seq@objectifs@anneedeux}%
+\DTLcleardb{seq@objectifs@anneetrois}%
+\DTLforeach*{#1_objectifs}{%
+\CodeNiveau=CodeNiveau,%
+\CodeSequence=CodeSequence,%
+\CodeObjectif=CodeObjectif,%
+\Nom=Nom,%
+\MaitriseTB=MaitriseTB,%
+\MaitriseS=MaitriseS,%
+\MaitriseF=MaitriseF%
+}{%
+\dtlexpandnewvalue
+\DTLifstringeq{\CodeNiveau}{#2}{%
+\DTLnewrow{seq@objectifs@anneeun}%
+\DTLnewdbentry{seq@objectifs@anneeun}{CodeSequence}{\CodeSequence}%
+\DTLnewdbentry{seq@objectifs@anneeun}{CodeObjectif}{\CodeObjectif}%
+\DTLnewdbentry{seq@objectifs@anneeun}{Nom}{\Nom}%
+\DTLnewdbentry{seq@objectifs@anneeun}{MaitriseTB}{\MaitriseTB}%
+\DTLnewdbentry{seq@objectifs@anneeun}{MaitriseS}{\MaitriseS}%
+\DTLnewdbentry{seq@objectifs@anneeun}{MaitriseF}{\MaitriseF}%
+}{%
+\DTLifstringeq{\CodeNiveau}{#3}{%
+\DTLnewrow{seq@objectifs@anneedeux}%
+\DTLnewdbentry{seq@objectifs@anneedeux}{CodeSequence}{\CodeSequence}%
+\DTLnewdbentry{seq@objectifs@anneedeux}{CodeObjectif}{\CodeObjectif}%
+\DTLnewdbentry{seq@objectifs@anneedeux}{Nom}{\Nom}%
+\DTLnewdbentry{seq@objectifs@anneedeux}{MaitriseTB}{\MaitriseTB}%
+\DTLnewdbentry{seq@objectifs@anneedeux}{MaitriseS}{\MaitriseS}%
+\DTLnewdbentry{seq@objectifs@anneedeux}{MaitriseF}{\MaitriseF}%
+}{%
+\DTLifstringeq{\CodeNiveau}{#4}{%
+\DTLnewrow{seq@objectifs@anneetrois}%
+\DTLnewdbentry{seq@objectifs@anneetrois}{CodeSequence}{\CodeSequence}%
+\DTLnewdbentry{seq@objectifs@anneetrois}{CodeObjectif}{\CodeObjectif}%
+\DTLnewdbentry{seq@objectifs@anneetrois}{Nom}{\Nom}%
+\DTLnewdbentry{seq@objectifs@anneetrois}{MaitriseTB}{\MaitriseTB}%
+\DTLnewdbentry{seq@objectifs@anneetrois}{MaitriseS}{\MaitriseS}%
+\DTLnewdbentry{seq@objectifs@anneetrois}{MaitriseF}{\MaitriseF}%
+}{%
+}%
+}%
+}%
+}%
+}%
+\newcommand{\seq@bases@filter@sequence}[3]{%
+\DTLcleardb{seq@connaissances@sequence}%
+\DTLforeach*[\DTLiseq{\CodeSequence}{#3}]{#1}{%
+\CodeSequence=CodeSequence,%
+\CodeConnaissance=CodeConnaissance,%
+\Nom=Nom%
+}{%
+\dtlexpandnewvalue
+\DTLnewrow{seq@connaissances@sequence}%
+\DTLnewdbentry{seq@connaissances@sequence}{CodeConnaissance}{\CodeConnaissance}%
+\DTLnewdbentry{seq@connaissances@sequence}{Nom}{\Nom}%
+}%
+\DTLcleardb{seq@objectifs@sequence}%
+\DTLforeach*[\DTLiseq{\CodeSequence}{#3}]{#2}{%
+\CodeSequence=CodeSequence,%
+\CodeObjectif=CodeObjectif,%
+\Nom=Nom,%
+\MaitriseTB=MaitriseTB,%
+\MaitriseS=MaitriseS,%
+\MaitriseF=MaitriseF%
+}{%
+\dtlexpandnewvalue
+\DTLnewrow{seq@objectifs@sequence}%
+\DTLnewdbentry{seq@objectifs@sequence}{CodeObjectif}{\CodeObjectif}%
+\DTLnewdbentry{seq@objectifs@sequence}{Nom}{\Nom}%
+\DTLnewdbentry{seq@objectifs@sequence}{MaitriseTB}{\MaitriseTB}%
+\DTLnewdbentry{seq@objectifs@sequence}{MaitriseS}{\MaitriseS}%
+\DTLnewdbentry{seq@objectifs@sequence}{MaitriseF}{\MaitriseF}%
+}%
+}%
+\newcommand{\seq@basesobjectifs@filter@niveau}[1]{%
+\ifthenelse{\equal{\seq@var@niveau}{#1}}{%cache niveau valide : rien à faire
+}{%mise à jour des bases filtrées pour le niveau
+\xdef\seq@var@niveau{#1}%
+\setcounter{seq@tmp@i}{1}%
+\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
+\DTLcleardb{seq@objectifs@s\arabic{seq@tmp@i}}%
+\stepcounter{seq@tmp@i}%
+}%
+\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{#1}{AnneeDansCycle}%
+\DTLforeach*{seq@objectifs@\tmp@annee}{%
+\CodeSequence=CodeSequence,%
+\CodeObjectif=CodeObjectif,%
+\Nom=Nom,%
+\MaitriseTB=MaitriseTB,%
+\MaitriseS=MaitriseS,%
+\MaitriseF=MaitriseF%
+}{%
+\seq@seqcode@tonumber{\tmp@seqnum}{\CodeSequence}%
+\edef\tmp@base{seq@objectifs@s\tmp@seqnum}%
+\dtlexpandnewvalue
+\DTLnewrow{\tmp@base}%
+\DTLnewdbentry{\tmp@base}{CodeObjectif}{\CodeObjectif}%
+\DTLnewdbentry{\tmp@base}{Nom}{\Nom}%
+\DTLnewdbentry{\tmp@base}{MaitriseTB}{\MaitriseTB}%
+\DTLnewdbentry{\tmp@base}{MaitriseS}{\MaitriseS}%
+\DTLnewdbentry{\tmp@base}{MaitriseF}{\MaitriseF}%
+}%
+}%
+}%
+\newcommand{\seq@seqcode@tobasename}[2]{%
+\seq@seqcode@tonumber{\seq@tmp@n}{#2}%
+\edef#1{seq@objectifs@s\seq@tmp@n}%
+}%
+\newcommand{\seq@prerequis@attenduscycleprecedent}[2]{%
+\ifthenelse{\equal{#1}{N10}}{%
+\begin{seq@prerequis@N1}[Les connaissances et savoir-faire suivants sont l'ensemble des attendus de fin de cycle 3]
+\DTLforeach*[\DTLiseq{\dtl@codeSequence}{#2}]{C04_attendus_fin_C03}{\dtl@codeSequence=CodeSequence,\attendu=Attendu}{\attendu}%
+\end{seq@prerequis@N1}%
+}{% code cycle inconnu : générer une erreur
+}%
+}%
+\newcommand{\seq@prerequis@annee}[2]{%
+\seq@bases@filter{#1}{#2}%
+\begin{seq@prerequis@N1}[Les connaissances et savoir-faire suivants sont l'ensemble des attendus de fin de \seqNiveauGetNomCourt{#1}]
+\edef\seq@tmp@rowcount{\DTLrowcount{seq@connaissances@sequence}}%
+\DTLifeq{\seq@tmp@rowcount}{0}{% Pas de nouvelle connaissance
+\item Aucune nouvelle connaissance pour cette séquence.
+}{%
+\item Connaissances de la séquence:
+\begin{seq@prerequis@N2}%
+\DTLforeach*{seq@connaissances@sequence}{\nom=Nom}{\item \nom}%
+\end{seq@prerequis@N2}%
+}%
+\edef\seq@tmp@rowcount{\DTLrowcount{seq@objectifs@sequence}}%
+\DTLifeq{\seq@tmp@rowcount}{0}{% Pas de nouvel objectif
+\item Aucun nouvel objectif pour cette séquence.
+}{%
+\item Objectifs de la séquence:
+\begin{seq@prerequis@N2}%
+\DTLforeach*{seq@objectifs@sequence}{\nom=Nom}{\item \nom}%
+\end{seq@prerequis@N2}%
+}%
+\end{seq@prerequis@N1}%
+}%
+\newcommand{\seq@tblrcell@decodemaitrise}[1]{%
+\DTLifeq{#1}{I}{\edef\tblrbody{\tblrbody \SetCell{bg=red,fg=white} Insuffisant}}{%
+\DTLifeq{#1}{F}{\edef\tblrbody{\tblrbody \SetCell{bg=yellow,fg=black} \`A consolider}}{%
+\DTLifeq{#1}{A}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!white,fg=black} Satisfaisant}}{%
+\DTLifeq{#1}{E}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!black,fg=white} Très bon}}{%
+\DTLifeq{#1}{NE}{\edef\tblrbody{\tblrbody Non évalué}}{%
+\DTLifnumerical{#1}{\edef\tblrbody{\tblrbody #1 }}{%
+\DTLifeq{#1}{-}{\edef\tblrbody{\tblrbody -}}{\edef\tblrbody{\tblrbody INCONNU:#1}}}}}}}}%
+}%
+\newcommand{\seq@tblrcell@coloremaitrise}[1]{%
+\DTLifeq{#1}{I}{\edef\tblrbody{\tblrbody \SetCell{bg=red,fg=white}}}{%
+\DTLifeq{#1}{F}{\edef\tblrbody{\tblrbody \SetCell{bg=yellow,fg=black}}}{%
+\DTLifeq{#1}{A}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!white,fg=black}}}{%
+\DTLifeq{#1}{E}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!black,fg=white}}}{%
+\DTLifeq{#1}{NE}{}{%
+\DTLifeq{#1}{-}{}{\edef\tblrbody{\tblrbody \SetCell{bg=gray!50!white,fg=white}}}}}}}}%
+}%
+\newenvironment{seq@prerequis@N1}[1][Les connaissances et savoir-faire suivants sont
+nécessaires pour réussir la séquence.]{%
+\par\vspace{20pt}%
+\begin{boitePaleNoBreak}{Prérequis}%
+#1
+\tcblower
+\begin{minipage}{\linewidth}%
+\begin{multicols}{2} \begin{dinglist}{224}%
+}{%
+\end{dinglist} \end{multicols}%
+\end{minipage}%
+\end{boitePaleNoBreak}%
+\par\vspace{10pt}%
+}%
+\newenvironment{seq@prerequis@N2}{%
+\begin{dinglist}{118}%
+}{%
+\end{dinglist}%
+}%
+\endinput
+%%
+%% End of file `seqenseigne-data.sty'.

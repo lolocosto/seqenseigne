@@ -1,0 +1,1094 @@
+% \iffalse
+%<*driver>
+\ProvidesFile{seqenseigne-data.dtx}%
+[2025/10/24 v1.0-dev seqenseigne – Module data (chargement & accès aux données)]
+%</driver>
+% \fi
+%
+% ============================================================================
+% seqenseigne-data.dtx
+% Module : DATA
+% Rôle :
+% - charger les CSV fusionnés (Objectifs.csv, Connaissances.csv)
+% via datatool
+% - filtrer par niveau / séquence courants
+% - fournir des macros d'accès du type :
+% \seqObjectifGetNom[niveau=N11,sequence=S01,objectif=03]
+% \seqConnaissanceGetNom[...]
+% - générer les tableaux d'objectifs:
+% \seqTableauObjectifs
+% ============================================================================
+%
+%<*package>
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-data}%
+[2025/10/24 v1.0-dev seqenseigne data module]
+
+% On suppose que le core a déjà chargé les paquets génériques
+% --- Bases de données en fichiers
+\RequirePackage{datatool}%
+\RequirePackage{xkeyval}%
+\RequirePackage{xifthen}%
+\RequirePackage{tabularray}%
+%
+% ============================================================================
+% Variables internes
+% ============================================================================
+% -- Répertoire relatif des bases de données
+\def\seq@var@datapath{../../}%
+% -- Cache pour filtrer les données correctement par niveau et par séquence
+\def\seq@var@cycle{C00}%
+\def\seq@var@niveau{N00}%
+\def\seq@var@sequence{S00}%
+% -- Bases objectifs et connaissances filtrées par niveau et par séquence
+% Bases par année du cycle (nommées anneeun/deux/trois, fixes)
+\DTLnewdb{seq@objectifs@anneeun}%
+\DTLnewdb{seq@objectifs@anneedeux}%
+\DTLnewdb{seq@objectifs@anneetrois}%
+\DTLnewdb{seq@objectifs@sequence}%
+\DTLnewdb{seq@connaissances@anneeun}%
+\DTLnewdb{seq@connaissances@anneedeux}%
+\DTLnewdb{seq@connaissances@anneetrois}%
+\DTLnewdb{seq@connaissances@sequence}%
+% Bases par séquence : nommées seq@objectifs@sN (N = numéro décimal).
+% Créées par boucle : ajuster seq@maxsequences pour supporter plus de séquences.
+\newcounter{seq@tmp@i}%
+\newcommand{\seq@maxsequences}{16}%
+\setcounter{seq@tmp@i}{1}%
+\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
+	\DTLnewdb{seq@objectifs@s\arabic{seq@tmp@i}}%
+	\stepcounter{seq@tmp@i}%
+}%
+%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seq@seqcode@tonumber}%
+% Convertit un code séquence (S01, S02 … S16, S09, etc.) en son numéro décimal.
+% Supprime le préfixe "S" et les zéros non significatifs en passant par \number.
+% Résultat stocké dans la macro passée en #1.
+% #1 : macro de sauvegarde (ex. \tmp@num)
+% #2 : code séquence (ex. S01, S12)
+% Usage interne uniquement (\seq@...).
+\newcommand{\seq@seqcode@tonumber}[2]{%
+	% On retire le "S" en développant le suffixe numérique brut (01, 02…)
+	% puis \number supprime les zéros de tête : 01 → 1, 12 → 12.
+	\edef\seq@tmp@stripped{\expandafter\@gobble\expandafter\@empty#2}%
+	\edef#1{\number\seq@tmp@stripped}%
+}%
+%
+% ============================================================================
+% Commandes publiques
+% ============================================================================
+% \begin{macro}{\seqSetDataPath}%
+% \IndexMacro{\seqSetDataPath}%
+% Règle la valeur du chemin (relatif ou absolu) vers les bases de données
+% Il doit se terminer par un /
+% Le chemin par défaut est ../../../ pour compiler les livrets de séquence
+% #1 : chemin
+% \begin{macrocode}%
+\newcommand{\seqSetDataPath}[1]{%
+	\gdef\seq@var@datapath{#1}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqLoadData}%
+% \IndexMacro{\seqLoadData}%
+% Les bases .dbtex sont créées avec l'outil externe datatooltk-gui 
+% à partir des fichiers csv en prenant soin de régler "escape character" à "none".
+% Elles contiennent, par cycle de 3 ans, les données concernant:
+% - les themes: nombres et calculs, traitement des données, etc
+% - les sequences: représentation d'un nombre, comaparaison de nombres, etc
+% - les attendus de fin de cycle précédent répartis sur les séquences du cycle courant (uniquement pour le cycle 4), 
+% - les connaissances de chaque séquence pour chaque niveau du cycle
+% - les objectifs de chaque séquence pour chaque niveau du cycle
+% \begin{macrocode}%
+\newcommand{\seqLoadData}{%
+	\input{\seq@var@datapath param_niveaux.dbtex}%
+	\input{\seq@var@datapath C03_themes.dbtex}%
+	\input{\seq@var@datapath C03_sequences.dbtex}%
+	\input{\seq@var@datapath C03_connaissances.dbtex}%
+	\input{\seq@var@datapath C03_objectifs.dbtex}%
+	\input{\seq@var@datapath C04_themes.dbtex}%
+	\input{\seq@var@datapath C04_sequences.dbtex}%
+	\input{\seq@var@datapath C04_attendus_fin_C03.dbtex}%
+	\input{\seq@var@datapath C04_connaissances.dbtex}%
+	\input{\seq@var@datapath C04_objectifs.dbtex}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqLoadDataSuivi}%
+% \IndexMacro{\seqLoadDataSuivi}%
+% #1 : code niveau
+% \begin{macrocode}%
+\newcommand{\seqLoadDataSuivi}[1]{%
+	\DTLloaddb[keys={Numero}]{eleves}{liste_eleves.csv}%
+	\DTLloaddb{periodes}{periodes.csv}%
+	\DTLforeach*{periodes}{\Periode=Periode}{%
+		\DTLloaddb{sequencesPeriode\Periode}{\Periode -sequences.csv}%
+		\DTLloaddb[keys={Numero}]{bilanPeriode\Periode}{\Periode bilan.csv}%
+	}%
+	\input{param_niveaux.dbtex}%
+	\seqDTLfetchsave{\tmp@codeCycle}{param_niveaux}{Code}{#1}{CodeCycle}%
+	\ifthenelse{\equal{\tmp@codeCycle}{C03}}{%
+		\input{C03_themes.dbtex}%
+		\input{C03_sequences.dbtex}%
+		\input{C03_objectifs.dbtex}%
+		\input{C03_connaissances.dbtex}%
+		\gdef\seq@var@cycle{C03}%
+		\seq@bases@filter@cycle{C03}{N07}{N08}{N09}%
+		\DTLforeach*{C03_sequences}{\tmp@codesequence=Code}{%
+			\DTLloaddb[keys={Numero}]{Suivi\tmp@codesequence}{./\tmp@codesequence Suivi.csv}%
+		}%
+	}{%
+		\ifthenelse{\equal{\tmp@codeCycle}{C04}}{%
+			\input{C04_themes.dbtex}%
+			\input{C04_sequences.dbtex}%
+			\input{C04_objectifs.dbtex}%
+			\input{C04_connaissances.dbtex}%
+			\gdef\seq@var@cycle{C04}%
+			\seq@bases@filter@cycle{C04}{N10}{N11}{N12}%
+			\DTLforeach*{C04_sequences}{\tmp@codesequence=Code}{%
+				\DTLloaddb[keys={Numero}]{Suivi\tmp@codesequence}{./\tmp@codesequence Suivi.csv}%
+			}%
+		}{% Code cycle inconnu : générer une erreur
+		}%
+	}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqDTLfetchsave}%
+% \IndexMacro{\seqDTLfetchsave}%
+% Récupère et sauvegarde dans une macro la valeur d'un champ
+% correspondant à la valeur d'un champ connu dans une base 
+% #1 : nom de la macro dans laquelle on stocke le résultat
+% #2 : base dans laquelle on recherche
+% #3 : nom du champ de référence
+% #4 : valeur du champ de référence
+% #5 : nom du champ qu'on recherche
+% \begin{macrocode}%
+\newcommand{\seqDTLfetchsave}[5]{%
+	\edtlgetrowforvalue{#2}{\dtlcolumnindex{#2}{#3}}{#4}%
+	\dtlgetentryfromcurrentrow{\dtlcurrentvalue}{\dtlcolumnindex{#2}{#5}}%
+	\let#1\dtlcurrentvalue
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqNiveauGetNomCourt}%
+% \IndexMacro{\seqNiveauGetNomCourt}%
+% Renvoie le nom court du niveau spécifié
+% #1 : code niveau
+% \begin{macrocode}%
+\newcommand{\seqNiveauGetNomCourt}[1]{%
+	\DTLfetch{param_niveaux}{Code}{#1}{NomCourt}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqNiveauGetNomLong}%
+% \IndexMacro{\seqNiveauGetNomLong}%
+% Renvoie le nom long du niveau spécifié
+% #1 : code niveau
+% \begin{macrocode}%
+\newcommand{\seqNiveauGetNomLong}[1]{%
+	\DTLfetch{param_niveaux}{Code}{#1}{NomLong}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqNiveauGetCodeCycle}%
+% \IndexMacro{\seqNiveauGetCodeCycle}%
+% Renvoie le code du cycle du niveau spécifié
+% #1 : code niveau
+% \begin{macrocode}%
+\newcommand{\seqNiveauGetCodeCycle}[1]{%
+	\DTLfetch{param_niveaux}{Code}{#1}{CodeCycle}%
+}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqThemeGetNom}%
+% \IndexMacro{\seqThemeGetNom}%
+% Renvoie le nom du thème spécifié dans le cycle spécifié
+% #1 : code cycle, 
+% #2 : code thème, 
+% \begin{macrocode}%
+\newcommand{\seqThemeGetNom}[2]{%
+	\DTLfetch{#1_themes}{Code}{#2}{Nom}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqThemeGetCodeCouleur}%
+% \IndexMacro{\seqThemeGetCodeCouleur}%
+% Renvoie le code couleur du thème spécifié dans le cycle spécifié
+% #1 : code cycle, 
+% #2 : code thème, 
+% \begin{macrocode}%
+\newcommand{\seqThemeGetCodeCouleur}[2]{%
+	\DTLfetch{#1_themes}{Code}{#2}{CodeCouleur}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqThemeGetDescription}%
+% \IndexMacro{\seqThemeGetDescription}%
+% Renvoie la description du thème spécifié dans le cycle spécifié
+% #1 : code cycle,
+% #2 : code thème,
+% \begin{macrocode}%
+\newcommand{\seqThemeGetDescription}[2]{%
+	\DTLfetch{#1_themes}{Code}{#2}{Description}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceGetNom}%
+% \IndexMacro{\seqSequenceGetNom}%
+% Renvoie le nom de la séquence courante
+% \begin{macrocode}%
+\newcommand{\seqSequenceGetNom}{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+	\DTLfetch{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Nom}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceGetNomOf}%
+% \IndexMacro{\seqSequenceGetNomOf}%
+% Variante de \seqSequenceGetNom permettant de spécifier explicitement le
+% niveau et la séquence, sans modifier les variables globales courantes.
+% Utile dans les tableaux récapitulatifs où l'on cite plusieurs séquences
+% différentes sans changer de contexte.
+% #1 : code niveau (ex. \verb|N10|)
+% #2 : code séquence (ex. \verb|S03|)
+% \begin{macrocode}%
+\newcommand{\seqSequenceGetNomOf}[2]{%
+    \seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{#1}{CodeCycle}%
+    \DTLfetch{\tmp@codecycle _sequences}{Code}{#2}{Nom}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceSaveNom}%
+% \IndexMacro{\seqSequenceGetNom}%
+% Sauve le nom de la séquence courante dans la macro spécifiée
+% #1 : macro de sauvegarde
+% \begin{macrocode}%
+\newcommand{\seqSequenceSaveNom}[1]{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+	\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Nom}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceGetNumero}%
+% \IndexMacro{\seqSequenceGetNumero}%
+% Renvoie le numéro de la séquence spécifiée
+% \begin{macrocode}%
+\newcommand{\seqSequenceGetNumero}{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+	\DTLfetch{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Numero}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceSaveNumero}%
+% \IndexMacro{\seqSequenceSaveNumero}%
+% Sauve le numéro de la séquence courante dans la macro spécifiée
+% #1 : macro de sauvegarde
+% \begin{macrocode}%
+\newcommand{\seqSequenceSaveNumero}[1]{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+	\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Numero}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceGetTheme}%
+% \IndexMacro{\seqSequenceGetTheme}%
+% Renvoie le thème de la séquence courante
+% \begin{macrocode}%
+\newcommand{\seqSequenceGetTheme}{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+	\DTLfetch{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Theme}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceSaveTheme}%
+% \IndexMacro{\seqSequenceSaveTheme}%
+% Sauve le thème de la séquence courante dans la macro spécifiée
+% #1 : macro de sauvegarde
+% \begin{macrocode}%
+\newcommand{\seqSequenceSaveTheme}[1]{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+	\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Theme}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSequenceSaveThemeOf}%
+% \IndexMacro{\seqSequenceSaveThemeOf}%
+% Sauve le thème de la séquence spécifiée dans la macro spécifiée
+% #1 : macro de sauvegarde
+% #2 : code du niveau
+% #3 : code de la séquence
+% \begin{macrocode}%
+\newcommand{\seqSequenceSaveThemeOf}[3]{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{#2}{CodeCycle}%
+	\seqDTLfetchsave{#1}{\tmp@codecycle _sequences}{Code}{#3}{Theme}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqObjectifGetNom}%
+% \IndexMacro{\seqObjectifGetNom}%
+% Renvoie le nom de l'objectif spécifié dans la séquence courante
+% #1 : code objectif.
+% \begin{macrocode}%
+\newcommand{\seqObjectifGetNom}[1]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{Nom}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqObjectifGetFinCycle}%
+% \IndexMacro{\seqObjectifGetFinCycle}%
+% Renvoie si l'objectif spécifié dans la séquence courante est un objectif de fin de cycle
+% #1 : code objectif.
+% \begin{macrocode}%
+\newcommand{\seqObjectifGetFinCycle}[1]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{FinCycle}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqObjectifGetMaitriseTB}%
+% \IndexMacro{\seqObjectifGetMaitriseTB}%
+% Renvoie le critère d'atteinte du niveau Très Bon pour l'objectif spécifié dans la séquence courante
+% #1 : code objectif.
+% \begin{macrocode}%
+\newcommand{\seqObjectifGetMaitriseTB}[1]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{MaitriseTB}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqObjectifGetMaitriseS}%
+% \IndexMacro{\seqObjectifGetMaitriseS}%
+% Renvoie le critère d'atteinte du niveau Satisfaisant pour l'objectif spécifié dans la séquence courante
+% #1 : code objectif, 
+% \begin{macrocode}%
+\newcommand{\seqObjectifGetMaitriseS}[1]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{MaitriseS}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqObjectifGetMaitriseF}%
+% \IndexMacro{\seqObjectifGetMaitriseF}%
+% Renvoie le critère d'atteinte du niveau Fragile pour l'objectif spécifié dans la séquence courante
+% #1 : code objectif.
+% \begin{macrocode}%
+\newcommand{\seqObjectifGetMaitriseF}[1]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\DTLfetch{seq@objectifs@sequence}{CodeObjectif}{#1}{MaitriseF}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqConnaissanceGetNom}%
+% \IndexMacro{\seqConnaissanceGetNom}%
+% Renvoie le libellé de la connaissance spécifiée dans la séquence courante
+% #1 : code connaissance.
+% \begin{macrocode}%
+\newcommand{\seqConnaissanceGetNom}[1]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\DTLfetch{seq@connaissances@sequence}{CodeConnaissance}{#1}{Nom}%
+}%
+% }%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqTableauObjectifs}%
+% \IndexMacro{\seqTableauObjectifs}%
+% Produit le tableau récapitulatif des critères d'atteinte des objectifs
+% pour la séquence courante.
+% \begin{macrocode}%
+\newcommand{\seqTableauObjectifs}[1][]{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\seq@rule@color{\seq@couleuri@vif}%
+	\begin{center}%
+		\begin{xltabular}{0.9\linewidth}{L{0.36\linewidth} *{3}{L{0.18\linewidth}}}%
+			\toprule[1pt]
+			\multirow{2}{*}{\centering \color{\seq@couleuri@vif}\textbf{Objectif}} &
+			\multicolumn{3}{c}{\color{\seq@couleuri@vif}\textbf{Niveau de maîtrise}} \\
+			\cmidrule[1pt]{2-4}%
+			& \color{\seq@couleuri@vif} Très bon &
+			\color{\seq@couleuri@vif} Satisfaisant &
+			\color{\seq@couleuri@vif} À consolider \\
+			\toprule[1pt]
+			\DTLforeach*{seq@objectifs@sequence}{%
+				\objCode=CodeObjectif,%
+				\objNom=Nom,%
+				\objMaitriseTB=MaitriseTB,%
+				\objMaitriseS=MaitriseS,%
+				\objMaitriseF=MaitriseF%
+			}{%
+				\textbf{\objCode}\newline\objNom &
+				\objMaitriseTB & \objMaitriseS & \objMaitriseF \\
+				\DTLiflastrow{\bottomrule[1pt]}{\midrule}%
+			}%
+		\end{xltabular}%
+	\end{center}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqTableauPrerequis}%
+% \IndexMacro{\seqTableauPrerequis}%
+% Produit le tableau récapitulatif des compétences à maîtriser en début 
+% de séquence pour la séquence courante.
+% \begin{macrocode}%
+\define@cmdkey [seq]{TableauPrerequis}{niveau}{}%
+\define@cmdkey [seq]{TableauPrerequis}{sequence}{}%
+\newcommand{\seqTableauPrerequis}[1][]{%
+	\setkeys[seq]{TableauPrerequis}{#1}%
+	\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N09}}{%
+		% Dernière année du cycle: on reprend les objectifs des 2 années précédentes
+		\seq@prerequis@annee{N07}{\cmdseq@TableauPrerequis@sequence}%
+		\seq@prerequis@annee{N08}{\cmdseq@TableauPrerequis@sequence}%
+	}{%
+		\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N10}}{%
+			% Première année du cycle: on reprend les attendus de fin du cycle précédent
+			\seq@prerequis@attenduscycleprecedent{\cmdseq@TableauPrerequis@niveau}{\cmdseq@TableauPrerequis@sequence}%
+		}{%
+			\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N11}}{%
+				% Deuxième année du cycle: on reprend les objectif de l'année précédente
+				\seq@prerequis@annee{N10}{\cmdseq@TableauPrerequis@sequence}%
+			}{%
+				\ifthenelse{\equal{\cmdseq@TableauPrerequis@niveau}{N12}}{%
+					% Dernière année du cycle: on reprend les objectifs des 2 années précédentes
+					\seq@prerequis@annee{N10}{\cmdseq@TableauPrerequis@sequence}%
+					\seq@prerequis@annee{N11}{\cmdseq@TableauPrerequis@sequence}%
+				}{%
+					% code niveau inconnu : générer une erreur
+				}%
+			}%
+		}%
+	}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqMaitriseGetNom}%
+% \IndexMacro{\seqMaitriseGetNom}%
+% Renvoie le nom d'un niveau de maîtrise spécifié.
+% #1 : code du niveau de maîtrise
+% \begin{macrocode}%
+\newcommand{\seqMaitriseGetNom}[1]{%
+	\ifthenelse{\equal{#1}{I}}{Insuffisant}{%
+		\ifthenelse{\equal{#1}{F}}{\`A consolider}{%
+			\ifthenelse{\equal{#1}{A}}{Satisfaisant}{%
+				\ifthenelse{\equal{#1}{E}}{Très bon}{%
+					\ifthenelse{\equal{#1}{NE}}{Non évalué}{%
+						#1 % inconnu: on renvoie la même chose
+					}%
+				}%
+			}%
+		}%
+	}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqSuiviAnnuelParEleve}%
+% \IndexMacro{\seqSuiviAnnuelParEleve}%
+% Produit le tableau annuel de suivi des compétences par élève 
+% pour une liste d'élèves.
+% \begin{macrocode}%
+\define@cmdkey[seq]{suiviAnnuelParEleve}{niveau}{}%
+\newcommand{\seqSuiviAnnuelParEleve}[1][]{%
+	\setkeys[seq]{suiviAnnuelParEleve}{#1}%
+	% On reconstruit les bases objectifs par séquence
+	\seq@basesobjectifs@filter@niveau{\cmdseq@suiviAnnuelParEleve@niveau}%
+	% On traite les données
+	\DTLforeach*{eleves}{\tmp@numEleve=Numero,\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+		\def\tblrbody{}%
+		\edef\tblrbody{\tblrbody \SetCell[c=2]{c} \tmp@nomEleve\;\tmp@prenomEleve & \\}%
+		\DTLforeach*{periodes}{\tmp@periode=Periode}{%
+			\edef\tblrbody{\tblrbody \SetRow{bg=blue!30!white} Bilan\;\tmp@periode \\}%
+			\DTLforeach*{sequencesPeriode\tmp@periode}{\tmp@codeSequence=Code,\tmp@nomSequence=Nom}{%
+				\edef\tblrbody{\tblrbody \tmp@codeSequence\;-\;\tmp@nomSequence & }%
+				\seqDTLfetchsave{\tmp@niveauMaitrise}{bilanPeriode\tmp@periode}{Numero}{\tmp@numEleve}{\tmp@codeSequence}%
+				\seq@tblrcell@decodemaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \\}%
+			}%
+		}%
+		\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{\cmdseq@suiviAnnuelParEleve@niveau}{AnneeDansCycle}%
+		\DTLforeach*{C04_sequences}{\tmp@codeSequence=Code,\tmp@nomSequence=Nom,\tmp@codeTheme=Theme}{%
+			\edef\tblrbody{\tblrbody \SetRow{bg=blue!30!white} \tmp@codeSequence\;-\;\tmp@nomSequence \\}%
+			\seq@seqcode@tobasename{\tmp@nombase}{\tmp@codeSequence}%
+			\DTLforeach*{\tmp@nombase}{%
+					\tmp@codeObjectif=CodeObjectif,\tmp@nomObjectif=Nom}{%
+				\edef\tblrbody{\tblrbody \tmp@nomObjectif &}%
+				\seqDTLfetchsave{\tmp@niveauMaitrise}{Suivi\tmp@codeSequence}{Numero}{\tmp@numEleve}{\tmp@codeObjectif}%
+				\seq@tblrcell@decodemaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \\}%
+			}%
+		}%
+		\begin{longtblr}[expand=\tblrbody]{%
+			width=0.95\linewidth,colspec={X[4]X[c]},hlines,
+			rows={valign=m},
+			rowhead=1
+			}%
+			\tblrbody
+		\end{longtblr}%
+		\cleardoublepage
+	}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqSuiviAnnuelParSequence}%
+% \IndexMacro{\seqSuiviAnnuelParSequence}%
+% Produit le tableau de suivi des compétences d'une séquence.
+% pour une liste d'élèves.
+% \begin{macrocode}%
+\define@cmdkey[seq]{suiviAnnuelParSequence}{niveau}{}%
+\define@cmdkey[seq]{suiviAnnuelParSequence}{sequence}{}%
+\newcommand{\seqSuiviAnnuelParSequence}[1][]{%
+	%% ---- Options
+	\setkeys[seq]{suiviAnnuelParSequence}{#1}%
+	% On reconstruit les bases objectifs par séquence
+	\seq@basesobjectifs@filter@niveau{\cmdseq@suiviAnnuelParSequence@niveau}%
+	% On traite les données
+	\def\tblrbody{}%
+	\DTLforeach*{eleves}{\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+		\edef\tblrbody{\tblrbody & \rotatebox{90}{\tmp@nomEleve\;\tmp@prenomEleve}}%
+	}%
+	\edef\tblrbody{\tblrbody \\}%
+	\seq@seqcode@tobasename{\tmp@nombase}{\cmdseq@suiviAnnuelParSequence@sequence}%
+	\DTLforeach*{\tmp@nombase}{\tmp@codeObj=CodeObjectif,\tmp@nomObj=Nom}{%
+		\edef\tblrbody{\tblrbody Objectif \tmp@codeObj \newline \tmp@nomObj &}%
+		\DTLforeach*{eleves}{\tmp@numEleve=Numero,\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+			\seqDTLfetchsave{\tmp@niveauMaitrise}{Suivi\cmdseq@suiviAnnuelParSequence@sequence}{Numero}{\tmp@numEleve}{\tmp@codeObj}%
+			\seq@tblrcell@coloremaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \tmp@niveauMaitrise}%
+			\DTLiflastrow{}{\edef\tblrbody{\tblrbody &}}%
+		}%
+		\edef\tblrbody{\tblrbody \\}%
+	}%
+	\begin{center}%
+		\begin{longtblr}[expand=\tblrbody]{%
+				width=0.9\linewidth,colspec={X[8]*{25}{X[c]}},hlines,vlines,
+				rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={font={\normalsize}}}%
+			\tblrbody
+		\end{longtblr}%
+	\end{center}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqSuiviPeriodiqueParSequence}%
+% \IndexMacro{\seqSuiviPeriodiqueParSequence}%
+% Produit le tableau de suivi des compétences des séquences d'une période
+% pour une liste d'élèves.
+% \begin{macrocode}%
+\define@cmdkey[seq]{suiviPeriodiqueParSequence}{periode}{}%
+\define@cmdkey[seq]{suiviPeriodiqueParSequence}{niveau}{}%
+\newcommand{\seqSuiviPeriodiqueParSequence}[1][]{%
+	%% ---- Options
+	\setkeys[seq]{suiviPeriodiqueParSequence}{#1}%
+	% On reconstruit les bases objectifs par séquence
+	\seq@basesobjectifs@filter@niveau{\cmdseq@suiviPeriodiqueParSequence@niveau}%
+	% On traite les données
+	\def\tblrbody{}%
+	\DTLforeach*{eleves}{\tmp@nomEleve=Nom,\tmp@prenomEleve=Prenom}{%
+		\edef\tblrbody{\tblrbody & \rotatebox{90}{\tmp@nomEleve\;\tmp@prenomEleve}}%
+	}%
+	\edef\tblrbody{\tblrbody \\}%
+	\DTLforeach*{sequencesPeriode\cmdseq@suiviPeriodiqueParSequence@periode}{\tmp@codesequence=Code,\tmp@nomsequence=Nom}{%
+		\edef\tblrbody{\tblrbody \tmp@codesequence\;-\;\tmp@nomsequence & }%
+		\DTLforeach*{eleves}{\tmp@numEleve=Numero}{%
+			\seqDTLfetchsave{\tmp@niveauMaitrise}{bilanPeriode\cmdseq@suiviPeriodiqueParSequence@periode}{Numero}{\tmp@numEleve}{\tmp@codesequence}%
+			\seq@tblrcell@coloremaitrise{\tmp@niveauMaitrise} \edef\tblrbody{\tblrbody \tmp@niveauMaitrise}%
+			\DTLiflastrow{}{\edef\tblrbody{\tblrbody &}}%
+		}%
+		\edef\tblrbody{\tblrbody \\}%
+	}%
+	\begin{center} \begin{longtblr}[expand=\tblrbody]{%
+			width=0.9\linewidth,colspec={X[8]*{25}{X[c]}},hlines,vlines,
+			rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={font={\normalsize}}}%
+			\tblrbody
+		\end{longtblr} \end{center}%
+	\bigskip\par
+	\centerline{\Large{\phantom{test}\hfill Dates des séquences \hfill}}%
+	\medskip\par
+	\DTLforeach*{sequencesPeriode\cmdseq@suiviPeriodiqueParSequence@periode}{\tmp@codeSequence=Code,\tmp@nomSequence=Nom,\tmp@dateDebut=Debut,\tmp@dateFin=Fin}{%
+		\large{\phantom{test}\qquad\tmp@codeSequence\;-\;\tmp@nomSequence: du \tmp@dateDebut{} au \tmp@dateFin}\smallskip\par
+	}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqPlanReperesNiveaux}%
+% \IndexMacro{\seqPlanReperesNiveaux}%
+% Produit le tableau des repères temporels (date début et fin) et 
+% la répartition des séances de la séquence.
+% \begin{macrocode}%
+\define@cmdkey[seq]{blocReperesNiveaux}{objCours}[01]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{objExosFirst}[02]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{objExosLast}[09]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{dateDeb}[\ldots/\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{dateFin}[\ldots/\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesTotal}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesRevisions}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesCours}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj02}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj03}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj04}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj05}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj06}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj12}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj13}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj14}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj15}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj16}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj22}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj23}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj24}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj25}[\ldots]{}%
+\define@cmdkey[seq]{blocReperesNiveaux}{seancesObj26}[\ldots]{}%
+\newcommand{\seqPlanReperesNiveaux}[1][]{%
+	\setkeys[seq]{blocReperesNiveaux}{objCours,objExosFirst,objExosLast,dateDeb,dateFin,seancesTotal,seancesRevisions,seancesCours,#1}%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+	\begin{multicols}{2}%
+		\begin{blocReperesNiveaux}{Repères temporels}%
+			\item Dates: du \cmdseq@blocReperesNiveaux@dateDeb~au~\cmdseq@blocReperesNiveaux@dateFin
+			\item Travail en classe: \cmdseq@blocReperesNiveaux@seancesTotal~séances
+			\begin{seqColItem}[nbCols=1,label=\ding{51}]
+				\item Révisions: \cmdseq@blocReperesNiveaux@seancesRevisions~séances
+				\item Cours: \cmdseq@blocReperesNiveaux@seancesCours~séances
+				\DTLforeach[\DTLisiclosedbetween{\codeObjectif}{\cmdseq@blocReperesNiveaux@objExosFirst}{\cmdseq@blocReperesNiveaux@objExosLast}]
+				{seq@objectifs@sequence}{\codeObjectif=CodeObjectif}{%
+					\item Objectif \codeObjectif: \csname cmdseq@blocReperesNiveaux@seancesObj\codeObjectif\endcsname~séances
+				}%
+			\end{seqColItem}%
+		\end{blocReperesNiveaux}%
+		\columnbreak
+		\begin{blocReperesNiveaux}{Niveaux atteints}%
+			\DTLforeach[\DTLisiclosedbetween{\codeObjectif}{\cmdseq@blocReperesNiveaux@objCours}{\cmdseq@blocReperesNiveaux@objExosLast}]
+			{seq@objectifs@sequence}{\codeObjectif=CodeObjectif}{%
+				\item Objectif \codeObjectif: \ldots
+			}%
+			\item \begin{minipage}[c][3em][c]{\linewidth} \textbf{Note équivalente: \ldots/20} \end{minipage}%
+		\end{blocReperesNiveaux}%
+	\end{multicols}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ============================================================================
+% Macros d'itération sur thèmes et séquences (Axe 3 – documents annuels)
+% ============================================================================
+% Ces macros encapsulent datatool pour les documents qui ont besoin d'itérer
+% sur l'ensemble des thèmes et des séquences du cycle courant (cours, exercices).
+% Elles lisent le cycle depuis \seq@code@niveau via la base param_niveaux.
+%
+% \begin{macro}{\seqForeachTheme}%
+% \IndexMacro{\seqForeachTheme}%
+% Itère sur tous les thèmes du cycle correspondant au niveau courant.
+% #1 : macro qui recevra le code thème
+% #2 : macro qui recevra le nom du thème
+% #3 : macro qui recevra la description du thème
+% #4 : macro qui recevra le code couleur du thème
+% #5 : corps à exécuter pour chaque thème
+% \begin{macrocode}%
+\newcommand{\seqForeachTheme}[5]{%
+    \seqDTLfetchsave{\seq@iter@cycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+    \DTLforeach*{\seq@iter@cycle _themes}{%
+        #1=Code,%
+        #2=Nom,%
+        #3=Description,%
+        #4=CodeCouleur%
+    }{#5}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqForeachSequence}%
+% \IndexMacro{\seqForeachSequence}%
+% Itère sur toutes les séquences du cycle correspondant au niveau courant.
+% #1 : macro qui recevra le code séquence
+% #2 : macro qui recevra le nom de la séquence
+% #3 : macro qui recevra le code thème de la séquence
+% #4 : corps à exécuter pour chaque séquence
+% \begin{macrocode}%
+\newcommand{\seqForeachSequence}[4]{%
+    \seqDTLfetchsave{\seq@iter@cycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+    \DTLforeach*{\seq@iter@cycle _sequences}{%
+        #1=Code,%
+        #2=Nom,%
+        #3=Theme%
+    }{#4}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+% Variable interne temporaire pour les macros d'itération
+\newcommand{\seq@iter@cycle}{}%
+% ----------------------------------------------------------------------------
+
+% -------------------------------------------------------------------------------------------
+% \begin{macro}{\seqSetColors}%
+% \IndexMacro{\seqSetColors}%
+% Règle les couleurs de la séquence courante en appelant \seq@setColors
+% \begin{macrocode}%
+\newcommand{\seqSetColors}{%
+	\ifthenelse{\equal{\seq@code@niveau}{N00}}{\seq@setColors{gris}}{%
+		\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+		\seqDTLfetchsave{\tmp@codeTheme}{\tmp@codecycle _sequences}{Code}{\seq@code@sequence}{Theme}%
+		\seqDTLfetchsave{\tmp@codeCouleur}{\tmp@codecycle _themes}{Code}{\tmp@codeTheme}{CodeCouleur}%
+		\seq@setColors{\tmp@codeCouleur}%
+	}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqSetColorsTheme}%
+% \IndexMacro{\seqSetColorsTheme}%
+% Wrapper public pour \seq@setColors
+% #1 : code de couleur à appliquer
+% \begin{macrocode}%
+\newcommand{\seqSetColorsTheme}[1]{%
+	\seq@setColors{#1}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFiltreDonnees}%
+% \IndexMacro{\seqSetColorsTheme}%
+% Wrapper public pour \seq@bases@filter avec la séquence courante
+% \begin{macrocode}%
+\newcommand{\seqFiltreDonnees}{%
+	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+% ----------------------------------------------------------------------------
+%
+% ============================================================================
+% Commandes internes
+% ============================================================================
+% ----------------------------------------------------------------------------
+% Vérifie que les bases sont filtrées pour le niveau et la séquence spécifiés
+% #1 : code de niveau
+% #2 : code de séquence
+\newcommand{\seq@bases@filter}[2]{%
+	\seqDTLfetchsave{\tmp@codecycle}{param_niveaux}{Code}{#1}{CodeCycle}%
+	% On vérifie les bases filtrées par cycle
+	\ifthenelse{\equal{\tmp@codecycle}{C03}}{%
+		\ifthenelse{\equal{\seq@var@cycle}{C03}}{%cache cycle 3 valide : rien à faire
+		}{%mise à jour des bases filtrées pour le cycle 3
+			\gdef\seq@var@cycle{C03}%
+			\seq@bases@filter@cycle{C03}{N07}{N08}{N09}%
+		}%
+	}{%
+		\ifthenelse{\equal{\tmp@codecycle}{C04}}{%
+			\ifthenelse{\equal{\seq@var@cycle}{C04}}{%cache cycle 4 valide : rien à faire
+			}{%mise à jour des bases filtrées pour le cycle 4
+				\gdef\seq@var@cycle{C04}%
+				\seq@bases@filter@cycle{C04}{N10}{N11}{N12}%
+			}%
+		}{%cycle inconnu: générer une erreur
+		}%
+	}%
+	% On vérifie les bases filtrées par niveau et séquence 
+	\ifthenelse{\equal{#1}{\seq@var@niveau}\and\equal{#2}{\seq@var@sequence}}{%cache niveau/séquence valide : rien à faire
+	}{%mise à jour des bases filtrées pour #2 de #1
+		\xdef\seq@var@niveau{#1}%
+		\xdef\seq@var@sequence{#2}%
+		\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{#1}{AnneeDansCycle}%
+		\seq@bases@filter@sequence{seq@connaissances@\tmp@annee}{seq@objectifs@\tmp@annee}{#2}%
+	}%
+}%
+% ----------------------------------------------------------------------------
+% Reconstruit les bases connaissances et objectifs filtrées 
+% par niveau pour le cycle spécifié
+% #1 : code cycle
+% #2 : code niveau un
+% #3 : code niveau deux
+% #4 : code niveau trois
+\newcommand{\seq@bases@filter@cycle}[4]{%
+	\DTLcleardb{seq@connaissances@anneeun}%
+	\DTLcleardb{seq@connaissances@anneedeux}%
+	\DTLcleardb{seq@connaissances@anneetrois}%
+	\DTLforeach*{#1_connaissances}{%
+		\CodeNiveau=CodeNiveau,%
+		\CodeSequence=CodeSequence,%
+		\CodeConnaissance=CodeConnaissance,%
+		\Nom=Nom%
+	}{%
+		\dtlexpandnewvalue
+		\DTLifstringeq{\CodeNiveau}{#2}{%
+			\DTLnewrow{seq@connaissances@anneeun}%
+			\DTLnewdbentry{seq@connaissances@anneeun}{CodeSequence}{\CodeSequence}%
+			\DTLnewdbentry{seq@connaissances@anneeun}{CodeConnaissance}{\CodeConnaissance}%
+			\DTLnewdbentry{seq@connaissances@anneeun}{Nom}{\Nom}%
+		}{%
+			\DTLifstringeq{\CodeNiveau}{#3}{%
+				\DTLnewrow{seq@connaissances@anneedeux}%
+				\DTLnewdbentry{seq@connaissances@anneedeux}{CodeSequence}{\CodeSequence}%
+				\DTLnewdbentry{seq@connaissances@anneedeux}{CodeConnaissance}{\CodeConnaissance}%
+				\DTLnewdbentry{seq@connaissances@anneedeux}{Nom}{\Nom}%
+			}{%
+				\DTLifstringeq{\CodeNiveau}{#4}{%
+					\DTLnewrow{seq@connaissances@anneetrois}%
+					\DTLnewdbentry{seq@connaissances@anneetrois}{CodeSequence}{\CodeSequence}%
+					\DTLnewdbentry{seq@connaissances@anneetrois}{CodeConnaissance}{\CodeConnaissance}%
+					\DTLnewdbentry{seq@connaissances@anneetrois}{Nom}{\Nom}%
+				}{%
+				}%
+			}%
+		}%
+	}%
+	\DTLcleardb{seq@objectifs@anneeun}%
+	\DTLcleardb{seq@objectifs@anneedeux}%
+	\DTLcleardb{seq@objectifs@anneetrois}%
+	\DTLforeach*{#1_objectifs}{%
+		\CodeNiveau=CodeNiveau,%
+		\CodeSequence=CodeSequence,%
+		\CodeObjectif=CodeObjectif,%
+		\Nom=Nom,%
+		\MaitriseTB=MaitriseTB,%
+		\MaitriseS=MaitriseS,%
+		\MaitriseF=MaitriseF%
+	}{%
+		\dtlexpandnewvalue
+		\DTLifstringeq{\CodeNiveau}{#2}{%
+			\DTLnewrow{seq@objectifs@anneeun}%
+			\DTLnewdbentry{seq@objectifs@anneeun}{CodeSequence}{\CodeSequence}%
+			\DTLnewdbentry{seq@objectifs@anneeun}{CodeObjectif}{\CodeObjectif}%
+			\DTLnewdbentry{seq@objectifs@anneeun}{Nom}{\Nom}%
+			\DTLnewdbentry{seq@objectifs@anneeun}{MaitriseTB}{\MaitriseTB}%
+			\DTLnewdbentry{seq@objectifs@anneeun}{MaitriseS}{\MaitriseS}%
+			\DTLnewdbentry{seq@objectifs@anneeun}{MaitriseF}{\MaitriseF}%
+		}{%
+			\DTLifstringeq{\CodeNiveau}{#3}{%
+				\DTLnewrow{seq@objectifs@anneedeux}%
+				\DTLnewdbentry{seq@objectifs@anneedeux}{CodeSequence}{\CodeSequence}%
+				\DTLnewdbentry{seq@objectifs@anneedeux}{CodeObjectif}{\CodeObjectif}%
+				\DTLnewdbentry{seq@objectifs@anneedeux}{Nom}{\Nom}%
+				\DTLnewdbentry{seq@objectifs@anneedeux}{MaitriseTB}{\MaitriseTB}%
+				\DTLnewdbentry{seq@objectifs@anneedeux}{MaitriseS}{\MaitriseS}%
+				\DTLnewdbentry{seq@objectifs@anneedeux}{MaitriseF}{\MaitriseF}%
+			}{%
+				\DTLifstringeq{\CodeNiveau}{#4}{%
+					\DTLnewrow{seq@objectifs@anneetrois}%
+					\DTLnewdbentry{seq@objectifs@anneetrois}{CodeSequence}{\CodeSequence}%
+					\DTLnewdbentry{seq@objectifs@anneetrois}{CodeObjectif}{\CodeObjectif}%
+					\DTLnewdbentry{seq@objectifs@anneetrois}{Nom}{\Nom}%
+					\DTLnewdbentry{seq@objectifs@anneetrois}{MaitriseTB}{\MaitriseTB}%
+					\DTLnewdbentry{seq@objectifs@anneetrois}{MaitriseS}{\MaitriseS}%
+					\DTLnewdbentry{seq@objectifs@anneetrois}{MaitriseF}{\MaitriseF}%
+				}{%
+				}%
+			}%
+		}%
+	}%
+}%
+% ----------------------------------------------------------------------------
+% Reconstruit les bases objectifs et connaissances filtrées 
+% pour la séquence spécifiée
+% #1 : BBD connaissances du niveau
+% #2 : BBD objectifs du niveau
+% #3 : code séquence
+\newcommand{\seq@bases@filter@sequence}[3]{%
+	% connaissances
+	\DTLcleardb{seq@connaissances@sequence}%
+	\DTLforeach*[\DTLiseq{\CodeSequence}{#3}]{#1}{%
+		\CodeSequence=CodeSequence,%
+		\CodeConnaissance=CodeConnaissance,%
+		\Nom=Nom%
+	}{%
+		\dtlexpandnewvalue
+		\DTLnewrow{seq@connaissances@sequence}%
+		\DTLnewdbentry{seq@connaissances@sequence}{CodeConnaissance}{\CodeConnaissance}%
+		\DTLnewdbentry{seq@connaissances@sequence}{Nom}{\Nom}%
+	}%
+	% objectifs
+	\DTLcleardb{seq@objectifs@sequence}%
+	\DTLforeach*[\DTLiseq{\CodeSequence}{#3}]{#2}{%
+		\CodeSequence=CodeSequence,%
+		\CodeObjectif=CodeObjectif,%
+		\Nom=Nom,%
+		\MaitriseTB=MaitriseTB,%
+		\MaitriseS=MaitriseS,%
+		\MaitriseF=MaitriseF%
+	}{%
+		\dtlexpandnewvalue
+		\DTLnewrow{seq@objectifs@sequence}%
+		\DTLnewdbentry{seq@objectifs@sequence}{CodeObjectif}{\CodeObjectif}%
+		\DTLnewdbentry{seq@objectifs@sequence}{Nom}{\Nom}%
+		\DTLnewdbentry{seq@objectifs@sequence}{MaitriseTB}{\MaitriseTB}%
+		\DTLnewdbentry{seq@objectifs@sequence}{MaitriseS}{\MaitriseS}%
+		\DTLnewdbentry{seq@objectifs@sequence}{MaitriseF}{\MaitriseF}%
+	}%
+}%
+% ----------------------------------------------------------------------------
+% ----------------------------------------------------------------------------
+% Reconstruit les bases objectifs filtrées 
+% par séquence pour le niveau spécifié
+% #1 : code niveau
+\newcommand{\seq@basesobjectifs@filter@niveau}[1]{%
+	\ifthenelse{\equal{\seq@var@niveau}{#1}}{%cache niveau valide : rien à faire
+	}{%mise à jour des bases filtrées pour le niveau
+		\xdef\seq@var@niveau{#1}%
+		% Vider toutes les bases par séquence en boucle
+		% (couvre S01 à S\seq@maxsequences, quel que soit le nombre réel de séquences)
+		\setcounter{seq@tmp@i}{1}%
+		\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
+			\DTLcleardb{seq@objectifs@s\arabic{seq@tmp@i}}%
+			\stepcounter{seq@tmp@i}%
+		}%
+		\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{#1}{AnneeDansCycle}%
+		\DTLforeach*{seq@objectifs@\tmp@annee}{%
+			\CodeSequence=CodeSequence,%
+			\CodeObjectif=CodeObjectif,%
+			\Nom=Nom,%
+			\MaitriseTB=MaitriseTB,%
+			\MaitriseS=MaitriseS,%
+			\MaitriseF=MaitriseF%
+		}{%
+			% Calcul direct du nom de base : S01 → seq@objectifs@s1, S12 → seq@objectifs@s12
+			\seq@seqcode@tonumber{\tmp@seqnum}{\CodeSequence}%
+			\edef\tmp@base{seq@objectifs@s\tmp@seqnum}%
+			\dtlexpandnewvalue
+			\DTLnewrow{\tmp@base}%
+			\DTLnewdbentry{\tmp@base}{CodeObjectif}{\CodeObjectif}%
+			\DTLnewdbentry{\tmp@base}{Nom}{\Nom}%
+			\DTLnewdbentry{\tmp@base}{MaitriseTB}{\MaitriseTB}%
+			\DTLnewdbentry{\tmp@base}{MaitriseS}{\MaitriseS}%
+			\DTLnewdbentry{\tmp@base}{MaitriseF}{\MaitriseF}%
+		}%
+	}%
+}%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seq@seqcode@tobasename}%
+% Remplace l'ancienne \seq@sequence@save@nombaseobjectifs.
+% Calcule le nom de la base objectifs d'une séquence à partir de son code,
+% sans cascade de comparaisons : S01 → seq@objectifs@s1, S16 → seq@objectifs@s16.
+% Fonctionne pour tout N entre 1 et \seq@maxsequences.
+% #1 : macro de sauvegarde
+% #2 : code séquence (ex. S01, S12)
+\newcommand{\seq@seqcode@tobasename}[2]{%
+	\seq@seqcode@tonumber{\seq@tmp@n}{#2}%
+	\edef#1{seq@objectifs@s\seq@tmp@n}%
+}%
+% ----------------------------------------------------------------------------
+% Récapitule les attendus de fin de cycle du cycle précédent 
+% pour la séquence spécifiée
+% #1 : code niveau
+% #2 : code séquence
+\newcommand{\seq@prerequis@attenduscycleprecedent}[2]{%
+	\ifthenelse{\equal{#1}{N10}}{%
+		\begin{seq@prerequis@N1}[Les connaissances et savoir-faire suivants sont l'ensemble des attendus de fin de cycle 3]
+			\DTLforeach*[\DTLiseq{\dtl@codeSequence}{#2}]{C04_attendus_fin_C03}{\dtl@codeSequence=CodeSequence,\attendu=Attendu}{\attendu}%
+		\end{seq@prerequis@N1}%
+	}{% code cycle inconnu : générer une erreur
+	}%
+}%
+% ----------------------------------------------------------------------------
+% Récapitule les objectifs de l'année pour la séquence spécifiée
+% #1 : code niveau
+% #2 : code séquence
+\newcommand{\seq@prerequis@annee}[2]{%
+	\seq@bases@filter{#1}{#2}%
+	\begin{seq@prerequis@N1}[Les connaissances et savoir-faire suivants sont l'ensemble des attendus de fin de \seqNiveauGetNomCourt{#1}]
+		\edef\seq@tmp@rowcount{\DTLrowcount{seq@connaissances@sequence}}%
+		\DTLifeq{\seq@tmp@rowcount}{0}{% Pas de nouvelle connaissance
+			\item Aucune nouvelle connaissance pour cette séquence.
+		}{%
+			\item Connaissances de la séquence:
+				\begin{seq@prerequis@N2}%
+					\DTLforeach*{seq@connaissances@sequence}{\nom=Nom}{\item \nom}%
+				\end{seq@prerequis@N2}%
+		}%
+		\edef\seq@tmp@rowcount{\DTLrowcount{seq@objectifs@sequence}}%
+		\DTLifeq{\seq@tmp@rowcount}{0}{% Pas de nouvel objectif
+			\item Aucun nouvel objectif pour cette séquence.
+		}{%
+			\item Objectifs de la séquence:
+				\begin{seq@prerequis@N2}%
+					\DTLforeach*{seq@objectifs@sequence}{\nom=Nom}{\item \nom}%
+				\end{seq@prerequis@N2}%
+		}%
+	\end{seq@prerequis@N1}%
+}%
+% ---------------------------------------------------------------------------------
+% Formatte une cellule dans un tblr pour le niveau de maîtrise spécifié
+% #1 : code niveau de maîtrise
+\newcommand{\seq@tblrcell@decodemaitrise}[1]{%
+	\DTLifeq{#1}{I}{\edef\tblrbody{\tblrbody \SetCell{bg=red,fg=white} Insuffisant}}{%
+		\DTLifeq{#1}{F}{\edef\tblrbody{\tblrbody \SetCell{bg=yellow,fg=black} \`A consolider}}{%
+			\DTLifeq{#1}{A}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!white,fg=black} Satisfaisant}}{%
+				\DTLifeq{#1}{E}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!black,fg=white} Très bon}}{%
+					\DTLifeq{#1}{NE}{\edef\tblrbody{\tblrbody Non évalué}}{%
+						\DTLifnumerical{#1}{\edef\tblrbody{\tblrbody #1 }}{%
+							\DTLifeq{#1}{-}{\edef\tblrbody{\tblrbody -}}{\edef\tblrbody{\tblrbody INCONNU:#1}}}}}}}}%
+}%
+% \end{macro}%
+% ---------------------------------------------------------------------------------
+% Colore une cellule vide dans un tblr pour le niveau de maîtrise spécifié
+% #1 : code niveau de maîtrise
+% \begin{macro}{seqColoreMaitriseTblr}%
+\newcommand{\seq@tblrcell@coloremaitrise}[1]{%
+	\DTLifeq{#1}{I}{\edef\tblrbody{\tblrbody \SetCell{bg=red,fg=white}}}{%
+		\DTLifeq{#1}{F}{\edef\tblrbody{\tblrbody \SetCell{bg=yellow,fg=black}}}{%
+			\DTLifeq{#1}{A}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!white,fg=black}}}{%
+				\DTLifeq{#1}{E}{\edef\tblrbody{\tblrbody \SetCell{bg=green!60!black,fg=white}}}{%
+					\DTLifeq{#1}{NE}{}{%
+						\DTLifeq{#1}{-}{}{\edef\tblrbody{\tblrbody \SetCell{bg=gray!50!white,fg=white}}}}}}}}%
+}%
+% \end{macro}%
+% ---------------------------------------------------------------------------------
+%
+% ============================================================================
+% Environnements internes
+% ============================================================================
+% Met en forme le premier niveau du tableau de prérequis
+% #1 : Commentaire explicatif du contenu du tableau
+\newenvironment{seq@prerequis@N1}[1][Les connaissances et savoir-faire suivants sont
+	nécessaires pour réussir la séquence.]{%
+	\par\vspace{20pt}%
+	\begin{boitePaleNoBreak}{Prérequis}%
+		#1
+		\tcblower
+		\begin{minipage}{\linewidth}%
+			\begin{multicols}{2} \begin{dinglist}{224}%
+					}{%
+				\end{dinglist} \end{multicols}%
+		\end{minipage}%
+	\end{boitePaleNoBreak}%
+	\par\vspace{10pt}%
+}%
+% \end{environment}%
+% ----------------------------------------------------------------------------
+% Met en forme le second niveau du tableau de prérequis
+\newenvironment{seq@prerequis@N2}{%
+	\begin{dinglist}{118}%
+		}{%
+	\end{dinglist}%
+}%
+% ----------------------------------------------------------------------------
+% Fin du module data
+%</package>

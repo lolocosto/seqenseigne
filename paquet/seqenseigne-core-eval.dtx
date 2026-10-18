@@ -1,0 +1,361 @@
+% \iffalse
+%<*driver>
+\ProvidesFile{seqenseigne-core-eval.dtx}%
+[2026/05/08 v1.0-dev seqenseigne – Module core-eval (évaluations sommatives)]
+%</driver>
+% \fi
+%
+% =============================================================
+% seqenseigne-core-eval.dtx
+% Module : CORE-EVAL
+% Rôle   : macros et environnements liés aux évaluations sommatives :
+%          - page de titre d'évaluation (\seqTitreEval)
+%          - barème (en-tête de l'évaluation, environnement seqEvalBareme)
+%          - exercices d'évaluation (environnement seqEvalExercice)
+%          - corrigés différés (\seqEvalCorrigeExo, \seqEvalAfficheCorriges)
+%
+% Module créé en v0.13.5.2 par extraction depuis seqenseigne-core.dtx.
+%
+% v0.13.5.2 étape 2 : renommages pour cohérence du préfixe seq.
+%   - \titreEval               → \seqTitreEval
+%   - \corrigeExoEval          → \seqEvalCorrigeExo
+%   - \seqEvalQCMItem          → \seqQcmQuestion (déplacée vers core-exos)
+%   - compteur ExoEvalNum      → seqExoEvalNum (centralisé dans core)
+%
+% v0.13.5.2 étape 3 : refonte fonctionnelle.
+%   \seqTitreEval :
+%   - Suppression des options numSeq, titreSeq, niveauDiff (et leur
+%     mapping vers un nombre de points "Ce sujet permet d'obtenir N
+%     points"). Une éval peut couvrir plusieurs séquences, ou un seul
+%     objectif d'une séquence — pas d'attache à une séquence unique.
+%   - Ajout de l'option titre (texte libre) en remplacement de
+%     numSeq+titreSeq.
+%   - Suppression du bandeau supérieur "Séquence NN" et de l'indication
+%     "Niveau fondamental/avancé/exploration" à droite.
+%   - "Mise en pratique" → "Évaluation" dans le rendu.
+%   - Conservation de theme=, etab=, classe=.
+%
+%   seqEvalExercice :
+%   - Option "nom" renommée en "titre" (cohérence avec \seqTitreEval).
+%   - Ajout de l'option "bareme" : si renseignée, affichage en italique
+%     aligné à droite du cartouche, format [/ <bareme>] (ex. [/ 5 points]).
+%
+% v0.13.5.2 étape 4 : nouvel environnement seqEvalObjectifs.
+%   Tableau d'objectifs évalués avec grille de critères de maîtrise
+%   (Insuffisant / À consolider / Satisfaisant / Très bon, à cocher
+%   manuellement par l'enseignant). Affiché par l'appli uniquement si
+%   le mode de notation inclut les critères ("criteres" ou
+%   "note_criteres"). Items écrits en clair par l'utilisateur :
+%     <code> & <intitulé> & \ding{113} & \ding{113} & \ding{113} & \ding{113} \\
+%   (tabularray refuse les macros qui contiennent des & et \\).
+%
+% Le QCM, étant un format particulier d'exercice utilisable hors-éval
+% (en livret de séquence par exemple), n'est pas défini ici. Il est
+% défini dans core-exos comme environnement enfant utilisable dans
+% n'importe quel contexte (seqEvalExercice, seqExercice).
+%
+% Dépendances :
+%  - seqenseigne-core (boîtes \begin{boiteTitreGen}, \begin{boiteTitreSection},
+%    \begin{boitePaleVariable}, \seq@setColors, \eue, \@charlb, \@charrb,
+%    \newwrite\corrfileeval, compteur seqExoEvalNum)
+%  - seqenseigne-core-exos (environnement seqQcm pour les QCM en éval)
+%  - paquet pifont (déjà chargé via dinglist pour le QCM) pour les
+%    cases à cocher \ding{113} dans seqEvalObjectifs
+%
+% =============================================================
+%
+%<*package>
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-core-eval}%
+[2026/05/08 v1.0-dev seqenseigne core-eval module]
+
+%% ------------------------------------------------------------------
+%% ---- Traitement des options --------------------------------------
+%% ------------------------------------------------------------------
+\newif\ifdocstd\docstdtrue
+\DeclareOption{ltxdoc}{\docstdfalse}%
+\ProcessOptions\relax
+
+%% Note : tous les compteurs (seqExoEvalNum, seqQcmItemNum, etc.) sont
+%% déclarés dans seqenseigne-core (centralisation des compteurs depuis
+%% v0.13.5.2 étape 2).
+
+%% ------------------------------------------------------------------
+%% ---- \seqInitCorrigesEval ----------------------------------------
+%% ------------------------------------------------------------------
+%% v0.13.5.6 — Allocation du canal d'écriture des corrigés d'éval.
+%% Pendant exact de \seqInitCorriges (core-exos, canal \corrfile) et
+%% \seqInitAnnexes (core, canal \annfile). Encapsule l'allocation
+%% \newwrite\corrfileeval qui était auparavant au top-level de
+%% seqenseigne-core.sty — les allocations TeX top-level ne sont pas
+%% indexées par le parser de paquet côté appli (services/
+%% paquet_parseur.py), et la fermeture transitive du préambule
+%% atomique les perdait. La macro publique, elle, est correctement
+%% indexée comme \newcommand.
+%%
+%% À appeler avant \seqTitreEval. Côté appli, services/
+%% render_evaluation.py::_section_titre l'émet systématiquement.
+\newcommand{\seqInitCorrigesEval}{%
+\newcounter{seqExoEvalNum}%
+\newwrite\corrfileeval
+}%
+
+%% ------------------------------------------------------------------
+%% ---- \seqTitreEval -----------------------------------------------
+%% ------------------------------------------------------------------
+%    \begin{macro}{\seqTitreEval}%
+%% v0.13.5.2 étape 3 — Refonte fonctionnelle :
+%%   - Suppression de numSeq, titreSeq, niveauDiff (et leur mapping
+%%     vers un nombre de points). Une éval peut couvrir plusieurs
+%%     séquences ou un seul objectif d'une séquence — le titre est
+%%     ce que l'enseignant veut.
+%%   - Ajout de "titre" (texte libre) à la place de numSeq+titreSeq.
+%%   - Suppression du bandeau supérieur "Séquence NN" (plus de
+%%     référence à une séquence unique).
+%%   - Suppression de l'indication "Niveau fondamental/avancé/..."
+%%     à droite (n'a plus de sens pour une éval qui mélange
+%%     potentiellement plusieurs séries).
+%%   - Suppression du bloc "Ce sujet permet d'obtenir N points" qui
+%%     dépendait de niveauDiff.
+%%   - "Mise en pratique" → "Évaluation".
+%%   - Conservation de theme=, etab=, classe=.
+%%   - Le sous-titre du corrigé devient simplement "Corrigé".
+%%
+%% Note : on garde les noms de groupes d'options (titreEval, exerciceEval)
+%% en interne, sans préfixe seq, conformément à la convention validée :
+%% préfixe seq pour macros et environnements publics, pas pour les
+%% groupes d'options xkeyval.
+\define@cmdkey[seq]{titreEval}{titre}{}%
+\define@cmdkey[seq]{titreEval}{etab}{}%
+\define@cmdkey[seq]{titreEval}{classe}{}%
+\define@cmdkey[seq]{titreEval}{theme}[gris]{}%
+%% ---- Page de titre de l'évaluation ------------------------------
+\newcommand{\seqTitreEval}[1][]{%
+	%% ---- Options
+	\setkeys[seq]{titreEval}{theme,#1}%
+	%% ---- Ouverture du fichier des corrigés (le \newwrite est déclaré
+	%%      globalement dans seqenseigne-core)
+	\immediate\openout\corrfileeval=CorrList.tex
+	%% ---- Début du corrigé : titre
+	%% Note : \begin{boiteTitreGen} prend un argument obligatoire (le
+	%% bandeau supérieur). Comme on ne veut plus de bandeau "Séquence NN"
+	%% en étape 3, on lui passe un argument vide via \unexpanded{{}}.
+	%% C'est l'équivalent côté write de \begin{boiteTitreGen}{} ligne 130.
+	\immediate\write\corrfileeval{%
+		\noexpand\cleardoublepage
+		\noexpand\begin{boiteTitreGen}\unexpanded{{}}%
+			\unexpanded{\begin{minipage}[c][70pt][c]{\linewidth}}%
+				\unexpanded{\vfill \textit{\'Evaluation: corrig\'e}}%
+				\noexpand\vfill \noexpand\centering \@charlb
+				\noexpand\Huge \noexpand\textbf{\eue{\cmdseq@titreEval@titre}} \@charrb
+				\noexpand\vfill \noexpand\hfill
+				\noexpand\textit{\eue{\cmdseq@titreEval@etab} - \eue{\cmdseq@titreEval@classe}}%
+				\unexpanded{ \end{minipage}	\end{boiteTitreGen}}%
+}%
+%% ---- Entêtes et pieds de page
+\ifdocstd
+	\pagestyle{fancy}%
+	\fancyhf{}%
+	\lfoot{Le \today}%
+	\rfoot{Page \thepage/\pageref{LastPage}}%
+\fi
+%% ---- Couleurs
+\seq@setColors{\cmdseq@titreEval@theme}%
+%% ---- Boîte de titre
+\begin{boiteTitreGen}{}%
+	\begin{minipage}[c][70pt][c]{\linewidth}%
+		\vfill \textit{Évaluation}%
+		\vfill \centering {\Huge \textbf{\cmdseq@titreEval@titre}}%
+		\vfill	\hfill
+		\textit{\cmdseq@titreEval@etab~- \cmdseq@titreEval@classe}%
+	\end{minipage}%
+\end{boiteTitreGen}%
+\begin{center} \begin{boitePaleVariable}{\linewidth}%
+		Toutes les réponses doivent être justifiées,
+		sauf si une indication contraire est donnée. \newline
+		Pour chaque question, si le travail n'est pas terminé,
+		laisser tout de même une trace de la recherche. \newline
+		Elle sera prise en compte dans la notation.
+	\end{boitePaleVariable} \end{center}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ---- Pour chaque corrigé -----------------------------------
+%    \begin{macro}{\seqEvalCorrigeExo}%
+%% Ecrit le corrigé de l'exercice dans un fichier séparé
+\newcommand{\seqEvalCorrigeExo}[1]{%
+	\scantokens{%
+		\begin{tcbverbatimwrite}{Corriges/c\theseqExoEvalNum.tex}%
+			#1
+		\end{tcbverbatimwrite}%
+	}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ---- Regroupe les corrigés en fin d'évaluation -------------
+%    \begin{macro}{\seqEvalAfficheCorriges}%
+%% qui commence sur une page impaire
+\newcommand{\seqEvalAfficheCorriges}{%
+	\immediate\closeout\corrfileeval
+	\clearpage
+	\ifodd\c@page\else
+		\null\newpage
+		\if@twocolumn\null\newpage\fi
+	\fi
+
+	\input{CorrList.tex}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% ---- Environnement seqEvalBareme ---------------------------------
+%% ------------------------------------------------------------------
+%    \begin{environment}{seqEvalBareme}%
+%% v0.13.5.2 étape 4 patch v2 :
+%%   La macro \seqEvalBaremeItem a été supprimée pour la même raison
+%%   que \seqEvalObjectifsItem et \seqQcmItem : tabularray refuse
+%%   les macros qui contiennent des & (séparateurs de cellules).
+%%   L'utilisateur (ou l'appli génératrice) écrit chaque ligne en
+%%   clair :
+%%
+%%     \begin{seqEvalBareme}%
+%%         Exercice I & 4 points \\
+%%         Exercice II & 6 points \\
+%%         Présentation et usage de la langue française & 1 point \\
+%%     \end{seqEvalBareme}%
+%%
+%%   colspec={X[5,l,m] X[r,m]} : la colonne libellé est large et
+%%   alignée à gauche, la colonne points est étroite et alignée à
+%%   droite. Plus besoin de \hfill explicite : tabularray gère
+%%   l'alignement via la spec de colonne.
+\newenvironment{seqEvalBareme}{%
+	\begin{center} \begin{boitePaleVariable}{0.8\linewidth}%
+			\begin{tblr}{%
+					colspec = {X[5,l,m] X[r,m]},
+					rowsep = 2pt,
+				}%
+				\SetCell[c=2]{c} \large \textbf{Barème} & \\
+				}{%
+			\end{tblr}%
+		\end{boitePaleVariable} \end{center}%
+}%
+%    \end{environment}%
+% -------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% ---- Environnement seqEvalObjectifs ------------------------------
+%% ------------------------------------------------------------------
+%    \begin{environment}{seqEvalObjectifs}%
+%% v0.13.5.2 étape 4 — Nouveauté :
+%%   Tableau d'objectifs évalués avec grille de critères de maîtrise.
+%%   Affiché uniquement si l'enseignant a choisi un mode de notation
+%%   qui inclut les critères ("criteres" ou "note_criteres" côté appli).
+%%   Pour les modes "note" ou "aucun", l'appli ne génère pas ce
+%%   tableau — il n'a pas de raison d'être sans critères de maîtrise.
+%%
+%%   Les 4 colonnes de cases à cocher correspondent aux niveaux de
+%%   maîtrise atteints : Insuffisant, À consolider, Satisfaisant,
+%%   Très bon. L'enseignant coche manuellement après correction.
+%%
+%% Limitation tabularray (cf. seqQcm pour le même genre de contrainte) :
+%%   tabularray refuse les macros qui contiennent des & ou des \\ dans
+%%   leur corps. Donc PAS DE MACRO \seqEvalObjectifsItem qui
+%%   produirait toute la ligne. L'utilisateur (ou l'appli génératrice)
+%%   écrit chaque ligne en clair :
+%%
+%%     \begin{seqEvalObjectifs}%
+%%         Obj. 02 & Pour les nombres décimaux\ldots
+%%             & \ding{113} & \ding{113} & \ding{113} & \ding{113} \\
+%%         Obj. 04 & Calculer le PGCD\ldots
+%%             & \ding{113} & \ding{113} & \ding{113} & \ding{113} \\
+%%     \end{seqEvalObjectifs}%
+%%
+%%   La verbosité des 4 \ding{113} répétés est sans importance en
+%%   pratique : c'est l'appli qui génère ce code, pas l'enseignant
+%%   à la main.
+%%
+%%   Le code dans la première colonne est un agrégat fourni par
+%%   l'appli, par exemple "Obj. 02" si tous les objectifs viennent
+%%   de la même séquence, ou "Séq. S03 Obj. 13" pour identifier
+%%   la séquence d'origine.
+%%
+%%   colspec figé en X[2,c,m] X[5,l,m] X[1,c,m] X[1,c,m] X[1,c,m] X[1,c,m]
+%%   (limitation tabularray : pas de macro à l'intérieur).
+
+\newenvironment{seqEvalObjectifs}{%
+	\begin{center} \begin{boitePaleVariable}{\linewidth}%
+			\begin{tblr}{%
+					colspec={X[2,c,m] X[5,l,m] X[1,c,m] X[1,c,m] X[1,c,m] X[1,c,m]},
+					rowsep = 2pt,
+				}%
+				\SetCell[c=6]{c} \large \textbf{Niveaux de maîtrise des objectifs évalués} & & & & & \\
+				\toprule
+				\SetCell[c=2]{c} \textbf{Objectif} &
+					& \rotatebox{90}{\textit{Insuffisant}}%
+					& \rotatebox{90}{\textit{À consolider}}%
+					& \rotatebox{90}{\textit{Satisfaisant}}%
+					& \rotatebox{90}{\textit{Très bon}} \\
+				\midrule
+				}{%
+			\end{tblr}%
+		\end{boitePaleVariable} \end{center}%
+}%
+%    \end{environment}%
+% -------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% ---- Environnement seqEvalExercice -------------------------------
+%% ------------------------------------------------------------------
+%    \begin{environment}{seqEvalExercice}%
+%% v0.13.5.2 étape 3 — Refonte fonctionnelle :
+%%   - Option "nom" renommée en "titre" (cohérence avec \seqTitreEval).
+%%   - Ajout d'une option "bareme" (texte libre type "5 points",
+%%     "3,5 points"). Si renseignée, affichage en italique aligné à
+%%     droite du cartouche, format [/ <bareme>].
+%% ---- Options
+\define@cmdkey[seq]{exerciceEval}{titre}{}%
+\define@cmdkey[seq]{exerciceEval}{bareme}{}%
+\newenvironment{seqEvalExercice}[1][]{%
+	%% ---- Réinitialisation des options pour permettre la détection
+	%%      de leur absence éventuelle dans cet appel
+	\let\cmdseq@exerciceEval@titre\@undefined
+	\let\cmdseq@exerciceEval@bareme\@undefined
+	%% ---- Options
+	\setkeys[seq]{exerciceEval}{#1}%
+	%% ---- Numéro de l'exercice
+	\stepcounter{seqExoEvalNum}%
+	%% ---- Début du corrigé
+	\immediate\write\corrfileeval{%
+		\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak}%
+		\unexpanded{\begin{boiteTitreSection}}%
+				\noexpand\begin{minipage}[c][20pt][c]{\noexpand\linewidth}%
+					\noexpand\Large \noexpand\textbf{ Exercice \Roman{seqExoEvalNum}%
+						\ifx\cmdseq@exerciceEval@titre\@undefined\else : \eue{\cmdseq@exerciceEval@titre} \fi }%
+					\unexpanded{\end{minipage} \end{boiteTitreSection}}%
+		\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak}%
+		\noexpand\input{Corriges/c\theseqExoEvalNum.tex}%
+	}%
+	%% ---- Boite de titre
+	\par\vspace{10pt}%
+	\begin{boiteTitreSection}%
+		\begin{minipage}[c][20pt][c]{\linewidth}%
+			\Large \textbf{Exercice \Roman{seqExoEvalNum}%
+				\ifx\cmdseq@exerciceEval@titre\@undefined\else : \cmdseq@exerciceEval@titre\fi }%
+			\ifx\cmdseq@exerciceEval@bareme\@undefined\else
+				\hfill \textit{[/ \cmdseq@exerciceEval@bareme]}%
+			\fi
+		\end{minipage}%
+	\end{boiteTitreSection}%
+	\par\vspace{10pt}%
+}{}%
+%    \end{environment}%
+% -------------------------------------------------------------
+
+\endinput
+%</package>
+%
+% \Finale
+\endinput

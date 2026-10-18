@@ -1,0 +1,400 @@
+%%
+%% This is file `seqenseigne-core-exos.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% seqenseigne-core-exos.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2025 by Laurent Coste
+%% 
+%% This file may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3 or later is part of all distributions of
+%% LaTeX version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-core-exos}%
+[2026/05/04 v1.0-dev seqenseigne core exos module]
+
+
+\DefTblrTemplate{caption}{default}{}%
+\DefTblrTemplate{capcont}{default}{}%
+
+\newcommand{\seq@avant@serie}{}%
+\newcommand{\seqContenuAvantSerie}[1]{\gdef\seq@avant@serie{#1}}%
+
+\newcommand{\seqCorrigesExos}{init}%
+
+\newcommand{\seqInitCorriges}{%
+\newcommand{\seq@corrigesoui}{oui}%
+%% ---- Création du fichier pour les corrigés
+\newwrite\corrfile
+\immediate\openout\corrfile=CorrList.tex
+}%
+
+\newcommand{\seqInitRemediation}{%
+%% Marqueur d'activation, lu par \seqRemediation
+\newcommand{\seq@remediation@active}{oui}%
+%% ---- Création des fichiers de remédiation
+\newwrite\remedenoncefile
+\immediate\openout\remedenoncefile=RemedEnonceList.tex
+\newwrite\remedcorrigefile
+\immediate\openout\remedcorrigefile=RemedCorrigeList.tex
+%% ---- Titres en tête des deux sections de remédiation
+%% On les écrit DÈS l'ouverture des fichiers : ils apparaîtront en tête
+%% lors du \input final, sans mécanisme conditionnel par série (la
+%% remédiation ne distingue pas Révisions/F/A/E — c'est un bloc unique
+%% en fin de livret).
+\immediate\write\remedenoncefile{%
+\noexpand\clearpage
+\noexpand\seqTitreSection{\unexpanded{Exercices de remédiation}}%
+}%
+\immediate\write\remedcorrigefile{%
+\noexpand\clearpage
+\noexpand\seqTitreSectionCorrige{\unexpanded{Corrigés des exercices de remédiation}}%
+}%
+}%
+
+\newcommand{\seqAfficheCorriges}{%
+\immediate\closeout\corrfile
+\input{CorrList.tex}%
+}%
+
+\newcommand{\seqAfficheRemediations}{%
+\ifcsname seq@remediation@active\endcsname
+\immediate\closeout\remedenoncefile
+\input{RemedEnonceList.tex}%
+\fi
+}%
+\newcommand{\seqAfficheCorrigesRemediation}{%
+\ifcsname seq@remediation@active\endcsname
+\immediate\closeout\remedcorrigefile
+\input{RemedCorrigeList.tex}%
+\fi
+}%
+
+\newcommand{\seqCorrige}[1]{%
+\scantokens{\begin{tcbverbatimwrite}%
+{Corriges/c\theSerieExosNum e\theExoNum.tex} #1
+\end{tcbverbatimwrite}%
+}%
+}%
+
+\newcommand{\seqRemediation}[2]{%
+\ifcsname seq@remediation@active\endcsname
+%% ---- 1. Écriture verbatim de l'énoncé dans un fichier séparé
+\scantokens{\begin{tcbverbatimwrite}%
+{Remediation/re\theSerieExosNum e\theExoNum.tex} #1
+\end{tcbverbatimwrite}%
+}%
+%% ---- 2. Écriture verbatim du corrigé
+\scantokens{\begin{tcbverbatimwrite}%
+{Remediation/rc\theSerieExosNum e\theExoNum.tex} #2
+\end{tcbverbatimwrite}%
+}%
+%% ---- 3. Entête + \input dans le stream RemedEnonce
+\seq@ecrit@remediation@enonce
+%% ---- 4. Entête + \input dans le stream RemedCorrige
+\seq@ecrit@remediation@corrige
+\fi
+}%
+
+\newcommand\seq@ecrit@remediation@enonce{%
+\immediate\write\remedenoncefile{%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak%
+\begin{boiteTitreExo}}%
+%% Ligne 1 : numéro à gauche, objectif à droite
+Exercice\noexpand\;\theExoNum
+\ifx\cmdseq@exercice@obj\undefined\else
+\ifnum\value{SerieExosNum}>0
+\unexpanded{\hfill\small\textit}\@charlb Objectif\noexpand\;\eue{\cmdseq@exercice@obj}\@charrb
+\fi
+\fi
+%% Ligne 2 : titre seul
+\ifx\cmdseq@exercice@nom\undefined\else
+\unexpanded{\par\textit}\@charlb \eue{\cmdseq@exercice@nom}\@charrb
+\fi
+\unexpanded{\end{boiteTitreExo}%
+\par\nopagebreak\vspace{5pt}\nopagebreak}%
+%% v0.11.6.2 — \label posé à l'emplacement de l'entête, pour que
+%% la boîte de titre principale (seqExercice avec remediation=oui)
+%% puisse afficher « Remédiation p. \pageref{remed:S-N} ».
+\noexpand\label{remed:\theSerieExosNum-\theExoNum}%
+\noexpand\input{Remediation/re\theSerieExosNum e\theExoNum.tex}%
+}%
+}%
+
+\newcommand\seq@ecrit@remediation@corrige{%
+\immediate\write\remedcorrigefile{%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak%
+\begin{boiteTitreExo}}%
+%% Ligne 1 : numéro à gauche, objectif à droite
+Exercice\noexpand\;\theExoNum
+\ifx\cmdseq@exercice@obj\undefined\else
+\ifnum\value{SerieExosNum}>0
+\unexpanded{\hfill\small\textit}\@charlb Objectif\noexpand\;\eue{\cmdseq@exercice@obj}\@charrb
+\fi
+\fi
+%% Ligne 2 : titre seul
+\ifx\cmdseq@exercice@nom\undefined\else
+\unexpanded{\par\textit}\@charlb \eue{\cmdseq@exercice@nom}\@charrb
+\fi
+\unexpanded{\end{boiteTitreExo}%
+\par\nopagebreak\vspace{5pt}\nopagebreak}%
+\noexpand\input{Remediation/rc\theSerieExosNum e\theExoNum.tex}%
+}%
+}%
+
+\newcommand{\seqCadreReponse}[1]{%
+\par\vspace{4pt}%
+\begin{boiteVariableTitre}{Réponse}{\linewidth}%
+\vspace*{#1\baselineskip}%
+\end{boiteVariableTitre}%
+\par\vspace{4pt}%
+}%
+
+\newcommand\seq@ecrit@corrige@serieExos{%
+\immediate\write\corrfile{%
+\noexpand\clearpage
+\noexpand\seqTitreSectionCorrige{%
+\ifnum\value{SerieExosNum}=0 \ifnum\value{ExoNum}=0 \unexpanded{Corrigés des exercices de révision} \fi \fi
+\ifnum\value{SerieExosNum}=1 \unexpanded{Corrigés des exercices de la série fondamentale} \fi
+\ifnum\value{SerieExosNum}=2 \unexpanded{Corrigés des exercices de la série avancée} \fi
+\ifnum\value{SerieExosNum}=3 \unexpanded{Corrigés des exercices de la série exploration} \fi
+}%
+\noexpand\label{corrigeExos\theSerieExosNum}%
+}%
+}%
+
+\newcommand\seq@ecrit@corrige@Exo{%
+\immediate\write\corrfile{%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak%
+\begin{boiteTitreExo}}%
+%% Ligne 1 : numéro à gauche, objectif à droite
+Exercice\noexpand\;\theExoNum
+\ifx\cmdseq@exercice@obj\undefined\else
+\ifnum\value{SerieExosNum}>0
+\unexpanded{\hfill\small\textit}\@charlb Objectif\noexpand\;\eue{\cmdseq@exercice@obj}\@charrb
+\fi
+\fi
+%% Ligne 2 : titre seul
+\ifx\cmdseq@exercice@nom\undefined\else
+\unexpanded{\par\textit}\@charlb \eue{\cmdseq@exercice@nom}\@charrb
+\fi
+\unexpanded{\end{boiteTitreExo}%
+\par\nopagebreak\vspace{5pt}\nopagebreak}%
+\noexpand\input{Corriges/c\theSerieExosNum e\theExoNum.tex}%
+}%
+}%
+
+\newenvironment{seqSerieExos}[1]{%
+\ifnum\value{SerieExosNum}=#1 \else \setcounter{SerieExosNum}{#1}\setcounter{ExoNum}{0} \label{serie:\theSerieExosNum} \fi
+%% ---- On écrit systématiquement les corrigés pour les révisions et la série fondamentale
+\ifnum\value{SerieExosNum}<2 \seq@ecrit@corrige@serieExos \else \ifdefstring{\seqCorrigesExos}{oui}{ \seq@ecrit@corrige@serieExos }{} \fi
+\seqTitreSection{%
+\ifnum\value{SerieExosNum}=0 \ifnum\value{ExoNum}=0 Révisions \else Révisions (suite) \fi \fi
+\ifnum\value{SerieExosNum}=1 \ifnum\value{ExoNum}=0 Série fondamentale \else Série fondamentale (suite) \fi \fi
+\ifnum\value{SerieExosNum}=2 \ifnum\value{ExoNum}=0 Série avancée \else Série avancée (suite) \fi \fi
+\ifnum\value{SerieExosNum}=3 \ifnum\value{ExoNum}=0 Série exploration \else Série exploration (suite) \fi \fi
+\ifnum\value{SerieExosNum}>3 \ifnum\value{ExoNum}=0 Série~\theSerieExosNum \else Série~\theSerieExosNum (suite) \fi \fi
+}%
+\seq@avant@serie\gdef\seq@avant@serie{}%
+\setlength{\columnsep}{10pt}%
+\begin{multicols*}{2}%
+\begin{boitePaleBreakNoTitle}%
+\ifnum\value{SerieExosNum}<2%
+\hfill {\small \textit{Corrigés en page \pageref{corrigeExos\theSerieExosNum}}}%
+\else
+\ifdefstring{\seqCorrigesExos}{oui}{\hfill {\small \textit{Corrigés en page \pageref{corrigeExos\theSerieExosNum}}}}{}%
+\fi
+}{%
+\end{boitePaleBreakNoTitle}%
+\end{multicols*}%
+\newpage
+}%
+
+\define@cmdkey[seq]{exercice}{nom}{}%
+\define@cmdkey[seq]{exercice}{obj}{}%
+\define@cmdkey[seq]{exercice}{remediation}[non]{}%
+\newenvironment{seqExercice}[1][]{%
+%% ---- Options ; remediation=non par défaut, à surcharger par l'utilisateur
+\setkeys[seq]{exercice}{remediation=non,#1}%
+%% ---- Numéro de l'exercice
+\refstepcounter{ExoNum}\label{exo:\theSerieExosNum-\theExoNum}%
+%% ---- On écrit systématiquement les corrigés pour les révisions et la série fondamentale
+\ifnum\value{SerieExosNum}<2 \seq@ecrit@corrige@Exo
+\else \ifdefstring{\seqCorrigesExos}{oui}{ \seq@ecrit@corrige@Exo }{}%
+\fi
+%% ---- Boîte de titre (v0.11.6.2 : 3 lignes)
+\par\nopagebreak\vspace{5pt}\nopagebreak%
+\begin{boiteTitreExo}%
+%% Ligne 1 : numéro à gauche, objectif à droite
+Exercice\;\theExoNum
+\ifx\cmdseq@exercice@obj\undefined\else
+\ifnum\value{SerieExosNum}>0
+\hfill{\small\textit{Objectif\;\cmdseq@exercice@obj}}%
+\fi
+\fi
+%% Ligne 2 : titre seul
+\ifx\cmdseq@exercice@nom\undefined\else
+\par\textit{\cmdseq@exercice@nom}%
+\fi
+%% Ligne 3 : page de la remédiation (v0.11.6.2)
+\ifdefstring{\cmdseq@exercice@remediation}{oui}{%
+\par{\small\textit{Remédiation p.~\pageref{remed:\theSerieExosNum-\theExoNum}}}%
+}{}%
+\end{boiteTitreExo}%
+\par\nopagebreak\vspace{5pt}\nopagebreak%
+}{}%
+
+
+%% ------------------------------------------------------------------
+%% ---- Helpers QCM partagés ----------------------------------------
+%% ------------------------------------------------------------------
+%% Helpers internes : reconstruction dynamique de l'en-tête de
+%% colonnes (A B C ...) du QCM. \seq@qcm@repCodes est reconstruite à
+%% chaque ouverture d'environnement seqQcm depuis les compteurs
+%% \seq@qcm@iter et \seq@qcm@alphcode (déclarés dans core).
+\newcommand\seq@qcm@repCodes{}%
+
+%% ------------------------------------------------------------------
+%% ---- \seqQcmQuestion --------------------------------------------
+%% ------------------------------------------------------------------
+%% \seqQcmQuestion{texte de la question}%
+%% Produit le numéro de la question (en gras, suivi d'un point), un
+%% espace \quad, puis le texte de la question.
+%%
+%% Le numéro est calculé depuis \therownum (compteur de ligne fourni
+%% par tabularray, robuste face aux passes multiples du moteur), en
+%% retirant les 2 lignes d'en-tête. Cette approche remplace le
+%% compteur \seqQcmItemNum qu'on avait initialement essayé d'utiliser
+%% (et qui ne fonctionnait pas, car \stepcounter est appelé à chaque
+%% passe de tabularray, faisant sauter la numérotation).
+%%
+%% Usage côté .tex : à utiliser dans le contexte d'un environnement
+%% seqQcm, après un \midrule, avec & et \\ explicites :
+%%     \midrule \seqQcmQuestion{Énoncé de la question}%
+%%         & rep A & rep B & rep C \\
+\newcommand{\seqQcmQuestion}[1]{%
+\textbf{\the\numexpr\therownum-2\relax.}\quad #1
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Environnement seqQcm ----------------------------------------
+%% ------------------------------------------------------------------
+%% Environnement enfant : produit uniquement le tableau QCM, à
+%% utiliser à l'intérieur d'un environnement parent (seqEvalExercice
+%% ou seqExercice) qui s'occupe du cartouche, du numéro d'exercice
+%% et de l'écriture du corrigé différé.
+%%
+%% Options de scoring (toutes optionnelles, mais affichage des règles
+%% uniquement si les TROIS sont définies — logique tout-ou-rien) :
+%%   ptOK, ptPartiel, ptKO : barème pour évaluation. Si l'une des
+%%       trois est absente, la dinglist des règles de scoring n'est
+%%       pas affichée. Cas typique du QCM hors-éval (révision AE) :
+%%       aucune des trois n'est renseignée, pas de scoring affiché.
+%% Options de présentation :
+%%   nbReps : nombre de colonnes de réponses utilisées effectivement
+%%       (de 2 à 5). Le tableau est dimensionné en dur pour 5 colonnes
+%%       maximum, l'espace non utilisé reste vide. Défaut : 3.
+%%   explication : oui (défaut) / non. Si "non", supprime le bloc
+%%       d'explication "Cet exercice est un questionnaire..." pour
+%%       laisser à l'utilisateur le soin de le rédiger lui-même.
+%%
+%% Détection du scoring : on initialise les trois options à \relax,
+%% et on teste explicitement si l'utilisateur a défini les trois.
+%%
+%% Limitations imposées par tabularray :
+%%   - colspec figé en \"X[5,c,m]*{5}{X[2,c,m]}\" (pas de macro à
+%%     l'intérieur de la spécification de colonnes : tabularray
+%%     refuse). D'où la limite à 5 réponses max.
+%%   - \cmidrule{2-5} en dur dans l'en-tête (même raison : pas de
+%%     macro à l'intérieur du corps de tabularray). Le trait s'adapte
+%%     visuellement même avec moins de 5 réponses effectives.
+%%   - les \midrule séparateurs entre questions, le \\ de fin de
+%%     ligne et le \bottomrule final doivent être écrits par
+%%     l'utilisateur, en dehors de toute macro (cf. \seqQcmQuestion
+%%     qui ne contient justement aucun de ces éléments structurels).
+\define@cmdkey[seq]{seqQcm}{ptOK}{}%
+\define@cmdkey[seq]{seqQcm}{ptPartiel}{}%
+\define@cmdkey[seq]{seqQcm}{ptKO}{}%
+\define@cmdkey[seq]{seqQcm}{nbReps}[3]{}%
+\define@choicekey[seq]{seqQcm}{explication}[\val\nr]{oui,non}[oui]{%
+\ifcase\nr\relax
+\def\cmdseq@seqQcm@explication{oui}%
+\or
+\def\cmdseq@seqQcm@explication{non}%
+\fi
+}%
+\newenvironment{seqQcm}[1][]{%
+%% ---- Réinitialisation des options de scoring (à \relax pour
+%%      détection ultérieure de leur présence)
+\let\cmdseq@seqQcm@ptOK\relax
+\let\cmdseq@seqQcm@ptPartiel\relax
+\let\cmdseq@seqQcm@ptKO\relax
+%% ---- Options
+\setkeys[seq]{seqQcm}{nbReps,explication,#1}%
+%% ---- Bloc d'explication (option explication=oui par défaut)
+\ifx\cmdseq@seqQcm@explication\@undefined\else
+\ifdefstring{\cmdseq@seqQcm@explication}{oui}{%
+Cet exercice est un questionnaire à choix multiples :
+pour chaque question, il y a une ou plusieurs réponse(s) correcte(s). \newline
+Pour répondre, indiquer le numéro de la question et
+recopier la ou les affirmation(s) juste(s) sur votre copie. \newline
+\textbf{Aucune justification n'est attendue pour ce QCM.} \newline
+}{}%
+\fi
+%% ---- Bloc des règles de scoring (uniquement si les TROIS
+%%      paramètres ptOK/ptPartiel/ptKO sont définis)
+\ifx\cmdseq@seqQcm@ptOK\relax\else
+\ifx\cmdseq@seqQcm@ptPartiel\relax\else
+\ifx\cmdseq@seqQcm@ptKO\relax\else
+Pour chaque question:
+\begin{dinglist}{224}%
+\item Donner toutes les bonnes réponses rapporte \cmdseq@seqQcm@ptOK.
+\item Ne pas donner toutes les bonnes réponses, mais sans mauvaise réponse,
+rapporte \cmdseq@seqQcm@ptPartiel.
+\item Ne pas donner de réponse n'est pas pénalisé.
+\item Donner au moins une mauvaise réponse enlève \cmdseq@seqQcm@ptKO.
+\end{dinglist}%
+\fi
+\fi
+\fi
+%% ---- Construction de la ligne d'en-tête (A B C...)
+\setcounter{seq@qcm@alphcode}{40}%
+\renewcommand\seq@qcm@repCodes{}%
+\forloop{seq@qcm@iter}{0}{\value{seq@qcm@iter} < \cmdseq@seqQcm@nbReps}%
+{\stepcounter{seq@qcm@alphcode} \eappto\seq@qcm@repCodes{ & \char"\theseq@qcm@alphcode}}%
+%% ---- Le tableau lui-même
+%% colspec figé en X[5,c,m]*{5}{X[2,c,m]} : tabularray refuse
+%%   les macros dans la spécification de colonnes. Cohérence
+%%   visuelle même si nbReps < 5.
+%% rowhead=2 : les 2 premières lignes (Questions/Affirmations
+%%   puis A B C) sont répétées en tête de chaque page.
+%% expand=\seq@qcm@repCodes : injecte les codes A B C qui ont été
+%%   construits dynamiquement plus haut.
+\begin{center}%
+\begin{longtblr}[expand=\seq@qcm@repCodes]{%
+width = 0.9\linewidth,
+colspec = {X[5,c,m]*{5}{X[2,c,m]}},
+rowhead = 2,
+rowsep = 2pt
+}%
+\toprule \textbf{Questions} & \textbf{Affirmations} \\
+\cmidrule{2-5} \seq@qcm@repCodes \\
+}{%
+\end{longtblr}%
+\end{center}%
+}%
+
+\endinput
+%%
+%% End of file `seqenseigne-core-exos.sty'.

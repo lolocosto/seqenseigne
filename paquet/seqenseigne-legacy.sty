@@ -1,0 +1,404 @@
+%%
+%% This is file `seqenseigne-legacy.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% seqenseigne-legacy.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2025 by Laurent Coste
+%% 
+%% This file may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3 or later is part of all distributions of
+%% LaTeX version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-legacy}%
+[2025/01/11 v1.0-dev seqenseigne legacy module]
+
+%% ------------------------------------------------------------------
+%% ---- Traitement des options --------------------------------------
+%% ------------------------------------------------------------------
+\newif\ifdocstd\docstdtrue
+\DeclareOption{ltxdoc}{\docstdfalse}%
+\ProcessOptions\relax
+
+
+%% ------------------------------------------------------------------
+%% ---- Alias de variables ------------------------------------------
+%% ------------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% ---- Alias d'environnements --------------------------------------
+%% ------------------------------------------------------------------
+
+
+%% ------------------------------------------------------------------
+%% ---- Macros obsolètes mais conservées ----------------------------
+%% ------------------------------------------------------------------
+
+\newcommand{\seq@ligne@eleve}[1]{%
+    \hline
+    #1 & & & & & & & & & \\%
+}%
+
+\define@cmdkey[seq]{titreFiche}{titreSeq}{}%
+\define@cmdkey[seq]{titreFiche}{numSeq}{}%
+\define@cmdkey[seq]{titreFiche}{classe}{}%
+\define@cmdkey[seq]{titreFiche}{etab}{}%
+\define@cmdkey[seq]{titreFiche}{annee}{}%
+\define@cmdkey[seq]{titreFiche}{enseignant}{}%
+
+\newenvironment{titreFiche}[1][]{%
+    \setkeys[seq]{titreFiche}{#1}%
+    \ifdocstd
+        \pagestyle{fancy}%
+        \fancyhf{}%
+        \lfoot{Le \today}%
+        \rfoot{Page \thepage/\pageref{LastPage}}%
+    \fi
+    \seqSetColors% Couleurs par défaut (N00/S00 en variables internes → gris)
+    \begin{boiteTitreGen}{Séquence \cmdseq@titreFiche@numSeq}%
+        \begin{minipage}[c][70pt][c]{\linewidth}%
+            \vfill \textit{Fiche de suivi}%
+            \ifx\cmdseq@titreFiche@annee\undefined\else
+                \hfill \textit{Année \cmdseq@titreFiche@annee}%
+            \fi
+            \vfill \centering {\Huge \textbf{\cmdseq@titreFiche@titreSeq}}%
+            \vfill
+            \ifx\cmdseq@titreFiche@enseignant\undefined\else
+                \textit{Enseignant : \cmdseq@titreFiche@enseignant}%
+            \fi
+            \hfill \textit{\cmdseq@titreFiche@etab - \cmdseq@titreFiche@classe}%
+        \end{minipage}%
+    \end{boiteTitreGen}%
+    \par\vspace{10pt}%
+    % Migration longtabu → longtblr (tabularray)
+    % X[9,l]          : colonne nom élève, 9 parts, alignée à gauche
+    % *{9}{X[c]}      : 9 colonnes de maîtrise, centrées
+    % vline{2}        : trait vertical avant la 1ère colonne de maîtrise
+    % rowsep=5pt      : équivalent \tabulinesep=5pt
+    % rowhead=1       : répétition de l'en-tête sur chaque page (= \endhead)
+    % hlines          : traits horizontaux automatiques (remplace \tabucline{-})
+    \begin{longtblr}[
+        caption = {},
+    ]{%
+        width = \linewidth,
+        colspec = { X[9,l] *{9}{X[c]} },
+        vline{2},
+        rowsep = 5pt,
+        rowhead = 1,
+        hlines,
+        row{1} = {font=\bfseries},
+    }%
+        & \rotatebox{90}{Niveau}%
+        & \rotatebox{90}{Note globale}%
+        & \rotatebox{90}{Comportement}%
+        & \rotatebox{90}{Restitution cours}%
+        & \rotatebox{90}{Restitution exos}%
+        & \rotatebox{90}{Éval bilan}%
+        & \rotatebox{90}{Série Fondamentale}%
+        & \rotatebox{90}{Série Avancée}%
+        & \rotatebox{90}{Série Exploration} \\%
+}{%
+    \end{longtblr}%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Décodage et colorisation (maîtrise) -------------------------
+%% ------------------------------------------------------------------
+
+\newcommand{\seqDecodeSerie}[1]{%
+    \ifthenelse{\equal{#1}{AE}}{Révision}{%
+        \ifthenelse{\equal{#1}{F}}{Fondamental}{%
+            \ifthenelse{\equal{#1}{A}}{Avancé}{%
+                \ifthenelse{\equal{#1}{E}}{Exploration}{INCONNU:#1}%
+            }%
+        }%
+    }%
+}%
+
+\newcommand{\seq@maitrise@colore}[1]{%
+    \DTLifeq{#1}{I}{\colorbox{red}{\color{white} \textbf{I}}}{%
+        \DTLifeq{#1}{F}{\colorbox{yellow}{\textbf{F}}}{%
+            \DTLifeq{#1}{A}{\colorbox{green!60!white}{\textbf{A}}}{%
+                \DTLifeq{#1}{E}{\colorbox{green!60!black}{\color{white}\textbf{E}}}{%
+                    \DTLifeq{#1}{NE}{NE}{%
+                        \DTLifeq{#1}{-}{-}{\colorbox{gray!50!white}{\color{white}\textbf{#1}}}%
+                    }%
+                }%
+            }%
+        }%
+    }%
+}%
+
+\newcommand{\seq@maitrise@decode}[1]{%
+    \DTLifeq{#1}{I}{\colorbox{red}{\color{white} \textbf{Insuffisant}}}{%
+        \DTLifeq{#1}{F}{\colorbox{yellow}{\textbf{À consolider}}}{%
+            \DTLifeq{#1}{A}{\colorbox{green!60!white}{\textbf{Satisfaisant}}}{%
+                \DTLifeq{#1}{E}{\colorbox{green!60!black}{\color{white}\textbf{Très bon}}}{%
+                    \DTLifeq{#1}{NE}{Non évalué}{%
+                        \DTLifnumerical{#1}{#1}{%
+                            \DTLifeq{#1}{-}{-}{INCONNU:#1}%
+                        }%
+                    }%
+                }%
+            }%
+        }%
+    }%
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Bilan périodique par élève ----------------------------------
+%% ------------------------------------------------------------------
+
+\define@cmdkey[seq]{bilanPeriodiqueParEleve}{periode}{}%
+\define@cmdkey[seq]{bilanPeriodiqueParEleve}{annee}{}%
+\define@cmdkey[seq]{bilanPeriodiqueParEleve}{niveau}{}%
+\define@cmdkey[seq]{bilanPeriodiqueParEleve}{nomClasse}{}%
+
+\newcommand{\seqBilanPeriodiqueParEleve}[1][]{%
+    \setkeys[seq]{bilanPeriodiqueParEleve}{#1}%
+    \DTLloaddb{sequencesPeriode\cmdseq@bilanPeriodiqueParEleve@periode}{../SequencesDB/\cmdseq@bilanPeriodiqueParEleve@periode -sequences.csv}%
+    \DTLloaddb[keys={Numero}]{bilanPeriode\cmdseq@bilanPeriodiqueParEleve@periode}{./\cmdseq@bilanPeriodiqueParEleve@periode Bilan.csv}%
+    \gdef\doamp{\gdef\doamp{&}}%
+    \fancyhead[C]{\large{Bilan de période~-~\cmdseq@bilanPeriodiqueParEleve@periode}}%
+    \fancyhead[R]{\cmdseq@bilanPeriodiqueParEleve@nomClasse~-~\cmdseq@bilanPeriodiqueParEleve@annee}%
+    \DTLforeach*{eleves}{\numEleve=Numero,\nomEleve=Nom,\prenomEleve=Prenom}{%
+        \begin{minipage}{\linewidth}%
+            \hrule%
+            \colorbox{blue!30!white}{\textbf{\nomEleve~\prenomEleve}} \medskip \par%
+            \DTLforeach*{sequencesPeriode\cmdseq@bilanPeriodiqueParEleve@periode}{\tmp@codesequence=Code,\nomSeq=Nom}{%
+                \begin{minipage}{0.6\linewidth} \textbf{\tmp@codesequence}~-~\nomSeq \end{minipage} \hfill%
+                \seqDTLfetchsave{\niveauMaitrise}{bilanPeriode\cmdseq@bilanPeriodiqueParEleve@periode}{Numero}{\numEleve}{\tmp@codesequence}%
+                \seq@maitrise@decode{\niveauMaitrise} \medskip \par%
+            }%
+        \end{minipage}%
+        \bigskip \par%
+    }%
+}%
+
+
+%% Compatibilité dans le fichier C04_attendus_fin_C03.csv
+\newenvironment{prerequisN2}{\begin{seq@prerequis@N2}}{\end{seq@prerequis@N2}}%
+
+%% ------------------------------------------------------------------
+%% ---- Bilan par compétences (modèle 2021) -------------------------
+%% ------------------------------------------------------------------
+%% Macros et environnements du modèle "Bilan des compétences" tel
+%% qu'il était utilisé en 2021 (Bilan_T1, différenciation par élève
+%% via \DTLforeach sur CSV). Conservés ici pour archivage et pour
+%% permettre la recompilation occasionnelle d'anciens documents.
+%%
+%% Déplacé depuis seqenseigne-core.dtx en v0.13.5.2.
+%% Le modèle de référence pour les nouvelles évaluations est défini
+%% dans seqenseigne-core-eval.dtx (sans différenciation par élève).
+%%
+%% Le compteur seqBilanExoNum est désormais déclaré globalement dans
+%% seqenseigne-core (v0.13.5.2 étape 2 : centralisation des compteurs).
+
+%% ---- seqBilanItemAlea --------------------------------------------
+\newcommand{\seqBilanItemAlea}[3] {%
+\midrule \QcmItemNum
+\FPrandom\hasard \FPupn\varA{3 \hasard{} * 0 trunc} % entre 0 et 2
+\FPrandom\hasard \FPupn\varB{2 \hasard{} * 0 trunc} % entre 0 et 1
+\ifthenelse{\varA=0}{%
+\ifthenelse{\varB=0}{#1 & #2 & #3}{#1 & #3 & #2}%
+}{%
+\ifthenelse{\varA=1}{%
+\ifthenelse{\varB=0}{#2 & #1 & #3}{#3 & #1 & #2}%
+}{%
+\ifthenelse{\varB=0}{#2 & #3 & #1}{#3 & #2 & #1}%
+}%
+}%
+\\
+}%
+
+%% ---- Pour chaque corrigé -----------------------------------------
+%% Ecrit le corrigé de l'exercice dans un fichier séparé
+\newcommand{\seqBilanCorrigeExo}[1]{%
+\scantokens{%
+\begin{tcbverbatimwrite}{Corriges/c\theseqBilanExoNum.tex}%
+#1
+\end{tcbverbatimwrite}%
+}%
+}%
+
+%% ---- Regroupe les corrigés en fin de livret ----------------------
+%% qui commence sur une page impaire
+\newcommand{\seqAfficheCorrigesBilan}{%
+\immediate\closeout\corrfileeval
+\clearpage
+\ifodd\c@page\else
+\null\newpage
+\if@twocolumn\null\newpage\fi
+\fi
+\input{CorrList.tex}%
+\clearpage
+\ifodd\c@page\else
+\null\newpage
+\if@twocolumn\null\newpage\fi
+\fi
+
+}%
+
+%% ---- Options
+\define@cmdkey[seq]{bilan}{periode}{}%
+\define@cmdkey[seq]{bilan}{annee}{}%
+\define@cmdkey[seq]{bilan}{etab}{}%
+\define@cmdkey[seq]{bilan}{classe}{}%
+\define@cmdkey[seq]{bilan}{eleve}{}%
+\newcommand{\seqBilan}[1][]{%
+%% ---- Options
+\setkeys[seq]{bilan}{#1}%
+%% ---- Début du corrigé : titre
+\immediate\openout\corrfileeval=CorrList.tex
+\immediate\write\corrfileeval{%
+\noexpand\cleardoublepage
+\noexpand\begin{boiteTitreGen}%
+\@charlb \eue{\cmdseq@bilan@annee} - \eue{\cmdseq@bilan@periode} \@charrb
+\unexpanded{\begin{minipage}[c][70pt][c]{\linewidth}}%
+\noexpand\vfill \noexpand\centering
+\@charlb \unexpanded{ \Huge \textbf{Bilan des compétences - CORRIG\'E}} \@charrb
+\noexpand\vfill
+\noexpand\textit{\eue{\cmdseq@bilan@eleve}}%
+\noexpand\hfill
+\noexpand\textit{\eue{\cmdseq@bilan@etab} - \eue{\cmdseq@bilan@classe}}%
+\unexpanded{ \end{minipage} \end{boiteTitreGen} }%
+}%
+%% ---- Entêtes et pieds de page
+\ifdocstd
+\pagestyle{fancy}\fancyhf{}%
+\lfoot{Le \today}\rfoot{Page \thepage/\pageref{LastPage}}%
+\fi
+%% ---- Couleurs
+\seq@setColors{gris}%
+%% ---- Boîte de titre
+\begin{boiteTitreGen}{\cmdseq@bilan@annee~-~\cmdseq@bilan@periode}%
+\begin{minipage}[c][70pt][c]{\linewidth}%
+\vfill \centering {\Huge \textbf{Bilan des compétences}}%
+\vfill \textit{\cmdseq@bilan@eleve} \hfill
+\textit{\cmdseq@bilan@etab~-~\cmdseq@bilan@classe}%
+\end{minipage}%
+\end{boiteTitreGen}%
+}%
+
+%% ---- Item de liste -----------------------------------------
+\newcommand{\seqBilanObjectifsItem}[2]{%
+\midrule #1 & #2 \\
+}%
+
+%% ---- Remise à zéro du numéro d'exercice --------------------
+\newcommand{\seqBilanRAZExoNum}{%
+\setcounter{seqBilanExoNum}{0}%
+}%
+
+%% ---- Liste des objectifs et niveaux ------------------------------
+\NewEnviron{seqBilanObjectifs}{%
+\begin{center} \begin{boitePaleVariable}{\linewidth}%
+\begin{tblr}[expand=\BODY]{X[5]X[1.5,c]X[c]}%
+\toprule \large \textbf{Séquence} & \large \textbf{Niveau} & \large \textbf{Validé ?} \\
+\BODY
+\bottomrule
+\end{tblr} \smallskip \newline
+\large \textbf{Consignes}: \newline
+Toutes les réponses doivent être justifiées,  sauf si une indication contraire est donnée. \newline
+Pour chaque question, si le travail n'est pas terminé, laisser tout de même une trace de la recherche: elle sera prise en compte dans l'évaluation. \smallskip \newline
+\large \textbf{Remarques du correcteur}: \bigskip \bigskip \bigskip
+\end{boitePaleVariable} \end{center}%
+}%
+
+%% ---- QCM ---------------------------------------------------------
+%% ---- Options
+\define@cmdkey[seq]{bilanQCM}{nbReps}[3]{}%
+\define@cmdkey[seq]{bilanQCM}{largeurQuestion}[3]{}%
+\define@cmdkey[seq]{bilanQCM}{largeurRep}[1]{}%
+\define@cmdkey[seq]{bilanQCM}{titre}[QCM]{}%
+\newenvironment{seqBilanQCM}[1][]{%
+%% ---- Options
+\setkeys[seq]{bilanQCM}{nbReps,largeurQuestion,largeurRep,titre,#1}%
+%% ---- Numéro de l'exercice
+\stepcounter{seqBilanExoNum}%
+%% Note v0.13.5.2 étape 2 : un \setcounter{seqQcmItemNum}{0} apparaissait
+%% ici à l'origine, lié à la macro \QcmItemNum (référencée dans
+%% \seqBilanItemAlea mais jamais définie dans le paquet — vestige
+%% d'une version antérieure). Comme tout le code Bilan 2021 est en
+%% archivage et que les .tex 2019/2021 ne compilent plus avec le
+%% paquet courant, ce setcounter a été retiré sans remplacement.
+%% ---- Début du corrigé du QCM
+\immediate\write\corrfileeval{%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak}%
+\unexpanded{\begin{boiteTitreSection}}%
+\noexpand\begin{minipage}[c][20pt][c]{\noexpand\linewidth} \noexpand\Large
+\noexpand\textbf{ Exercice \Roman{seqBilanExoNum} : \eue{\cmdseq@bilanQCM@titre} }%
+\unexpanded{\end{minipage} \end{boiteTitreSection}}%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak}%
+\noexpand\input{Corriges/c\theseqBilanExoNum.tex}%
+}%
+%% ---- Boite de titre
+\par\vspace{10pt}%
+\begin{boiteTitreSection}%
+\begin{minipage}[c][20pt][c]{\linewidth}%
+\Large \textbf{Exercice \Roman{seqBilanExoNum} : \cmdseq@bilanQCM@titre}%
+\end{minipage}%
+\end{boiteTitreSection}%
+\par\vspace{5pt}%
+Cet exercice est un questionnaire à choix multiples :
+pour chaque question, il y a une ou plusieurs réponse(s) correcte(s).
+Pour répondre, indiquez le numéro de la question et les codes (A, B, C)
+correspondant aux affirmation(s) juste(s) sur votre copie. \newline
+\centerline{\textbf{Aucune justification n'est attendue pour ce QCM.}}%
+\setcounter{seq@qcm@alphcode}{40}%
+\renewcommand\seq@qcm@repCodes{}%
+\forloop{seq@qcm@iter}{0}{\value{seq@qcm@iter} < \cmdseq@bilanQCM@nbReps}%
+{\stepcounter{seq@qcm@alphcode} \eappto\seq@qcm@repCodes{ & \char"\theseq@qcm@alphcode}}%
+\xltabular{0.95\linewidth}{L{0.45\linewidth} *{3}{C{0.15\linewidth}}}%
+\toprule
+\centering\textbf{Questions} & \multicolumn{\cmdseq@bilanQCM@nbReps}{c}{\textbf{Affirmations}} \\
+\seq@qcm@repCodes \\
+\endhead
+}{%
+\endxltabular
+}%
+
+%% ---- Exercice autre que QCM --------------------------------------
+%% ---- Options
+\define@cmdkey[seq]{seqBilanExo}{titre}{}%
+\newenvironment{seqBilanExo}[1][]{%
+%% ---- Options
+\setkeys[seq]{seqBilanExo}{#1}%
+%% ---- Numéro de l'exercice
+\stepcounter{seqBilanExoNum}%
+%% ---- Début du corrigé
+\immediate\write\corrfileeval{%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak}%
+\unexpanded{\begin{boiteTitreSection}}%
+\noexpand\begin{minipage}[c][20pt][c]{\noexpand\linewidth}%
+\noexpand\Large \noexpand\textbf{ Exercice \Roman{seqBilanExoNum}%
+\ifx\cmdseq@seqBilanExo@titre\undefined\else : \eue{\cmdseq@seqBilanExo@titre} \fi }%
+\unexpanded{\end{minipage} \end{boiteTitreSection}}%
+\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak}%
+\noexpand\input{Corriges/c\theseqBilanExoNum.tex}%
+}%
+%% ---- Boite de titre
+\par\vspace{10pt}%
+\begin{boiteTitreSection}%
+\begin{minipage}[c][20pt][c]{\linewidth}%
+\Large \textbf{Exercice \Roman{seqBilanExoNum}%
+\ifx\cmdseq@seqBilanExo@titre\undefined\else : \cmdseq@seqBilanExo@titre\fi }%
+\end{minipage}%
+\end{boiteTitreSection}%
+\par\vspace{5pt}%
+}{}%
+
+\endinput
+%%
+%% End of file `seqenseigne-legacy.sty'.

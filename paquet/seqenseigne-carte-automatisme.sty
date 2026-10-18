@@ -1,0 +1,391 @@
+%%
+%% This is file `seqenseigne-carte-automatisme.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% seqenseigne-carte-automatisme.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2025 by Laurent Coste
+%% 
+%% This file may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either
+%% version 1.3 of this license or (at your option) any later
+%% version. The latest version of this license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3 or later is part of all distributions of
+%% LaTeX version 2005/12/01 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-carte-automatisme}%
+[2026/05/12 v0.13.6.2 seqenseigne carte-automatisme module]
+
+\RequirePackage{xkeyval}%
+\RequirePackage{xifthen}%
+\RequirePackage{etoolbox}%
+\RequirePackage{geometry}%
+
+\geometry{a4paper,landscape,%
+margin=1mm,%
+nohead,nofoot}%
+\pagestyle{empty}%
+
+\providecommand{\seqca@couleur@titre}{blue!70!black}%
+\providecommand{\seqca@couleur@fond}{blue!10!white}%
+\providecommand{\seqca@couleur@cadre}{blue!70!black}%
+\providecommand{\seqca@couleur@versofond}{white}%
+
+\newcommand{\seqca@applytheme}{%
+    \renewcommand{\seqca@couleur@titre}{\seq@couleuri@vif}%
+    \renewcommand{\seqca@couleur@fond}{\seq@couleurii@pale}%
+    \renewcommand{\seqca@couleur@cadre}{\seq@couleuri@vif}%
+}%
+
+\newcounter{seqca@cellpos}
+
+\newcommand{\seqca@identifiant}[3]{%
+    #1/#2/CA\ifnum#3<10 0\fi\number#3%
+}%
+\newcommand{\seqca@recto}[5]{%
+    \noindent
+    \begin{tcolorbox}[
+        width           = 69mm,
+        height          = 48mm,
+        colback         = \seqca@couleur@fond,
+        colframe        = \seqca@couleur@cadre,
+        colbacktitle    = \seqca@couleur@titre,
+        coltitle        = white,
+        fonttitle       = \bfseries\scriptsize,
+        title           = {%
+            \seqca@identifiant{#1}{#2}{#3} \hfill #4%
+        },
+        enhanced,
+        nobeforeafter,
+        boxsep          = 1pt,
+        top             = 3pt,
+        bottom          = 3pt,
+        left            = 3pt,
+        right           = 3pt,
+        halign = center,
+        valign = center,
+        space to upper
+    ]
+        % Zone contenu : centrée verticalement
+        #5
+        % Zone identification élève en bas (Nom / Classe, pas de date)
+        \tcblower
+        \scriptsize
+        Nom~: \underline{\hspace{2.2cm}}\hfill
+        Classe~: \underline{\hspace{1.2cm}}%
+    \end{tcolorbox}%
+}%
+\newcommand{\seqca@verso}[4]{%
+    \noindent
+    \begin{tcolorbox}[
+        width           = 69mm,
+        height          = 48mm,
+        colback         = \seqca@couleur@versofond,
+        colframe        = \seqca@couleur@cadre,
+        colbacktitle    = \seqca@couleur@titre,
+        coltitle        = white,
+        fonttitle       = \bfseries\scriptsize,
+        title           = {%
+            \seqca@identifiant{#1}{#2}{#3} \hfill Réponse%
+        },
+        enhanced,
+        nobeforeafter,
+        boxsep          = 1pt,
+        top             = 3pt,
+        bottom          = 3pt,
+        left            = 3pt,
+        right           = 3pt,
+        halign = center,
+        valign = center,
+        space to upper
+    ]
+        #4
+    \end{tcolorbox}%
+}%
+\newcommand{\seqca@emettreRecto}[1]{%
+\stepcounter{seqca@cellpos}%
+\immediate\write\plancherectostream{%
+\unexpanded{\seqCarteRecto[niveau=}\cmdseqca@planche@niveau%
+\unexpanded{,sequence=}\cmdseqca@planche@sequence%
+\unexpanded{,num=}\cmdseqca@planche@num%
+\unexpanded{,typepedagolibelle=}\cmdseqca@planche@typepedagolibelle%
+\unexpanded{,codecouleur=}\cmdseqca@planche@codecouleur \unexpanded{]}%
+\@charlb \unexpanded{#1} \@charrb
+\ifnum\numexpr\value{seqca@cellpos}-(\value{seqca@cellpos}/4)*4\relax=0 %
+\unexpanded{\\}%
+\else
+\unexpanded{&}%
+\fi
+}%
+}%
+\newcommand{\seqca@emettreVerso}[1]{%
+\stepcounter{seqca@cellpos}%
+\immediate\write\plancheversostream{%
+\unexpanded{\seqCarteVerso[niveau=}\cmdseqca@planche@niveau%
+\unexpanded{,sequence=}\cmdseqca@planche@sequence%
+\unexpanded{,num=}\cmdseqca@planche@num%
+\unexpanded{,codecouleur=}\cmdseqca@planche@codecouleur \unexpanded{]}%
+\@charlb \unexpanded{#1} \@charrb
+\ifnum\numexpr\value{seqca@cellpos}-(\value{seqca@cellpos}/4)*4\relax=0 %
+\unexpanded{\\}%
+\else
+\unexpanded{&}%
+\fi
+}%
+}%
+
+\newcommand{\seqThemeCarte}[1]{
+\seq@setColors{#1}
+\seqca@applytheme
+}
+\newcommand\seqInitCartes{%
+\shorthandoff{:;?!}
+\newwrite\plancherectostream
+\newwrite\plancheversostream
+\newwrite\tiragesstream
+\newwrite\recaprectostream
+\newwrite\recapversostream
+}%
+\define@cmdkey[seqca]{recto}{niveau}[N10]{}%
+\define@cmdkey[seqca]{recto}{sequence}[S01]{}%
+\define@cmdkey[seqca]{recto}{num}[1]{}%
+\define@cmdkey[seqca]{recto}{typepedagolibelle}[Définition]{}%
+\define@cmdkey[seqca]{recto}{codecouleur}[nombres]{}%
+\newcommand{\seqCarteRecto}[2][]{%
+    \setkeys[seqca]{recto}{niveau,sequence,num,typepedagolibelle,%
+                           codecouleur,#1}%
+    \seq@setColors{\cmdseqca@recto@codecouleur}%
+    \seqca@applytheme
+    \seqca@recto
+        {\cmdseqca@recto@niveau}%
+        {\cmdseqca@recto@sequence}%
+        {\cmdseqca@recto@num}%
+        {\cmdseqca@recto@typepedagolibelle}%
+        {#2}%
+\ignorespaces
+}%
+\define@cmdkey[seqca]{verso}{niveau}[N10]{}%
+\define@cmdkey[seqca]{verso}{sequence}[S01]{}%
+\define@cmdkey[seqca]{verso}{num}[1]{}%
+\define@cmdkey[seqca]{verso}{codecouleur}[nombres]{}%
+\newcommand{\seqCarteVerso}[2][]{%
+    \setkeys[seqca]{verso}{niveau,sequence,num,%
+                           codecouleur,#1}%
+    \seq@setColors{\cmdseqca@verso@codecouleur}%
+    \seqca@applytheme
+    \seqca@verso
+        {\cmdseqca@verso@niveau}%
+        {\cmdseqca@verso@sequence}%
+        {\cmdseqca@verso@num}%
+        {#2}%
+        \ignorespaces
+}%
+%% Options
+\define@cmdkey[seqca]{carte}{niveau}[N10]{}%
+\define@cmdkey[seqca]{carte}{sequence}[S01]{}%
+\define@cmdkey[seqca]{carte}{num}[1]{}%
+\define@cmdkey[seqca]{carte}{typepedagolibelle}[Définition]{}%
+\define@cmdkey[seqca]{carte}{codecouleur}[nombres]{}%
+\define@cmdkey[seqca]{carte}{nom}[]{}%
+\newcommand{\seqCarteAutomatisme}[3][]{%
+    \setkeys[seqca]{carte}{niveau,sequence,num,typepedagolibelle,%
+                           codecouleur,nom,#1}%
+    \seq@setColors{\cmdseqca@carte@codecouleur}%
+    \seqca@applytheme
+    % Recto
+    \seqca@recto
+        {\cmdseqca@carte@niveau}%
+        {\cmdseqca@carte@sequence}%
+        {\cmdseqca@carte@num}%
+        {\cmdseqca@carte@typepedagolibelle}%
+        {#2}%
+    % Verso
+    \seqca@verso
+        {\cmdseqca@carte@niveau}%
+        {\cmdseqca@carte@sequence}%
+        {\cmdseqca@carte@num}%
+        {#3}%
+}%
+%% Environnement
+\newenvironment{seqCarteRecap}{%
+\immediate\openout\recaprectostream=recaprecto.tex\relax
+\immediate\openout\recapversostream=recapverso.tex\relax
+\immediate\write\recaprectostream{\unexpanded{\begin{tblr}{*{4}{X[c]}}}}
+\immediate\write\recapversostream{\unexpanded{\begin{tblr}{*{4}{X[c]}}}}
+}{
+\immediate\write\recaprectostream{\unexpanded{\end{tblr}\clearpage}}
+\immediate\write\recapversostream{\unexpanded{\end{tblr}\clearpage}}
+\immediate\closeout\recaprectostream
+\immediate\closeout\recapversostream
+\input{recaprecto}%
+\input{recapverso}%
+}
+%% Options
+\define@cmdkey[seqca]{addrecap}{niveau}[N10]{}%
+\define@cmdkey[seqca]{addrecap}{sequence}[S01]{}%
+\define@cmdkey[seqca]{addrecap}{num}[1]{}%
+\define@cmdkey[seqca]{addrecap}{typepedagolibelle}[Définition]{}%
+\define@cmdkey[seqca]{addrecap}{codecouleur}[nombres]{}%
+\define@cmdkey[seqca]{addrecap}{finLigne}[non]{}%
+%% Macro
+\newcommand{\seqCarteRecapAjouteCarte}[4][]{
+\setkeys[seqca]{addrecap}{niveau,sequence,num,typepedagolibelle,%
+codecouleur,finLigne,#1}%
+#2
+\immediate\write\recaprectostream{\unexpanded{\seqCarteRecto[niveau=}\cmdseqca@addrecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addrecap@sequence%
+\unexpanded{,num=}\cmdseqca@addrecap@num%
+\unexpanded{,typepedagolibelle=}\cmdseqca@addrecap@typepedagolibelle%
+\unexpanded{,codecouleur=}\cmdseqca@addrecap@codecouleur \unexpanded{]}%
+\@charlb \unexpanded{#3} \@charrb%
+}%
+\ifdefstring{\cmdseqca@addrecap@finLigne}{oui}{
+\immediate\write\recaprectostream{\\}
+}{
+\immediate\write\recaprectostream{&}
+}
+\immediate\write\recapversostream{\unexpanded{\seqCarteVerso[niveau=}\cmdseqca@addrecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addrecap@sequence%
+\unexpanded{,num=}\cmdseqca@addrecap@num%
+\unexpanded{,codecouleur=}\cmdseqca@addrecap@codecouleur \unexpanded{]}
+\@charlb \unexpanded{#4} \@charrb%
+}%
+\ifdefstring{\cmdseqca@addrecap@finLigne}{oui}{
+\immediate\write\recapversostream{\\}
+}{
+\immediate\write\recapversostream{&}
+}
+}
+%% Options
+\define@cmdkey[seqca]{addlignerecap}{niveau}[N10]{}%
+\define@cmdkey[seqca]{addlignerecap}{sequenceUn}[S01]{}%
+\define@cmdkey[seqca]{addlignerecap}{numUn}[1]{}%
+\define@cmdkey[seqca]{addlignerecap}{typepedagolibelleUn}[Définition]{}%
+\define@cmdkey[seqca]{addlignerecap}{codecouleurUn}[nombres]{}%
+\define@key[seqca]{addlignerecap}{rectoUn}[test_recto_un]{\long\def\cmdseqca@addlignerecap@rectoUn{#1}}%
+\define@key[seqca]{addlignerecap}{versoUn}[test_verso_un]{\long\def\cmdseqca@addlignerecap@versoUn{#1}}%
+\define@cmdkey[seqca]{addlignerecap}{sequenceDeux}[S01]{}%
+\define@cmdkey[seqca]{addlignerecap}{numDeux}[2]{}%
+\define@cmdkey[seqca]{addlignerecap}{typepedagolibelleDeux}[Définition]{}%
+\define@cmdkey[seqca]{addlignerecap}{codecouleurDeux}[nombres]{}%
+\define@key[seqca]{addlignerecap}{rectoDeux}[test_recto_deux]{\long\def\cmdseqca@addlignerecap@rectoDeux{#1}}%
+\define@key[seqca]{addlignerecap}{versoDeux}[test_verso_deux]{\long\def\cmdseqca@addlignerecap@versoDeux{#1}}%
+\define@cmdkey[seqca]{addlignerecap}{sequenceTrois}[S01]{}%
+\define@cmdkey[seqca]{addlignerecap}{numTrois}[3]{}%
+\define@cmdkey[seqca]{addlignerecap}{typepedagolibelleTrois}[Définition]{}%
+\define@cmdkey[seqca]{addlignerecap}{codecouleurTrois}[nombres]{}%
+\define@key[seqca]{addlignerecap}{rectoTrois}[test_recto_trois]{\long\def\cmdseqca@addlignerecap@rectoTrois{#1}}%
+\define@key[seqca]{addlignerecap}{versoTrois}[test_verso_trois]{\long\def\cmdseqca@addlignerecap@versoTrois{#1}}%
+\define@cmdkey[seqca]{addlignerecap}{sequenceQuatre}[S01]{}%
+\define@cmdkey[seqca]{addlignerecap}{numQuatre}[4]{}%
+\define@cmdkey[seqca]{addlignerecap}{typepedagolibelleQuatre}[Définition]{}%
+\define@cmdkey[seqca]{addlignerecap}{codecouleurQuatre}[nombres]{}%
+\define@key[seqca]{addlignerecap}{rectoQuatre}[test_recto_quatre]{\long\def\cmdseqca@addlignerecap@rectoQuatre{#1}}%
+\define@key[seqca]{addlignerecap}{versoQuatre}[test_verso_quatre]{\long\def\cmdseqca@addlignerecap@versoQuatre{#1}}%
+%% Macro
+\NewDocumentCommand{\seqCarteRecapAjouteLigneCartes}{+O{} +m}{
+\setkeys[seqca]{addlignerecap}{niveau,%
+sequenceUn,numUn,typepedagolibelleUn,codecouleurUn,rectoUn,versoUn,%
+sequenceDeux,numDeux,typepedagolibelleDeux,codecouleurDeux,rectoDeux,versoDeux,%
+sequenceTrois,numTrois,typepedagolibelleTrois,codecouleurTrois,rectoTrois,versoTrois,%
+sequenceQuatre,numQuatre,typepedagolibelleQuatre,codecouleurQuatre,rectoQuatre,versoQuatre,%
+#1}%
+#2
+\immediate\write\recaprectostream{\unexpanded{\seqCarteRecto[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceUn%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numUn%
+\unexpanded{,typepedagolibelle=}\cmdseqca@addlignerecap@typepedagolibelleUn%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurUn \unexpanded{]}%
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@rectoUn} \@charrb &%
+}%
+\immediate\write\recaprectostream{\unexpanded{\seqCarteRecto[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceDeux%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numDeux%
+\unexpanded{,typepedagolibelle=}\cmdseqca@addlignerecap@typepedagolibelleDeux%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurDeux \unexpanded{]}%
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@rectoDeux} \@charrb &%
+}%
+\immediate\write\recaprectostream{\unexpanded{\seqCarteRecto[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceTrois%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numTrois%
+\unexpanded{,typepedagolibelle=}\cmdseqca@addlignerecap@typepedagolibelleTrois%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurTrois \unexpanded{]}%
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@rectoTrois} \@charrb &%
+}%
+\immediate\write\recaprectostream{\unexpanded{\seqCarteRecto[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceQuatre%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numQuatre%
+\unexpanded{,typepedagolibelle=}\cmdseqca@addlignerecap@typepedagolibelleQuatre%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurQuatre \unexpanded{]}%
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@rectoQuatre} \@charrb \\%
+}%
+\immediate\write\recapversostream{\unexpanded{\seqCarteVerso[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceQuatre%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numQuatre%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurQuatre \unexpanded{]}
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@versoQuatre} \@charrb &%
+}%
+\immediate\write\recapversostream{\unexpanded{\seqCarteVerso[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceTrois%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numTrois%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurTrois \unexpanded{]}
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@versoTrois} \@charrb &%
+}%
+\immediate\write\recapversostream{\unexpanded{\seqCarteVerso[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceDeux%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numDeux%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurDeux \unexpanded{]}
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@versoDeux} \@charrb &%
+}%
+\immediate\write\recapversostream{\unexpanded{\seqCarteVerso[niveau=}\cmdseqca@addlignerecap@niveau%
+\unexpanded{,sequence=}\cmdseqca@addlignerecap@sequenceUn%
+\unexpanded{,num=}\cmdseqca@addlignerecap@numUn%
+\unexpanded{,codecouleur=}\cmdseqca@addlignerecap@codecouleurUn \unexpanded{]}
+\@charlb \unexpanded\expandafter{\cmdseqca@addlignerecap@versoUn} \@charrb \\%
+}%
+}
+\define@cmdkey[seqca]{planche}{niveau}[N10]{}%
+\define@cmdkey[seqca]{planche}{sequence}[S01]{}%
+\define@cmdkey[seqca]{planche}{num}[1]{}%
+\define@cmdkey[seqca]{planche}{typepedagolibelle}[Définition]{}%
+\define@cmdkey[seqca]{planche}{codecouleur}[nombres]{}%
+\newcommand{\seqCartePlanche}[4][]{
+\setkeys[seqca]{planche}{niveau,sequence,num,typepedagolibelle,%
+codecouleur,#1}%
+\immediate\openout\plancherectostream=plancherecto.tex\relax
+\immediate\openout\plancheversostream=plancheverso.tex\relax
+\immediate\openout\tiragesstream=tirages.tex\relax
+\immediate\write\tiragesstream{\unexpanded{#2}}%
+\immediate\write\plancherectostream{\unexpanded{\begin{tblr}{*{4}{X[c]}}}}%
+\immediate\write\plancheversostream{\unexpanded{\begin{tblr}{*{4}{X[c]}}}}%
+\begingroup
+\setcounter{seqca@cellpos}{0}%
+\let\seqCelluleRecto\seqca@emettreRecto
+#3%
+\endgroup
+\begingroup
+\setcounter{seqca@cellpos}{0}%
+\let\seqCelluleVerso\seqca@emettreVerso
+#4%
+\endgroup
+\immediate\write\plancherectostream{\unexpanded{\end{tblr}\clearpage}}%
+\immediate\write\plancheversostream{\unexpanded{\end{tblr}\clearpage}}%
+\immediate\closeout\tiragesstream\relax
+\immediate\closeout\plancherectostream\relax
+\immediate\closeout\plancheversostream\relax
+\input{tirages}%
+\input{plancherecto}%
+\input{plancheverso}%
+}
+
+\endinput
+%%
+%% End of file `seqenseigne-carte-automatisme.sty'.

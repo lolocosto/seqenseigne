@@ -1,0 +1,498 @@
+% \iffalse
+%<*driver>
+\ProvidesFile{seqenseigne-flashcard.dtx}%
+[2025/03/16 v1.0-dev seqenseigne – Module flashcard (cartes mémoire imprimables)]
+%</driver>
+% \fi
+%
+% =============================================================================
+% seqenseigne-flashcard.dtx
+% Module : FLASHCARD
+% Rôle   :
+%   - Définir le format de page pour les cartes mémoire
+%   - Fournir des environnements pour créer des cartes recto/verso
+%   - Générer automatiquement des séries de cartes depuis les bases de données
+%
+% Dépendances :
+%   - seqenseigne-theme.dtx  (couleurs, boîtes tcolorbox)
+%   - seqenseigne-data.dtx   (accès aux objectifs et connaissances)
+%   - paquet 'pgf' ou 'tikz' (déjà chargé par core)
+%
+% Formats de page disponibles (option du paquet) :
+%   portrait  : A6 portrait (105×148 mm), 4 cartes par feuille A4
+%   paysage   : demi-A4 paysage (148×105 mm), 2 cartes par feuille A4
+%
+% Structure d'une carte :
+%   Recto : bandeau thème/séquence, objectif centré, zone nom
+%   Verso : trois blocs de critères (TB/S/F) + zone exemples libre
+%
+% Usage sans données CSV (mode manuel) :
+%   \begin{seqFlashcard}[options]{contenu verso}%
+%     contenu recto (optionnel, sinon généré)
+%   \end{seqFlashcard}%
+%
+% Usage avec données CSV (mode automatique) :
+%   \seqFlashcardsSequence{codeNiveau}{codeSequence}%
+%   \seqFlashcardsAnnee{codeNiveau}%
+%
+% IMPORTANT — Ce module ne peut PAS être chargé dans le même document
+% qu'un livret ou une évaluation : il redéfinit la géométrie de page.
+% Créer un fichier .tex séparé dédié aux flashcards.
+% =============================================================================
+%
+%<*package>
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-flashcard}%
+[2025/03/16 v1.0-dev seqenseigne flashcard module]
+
+% =============================================================================
+% Dépendances
+% =============================================================================
+% tcolorbox et ses bibliothèques sont déjà chargés par seqenseigne-theme.
+% On ne charge que ce qui est propre à ce module.
+\RequirePackage{xkeyval}%
+\RequirePackage{xifthen}%
+\RequirePackage{etoolbox}%
+\RequirePackage{geometry}%
+\RequirePackage{everypage}  % pour alterner recto/verso sans erreur pdflatex
+
+% =============================================================================
+% Options du module
+% =============================================================================
+%
+% \begin{macro}{format}%
+% Option 'format' : portrait (A6, 4 cartes/feuille) ou paysage (demi-A4, 2/feuille).
+% Défaut : portrait.
+% \begin{macrocode}%
+\newif\ifseqfc@paysage\seqfc@paysagefalse
+\DeclareOption{portrait}{\seqfc@paysagefalse}%
+\DeclareOption{paysage}{\seqfc@paysagetrue}%
+\DeclareOption{ltxdoc}{}%
+\ProcessOptions\relax
+% \end{macrocode}%
+% \end{macro}%
+
+% =============================================================================
+% Géométrie de page
+% =============================================================================
+%
+% \begin{macro}{\seqfc@setupgeometry}%
+% Configure la géométrie selon le format choisi.
+% \begin{macrocode}%
+\newcommand{\seqfc@setupgeometry}{%
+    \ifseqfc@paysage
+        % Demi-A4 paysage : 148 × 105 mm — 2 cartes par feuille A4
+        \newgeometry{%
+            paperwidth  = 148mm,
+            paperheight = 105mm,
+            left        = 6mm,
+            right       = 6mm,
+            top         = 6mm,
+            bottom      = 6mm,
+            nohead,
+            nofoot
+        }%
+    \else
+        % A6 portrait : 105 × 148 mm — 4 cartes par feuille A4
+        \newgeometry{%
+            paperwidth  = 105mm,
+            paperheight = 148mm,
+            left        = 5mm,
+            right       = 5mm,
+            top         = 5mm,
+            bottom      = 5mm,
+            nohead,
+            nofoot
+        }%
+    \fi
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% Appliquer la géométrie dès le chargement du module
+\AtBeginDocument{\seqfc@setupgeometry}%
+
+% =============================================================================
+% Compteur de cartes
+% =============================================================================
+\newcounter{seqfc@num}%
+\setcounter{seqfc@num}{0}%
+
+% Macro interne : numéro courant formaté
+\newcommand{\seqfc@numcourant}{\arabic{seqfc@num}}%
+
+% =============================================================================
+% Couleurs et styles internes
+% =============================================================================
+%
+% Les couleurs TB/S/F sont celles utilisées dans tout le paquet pour la maîtrise.
+% On les redéfinit localement pour éviter toute dépendance sur les variables
+% de thème (\seq@couleuri@vif etc.) qui peuvent ne pas être initialisées
+% si seqenseigne-theme n'est pas chargé.
+%
+% Si seqenseigne-theme EST chargé (usage normal), ces définitions sont remplacées
+% par les couleurs du thème courant via \seqfc@applytheme.
+%
+\providecommand{\seqfc@couleur@tb}{green!60!black}%
+\providecommand{\seqfc@couleur@s}{green!60!white}%
+\providecommand{\seqfc@couleur@f}{yellow!80!black}%
+\providecommand{\seqfc@couleur@titre}{blue!70!black}%
+\providecommand{\seqfc@couleur@fond}{blue!10!white}%
+\providecommand{\seqfc@couleur@cadre}{blue!70!black}%
+
+% \begin{macro}{\seqfc@applytheme}%
+% Synchronise les couleurs de flashcard avec le thème seqenseigne courant.
+% À appeler après \seqSetColors ou \seq@setColors.
+% \begin{macrocode}%
+\newcommand{\seqfc@applytheme}{%
+    \renewcommand{\seqfc@couleur@titre}{\seq@couleuri@vif}%
+    \renewcommand{\seqfc@couleur@fond}{\seq@couleurii@pale}%
+    \renewcommand{\seqfc@couleur@cadre}{\seq@couleuri@vif}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% =============================================================================
+% Macros de mise en page interne
+% =============================================================================
+
+% \begin{macro}{\seqfc@recto}%
+% Compose le recto d'une carte.
+% #1 : code niveau
+% #2 : code séquence
+% #3 : code objectif
+% #4 : libellé de l'objectif (texte)
+% #5 : libellé de la séquence (texte)
+% \begin{macrocode}%
+\newcommand{\seqfc@recto}[5]{%
+    \stepcounter{seqfc@num}%
+    \noindent
+    \begin{tcolorbox}[
+        height          = \textheight,
+        colback         = \seqfc@couleur@fond,
+        colframe        = \seqfc@couleur@cadre,
+        colbacktitle    = \seqfc@couleur@titre,
+        coltitle        = white,
+        fonttitle       = \bfseries\small,
+        title           = {%
+            \seqNiveauGetNomCourt{#1}\hfill
+            #2~--~#5\hfill
+            Fiche n°\,\seqfc@numcourant
+        },
+        enhanced,
+        attach boxed title to top left={yshift=-4pt, xshift=10pt},
+        top             = 14pt,
+        bottom          = 4pt,
+    ]
+        % Zone objectif : centré verticalement, texte en grand
+        \vfill
+        \begin{center}%
+            {\Large\bfseries\color{\seqfc@couleur@cadre} Objectif~#3}\par
+            \vspace{6pt}%
+            {\large #4}%
+        \end{center}%
+        \vfill
+        % Zone nom élève en bas
+        \tcblower
+        \small
+        \textit{Version de \datemoisannee\today}\hfill
+        Nom~: \underline{\hspace{5cm}}%
+    \end{tcolorbox}%
+    \newpage
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% \begin{macro}{\seqfc@verso}%
+% Compose le verso d'une carte avec les critères de maîtrise et une zone libre.
+% #1 : critère Très Bon (MaitriseTB)
+% #2 : critère Satisfaisant (MaitriseS)
+% #3 : critère À consolider (MaitriseF)
+% #4 : contenu libre (exemples, formules, schémas — peut être vide)
+% \begin{macrocode}%
+\newcommand{\seqfc@verso}[4]{%
+    \noindent
+    \begin{tcolorbox}[
+        height          = \textheight,
+        colback         = white,
+        colframe        = \seqfc@couleur@cadre,
+        colbacktitle    = \seqfc@couleur@titre,
+        coltitle        = white,
+        fonttitle       = \bfseries\small,
+        title           = {Critères de maîtrise — Fiche n°\,\seqfc@numcourant},
+        enhanced,
+        attach boxed title to top left={yshift=-4pt, xshift=10pt},
+        top             = 14pt,
+        bottom          = 4pt,
+    ]
+        % Bloc Très Bon
+        \begin{tcolorbox}[
+            colback  = \seqfc@couleur@tb,
+            colframe = \seqfc@couleur@tb,
+            coltitle = white,
+            fonttitle= \bfseries\footnotesize,
+            title    = {Très bon},
+            top=2pt, bottom=2pt, left=4pt, right=4pt,
+        ]
+            \footnotesize #1
+        \end{tcolorbox}%
+        \vspace{3pt}%
+        % Bloc Satisfaisant
+        \begin{tcolorbox}[
+            colback  = \seqfc@couleur@s,
+            colframe = \seqfc@couleur@s,
+            coltitle = black,
+            fonttitle= \bfseries\footnotesize,
+            title    = {Satisfaisant},
+            top=2pt, bottom=2pt, left=4pt, right=4pt,
+        ]
+            \footnotesize #2
+        \end{tcolorbox}%
+        \vspace{3pt}%
+        % Bloc À consolider
+        \begin{tcolorbox}[
+            colback  = \seqfc@couleur@f,
+            colframe = \seqfc@couleur@f,
+            coltitle = black,
+            fonttitle= \bfseries\footnotesize,
+            title    = {\`A consolider},
+            top=2pt, bottom=2pt, left=4pt, right=4pt,
+        ]
+            \footnotesize #3
+        \end{tcolorbox}%
+        % Zone exemples libre (si fournie)
+        \ifthenelse{\isempty{#4}}{}{%
+            \vspace{4pt}%
+            \begin{tcolorbox}[
+                colback  = white,
+                colframe = \seqfc@couleur@cadre,
+                coltitle = white,
+                colbacktitle = \seqfc@couleur@cadre,
+                fonttitle= \bfseries\footnotesize,
+                title    = {Exemples},
+                top=2pt, bottom=2pt, left=4pt, right=4pt,
+                enhanced,
+                attach boxed title to top left={yshift=-3pt, xshift=8pt},
+            ]
+                \footnotesize #4
+            \end{tcolorbox}%
+        }%
+        \vfill
+    \end{tcolorbox}%
+    \newpage
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% =============================================================================
+% Interface publique
+% =============================================================================
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFlashcard}%
+% \IndexMacro{\seqFlashcard}%
+% Crée une paire recto/verso pour UN objectif spécifié manuellement.
+% Mode sans données CSV : tous les contenus sont fournis en arguments.
+%
+% Utilisation :
+%   \seqFlashcard
+%     [niveau=N11, sequence=S03, objectif=02]
+%     {libellé objectif}%
+%     {libellé séquence}%
+%     {critère TB}%
+%     {critère S}%
+%     {critère F}%
+%     {exemples (peut être vide {})}%
+%
+% #1 (optionnel) : options clé=valeur (niveau, sequence, objectif)
+% #2 : libellé de l'objectif (recto)
+% #3 : libellé de la séquence (recto, bandeau)
+% #4 : critère Très Bon (verso)
+% #5 : critère Satisfaisant (verso)
+% #6 : critère À consolider (verso)
+% #7 : exemples/contenu libre du verso (peut être {})
+% \begin{macrocode}%
+\define@cmdkey[seqfc]{flashcard}{objectif}[00]{}%
+\newcommand{\seqFlashcard}[7][]{%
+    \setkeys[seqfc]{flashcard}{niveau,sequence,objectif,#1}%
+    \seqfc@recto
+        {\cmdseqfc@flashcard@niveau}%
+        {\cmdseqfc@flashcard@sequence}%
+        {\cmdseqfc@flashcard@objectif}%
+        {#2}%
+        {#3}%
+    \seqfc@verso{#4}{#5}{#6}{#7}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFlashcardAuto}%
+% \IndexMacro{\seqFlashcardAuto}%
+% Crée une paire recto/verso pour UN objectif, en lisant les données des bases.
+% Requiert \seqLoadData (ou \seqSetDataPath + \seqLoadData) préalablement appelé.
+%
+% #1 (optionnel) : options clé=valeur
+%   niveau   : code niveau   (ex. N11)
+%   sequence : code séquence (ex. S03)
+%   objectif : code objectif (ex. 02)
+%   exemples : contenu libre du verso (texte LaTeX, peut être vide)
+%
+% Usage :
+%   \seqFlashcardAuto[niveau=N11, sequence=S03, objectif=02, exemples={}]
+% \begin{macrocode}%
+\define@cmdkey[seqfc]{flashcardauto}{objectif}[00]{}%
+\define@cmdkey[seqfc]{flashcardauto}{exemples}[]{}%
+\newcommand{\seqFlashcardAuto}[1][]{%
+    \setkeys[seqfc]{flashcardauto}{niveau,sequence,objectif,exemples,#1}%
+    % Synchroniser le thème avec la séquence courante
+    \seqSetColors%
+    \seqfc@applytheme
+    % Recto
+    \seqfc@recto
+        {\cmdseqfc@flashcardauto@niveau}%
+        {\cmdseqfc@flashcardauto@sequence}%
+        {\cmdseqfc@flashcardauto@objectif}%
+        {\seqObjectifGetNom
+            {\cmdseqfc@flashcardauto@niveau}%
+            {\cmdseqfc@flashcardauto@sequence}%
+            {\cmdseqfc@flashcardauto@objectif}}%
+        {\seqSequenceGetNom
+            {\cmdseqfc@flashcardauto@niveau}%
+            {\cmdseqfc@flashcardauto@sequence}}%
+    % Verso
+    \seqfc@verso
+        {\seqObjectifGetMaitriseTB
+            {\cmdseqfc@flashcardauto@niveau}%
+            {\cmdseqfc@flashcardauto@sequence}%
+            {\cmdseqfc@flashcardauto@objectif}}%
+        {\seqObjectifGetMaitriseS
+            {\cmdseqfc@flashcardauto@niveau}%
+            {\cmdseqfc@flashcardauto@sequence}%
+            {\cmdseqfc@flashcardauto@objectif}}%
+        {\seqObjectifGetMaitriseF
+            {\cmdseqfc@flashcardauto@niveau}%
+            {\cmdseqfc@flashcardauto@sequence}%
+            {\cmdseqfc@flashcardauto@objectif}}%
+        {\cmdseqfc@flashcardauto@exemples}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFlashcardsSequence}%
+% \IndexMacro{\seqFlashcardsSequence}%
+% Génère automatiquement TOUTES les cartes des objectifs d'une séquence.
+% Boucle sur seq@objectifs@sequence après filtrage.
+% Requiert \seqLoadData préalablement appelé.
+%
+% #1 : code niveau   (ex. N11)
+% #2 : code séquence (ex. S03)
+%
+% Usage :
+%   \seqFlashcardsSequence{N11}{S03}%
+% \begin{macrocode}%
+\newcommand{\seqFlashcardsSequence}[2]{%
+    % Fixer le contexte niveau/séquence
+    \seqSetCodeNiveau{#1}%
+    \seqSetCodeSequence{#2}%
+    % Filtrer les données et synchroniser le thème
+    \seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+    \seqSetColors%
+    \seqfc@applytheme
+    % Boucler sur tous les objectifs de la séquence
+    \DTLforeach*{seq@objectifs@sequence}{%
+        \seqfc@tmpCode=CodeObjectif,%
+        \seqfc@tmpNom=Nom,%
+        \seqfc@tmpTB=MaitriseTB,%
+        \seqfc@tmpS=MaitriseS,%
+        \seqfc@tmpF=MaitriseF%
+    }{%
+        \seqfc@recto
+            {\seq@code@niveau}%
+            {\seq@code@sequence}%
+            {\seqfc@tmpCode}%
+            {\seqfc@tmpNom}%
+            {\seqSequenceGetNom}%
+        \seqfc@verso
+            {\seqfc@tmpTB}%
+            {\seqfc@tmpS}%
+            {\seqfc@tmpF}%
+            {}%  verso sans exemples en génération automatique
+    }%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFlashcardsAnnee}%
+% \IndexMacro{\seqFlashcardsAnnee}%
+% Génère toutes les cartes de toutes les séquences d'un niveau (toute l'année).
+% Boucle sur la base des séquences du cycle correspondant.
+% Requiert \seqLoadData préalablement appelé.
+%
+% #1 : code niveau (ex. N11)
+%
+% Usage :
+%   \seqFlashcardsAnnee{N11}%
+% \begin{macrocode}%
+\newcommand{\seqFlashcardsAnnee}[1]{%
+    % Fixer le niveau courant
+    \seqSetCodeNiveau{#1}%
+    % Récupérer le code cycle du niveau
+    \seqDTLfetchsave{\seqfc@tmp@cycle}{param_niveaux}{Code}{\seq@code@niveau}{CodeCycle}%
+    % Boucler sur les séquences du cycle
+    \DTLforeach*{\seqfc@tmp@cycle _sequences}{%
+        \seqfc@tmpSeq=Code%
+    }{%
+        \seqFlashcardsSequence{\seq@code@niveau}{\seqfc@tmpSeq}%
+    }%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFlashcardVersoBlanc}%
+% \IndexMacro{\seqFlashcardVersoBlanc}%
+% Insère un verso blanc (pour impression recto-verso sur du papier ordinaire
+% quand la carte précédente avait un verso, mais la suivante commence un recto).
+% Utile pour forcer l'alignement recto/verso lors d'une impression deux faces.
+% \begin{macrocode}%
+\newcommand{\seqFlashcardVersoBlanc}{%
+    \noindent
+    \begin{tcolorbox}[
+        height   = \textheight,
+        colback  = white,
+        colframe = white,
+    ]
+    \end{tcolorbox}%
+    \newpage
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seqFlashcardResetCompteur}%
+% \IndexMacro{\seqFlashcardResetCompteur}%
+% Remet le compteur de cartes à zéro.
+% Utile pour recommencer la numérotation entre deux séries.
+% \begin{macrocode}%
+\newcommand{\seqFlashcardResetCompteur}{%
+    \setcounter{seqfc@num}{0}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% =============================================================================
+% Variables temporaires internes (déclarées globalement pour éviter
+% les problèmes de portée dans les boucles DTL)
+% =============================================================================
+\newcommand{\seqfc@tmpCode}{}%
+\newcommand{\seqfc@tmpNom}{}%
+\newcommand{\seqfc@tmpTB}{}%
+\newcommand{\seqfc@tmpS}{}%
+\newcommand{\seqfc@tmpF}{}%
+\newcommand{\seqfc@tmp@cycle}{}%
+
+% Fin du module flashcard
+%</package>

@@ -1,0 +1,1229 @@
+% \iffalse
+%<*driver>
+\ProvidesFile{seqenseigne-doc.dtx}%
+[2025/10/24 v1.0-dev seqenseigne – Documentation utilisateur]
+%</driver>
+% \fi
+%
+% =============================================================
+% seqenseigne-doc.dtx
+% Module : DOC
+% Rôle   :
+%   - manuel utilisateur du package
+%   - explication des concepts pédagogiques
+%   - exemples compilables complets
+%   - index des macros et environnements
+%
+% NOTE :
+%   Ici tu colles la grande doc narrative que tu avais commencée :
+%   "Le package seqenseigne – structurer des séquences d’enseignement"
+%   + les exemples \begin{seqBlocObjectifs} ... \end{seqBlocObjectifs}%
+%   + mode d'emploi pour charger les données fusionnées, etc.
+%
+%   On traite ce fichier comme le .dtx de doc classique LaTeX.
+% =============================================================
+%
+%<*package>
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-doc}%
+[2025/10/24 v1.0-dev seqenseigne documentation module]
+
+% \section{Introduction}%
+%  Le paquet \texttt{seqenseigne} est le résultat d'un processus de plusieurs années, lié à ma pratique d'enseignant.
+%  En effet, quand j'ai découvert le métier, j'ai été tout de suite confronté à plusieurs problématiques. \par
+%  Tout d'abord, comment construire mes séquences? J'ai immédiatement pensé qu'il serait plus efficace de reprendre des
+%  contenus déjà existant, éventuellement en les adaptant, plutôt que de tout réinventer\ldots Et de fait, la quantité 
+%  de matériel pédagogique disponible est énorme et généralement de très bonne qualité. Je me suis donc centré sur le 
+%  processus d'apropriation et d'homogénéisation de ces contenus. \par
+%  Ensuite, quel outil logiciel utiliser? La production de documents avec les suites bureautiques dominantes m'a toujours 
+%  semblé s'aparenter à du \og bricolage \fg{}. Surtout, ce qui est un réel problème pour les mathématiques, l'inclusion 
+%  de formules et de graphiques. Alors j'ai naturellement adopté \LaTeX. \par
+%  Enfin, (surtout!) pour quelle utilisation pédagogique? En classe, faire cours aux élèves en leur expliquant quelques exemples 
+%  (si j'ai du temps de reste\ldots) et les laisser faire les exercices chez eux, c'est à dire en fait, perpétuer la méthode
+%  d'enseignement que j'ai moi-même \og subie \fg{} en tant qu'élève, me semble être une erreur. En effet, je crois que cette méthode convient 
+%  essentiellement aux élèves qui ont des facilités de compréhension et tend à exclure les autres au lieu de leur permettre de progresser.
+%  J'ai donc choisi d'explorer l'apprentissage inversé, aussi appelé \og classe inversée \fg{}. \bigbreak \par
+%  Ainsi, le paquet \texttt{seqenseigne} permet de mettre en forme plusieurs documents : 
+%  \begin{seqColItem}[nbCols=1,label=\ding{227}]
+%  \item une \textbf{fiche de suivi de séquence} qui permet à l'enseignant de suivre la progression du travail que les élèves font en autonomie 
+%    durant les séances et qui récapitule les dates-clés de la séquence. \newline
+%    Voir la section \ref{subsec:ficheFic} pour la structure générale du fichier et la section \ref{subsec:ficheOutils} pour les macros et environnements disponibles.
+%   \item un \textbf{plan de travail} qui peut contenir les éléments suivants:
+%    \begin{seqColItem}%
+%     \item la liste des tâches à réaliser en classe
+%     \item la liste des tâches à réaliser chez soi
+%     \item les dates clés de la séquence
+%     \item les ressources disponibles pour réussir
+%    \end{seqColItem}%
+%    Voir la section \ref{subsec:planFic} pour la structure générale du fichier et la section \ref{subsec:planOutils} pour les macros et environnements disponibles.
+%   \item un \textbf{livret de séquence} qui peut contenir les éléments suivants:
+%    \begin{seqColItem}[nbCols=1]
+%     \item les prérequis pour réussir la séquence
+%     \item des exercices de révision
+%     \item les objectifs de fin de séquence
+%     \item une carte mentale représentant les notions à maîtriser
+%     \item les méthodes clés pour résoudre les exercices
+%     \item des exercices regroupés en trois séries de difficulté croissante
+%     \item les solutions au questionnaire d'autoévaluation initiale et aux exercices
+%    \end{seqColItem}%
+%    Il n'y a pas de cours (définitions, propriétés, démonstrations, etc) dans le livret de séquence car ces éléments sont préférentiellement produits sous forme de capsules vidéo. \newline
+%    Voir la section \ref{subsec:livretFic} pour la structure générale du fichier et la section \ref{subsec:livretOutils} pour les macros et environnements disponibles.
+%  \item des \textbf{évaluations bilan} qui peut contenir les éléments suivants:
+%    \begin{seqColItem}[nbCols=1]
+%     \item des QCM
+%     \item des exercices \og classiques \fg{}%
+%    \end{seqColItem}%
+%    Voir la section \ref{subsec:evalFic} pour la structure générale du fichier et la section \ref{subsec:evalOutils} pour les macros et environnements disponibles.
+% \end{seqColItem}%
+%
+% \newpage
+% \section{Comment utiliser \texttt{seqenseigne}}%
+%  \subsection{Installation de \texttt{seqenseigne}}%
+%   Le fichier \texttt{seqenseigne.sty} doit être placé dans un répertoire visible pour \LaTeX:
+%   \begin{seqColItem}[nbCols=1]
+%    \item dans le même répertoire que le document
+%    \item dans l'arborescence \LaTeX\, de l'utilisateur. \newline Par exemple, le répertoire \texttt{\textasciitilde/.textive/texmf-var/arch/tlpkg} pour TexLive.
+%    \item dans l'arborescence \LaTeX\, système. \newline Par exemple, le répertoire \texttt{/usr/local/share/texmf/tex/latex} pour TexLive.
+%   \end{seqColItem}%
+%
+%  \subsection{Structure des documents utilisant \texttt{seqenseigne}}%
+% 	\subsubsection{Fiche de suivi} \label{subsec:ficheFic}%
+%    La fiche de suivi comprend une ou deux pages, en fonction du nombre d'élèves de la classe. La structure du fichier \LaTeX\, est très simple:\newline
+%    \verb|  \documentclass[a4paper,11pt]{article}|\newline
+%    \verb|  \usepackage{seqenseigne}|\newline
+%    \verb|  \begin{document}|\newline
+%    \verb|   \begin{titreFiche}[numSeq=1,titreSeq=Théorème de Pythagore,| \newline
+%    \verb|                      etab=Collège Exemple,classe=4\ieme{}A]|\newline
+%    \verb|    \seq@ligne@eleve{Laurent COSTE}|\newline
+%    \verb|   \end{titreFiche}|\newline
+%    \verb|  \end{document}|\newline
+%    Les différents éléments de la fiche de suivi sont détaillés à partir de la page \pageref{elementsSuivi}.
+%
+% 	\subsubsection{Plan de travail} \label{subsec:planFic}%
+%    Le plan de travail comprend une seule page. La structure du fichier \LaTeX\, est très simple:\newline
+%    \verb|  \documentclass[a4paper,11pt]{article}|\newline
+%    \verb|  \usepackage{seqenseigne}|\newline
+%    \verb|  \begin{document}|\newline
+%    \verb|   \begin{titrePlan}[numSeq=1,titreSeq=Théorème de Pythagore,| \newline
+%    \verb|                      etab=Collège Exemple,classe=4\ieme{}A]|\newline
+%    \verb|    \begin{seqBloc}{En classe}| \newline
+%    \verb|     \item Je travaille!| \newline
+%    \verb|    \end{seqBloc}| \newline
+%    \verb|    &| \newline
+%    \verb|    \begin{seqBloc}{Chez moi}| \newline
+%    \verb|    \item Je travaille| \newline
+%    \verb|     \begin{blocN2} | \newline
+%    \verb|      \item Le soir| \newline
+%    \verb|      \item Le week-end| \newline
+%    \verb|     \end{blocN2}| \newline
+%    \verb|    \item Je m'amuse aussi!| \newline
+%    \verb|   \end{seqBloc}| \newline
+%    \verb|   \newline| \newline
+%    \verb|  \end{titrePlan}| \newline
+%    \verb|  \end{document}|\newline
+%    Les différents éléments du plan de travail sont détaillés à partir de la page \pageref{elementsPlan}.
+%    
+% 	\subsubsection{livret de séquence} \label{subsec:livretFic}%
+%    Plusieurs livrets de séquence peuvent coexister dans le même répertoire. \newline
+%    Je conseille fortement une structure modulaire comprenant un document-maître et des sous-documents, telle que:\newline
+%    \verb|  \documentclass[a4paper,11pt]{article}|\newline
+%    \verb|  \usepackage{seqenseigne}|\newline
+%    \verb|  \begin{document}|\newline
+%    \verb|   \titreLivret[theme=geometrie,titreSeq=Théorème de Pythagore,|\newline
+%    \verb|                      niveau=quatrième,numseq=1}|\newline
+%    \verb|    \input{Include/Prerequis.tex}|\newline
+%    \verb|    \input{./include/Seq01AutoEvaluation.tex}|\newline
+%    \verb|   \seqTitresection{Objectifs et connaissances}|\newline
+%    \verb|    \input{Include/Objectifs.tex}|\newline
+%    \verb|    \input{Include/CarteMentale.tex}|\newline
+%    \verb|   \seqTitresection{Méthodes}|\newline
+%    \verb|    \input{Include/Methodes.tex}|\newline
+%    \verb|   \seqTitresection{Exercices}|\newline
+%    \verb|    \input{Include/SerieFondamentale.tex}|\newline
+%    \verb|    \input{Include/SerieAvancee.tex}|\newline
+%    \verb|    \input{Include/SerieExploration.tex}|\newline
+%    \verb|   \seqAfficheCorriges|\newline
+%    \verb|  \end{document}|\newline
+%    Dans l'exemple précédent, il faut créer manuellement le sous-répertoire \meta{nom du fichier}\texttt{Include} qui contiendra tous les sous-documents.\newline
+%    Par ailleurs, je conseille aussi fortement de placer les images incluses dans les différentes sections du livret de séquence dans un répertoire 
+%    \meta{nom du fichier}\texttt{Images}, à créer manuellement. \newline
+%    Enfin, la compilation génère un fichier de corrigé par exercice. Tous ces fichiers sont stockés dans un sous-répertoire \meta{nom du fichier}\texttt{Corriges} qu'il faut créer manuellement.\newline
+%    Les différents éléments du livret de séquence sont détaillés à partir de la page \pageref{elementslivret}.
+%
+% 	\subsubsection{\'Evaluation bilan} \label{subsec:evalFic}%
+%    Plusieurs évaluations peuvent coexister dans le même répertoire. \newline
+%    Je conseille fortement une structure modulaire comprenant un document-maître et des sous-documents, telle que:\newline
+%    \verb|  \documentclass[a4paper,11pt]{article}|\newline
+%    \verb|  \usepackage{seqenseigne}|\newline
+%    \verb|  \usepackage{pgfplots}|\newline
+%    \verb|  \usepackage{eurosym}|\newline
+%    \verb|  \begin{document}|\newline
+%    \verb|  \titreEval[numSeq=03,titreSeq=Proportionnalité,niveauDiff=fondamental,|\newline
+%    \verb|             etab=Collège exemple,classe=4\ieme{}A]|\newline
+%    \verb|  \begin{bareme}|\newline
+%    \verb|  	\baremeItem{QCM}{5 points}|\newline
+%    \verb|  	\baremeItem{Exercice II}{6 points}|\newline
+%    \verb|  	\baremeItem{Présentation de la copie et usage de la langue française}{1 point}|\newline
+%    \verb|  \end{bareme}|\newline
+%    \verb|  \input{Include/exoI.tex}|\newline
+%    \verb|  \input{Include/exoII.tex}|\newline
+%    \verb|  \afficheCorrigesEval|\newline
+%    \verb|  \end{document}|\newline
+%    Dans l'exemple précédent, il faut créer manuellement le sous-répertoire \meta{nom du fichier}\texttt{Include} qui contiendra tous les sous-documents.\newline
+%    Par ailleurs, je conseille aussi fortement de placer les images incluses dans les différentes sections du livret de séquence dans un répertoire 
+%    \meta{nom du fichier}\texttt{Images}, à créer manuellement. \newline
+%    Enfin, la compilation génère un fichier de corrigé par exercice. Ils sont stockés dans un sous-répertoire \meta{nom du fichier}\texttt{Corriges} qu'il faut créer manuellement.\newline
+%    Les différents éléments de l'évaluation bilan sont détaillés à partir de la page \pageref{elementsEval}.
+%
+%  \subsection{Paquets chargés par \texttt{seqenseigne}}%
+%   Le paquet \texttt{seqenseigne} charge les paquets suivants:
+%   \begin{seqColItem}%
+%    \item \texttt{inputenc} avec l'option \texttt{utf8}%
+%    \item \texttt{fontenc} avec l'option \textsf{T1}%
+%    \item \texttt{lmodern}%
+%    \item \texttt{babel} avec l'option \texttt{french}%
+%    \item \texttt{geometry}%
+%    \item \texttt{fancyhdr}%
+%    \item \texttt{lastpage}%
+%    \item \texttt{multicol}, \texttt{multirow}%
+%    \item \texttt{amsmath}, \texttt{amsfonts}, \texttt{amssymb}%
+%    \item \texttt{tcolorbox} avec les options \texttt{theorems}, \texttt{breakable} et \texttt{skins}%
+%    \item \texttt{tabularray} avec les bibliothèques \texttt{booktabs} et \texttt{longtable}%
+%    \item \texttt{tabularx}, \texttt{xltabular}, \texttt{booktabs}%
+%    \item \texttt{xcolor}, \texttt{colortbl}%
+%    \item \texttt{xkeyval}, \texttt{xifthen}, \texttt{etoolbox}, \texttt{kvoptions}%
+%    \item \texttt{forloop}%
+%    \item \texttt{datatool} (chargement des bases de données \texttt{.dbtex})
+%    \item \texttt{tikz} avec ses librairies \texttt{babel}, \texttt{intersections} et \texttt{mindmap}%
+%    \item \texttt{tkz-tab}, \texttt{tkz-base}, \texttt{tkz-euclide}%
+%    \item \texttt{hyperref}%
+%    \item \texttt{scratch3} (blocs Scratch dans les exercices)
+%    \item \texttt{eurosym}, \texttt{pifont}%
+%    \item \texttt{enumitem} avec l'option \textsf{inline}%
+%    \item \texttt{datetime}, \texttt{environ}, \texttt{xintexpr}%
+%   \end{seqColItem}%
+%   La documentation de ces paquets est disponible sur \texttt{CTAN}. \newline
+%   Il est possible d'appeler tout autre paquet nécessaire à la mise en forme du document en utilisant la macro |\usepackage|.
+%
+%  \subsection{\`A propos de \TikZ}%
+%   J'ai choisi d'utiliser \TikZ pour tous les graphiques. Sa librairie \texttt{mindmap} permet de construire les cartes mentales. \newline
+%   Le paquet \texttt{tkz-euclide} sert pour les figures en géométrie euclidienne.\newline
+%   Le paquet \texttt{tkz-tab} sert pour les tableaux de variation.
+%   \medskip \newline
+%   Voici quelques macro pour faciliter le tracé des graphiques.
+%   \medskip \newline
+%   \DescribeMacro{\seqOrigine}%
+%    La macro |\seqOrigine| place le point $O$ à l'origine du repère.
+%    \medskip \newline
+%   \DescribeMacro{\seqAxeX}%
+%    La macro |\seqAxeX|\oarg{options} trace l'axe des abscisses.\newline
+%    L'option \texttt{ord}=\meta{nombre} est l'ordonnée de l'axe. Elle vaut 0 par défaut. \newline
+%    L'option \texttt{absMin}=\meta{nombre} est l'abscisse minimum. Cette option est obligatoire. \newline
+%    L'option \texttt{absMax}=\meta{nombre} est l'abscisse maximum. Cette option est obligatoire. \newline
+%    L'option \texttt{abslist}=\{\meta{liste}\} est la liste des abscisses qui seront marquées sur l'axe. Elle est vide par défaut. \newline
+%    L'option \texttt{libelle}=\meta{texte} est le libellé placé au dessus à droite de l'axe. Il est vide par défaut. 
+%    \medskip \newline
+%   \DescribeMacro{\seqAxeY}%
+%    La macro |\seqAxeY|\oarg{options} trace l'axe des ordonnées.\newline
+%    L'option \texttt{abs}=\meta{nombre} est l'abscisse de l'axe. Elle vaut 0 par défaut. \newline
+%    L'option \texttt{ordMin}=\meta{nombre} est l'ordonnée minimum. Cette option est obligatoire. \newline
+%    L'option \texttt{ordMax}=\meta{nombre} est l'ordonnée maximum. Cette option est obligatoire. \newline
+%    L'option \texttt{ordlist}=\{\meta{liste}\} est la liste des ordonnées qui seront marquées sur l'axe. Elle est vide par défaut. \newline
+%    L'option \texttt{libelle}=\meta{texte} est le libellé placé au dessus à droite de l'axe. Il est vide par défaut. 
+%    \medskip \newline
+%   Par exemple: \newline
+%   \verb|\begin{tikzpicture}[scale=0.5]| \newline
+%   \verb| \seqAxeX[absMin=-4,absMax=5,absList={-2,2,4},libelle=nombre]| \newline
+%	\verb| \seqAxeY[ordMin=-1,ordMax=5,ordList={1,2,3},libelle=prix]| \newline
+%	\verb| \seqOrigine| \newline
+%	\verb|\end{tikzpicture}| \newline
+%   donne:
+%   \begin{center} \begin{tikzpicture}[scale=0.5]
+%    \seqAxeX[absMin=-4,absMax=5,absList={-2,2,4},libelle=nombre] \seqAxeY[ordMin=-1,ordMax=5,ordList={1,2,3},libelle=prix] \seqOrigine
+%   \end{tikzpicture} \end{center}%
+%
+%  \subsection{\`A propos de \textsf{tcolorbox}}%
+%   Le paquet \textsf{tcolorbox} permet de définir des boîtes. Je l'ai utilisé pour délimiter les différentes parties des documents.\newline
+%   Les boîtes de titre de chaque document (fiche de suivi, plan de travail et livret de séquence) ont une hauteur fixe; les hauteurs des autres boîtes s'adaptent à leur contenu.\newline
+%   Les boîtes des numéros d'exercices ont une largeur fixe; les largeurs des autres boîtes s'adaptent à leur contenu.\newline 
+%   Les boîtes qui contiennent chaque série d'exercice peuvent s'étendre sur plusieurs pages; les autres sont d'un seul bloc, c'est à dire sur une seule page.\newline
+%   Attention aux débordements si elles sont trop grandes!
+%
+%   \subsection{Définition des couleurs} \label{subsec:themes}%
+%    Pour le thème \og \textit{Nombres et calcul} \fg{}, les couleurs de la maquette sont:
+%     \begin{tcolorbox}[colback=\seqCouleurRougeVif] |\seqCouleurRougeVif| défini par \textit{red!85!black}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurRougeModere] |\seqCouleurRougeModere| défini par \textit{red!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurRougeMoyen] |\seqCouleurRougeMoyen| défini par \textit{red!25!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurRougePale] |\seqCouleurRougePale| défini par \textit{red!10!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurJauneModere] |\seqCouleurJauneModere| défini par \textit{yellow!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurJaunePale] |\seqCouleurJaunePale| défini par \textit{yellow!10!white}%
+%     \end{tcolorbox}%
+%    Pour le thème \og \textit{Organisation des données} \fg{}, les couleurs de la maquette sont:
+%     \begin{tcolorbox}[colback=\seqCouleurBleuVif] |\seqCouleurBleuVif| défini par \textit{blue!85!black}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurBleuModere] |\seqCouleurBleuModere| défini par \textit{blue!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurBleuMoyen] |\seqCouleurBleuMoyen| défini par \textit{blue!25!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurBleuPale] |\seqCouleurBleuPale| défini par \textit{blue!10!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurOrangeModere] |\seqCouleurOrangeModere| défini par \textit{orange!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurOrangePale] |\seqCouleurOrangePale| défini par \textit{orange!10!white}%
+%     \end{tcolorbox}%
+%    Pour le thème \og \textit{Espace et géométrie} \fg{}, les couleurs de la maquette sont:
+%     \begin{tcolorbox}[colback=\seqCouleurVioletVif] |\seqCouleurVioletVif| défini par \textit{violet!85!black}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurVioletModere] |\seqCouleurVioletModere| défini par \textit{violet!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurVioletMoyen] |\seqCouleurVioletMoyen| défini par \textit{violet!25!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurVioletPale] |\seqCouleurVioletPale| défini par \textit{violet!10!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurVertModere] |\seqCouleurVertModere| défini par \textit{green!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurVertPale] |\seqCouleurVertPale| défini par \textit{green!10!white}%
+%     \end{tcolorbox}%
+%    Quand il n'y a pas de thème, les couleurs de la maquette sont:
+%     \begin{tcolorbox}[colback=\seqCouleurNoirVif,coltext=white] |\seqCouleurNoirVif| défini par \textit{black!85!black}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurNoirModere,coltext=white] |\seqCouleurNoirModere| défini par \textit{black!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurNoirMoyen] |\seqCouleurNoirMoyen| défini par \textit{black!25!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurNoirPale] |\seqCouleurNoirPale| défini par \textit{black!10!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurGrisModere] |\seqCouleurGrisModere| défini par \textit{gray!50!white}%
+%     \end{tcolorbox}%
+%     \begin{tcolorbox}[colback=\seqCouleurGrisPale] |\seqCouleurGrisPale| défini par \textit{gray!10!white}%
+%     \end{tcolorbox}%
+
+%  \subsection{Environnements de listes}%
+%   \DescribeEnv{colEnum}%
+%    L'environnement |colEnum|\oarg{options} est destiné à combiner |\enumerate| et |\multicols|.\newline
+%    L'option \texttt{nbCols}=\meta{nombre} sert à fixer le nombre de colonnes. Elle vaut 2 par défaut.
+%   \medskip \newline
+%   \DescribeEnv{colItem}%
+%    L'environnement |colItem|\oarg{options} est destiné à combiner |\itemize| et |\multicols|.\newline
+%    L'option \texttt{nbCols}=\meta{nombre} sert à fixer le nombre de colonnes. Elle vaut 2 par défaut.\newline
+%    L'option \texttt{label}=\meta{texte} sert à fixer la puce devant chaque item. Elle vaut \verb|$\bullet$| par défaut.
+%   \medskip \newline
+%   Exemple:
+%    \begin{seqColEnum}%
+%     \item Enum 1
+%     \item Enum 2
+%      \begin{seqColItem}[nbCols=1]
+%       \item Item 2.1
+%       \item Item 2.2
+%      \end{seqColItem}%
+%     \item Enum 3
+%     \item Enum 4
+%    \end{seqColEnum}%
+%   On peut imbriquer ces deux environnements.
+%
+% \newpage
+% \section{Les différents éléments de la fiche de suivi de séquence} \label{subsec:ficheOutils} \label{elementsSuivi}%
+%  \subsection{Titre de la fiche de suivi}%
+%   \DescribeEnv{titreFiche}%
+%    L'environnement |titreFiche|\oarg{options} met en forme le titre du document.\newline
+%    Il débute également un tableau à dix colonnes dans lequel seront listés les élèves à l'aide de la macro |\seq@ligne@eleve|. \newline
+%    Il définit enfin les entêtes et pieds de page.\newline
+%    L'option obligatoire \texttt{numSeq}=\meta{texte} est le numéro de la séquence dans la progression. \newline
+%    L'option obligatoire \texttt{titreSeq}=\meta{texte} est le nom de la séquence. \newline
+%    L'option obligatoire \texttt{etab}=\meta{texte} est le nom de l'établissement. \newline
+%    L'option obligatoire \texttt{classe}=\meta{texte} est le nom de la classe. \newline
+%    L'option facultative \texttt{année}=\meta{texte} est l'année scolaire. Elle est vide par défaut. \newline
+%    L'option facultative \texttt{enseignant}=\meta{texte} est le nom de l'enseignant. Elle est vide par défaut. \newline
+%	 Il n'y a pas d'option pour le theme de couleurs qui est obligatoirement gris. \medskip \newline
+%    
+%   \DescribeMacro{\seq@ligne@eleve}%
+%    La macro |\seq@ligne@eleve|\marg{eleve} met en forme une ligne du tableau contenant les élèves de la classe. \newline
+%    L'argument \meta{eleve} est obligatoire.
+%    \medskip \newline
+%    Par exemple, \newline
+%    \verb|  	\begin{titreFiche}[numSeq=01,titreSeq=Théorème de Pythagore,|\newline
+%    \verb|  	                   etab=Collège Exemple,classe=4\ieme{}A,|\newline
+%    \verb|  	                   annee=2017/2018,enseignant=L. Coste]|\newline
+%    \verb|  		\seq@ligne@eleve{Laurent COSTE}|\newline
+%    \verb|  	\end{titreFiche}|\newline
+%    donne :
+%    \begin{titreFiche}[numSeq=01,titreSeq=Théorème de Pythagore,etab=Collège Exemple,classe=4\ieme{}A,
+%                       annee=2017/2018,enseignant=L. Coste]
+%     \seq@ligne@eleve{Laurent COSTE}%
+%    \end{titreFiche}%
+%
+% \newpage
+% \section{Les différents éléments du plan de travail} \label{subsec:planOutils} \label{elementsPlan}%
+%  \subsection{Titre du plan de travail}%
+%   \DescribeEnv{titrePlan}%
+%    L'environnement |titrePlan|\oarg{options} met en forme le titre du document.\newline
+%    Il débute également un tableau à deux colonnes dans lequel viendront se placer les différents blocs.
+%    Il définit enfin les entêtes et pieds de page.\newline
+%    L'option obligatoire \texttt{numSeq}=\meta{texte} est le numéro de la séquence dans la progression. \newline
+%    L'option obligatoire \texttt{titreSeq}=\meta{texte} est le nom de la séquence. \newline
+%    L'option obligatoire \texttt{etab}=\meta{texte} est le nom de l'établissement. \newline
+%    L'option obligatoire \texttt{classe}=\meta{texte} est le nom de la classe. \newline
+%    L'option facultative \texttt{année}=\meta{texte} est l'année scolaire. Elle est vide par défaut. \newline
+%    L'option facultative \texttt{enseignant}=\meta{texte} est le nom de l'enseignant. Elle est vide par défaut. \newline
+%    L'option facultative \texttt{theme}=\meta{texte} définit le thème de couleurs utilisé.
+%     Les différentes valeurs possibles sont \textit{nombres}, \textit{donnees}, \textit{geometrie} et \textit{gris} (valeur par défaut). 
+%     Voir \ref{subsec:themes} pour leur définition.
+%
+%  \subsection{Blocs}%
+%   \DescribeEnv{bloc}%
+%    L'environnement |bloc|\marg{titre} construit une boîte comportant un titre, 
+%    dans laquelle seront listés des éléments en utilisant la macro |\item|.\newline
+%    L'argument \meta{titre} est obligatoire.
+%    \medskip \newline
+%   \DescribeEnv{blocN2}%
+%    L'environnement |blocN2| permet d'imbriquer un deuxième niveau dans le bloc en utilisant également la macro |\item|.
+%    \medskip \newline
+%    Par exemple,\newline
+%    \verb|  \begin{titrePlan}[numSeq=03,titreSeq=Proportionnalité,annee=2017/2018,| \newline
+%    \verb|      etab=Collège exemple,classe=4\ieme{}A,enseignant=L. Coste,theme=nombres]| \newline
+%    \verb|   \begin{seqBloc}{En classe}| \newline
+%    \verb|    \item Je fais les exercices de révivion| \newline
+%    \verb|    \item Je m'exerce en faisant les exercices des trois séries| \newline
+%    \verb|    \item Je pose les questions sur les difficultés rencontrées lors de mon | \newline
+%    \verb|      travail en classe ou chez moi| \newline
+%    \verb|   \end{seqBloc}| \newline
+%    \verb|   &| \newline
+%    \verb|   \begin{seqBloc}{Chez moi}| \newline
+%    \verb|    \item J'apprends mon cours et je fais ma fiche de résumé| \newline
+%    \verb|     \begin{blocN2} | \newline
+%    \verb|      \item Cours et savoir-faire pages 122 à 125 | \newline
+%    \verb|      \item Carte mentale page 128| \newline
+%    \verb|     \end{blocN2}| \newline
+%    \verb|    \item Je fais les exercices corrigés du manuel| \newline
+%    \verb|     \begin{blocN2}| \newline
+%    \verb|      \item \og Faire le point \fg{} page 128| \newline
+%    \verb|      \item Exercices numérotés sur fond vert| \newline
+%    \verb|     \end{blocN2}| \newline
+%    \verb|   \end{seqBloc}| \newline
+%    \verb|   \newline| \newline
+%    \verb|  \end{titrePlan}| \newline
+%    donne : 
+%    \newpage
+%    \begin{titrePlan}[numSeq=03,titreSeq=Proportionnalité,etab=Collège exemple,classe=4\ieme{}A,
+%                      annee=2017/2018,enseignant=L. Coste,theme=nombres]
+%    	\begin{seqBloc}{En classe}%
+%    		\item Je fais les exercices de révision
+%    		\item Je m'exerce en faisant les exercices des trois séries
+%    		\item Je pose les questions sur les difficultés rencontrées lors de mon travail en classe ou chez moi
+%    	\end{seqBloc}%
+%    	&
+%    	\begin{seqBloc}{Chez moi}%
+%    		\item J'apprends mon cours et je fais ma fiche de résumé
+%    			\begin{blocN2} 
+%    				\item Cours et savoir-faire pages 122 à 125 
+%    				\item Carte mentale page 128
+%    			\end{blocN2}%
+%    		\item Je fais les exercices corrigés du manuel
+%    			\begin{blocN2}%
+%    				\item \og Faire le point \fg{} page 128
+%    				\item Exercices numérotés sur fond vert
+%    			\end{blocN2}%
+%    	\end{seqBloc}%
+%    	\\
+%    \end{titrePlan}%
+%
+% \newpage
+% \section{Les différents éléments du livret de séquence} \label{subsec:livretOutils} \label{elementslivret}%
+%  Si la maquette du livret de séquence est libre, dans le sens où aucun élément n'est obligatoire et l'ordre des éléments présent est indifférent, 
+%  les macros et les environnements ont été pensés pour être ordonnés d'une certaine manière.\newline
+%  Certains environnements intègrent un titre à la boîte qu'ils construisent. Ils sont destinés à être utilisés une seule fois
+%  dans le document. Par exemple: la carte mentale. Ils n'est pas nécessaire d'insérer un titre de section avant ces environnements.\newline
+%  A contrario, d'autres environnements n'intrègent pas de titre: ils nécessitent un titre de section. Ils sont destinés à être
+%  utilisés plusieurs fois à la suite dans le document. Par exemple: les méthodes clés.
+%
+%  \subsection{Titre du livret de séquence}%
+%   \DescribeMacro{\titreLivret}%
+%    La macro |\titreLivret|\oarg{options} met en forme le titre du livret de séquence.\newline
+%    Elle définit les entêtes et pieds de page.\newline
+%    Elle crée les compteurs pour numéroter automatiquement les exercices de révision, les méthodes, les exercices.\newline
+%    L'option \texttt{numSeq}=\meta{texte} est le numéro de la séquence dans la progression. \newline
+%    L'option \texttt{titreSeq}=\meta{texte} est le nom de la séquence. \newline
+%    L'option \texttt{niveau}=\meta{texte} est le niveau de classe de cette séquence. \newline
+%    Ces trois options sont obligatoires. \newline
+%    L'option facultative \texttt{theme}=\meta{texte} définit le thème de couleurs utilisé.
+%     Les différentes valeurs possibles sont \textit{nombres}, \textit{donnees}, \textit{geometrie} et \textit{gris} (valeur par défaut). 
+%     Voir \ref{subsec:themes} pour leur définition.
+%   \medskip \newline
+%   Par exemple : \newline
+%   \verb|\titreLivret[numSeq=01,titreSeq=Théorème de Pythagore,niveau=quatrième,|\newline
+%   \verb|                theme=geometrie]|\newline
+%   donne :
+%	\par\vspace{20pt}%
+%	\titreLivret[numSeq=01,titreSeq=Théorème de Pythagore,niveau=quatrième,theme=geometrie]
+%
+%  \subsection{Titres de section}%
+%   \DescribeMacro{\seqTitresection}%
+%    La macro |\seqTitresection|\marg{titre} sert à inserer un titre au début d'une nouvelle section. \newline
+%    Il est placé au début d'une nouvelle page. \newline
+%    L'argument \meta{titre} est obligatoire.
+%    \medskip \newline
+%   Par exemple :\newline
+%   \verb|\seqTitresection{Exercices}| \newline
+%   donne : 
+%	\par\vspace{20pt}%
+%   \seqTitresection{Exercices}%
+%
+%  \subsection{Prérequis et objectifs}%
+%   \DescribeEnv{prerequis}%
+%    L'environnement |prerequis|\oarg{description} construit une boîte comportant un titre et une courte description, 
+%    dans laquelle seront listés les prérequis de la séquence en utilisant la macro |\item|.\newline
+%    L'argument optionnel \meta{description} permet de modifier la description par défaut.
+%   \medskip \newline
+%   \DescribeEnv{prerequisN2}%
+%    L'environnement |prerequisN2| permet d'imbriquer un deuxième niveau de prérequis en utilisant également la macro |\item|.
+%   \medskip \newline
+%   Par exemple:\newline
+%   \verb|  \begin{seqPrerequis}|\newline
+%   \verb|   \item Carré et racine carrée d'un nombre|\newline
+%   \verb|   \item Notions fondamentales concernant les triangles|\newline
+%   \verb|  \end{seqPrerequis}|\newline
+%   donne :
+%   \begin{seqPrerequis}%
+%    \item Carré et racine carrée d'un nombre
+%    \item Notions fondamentales concernant les triangles
+%   \end{seqPrerequis}%
+%
+%   \DescribeEnv{objectifs}%
+%    L'environnement |objectifs|\oarg{description} fonctionne comme l'environnement \newline
+%    |prerequis|\oarg{description} ci-avant.
+%   \medskip \newline
+%   \DescribeEnv{objectifsN2}%
+%    L'environnement |objectifsN2| fonctionne comme l'environnement |prerequisN2| ci-avant.
+%   \medskip \newline
+%    Par exemple:\newline
+%    \verb|  \begin{seqObjectif}|\newline
+%    \verb|   \item Caractériser le triangle rectangle par l'égalité de Pythagore|\newline
+%    \verb|   \item Calculer la longueur d'un côté d'un triangle rectangle|\newline
+%    \verb|   \item Démontrer qu'un triangle est rectangle ou n'est pas rectangle|\newline
+%    \verb|         en connaissant les longueurs de ses côtés|\newline
+%    \verb|  \end{seqObjectif}|\newline
+%    donne :
+%    \begin{seqObjectif}%
+%     \item Caractériser le triangle rectangle par l'égalité de Pythagore
+%     \item Calculer la longueur d'un côté d'un triangle rectangle
+%     \item Démontrer qu'un triangle est rectangle ou n'est pas rectangle en connaissant les longueurs de ses côtés
+%    \end{seqObjectif}%
+%
+%  \subsection{Révisions}%
+%   \DescribeEnv{autoEval}%
+%    L'environnement |autoEval|\oarg{description} construit une boîte comportant un titre et une courte description,
+%    dans laquelle seront regroupées les exercices de révision.\newline
+%    L'argument optionnel \meta{description} permet de modifier la description par défaut.
+%   \medskip \newline
+%   \DescribeEnv{exoAE}%
+%    L'environnement |exoAE| permet de mettre en forme un exercice révision. La numérotation des exercices est automatique.
+%   \medskip \newline
+%   \DescribeMacro{\corrigeAE}%
+%    La macro |\corrigeAE|\marg{corrige} permet de donner le corrigé de l'exercice.
+%    Elle se place à l'intérieur de l'environnement |\exoAE|.\newline
+%    L'argument obligatoire \meta{corrige} est le corrigé de l'exercice.\newline
+%    Tous les corrigés sont automatiquement regroupés en fin de document.
+%   \medskip \newline
+%    Par exemple:\newline
+%    \verb|  \begin{autoEval}|\newline
+%    \verb|   \begin{exoAE}|\newline
+%    \verb|    Calculer le carré de 16.|\newline
+%    \verb|    \corrigeAE{ Le carré de 16 se note $16^2$. Il vaut $16 \times 16 = 256$. }|\newline
+%    \verb|   \end{exoAE}|\newline
+%    \verb|   \begin{exoAE}|\newline
+%    \verb|    Donner le nom de l'hypoténuse du rectangle $RST$.|\newline
+%    \verb|    \begin{center} \begin{tikzpicture}[scale=0.5]|\newline
+%    \verb|     \coordinate (R) at (0,0); \coordinate (S) at (3,0);|\newline
+%    \verb|     \coordinate (T) at (0,5);|\newline
+%    \verb|     \draw (0,0) rectangle (0.2,0.2);|\newline
+%    \verb|     \draw (R) node[below left]{$R$} -- (S) node[below right]{$S$} --|\newline
+%    \verb|           (T) node[above]{$T$} -- cycle;|\newline
+%    \verb|    \end{tikzpicture} \end{center}|\newline
+%    \verb|    \corrigeAE{ L'hypoténuse de $RST$ est le côté à l'opposé de l'angle droit.|\newline
+%    \verb|        C'est aussi le côté le plus long du triangle. Ici, c'est $[ST]$. }|\newline
+%    \verb|   \end{exoAE}|\newline
+%    \verb|  \end{autoEval}|\newline
+%    donne :
+%    \begin{autoEval}%
+%     \begin{exoAE}%
+%      Calculer le carré de 16.
+%      \corrigeAE{Le carré de 16 se note $16^2$. Il vaut $16 \times 16 = 256$.}%
+%     \end{exoAE}%
+%     \begin{exoAE}%
+%      Donner le nom de l'hypoténuse du rectangle $RST$.
+%      \begin{center} \begin{tikzpicture}[scale=0.5]
+%         \coordinate (R) at (0,0);	\coordinate (S) at (3,0);	\coordinate (T) at (0,5);
+%         \draw (0,0) rectangle (0.2,0.2);
+%         \draw (R) node[below left]{$R$} -- (S) node[below right]{$S$} -- (T) node[above]{$T$} -- cycle;
+%      \end{tikzpicture} \end{center}%
+%      \corrigeAE{%
+%       L'hypoténuse de $RST$ est le côté à l'opposé de l'angle droit. C'est aussi le côté le plus long du triangle. 
+%       Ici, c'est $[ST]$.
+%      }%
+%     \end{exoAE}%
+%    \end{autoEval}%
+%
+%  \subsection{Carte mentale}%
+%   \DescribeEnv{carteMentale}%
+%    L'environnement |carteMentale|\oarg{description} construit une boîte comportant un titre et une courte description,
+%    dans laquelle sera placée la carte mentale représentant de manière synthétique les connaissances de la séquence.\newline
+%    L'argument optionnel \meta{description} permet de modifier la description par défaut.\newline
+%    La carte mentale elle-même est mise en forme avec l'extension \textsf{mindmap} de \TikZ.
+%    \medskip \newline
+%   Par exemple:\newline
+%    \verb|\begin{seqCarteMentale}|\newline
+%    \verb| \begin{center} \begin{tikzpicture}[small mindmap,concept color=\seqCouleurVioletVif,|\newline
+%    \verb|    level 1 concept/.style={concept color=\seqCouleurVioletModere},|\newline
+%    \verb|    every annotation/.style={fill=\seqCouleurVioletPale}]|\newline
+%    \verb|  \node [concept] {Théorème de Pythagore} [counterclockwise from=0]|\newline
+%    \verb|   child {node[concept] (egalite) {\'Egalité de Pythagore} }|\newline
+%    \verb|   child {node[concept] (hypotenuse) {Hypoténuse d'un triangle rectangle} }|\newline
+%    \verb|   child {node[concept] (racine) {Racine carrée} }|\newline
+%    \verb|   child {node[concept] (theoreme) {Le théorème} }|\newline
+%    \verb|   child {node[concept] (reciproque) {La réciproque du théorème} };|\newline
+%    \verb|  \node [annotation,above left=5pt] at (racine.north west){|\newline
+%    \verb|    La racine carrée du nombre positif $a$ est le nombre positif|\newline
+%    \verb|    $b$ tel que $b^2=a$.};|\newline
+%    \verb|  \node [annotation,left=5pt] at (racine.west){|\newline
+%    \verb|    Le symbole de la  racine carrée est $\sqrt{\phantom{ab}}$.};|\newline
+%    \verb|  \node [annotation,above left=5pt] at (hypotenuse.north){|\newline
+%    \verb|    \begin{tikzpicture}[scale=0.5, sharp corners]|\newline
+%    \verb|      \coordinate (A) at (0,0);	\coordinate (B) at (6,0);|\newline
+%    \verb|      \coordinate (C) at (0,3);|\newline
+%    \verb|      \draw (A) -- (B) -- node[above right]{hypoténuse} (C) -- cycle;|\newline
+%    \verb|      \draw (0,0) rectangle (0.3,0.3);|\newline
+%    \verb|    \end{tikzpicture}};|\newline
+%    \verb|  \node [annotation,above right=10pt] at (hypotenuse.north east){|\newline
+%    \verb|    C'est le plus grand côté du triangle.\newline |\newline
+%    \verb|    C'est le côté à l'opposé de l'angle droit.\newline|\newline
+%    \verb|    Seuls les triangles rectangles ont une hypoténuse.};|\newline
+%    \verb|  \node [annotation,left=5pt] at (theoreme.north west){|\newline
+%    \verb|    Si un triangle est rectangle, alors le carré de la longueur de l'hypoténuse |\newline
+%    \verb|    est égal à la somme des carrés des longueurs des deux autres côtés.};|\newline
+%    \verb|  \node [annotation,below left=5pt] at (theoreme.south west){|\newline
+%    \verb|    Si, dans un triangle, le carré de la longueur du plus grand côté|\newline
+%    \verb|    n'est pas égal à la somme des carrés des longueurs de deux autres côtés,|\newline
+%    \verb|    alors le triangle n'est pas rectangle.\newline|\newline
+%    \verb|    \textit{(Cet énoncé s'appelle la contraposée du théorème)}};|\newline
+%    \verb|  \node [annotation,below right=5pt] at (reciproque.south east){|\newline
+%    \verb|    Si, dans un triangle, le carré de la longueur du plus grand côté est égal|\newline
+%    \verb|    à la somme des carrés des longueurs des deux autres côtés,|\newline
+%    \verb|    alors le triangle est rectangle.};|\newline
+%    \verb|  \node [annotation,below right=5pt] at (egalite.east){|\newline
+%    \verb|    On a $BC^2=AB^2+AC^2$, c'est à dire \newline|\newline
+%    \verb|    $BC=\sqrt{AB^2+AC^2}$ et $AB=\sqrt{BC^2-AC^2}$ et $AC=\sqrt{BC^2-AB^2}$};|\newline
+%    \verb|  \node [annotation,above right=5pt] at (egalite.east){|\newline
+%    \verb|    \begin{tikzpicture}[sharp corners]|\newline
+%    \verb|      \coordinate (A) at (0,0);	\coordinate (B) at (2,0);|\newline
+%    \verb|      \coordinate (C) at (0,1);|\newline
+%    \verb|      \draw (A) -- (B) -- (C) -- cycle;|\newline
+%    \verb|      \node at (-0.5,-0.5) {$A$};	\node at (2,-0.5) {$B$};|\newline
+%    \verb|      \node at (-0.5,1) {$C$};|\newline
+%    \verb|      \draw (0,0) rectangle (0.2,0.2);|\newline
+%    \verb|    \end{tikzpicture}|\newline
+%    \verb|  };|\newline
+%    \verb| \end{tikzpicture} \end{center}|\newline
+%    \verb|\end{seqCarteMentale}|\newline
+%    donne :
+%    \begin{seqCarteMentale}%
+%     \begin{center}%
+%      \begin{tikzpicture}[small mindmap,concept color=\seqCouleurVioletVif,
+%           level 1 concept/.append style={concept color=\seqCouleurVioletModere},
+%           every annotation/.append style={fill=\seqCouleurVioletPale}]
+%    	 \node [concept] {Théorème de Pythagore} [counterclockwise from=0]
+%           child {node[concept] (egalite) {\'Egalité de Pythagore} }%
+%           child {node[concept] (hypotenuse) {Hypoténuse d'un triangle rectangle} }%
+%           child {node[concept] (racine) {Racine carrée} }%
+%           child {node[concept] (theoreme) {Le théorème} }%
+%           child {node[concept] (reciproque) {La réciproque du théorème} };
+%        \node [annotation,above left=5pt] at (racine.north west){%
+%           La racine carrée du nombre positif $a$ est le nombre positif $b$ tel que $b^2=a$.};
+%        \node [annotation,left=5pt] at (racine.west){%
+%           Le symbole de la  racine carrée est $\sqrt{\phantom{ab}}$.};
+%        \node [annotation,above left=5pt] at (hypotenuse.north){%
+%           \begin{tikzpicture}[scale=0.4, sharp corners]
+%              \coordinate (A) at (0,0);	\coordinate (B) at (6,0);	\coordinate (C) at (0,3);
+%              \draw (A) -- (B) -- node[above right]{hypoténuse} (C) -- cycle;
+%              \draw (0,0) rectangle (0.3,0.3);
+%           \end{tikzpicture}};
+%        \node [annotation,above right=10pt] at (hypotenuse.north east){%
+%           C'est le plus grand côté du triangle.\newline C'est le côté à l'opposé de l'angle droit.\newline
+%           Seuls les triangles rectangles ont une hypoténuse.};
+%        \node [annotation,left=5pt] at (theoreme.north west){%
+%           Si un triangle est rectangle, alors le carré de la longueur de l'hypoténuse est égal 
+%           à la somme des carrés des longueurs des deux autres côtés.};
+%        \node [annotation,below left=5pt] at (theoreme.south west){%
+%           Si, dans un triangle, le carré de la longueur du plus grand côté n'est pas égal 
+%           à la somme des carrés des longueurs des deux autres côtés, alors le triangle n'est pas rectangle.\newline
+%           \textit{(Cet énoncé s'appelle la contraposée du théorème)}};
+%        \node [annotation,below right=5pt] at (reciproque.south east){%
+%           Si, dans un triangle, le carré de la longueur du plus grand côté est égal à la somme des carrés
+%           des longueurs de deux autres côtés, alors le triangle est rectangle.};
+%        \node [annotation,below right=5pt] at (egalite.east){%
+%           On a $BC^2=AB^2+AC^2$, c'est à dire \newline
+%           $BC=\sqrt{AB^2+AC^2}$ et $AB=\sqrt{BC^2-AC^2}$ et $AC=\sqrt{BC^2-AB^2}$};
+%        \node [annotation,above right=5pt] at (egalite.east){%
+%           \begin{tikzpicture}[sharp corners]
+%              \coordinate (A) at (0,0);	\coordinate (B) at (2,0);	\coordinate (C) at (0,1);
+%              \draw (A) -- (B) -- (C) -- cycle;
+%              \node at (-0.5,-0.5) {$A$};	\node at (2,-0.5) {$B$};	\node at (-0.5,1) {$C$};
+%              \draw (0,0) rectangle (0.2,0.2);
+%           \end{tikzpicture}%
+%       };
+%     \end{tikzpicture} \end{center}%
+%    \end{seqCarteMentale}%
+%
+%  \subsection{Méthodes clés}%
+%   \DescribeEnv{methode}%
+%    L'environnement |methode|\marg{titre}\marg{enonce} construit une boîte comportant un titre et contenant deux parties:
+%    l'énoncé des exercices tout d'abord, et leurs corrigés ensuite.\newline
+%    L'argument obligatoire \meta{titre} est le titre de la méthode. \newline
+%    L'argument obligatoire \meta{enonce} est l'enoncé des exercices.\newline
+%    Les méthodes sont numérotées automatiquement.
+%    \medskip \newline
+%   Par exemple:\newline
+%   \verb|  \begin{seqMethode}{Calculer la longueur de l'hypoténuse d'un triangle rectangle}{|\newline
+%   \verb|    Le triangle $ABC$ est un triangle rectangle en $A$ tel que $AB=12$ cm|\newline
+%   \verb|    et $AC=5$ cm. \newline Calculer la longueur de $[BC]$.|\newline
+%   \verb|   }|\newline
+%   \verb|   \begin{multicols}{2}|\newline
+%   \verb|    Je commence par faire une figure.\newline|\newline
+%   \verb|    Le triangle $ABC$ étant rectangle en $A$, le théorème de Pythagore permet |\newline
+%   \verb|    d'écrire l'égalité de Pythagore: \newline $AB^2+AC^2=BC^2$\newline|\newline
+%   \verb|    Je calcule $AB^2=12^2=144$ et $AC^2=5^2=25$. |\newline
+%   \verb|    Ainsi, $BC^2=144+25=169$.\newline|\newline
+%   \verb|    Je calcule ensuite la racine carrée de 169 avec la calculatrice: | \newline
+%   \verb|    $\sqrt{169}=13$.\newline|\newline
+%   \verb|    Finalement, $BC=13$ cm.|\newline
+%   \verb|    \begin{center} \begin{tikzpicture}[scale=0.35]|\newline
+%   \verb|     \coordinate (A) at (0,0); \coordinate (B) at (12,0); |\newline
+%   \verb|     \coordinate (C) at (0,5);|\newline
+%   \verb|     \draw (A) node[below left]{$A$} -- node[below]{$12$ cm}|\newline
+%   \verb|       (B) node[below right]{$B$} -- node[above right]{longueur à calculer}|\newline
+%   \verb|       (C) node[above]{$C$} -- node[left]{$5$ cm} cycle;|\newline
+%   \verb|     \draw (0,0) rectangle (0.4,0.4);|\newline
+%   \verb|    \end{tikzpicture} \end{center}|\newline
+%   \verb|   \end{multicols}|\newline
+%   \verb|  \end{seqMethode}|\newline
+%   donne :
+%   \begin{seqMethode}{Calculer la longueur de l'hypoténuse d'un triangle rectangle}{%
+%     Le triangle $ABC$ est un triangle rectangle en $A$ tel que $AB=12$ cm et $AC=5$ cm.\newline Calculer la longueur de $[BC]$.
+%    }%
+%    \begin{multicols}{2}%
+%     Je commence par faire une figure.\newline
+%     Le triangle $ABC$ étant rectangle en $A$, le théorème de Pythagore permet d'écrire l'égalité de Pythagore:\newline
+%     $AB^2+AC^2=BC^2$\newline
+%     Je calcule $AB^2=12^2=144$ et $AC^2=5^2=25$. Ainsi, $BC^2=144+25=169$.\newline
+%     Je calcule ensuite la racine carrée de 169 avec la calculatrice: $\sqrt{169}=13$.\newline
+%     Finalement, $BC=13$ cm.
+%     \begin{center} \begin{tikzpicture}[scale=0.35]
+%      \coordinate (A) at (0,0);	\coordinate (B) at (12,0);	\coordinate (C) at (0,5);
+%      \draw (A) node[below left]{$A$} -- node[below]{$12$ cm} (B) node[below right]{$B$} -- 
+%       node[above right]{longueur à calculer} (C) node[above]{$C$} -- node[left]{$5$ cm} cycle;
+%      \draw (0,0) rectangle (0.4,0.4);
+%     \end{tikzpicture} \end{center}%
+%    \end{multicols}%
+%   \end{seqMethode}%
+%
+%  \subsection{Séries d'exercices et exercices}%
+%   \DescribeEnv{serieExos}%
+%    L'environnement |serieExos|\oarg{titre} construit une boîte comportant un titre, dans laquelle seront regroupés les exercices correspondants. Il saute une page quand il se termine. \newline
+%    L'argument optionnel \meta{titre} est le titre de la série d'exercices.
+%    \medskip \newline
+%   \DescribeEnv{exercice}%
+%    L'environnement |exercice|\oarg{titre} numérote automatiquement l'exercice dans la série à laquelle il appartient.\newline
+%    L'argument optionnel \meta{titre} est le titre de l'exercice, vide par défaut.
+%    \medskip \newline
+%   \DescribeMacro{\seqCorrige}%
+%    La macro |\seqCorrige|\marg{corrige} permet de donner le corrigé de l'exercice. Elle se place à l'intérieur de l'environnement |\exercice|.\newline
+%    L'argument obligatoire \meta{corrige} est le texte du corrigé.\newline
+%    Tous les corrigés sont automatiquement regroupés en fin de document.
+%    \medskip \newline
+%   Par exemple:\newline
+%   \verb|  \begin{seqSerieExos}{fondamentale}|\newline
+%   \verb|   \begin{seqExercice}|\newline
+%   \verb|    Calculer les nombres suivants.|\newline
+%   \verb|    \begin{seqColEnum}[3]|\newline
+%   \verb|     \item $3^2$ \item $10^2$ \item $9^2$ \item $4^2+5^2$|\newline
+%   \verb|     \item $7^2+3^2$ \item $9^2+6^2$|\newline
+%   \verb|    \end{seqColEnum}|\newline
+%   \verb|    \seqCorrige{|\newline
+%   \verb|     Je calcule les résultats des expressions :|\newline
+%   \verb|     \begin{seqColEnum}[3]|\newline
+%   \verb|      \item $3^2 = 3 \times 3 = 9$ \item $10^2 = 10 \times 10 = 100$|\newline
+%   \verb|      \item $9^2 = 9 \times 9 = 81$ \item $4^2 + 5^2 = 16 + 25 = 41$|\newline
+%   \verb|      \item $7^2 + 3^2 = 49 + 9 = 58$ \item $9^2 + 6^2 = 81 + 36 = 117$|\newline
+%   \verb|     \end{seqColEnum}|\newline
+%   \verb|    }|\newline
+%   \verb|   \end{seqExercice}|\newline
+%   \verb|   \begin{seqExercice}|\newline
+%   \verb|    Trouver tous les triangles rectangles dans la figure ci-dessous.\newline|\newline
+%   \verb|    Pour chacun, nommer son hypoténuse.|\newline
+%   \verb|    \begin{center} \begin{tikzpicture}[scale=0.5]|\newline
+%   \verb|     \tkzInit[ymin=-1,ymax=7,xmin=-1,xmax=10] \tkzClip|\newline
+%   \verb|     \tkzDefPoint(0,0){C} \tkzDefPoint(6,0){B} \tkzDefPoint(0,3){A}|\newline
+%   \verb|     \tkzDefLine[perpendicular=through C](A,B) \tkzGetPoint{m}|\newline
+%   \verb|     \tkzInterLL(C,m)(A,B) \tkzGetPoint{F}|\newline
+%   \verb|     \tkzDefPointBy[translation= from C to F](A) \tkzGetPoint{D}|\newline
+%   \verb|     \tkzDefPointBy[rotation=center B angle -90](D) \tkzGetPoint{n}|\newline
+%   \verb|     \tkzDefPointBy[homothety=center B ratio .4](n) \tkzGetPoint{E}|\newline
+%   \verb|     \tkzDrawPolygon(A,B,C) \tkzDrawPolygon(A,B,D)|\newline
+%   \verb|     \tkzDrawPolygon(A,F,C) \tkzDrawPolygon(B,D,E)|\newline
+%   \verb|     \tkzMarkRightAngle(B,C,A) \tkzMarkRightAngle(B,A,D)|\newline
+%   \verb|     \tkzMarkRightAngle(A,F,C) \tkzMarkRightAngle(E,B,D)|\newline
+%   \verb|     \tkzLabelPoints[above](D,F) \tkzLabelPoints[below](B,C)|\newline
+%   \verb|     \tkzLabelPoints[left](A) \tkzLabelPoints[right](E)|\newline
+%   \verb|    \end{tikzpicture} \end{center}|\newline
+%   \verb|    \seqCorrige{|\newline
+%   \verb|     Le triangle $ABC$ a pour hypoténuse $AB$. \quad|\newline
+%   \verb|     Le triangle $ABD$ a pour hypoténuse $DB$. \newline|\newline
+%   \verb|     Le triangle $BDE$ a pour hypoténuse $DE$. \quad|\newline
+%   \verb|     Le triangle $AFC$ a pour hypoténuse $AC$. \newline|\newline
+%   \verb|     Le triangle $BFC$ a pour hypoténuse $BC$.|\newline
+%   \verb|    }|\newline
+%   \verb|   \end{seqExercice}|\newline
+%   \verb|  \end{seqSerieExos}|\newline
+%   donne : 
+%   \newpage
+%   \begin{seqSerieExos}{fondamentale}%
+%    \begin{seqExercice}[nom=carrés]
+%     Calculer les nombres suivants.
+%     \begin{seqColEnum}[nbCols=3]
+%      \item $3^2$	\item $10^2$	\item $9^2$	\item $4^2+5^2$
+%      \item $7^2+3^2$	\item $9^2+6^2$
+%     \end{seqColEnum}%
+%     \seqCorrige{%
+%      Je calcule les résultats des expressions :
+%      \begin{seqColEnum}[nbCols=3]
+%       \item $3^2 = 3 \times 3 = 9$
+%       \item $10^2 = 10 \times 10 = 100$
+%       \item $9^2 = 9 \times 9 = 81$
+%       \item $4^2 + 5^2 = 16 + 25 = 41$
+%       \item $7^2 + 3^2 = 49 + 9 = 58$
+%       \item $9^2 + 6^2 = 81 + 36 = 117$
+%      \end{seqColEnum}%
+%     }%
+%    \end{seqExercice}%
+%    \begin{seqExercice}%
+%     Trouver tous les triangles rectangles dans la figure ci-dessous. \newline Pour chacun, nommer son hypoténuse.
+%     \begin{center} \begin{tikzpicture}[scale=0.5]
+%      \tkzInit[ymin=-1,ymax=7,xmin=-1,xmax=10] \tkzClip
+%      \tkzDefPoint(0,0){C} \tkzDefPoint(6,0){B} \tkzDefPoint(0,3){A}%
+%      \tkzDefLine[perpendicular=through C](A,B) \tkzGetPoint{m}%
+%      \tkzInterLL(C,m)(A,B) \tkzGetPoint{F}%
+%      \tkzDefPointBy[translation= from C to F](A) \tkzGetPoint{D}%
+%      \tkzDefPointBy[rotation=center B angle -90](D) \tkzGetPoint{n}%
+%      \tkzDefPointBy[homothety=center B ratio .4](n) \tkzGetPoint{E}%
+%      \tkzDrawPolygon(A,B,C)	\tkzDrawPolygon(A,B,D)	\tkzDrawPolygon(A,F,C)	\tkzDrawPolygon(B,D,E)
+%      \tkzMarkRightAngle(B,C,A)	\tkzMarkRightAngle(B,A,D)	\tkzMarkRightAngle(A,F,C)	\tkzMarkRightAngle(E,B,D)
+%      \tkzLabelPoints[above](D,F)	\tkzLabelPoints[below](B,C)	\tkzLabelPoints[left](A)	\tkzLabelPoints[right](E)
+%     \end{tikzpicture} \end{center}%
+%    \seqCorrige{%
+%     Le triangle $ABC$ a pour hypoténuse $AB$. \quad Le triangle $ABD$ a pour hypoténuse $DB$. \newline
+%     Le triangle $BDE$ a pour hypoténuse $DE$. \quad Le triangle $AFC$ a pour hypoténuse $AC$. \newline
+%     Le triangle $BFC$ a pour hypoténuse $BC$.
+%    }%
+%   \end{seqExercice}%
+%  \end{seqSerieExos}%
+%
+%  \subsection{Affichage des corrigés}%
+%   \DescribeMacro{\seqAfficheCorriges}%
+%    La macro |\seqAfficheCorriges| permet d'afficher les corrigés de tous les exercices, y compris les révisions.
+%    Elle se place à la fin du document.
+%    \medskip \newline
+%    Exemple avec les exercices de ce document:
+%    \seqAfficheCorriges
+%
+% \newpage
+% \section{Les différents éléments de l'évaluation bilan} \label{subsec:evalOutils} \label{elementsEval}%
+%  \subsection{Titre de l'évaluation bilan}%
+%   \DescribeMacro{\titreEval}%
+%    La macro |\titreEval|\oarg{options} met en forme le titre de l'évaluation.\newline
+%    Elle définit les entêtes et pieds de page.\newline
+%    Elle crée les compteurs pour numéroter automatiquement les exercices.\newline
+%    L'option \texttt{numSeq}=\meta{texte} est le numéro de la séquence dans la progression. \newline
+%    L'option \texttt{titreSeq}=\meta{texte} est le nom de la séquence. \newline
+%    L'option \texttt{niveauDiff}=\meta{texte} est le niveau de difficulté de cette évaluation. Elle peut prendre les valeurs \texttt{fondamental}, \texttt{avancé} ou \texttt{exploration}. \newline
+%    L'option \texttt{etab}=\meta{texte} est le nom de l'établissement. \newline
+%    L'option \texttt{classe}=\meta{texte} est le nom de la classe. \newline
+%    Ces cinq options sont obligatoires. \newline
+%    L'option facultative \texttt{theme}=\meta{texte} définit le thème de couleurs utilisé.
+%     Les différentes valeurs possibles sont \textit{nombres}, \textit{donnees}, \textit{geometrie} et \textit{gris} (valeur par défaut). 
+%     Voir \ref{subsec:themes} pour leur définition.
+%   \medskip \newline
+%   Par exemple : \newline
+%   \verb|\titreEval[numSeq=01,titreSeq=Proportionnalité,niveauDiff=fondamental]| \newline
+%   \verb|           etab=collège Exemple,classe=4\ieme{}A,theme=nombres]| \newline
+%   donne
+%	\par\vspace{20pt}%
+%	\titreEval[numSeq=01,titreSeq=Proportionnalité,niveauDiff=fondamental,
+%              etab=collège Exemple,classe=4\ieme{}A,theme=nombres]
+%
+%  \subsection{Barème de l'évaluation bilan}%
+%   \DescribeEnv{bareme}%
+%    L'environnement |bareme| construit une boîte comportant un titre et une courte description, 
+%    dans laquelle seront listés les prérequis de la séquence en utilisant la macro |\baremeItem|.\newline
+%    L'argument optionnel \meta{description} permet de modifier la description par défaut.
+%   \medskip \newline
+%   \DescribeMacro{\baremeItem}%
+%    La macro |\baremeItem|\marg{nom}\marg{points} met en forme une ligne du barème.\newline
+%    L'argument obligatoire \meta{nom} est le nom de l'exercice. \newline
+%    L'argument obligatoire \meta{points} est le nombre de points de l'exercice. 
+%    \medskip \newline
+%   Par exemple : \newline
+%   \verb|\begin{bareme}| \newline
+%   \verb|	\baremeItem{QCM}{5 points}| \newline
+%   \verb|	\baremeItem{Exercice II}{6 points}| \newline
+%   \verb|	\baremeItem{Présentation de la copie et usage de la langue française}{1 point}| \newline
+%   \verb|\end{bareme}| \newline
+%   donne
+%	\par\vspace{20pt}%
+%   \begin{bareme}%
+%   	\baremeItem{QCM}{5 points}%
+%   	\baremeItem{Exercice II}{6 points}%
+%   	\baremeItem{Présentation de la copie et usage de la langue française}{1 point}%
+%   \end{bareme}%
+%
+%  \subsection{Exercices de l'évaluation bilan}%
+%   \subsubsection{Corrigé d'un exercice} \label{subsec:corrExoEval}%
+%    \DescribeMacro{\corrigeExoEval}%
+%    La macro |\corrigeExoEval|\marg{corrige} permet de donner le corrigé de l'exercice. \newline
+%    Elle se place à l'intérieur de l'environnement |qcm| ou |exerciceEval|.\newline
+%    L'argument obligatoire \meta{corrige} est le texte du corrigé.\newline
+%    Tous les corrigés sont automatiquement regroupés en fin d'évaluation. \newline
+%    Des exemples d'utilisation sont donnés dans le paragraphes suivants.
+%
+%   \subsubsection{QCM}%
+%   Les QCM sont mis en forme de manière particulière par rapport aux autres exercices, par l'utilisation des macros et environnements suivants.
+%   \medskip \newline
+%   \DescribeEnv{qcm}%
+%    L'environnement |qcm|\oarg{options} met en forme le titre du qcm ainsi que les instructions pour y répondre.\newline
+%    Il débute également un tableau dans lequel on placera les différentes questions composant le qcm en utilisant la macro |\qcmItem|.\newline
+%    Les réponses possibles sont automatiquement nommées \texttt{A}, \texttt{B}, etc. \newline
+%    Le corrigé du QCM est donné en utilisant la macro |\corrigeExoEval| décrite ci-dessus. \newline
+%    L'option \texttt{ptOK}=\meta{texte} est le nombre de point(s) que rapporte une bonne réponse. \newline
+%    L'option \texttt{ptKO}=\meta{texte} est le nombre de point(s) que rapporte une réponse partielle ou qu'enlève une mauvaise réponse. \newline
+%    L'option \texttt{nbReps}=\meta{nombre} est le nombre de réponses pour chaque question. Il vaut 3 par défaut.\newline
+%    L'option \texttt{largeurQuestion}=\meta{nombre} est la pondération de la largeur de la colonne pour la question. Elle vaut 3 par défaut. \newline
+%    L'option \texttt{largeurRep}=\meta{nombre} est la pondération de la largeur de chaque colonne de réponse. Elle vaut 1 par défaut. \newline
+%    Les options \texttt{ptOK} et \texttt{ptKO} sont obligatoires.
+%   \medskip \newline
+%   \DescribeMacro{\qcmItem}%
+%    La macro |\qcmItem|\marg{enonce} met en forme une ligne du QCM.\newline
+%    L'argument obligatoire \meta{enonce} est l'énoncé complet : il comprend la question et toutes les réponses possibles.
+%    Chaque élément doit être séparé du suivant par un \&.
+%    \medskip \newline
+%   Par exemple : \newline
+%   \verb|\begin{qcm}[ptOK=un point,ptPartiel=un demi-point,ptKO=un quart de point]| \newline
+%   \verb| \qcmItem{| \newline
+%   \verb|  Quels tableaux représentent une situation de proportionnalité ? &| \newline
+%   \verb|  \begin{tblr}{X[r] *{2}{X[r]}}| \newline
+%   \verb|   \hline 0 & 5 & 7 \\ \hline 6 & 30 & 42 \\ \hline| \newline
+%   \verb|  \end{tblr} &| \newline
+%   \verb|  \begin{tblr}{X[r] *{2}{X[r]}}| \newline
+%   \verb|   \hline 6 & 8 & 14 \\ \hline 9 & 12 & 21 \\ \hline| \newline
+%   \verb|  \end{tblr} &| \newline
+%   \verb|  \begin{tblr}{X[r] *{2}{X[r]}}| \newline
+%   \verb|   \hline 5 & 6 & 7 \\ \hline 8 & 9,6 & 11,2 \\ \hline| \newline
+%   \verb|  \end{tblr}| \newline
+%   \verb| }| \newline
+%   \verb| \corrigeExoEval{| \newline
+%   \verb|  \begin{seqColEnum}[nbCols=1]| \newline
+%   \verb|   \item Les réponses \textbf{B} et \textbf{C} sont correctes. \newline| \newline
+%   \verb|    Pour \textbf{A} : | \newline
+%   \verb|     sur la première colonne, 0, et pas 6, devrait correspondre à 0. \newline| \newline
+%   \verb|    Pour \textbf{B} : | \newline
+%   \verb|     on passe de la première à la deuxième ligne en multipliant par | \newline
+%   \verb|     1,5 pour toutes les colonnes. \newline| \newline
+%   \verb|    Pour \textbf{C} : | \newline
+%   \verb|     on passe de la première à la deuxième ligne en multipliant par | \newline
+%   \verb|     1,6 pour toutes les colonnes. \newline| \newline
+%   \verb|  \end{seqColEnum}| \newline
+%   \verb| }| \newline
+%   \verb|\end{qcm}| \newline
+%   donne :
+%   \begin{qcm}[ptOK=un point,ptPartiel=un demi-point,ptKO=un quart de point,nbReps=3,largeurQuestion=2,largeurRep=1]
+%   	\qcmItem{%
+%   		Quels tableaux représentent une situation de proportionnalité ? &
+%   		\begin{tblr}{X[r] *{2}{X[r]}} \hline 0 & 5 & 7 \\ \hline 6 & 30 & 42 \\ \hline \end{tblr} &
+%   		\begin{tblr}{X[r] *{2}{X[r]}} \hline 6 & 8 & 14 \\ \hline 9 & 12 & 21 \\ \hline \end{tblr} &
+%   		\begin{tblr}{X[r] *{2}{X[r]}} \hline 5 & 6 & 7 \\ \hline 8 & 9,6 & 11,2 \\ \hline \end{tblr}%
+%   	}%
+%		\corrigeExoEval{%
+%   		\begin{seqColEnum}[nbCols=1]
+%   			\item Les réponses \textbf{B} et \textbf{C} sont correctes. \newline
+%   				Pour \textbf{A} : sur la première colonne, 0, et pas 6, devrait correspondre à 0. \newline
+%   				Pour \textbf{B} : on passe de la première à la deuxième ligne en multipliant par 1,5 pour toutes les colonnes. \newline
+%   				Pour \textbf{C} : on passe de la première à la deuxième ligne en multipliant par 1,6 pour toutes les colonnes. \newline
+%   		\end{seqColEnum}%
+%   	}%
+%   \end{qcm}%
+%
+%   \subsubsection{Autres exercices}%
+%    Les autres exercices de l'évaluation sont mis en forme avec l'environnement suivant :
+%    \medskip \newline
+%    \DescribeEnv{exerciceEval}%
+%     L'environnement |exerciceEval|\oarg{titre} numérote automatiquement l'exercice. \newline
+%     Il insere une boîte de titre au début de l'exercice. \newline
+%     L'argument \meta{titre} est facultatif.
+%     Le corrigé du QCM est donné en utilisant la macro |\corrigeExoEval| décrite au \ref{subsec:corrExoEval}.
+%     \medskip \newline
+%    Par exemple : \newline
+%    \verb|\begin{exerciceEval}[nom=avec les pieds]| \newline
+%    \verb| Le pied (en anglais \textit{foot} noté ft) est une unité de longueur | \newline
+%    \verb| anglo-saxonne : 5000\,ft correspondent à 1524\,m.| \newline
+%    \verb| \begin{seqColEnum}| \newline
+%    \verb|  \item Un ULM vole à 800\,m d'altitude. Convertir cette altitude en pieds. | \newline
+%    \verb|     Donner une valeur approchée à l'unité près.| \newline
+%    \verb|   \begin{center} | \newline
+%    \verb|    \includegraphics[scale=0.2]{Images/EvalFondamentalExo2Enonce.jpg}| \newline
+%    \verb|   \end{center}| \newline
+%    \verb|  \item Pour les appareils qui effectuent des vols \og à vue \fg{}, la limite | \newline
+%    \verb|    de survol de certaines villes est fixée à 3300\,ft.| \newline
+%    \verb|    Convertir cette altitude en mètres.| \newline
+%    \verb|  \item Pour effectuer les calculs plus facilement, Noah utilise 30\,cm comme | \newline
+%    \verb|    correspondance pour 1\,ft.| \newline
+%    \verb|    Pour une altitude de 200\,ft, quelle est la différence, en cm, | \newline
+%    \verb|    entre la mesure de Noah et la valeur exacte ?| \newline
+%    \verb| \end{seqColEnum}| \newline
+%    \verb| \corrigeExoEval{| \newline
+%    \verb|  \begin{seqColEnum}| \newline
+%    \verb|   \item Pour convertir la valeur, j'utilise un tableau de proportionnalité : | \newline
+%    \verb|    \begin{center} \begin{tblr}{X[2,r] *{2}{X[r]}}| \newline
+%    \verb|     \hline En mètres & 1524 & 800 \\ \hline En pieds & 5000 & $x$ \\ \hline| \newline
+%    \verb|    \end{tblr} \end{center}| \newline
+%    \verb|    Je calcule en utilisant le produit en croix : | \newline
+%    \verb|    $x=5000 \times 800 \div 1524 \approx 2625$. \newline| \newline
+%    \verb|    800\;m correspond environ à 2625\;ft.| \newline
+%    \verb|   \item Pour convertir la valeur, j'utilise un tableau de proportionnalité : | \newline
+%    \verb|    \begin{center} \begin{tblr}{X[2,r] *{2}{X[r]}}| \newline
+%    \verb|     \hline En mètres & 1524 & $x$ \\ \hline En pieds & 5000 & 3300 \\ \hline| \newline
+%    \verb|    \end{tblr} \end{center}| \newline
+%    \verb|    Je calcule en utilisant le produit en croix : | \newline
+%    \verb|    $x=3300 \times 1524 \div 5000 = 1005,84$. \newline| \newline
+%    \verb|    3300\;ft correspond à 1005,84\;m.| \newline
+%    \verb|   \item Pour convertir la valeur réelle, j'utilise un tableau de | \newline
+%    \verb|    proportionnalité : | \newline
+%    \verb|    \begin{center} \begin{tblr}{X[2,r] *{2}{X[r]}}| \newline
+%    \verb|     \hline En mètres & 1524 & $x$ \\ \hline En pieds & 5000 & 200 \\ \hline| \newline
+%    \verb|    \end{tblr} \end{center}| \newline
+%    \verb|    Je calcule en utilisant le produit en croix : | \newline
+%    \verb|    $x=200 \times 1524 \div 5000 = 60,96$. \newline| \newline
+%    \verb|    200\;ft correspond à 60,96\;m soit 6096\;cm. \newline| \newline
+%    \verb|    J'utilise maintenant la méthode de Noah : $30 \times 200 = 6000$.| \newline
+%    \verb|    Pour lui, 200\;ft correspond à 6000\;cm. \newline| \newline
+%    \verb|    Il y a 96\;cm d'écart entre les deux valeurs.| \newline
+%    \verb|  \end{seqColEnum}| \newline
+%    \verb| }| \newline
+%    \verb|\end{exerciceEval}| \newline
+%    donne
+%    \begin{exerciceEval}[nom=avec les pieds]
+%    	Le pied (en anglais \textit{foot} noté ft) est une unité de longueur anglo-saxonne : 5000\,ft correspondent à 1524\,m.
+%    		\begin{seqColEnum}%
+%    			\item Un ULM vole à 800\,m d'altitude. Convertir cette altitude en pieds. Donner une valeur approchée à l'unité près.
+%    			\item Pour les appareils qui effectuent des vols \og à vue \fg{}, la limite de survol de certaines villes est fixée à 3300\,ft.
+%    					Convertir cette altitude en mètres.
+%    			\item Pour effectuer les calculs plus facilement, Noah utilise 30\,cm comme correspondance pour 1\,ft.
+%    					Pour une altitude de 200\,ft, quelle est la différence, en cm, entre la mesure de Noah et la valeur exacte ?
+%    		\end{seqColEnum}%
+%    	\corrigeExoEval{%
+%        \begin{seqColEnum}%
+%         \item Pour convertir la valeur, j'utilise un tableau de proportionnalité : 
+%          \begin{center} \begin{tblr}{X[2,r] *{2}{X[r]}}%
+%           \hline En mètres & 1524 & 800 \\ \hline En pieds & 5000 & $x$ \\ \hline
+%          \end{tblr} \end{center}%
+%          Je calcule en utilisant le produit en croix : $x=5000 \times 800 \div 1524 \approx 2625$. \newline
+%          800\;m correspond environ à 2625\;ft.
+%         \item Pour convertir la valeur, j'utilise un tableau de proportionnalité : 
+%          \begin{center} \begin{tblr}{X[2,r] *{2}{X[r]}}%
+%           \hline En mètres & 1524 & $x$ \\ \hline En pieds & 5000 & 3300 \\ \hline
+%          \end{tblr} \end{center}%
+%          Je calcule en utilisant le produit en croix : $x=3300 \times 1524 \div 5000 = 1005,84$. \newline
+%          3300\;ft correspond à 1005,84\;m.
+%         \item Pour convertir la valeur réelle, j'utilise un tableau de proportionnalité : 
+%          \begin{center} \begin{tblr}{X[2,r] *{2}{X[r]}}%
+%           \hline En mètres & 1524 & $x$ \\ \hline En pieds & 5000 & 200 \\ \hline
+%          \end{tblr} \end{center}%
+%          Je calcule en utilisant le produit en croix : $x=200 \times 1524 \div 5000 = 60,96$. \newline
+%          200\;ft correspond à 60,96\;m soit 6096\;cm. \newline
+%          J'utilise maintenant la méthode de Noah : $30 \times 200 = 6000$.
+%          Pour lui, 200\;ft correspond à 6000\;cm. \newline
+%          Il y a 96\;cm d'écart entre les deux valeurs.
+%        \end{seqColEnum}%
+%    	}%
+%    \end{exerciceEval}%
+%
+%  \subsection{Affichage du corrigé de l'évaluation}%
+%   \DescribeMacro{\afficheCorrigesEval}%
+%    La macro |\afficheCorrigesEval| permet d'afficher les corrigés de tous les exercices, y compris les QCM, sur une nouvelle page impaire.
+%    Elle se place à la fin de l'évaluation.
+%    \medskip \newline
+%    Exemple avec les exercices de cette évaluation sur la prochaine page impaire :
+%    \afficheCorrigesEval
+
+% \newpage
+% \section{Chargement des données pédagogiques} \label{sec:donnees}%
+%  Le paquet \texttt{seqenseigne} peut exploiter des bases de données pédagogiques
+%  (objectifs, connaissances, séquences) stockées dans des fichiers \texttt{.dbtex}%
+%  précompilés avec l'outil \texttt{datatooltk-gui}.
+%  Cette fonctionnalité est optionnelle : les macros structurelles du livret et de
+%  l'évaluation fonctionnent sans elle, mais les macros \texttt{Get*} et les tableaux
+%  automatiques (tableau d'objectifs, tableau de prérequis) l'exigent.
+%
+%  \subsection{Organisation des fichiers de données}%
+%   Les bases sont organisées par cycle. Les fichiers attendus sont :
+%   \begin{seqColItem}[nbCols=1]
+%    \item \texttt{param\_niveaux.dbtex} : correspondance codes niveaux / cycles
+%    \item \texttt{C03\_themes.dbtex}, \texttt{C03\_sequences.dbtex},
+%          \texttt{C03\_connaissances.dbtex}, \texttt{C03\_objectifs.dbtex}%
+%    \item \texttt{C04\_themes.dbtex}, \texttt{C04\_sequences.dbtex},
+%          \texttt{C04\_attendus\_fin\_C03.dbtex},
+%          \texttt{C04\_connaissances.dbtex}, \texttt{C04\_objectifs.dbtex}%
+%   \end{seqColItem}%
+%   Par convention ces fichiers sont trois niveaux au-dessus du document compilé
+%   (\texttt{../../../}). Ce chemin est modifiable avec |\seqSetDataPath|.
+%
+%  \subsection{Chargement principal}%
+%   \DescribeMacro{\seqLoadData}%
+%    |\seqLoadData| charge l'ensemble des bases cycles 3 et 4. Elle doit être appelée
+%    \emph{une seule fois}, avant tout appel aux macros \texttt{Get*}.
+%   \medskip \newline
+%   \DescribeMacro{\seqSetDataPath}%
+%    |\seqSetDataPath|\marg{chemin} modifie le répertoire de recherche des \texttt{.dbtex}.
+%    Le \meta{chemin} doit se terminer par un \texttt{/}.\newline
+%    Exemple pour un document au même niveau que les bases :\newline
+%    \verb|\seqSetDataPath{./}| \newline
+%    \verb|\seqLoadData|
+%
+%  \subsection{Macros d'accès}%
+%   \DescribeMacro{\seqNiveauGetNomCourt}%
+%    |\seqNiveauGetNomCourt|\marg{codeNiveau} : nom court (ex.~\texttt{N11} $\to$ \og quatrième \fg{}).
+%   \medskip \newline
+%   \DescribeMacro{\seqSequenceGetNom}%
+%    |\seqSequenceGetNom|\marg{codeNiveau}\marg{codeSequence} : titre de la séquence.
+%   \medskip \newline
+%   \DescribeMacro{\seqSequenceGetNumero}%
+%    |\seqSequenceGetNumero|\marg{codeNiveau}\marg{codeSequence} : numéro dans la progression.
+%   \medskip \newline
+%   \DescribeMacro{\seqObjectifGetNom}%
+%    |\seqObjectifGetNom|\marg{codeNiveau}\marg{codeSequence}\marg{codeObjectif} : libellé d'un objectif.
+%   \medskip \newline
+%   \DescribeMacro{\seqConnaissanceGetNom}%
+%    |\seqConnaissanceGetNom|\marg{codeNiveau}\marg{codeSequence}\marg{codeConnaissance} : libellé d'une connaissance.
+%   \medskip \newline
+%   \DescribeMacro{\seqSetColors}%
+%    |\seqSetColors|\marg{codeNiveau}\marg{codeSequence} : règle le thème de couleurs
+%    d'après le thème de la séquence dans les bases.
+%
+%  \subsection{Tableaux automatiques}%
+%   \DescribeMacro{\seqTableauObjectifs}%
+%    |\seqTableauObjectifs|\oarg{niveau=\meta{code},sequence=\meta{code}} : tableau
+%    récapitulatif des critères de maîtrise (Très bon / Satisfaisant / À consolider).
+%   \medskip \newline
+%   \DescribeMacro{\seqTableauPrerequis}%
+%    |\seqTableauPrerequis|\oarg{niveau=\meta{code},sequence=\meta{code}} : tableau
+%    de prérequis adapté au niveau (attendus fin de cycle pour N10, objectifs des années
+%    précédentes pour N08, N09, N11, N12).
+%
+% \newpage
+% \section{Plan de travail automatique} \label{sec:plan}%
+%  Le plan automatique exploite les bases pour générer objectifs et répartition des séances.
+%
+%  \subsection{Titre}%
+%   \DescribeMacro{\seqBoiteTitrePlan}%
+%    |\seqBoiteTitrePlan|\oarg{options} : boîte de titre utilisant |\seqCodeSequence|,
+%    |\annee|, |\nomClasse| et |\nomCollege|.\newline
+%    Options : \texttt{afficheSeq=oui|non}, \texttt{affichePlan=oui|non},
+%    \texttt{titre=}\meta{texte} (obligatoire).
+%
+%  \subsection{Bloc objectif}%
+%   \DescribeMacro{\seqPlanObjectif}%
+%    |\seqPlanObjectif|\marg{niveau}\marg{sequence}\marg{objectif}\marg{connaissances}%
+%    \marg{exosF}\marg{exosA}\marg{exosE} : bloc affichant le titre de l'objectif,
+%    les notions et les numéros d'exercices des trois séries.\newline
+%    Exemple :\newline
+%    \verb|\seqPlanObjectif{N11}{S03}{02}| \newline
+%    \verb|  {\seqConnaissanceGetNom{N11}{S03}{01}}{1,2,3}{4,5}{6}|
+%
+%  \subsection{Repères temporels}%
+%   \DescribeMacro{\seqPlanReperesNiveaux}%
+%    |\seqPlanReperesNiveaux|\oarg{options} : bloc repères temporels (dates, séances par
+%    objectif) et bloc niveaux atteints, côte à côte.\newline
+%    Options : \texttt{codeNiveau}, \texttt{codeSequence}, \texttt{dateDeb}, \texttt{dateFin},
+%    \texttt{seancesTotal}, \texttt{seancesRevisions}, \texttt{seancesCours},
+%    \texttt{seancesObj02} \ldots \texttt{seancesObj26}.
+%
+% \newpage
+% \section{Suivi de classe} \label{sec:suivi}%
+%
+%  \subsection{Fichiers attendus}%
+%   \begin{seqColItem}[nbCols=1]
+%    \item \texttt{liste\_eleves.csv} : colonnes \texttt{Numero}, \texttt{Nom}, \texttt{Prenom}%
+%    \item \texttt{periodes.csv} : colonne \texttt{Periode} (ex. \texttt{P1}, \texttt{P2}\ldots)
+%    \item \texttt{P1-sequences.csv} \ldots : colonnes \texttt{Code}, \texttt{Nom}%
+%    \item \texttt{P1bilan.csv} \ldots : colonne \texttt{Numero} + une colonne par séquence
+%          contenant un code de maîtrise (\texttt{I}, \texttt{F}, \texttt{A}, \texttt{E}, \texttt{NE})
+%    \item \texttt{S01Suivi.csv} \ldots : colonne \texttt{Numero} + une colonne par objectif
+%   \end{seqColItem}%
+%
+%  \subsection{Chargement}%
+%   \DescribeMacro{\seqLoadDataSuivi}%
+%    |\seqLoadDataSuivi|\marg{codeNiveau} : charge les bases pédagogiques du cycle,
+%    la liste des élèves, les périodes et tous les CSV de suivi. Remplace |\seqLoadData|
+%    pour les documents de suivi.\newline Exemple : |\seqLoadDataSuivi{N11}|
+%   \medskip \newline
+%   \DescribeMacro{\seqTitreSuivi}%
+%    |\seqTitreSuivi|\marg{classe}\marg{titre}\marg{annee} : configure en-têtes et pieds de page.
+%
+%  \subsection{Tableau annuel par élève}%
+%   \DescribeMacro{\seqSuiviAnnuelParEleve}%
+%    |\seqSuiviAnnuelParEleve|\oarg{niveau=\meta{code}} : pour chaque élève, tableau
+%    paginé de ses niveaux de maîtrise par objectif sur toute l'année.\newline
+%    Structure minimale :\newline
+%    \verb|\documentclass[a4paper,11pt]{article}| \newline
+%    \verb|\usepackage{seqenseigne}| \newline
+%    \verb|\begin{document}| \newline
+%    \verb|  \seqLoadDataSuivi{N11}| \newline
+%    \verb|  \seqTitreSuivi{4\ieme{}A}{Suivi annuel}{2024/2025}| \newline
+%    \verb|  \seqSuiviAnnuelParEleve[niveau=N11]| \newline
+%    \verb|\end{document}|
+%
+%  \subsection{Tableau annuel par séquence}%
+%   \DescribeMacro{\seqSuiviAnnuelParSequence}%
+%    |\seqSuiviAnnuelParSequence|\oarg{niveau=\meta{code},sequence=\meta{code}} :
+%    tableau d'une séquence, une colonne par élève, cellules colorées selon la maîtrise.
+%   \medskip \newline
+%   \DescribeMacro{\seqSuiviSequence}%
+%    |\seqSuiviSequence|\marg{codeNiveau}\marg{codeSequence} : raccourci qui appelle
+%    |\seqSuiviAnnuelParSequence| et passe à la page suivante.
+%
+%  \subsection{Tableau périodique par séquence}%
+%   \DescribeMacro{\seqSuiviPeriodiqueParSequence}%
+%    |\seqSuiviPeriodiqueParSequence|\oarg{niveau=\meta{code},periode=\meta{code}} :
+%    bilan de période (une ligne par séquence, une colonne par élève) avec dates.
+%
+%  \subsection{Bilan périodique par élève}%
+%   \DescribeMacro{\seqBilanPeriodiqueParEleve}%
+%    |\seqBilanPeriodiqueParEleve|\oarg{options} : récapitulatif compact des maîtrises
+%    par séquence pour chaque élève d'une période.\newline
+%    Options : \texttt{periode}, \texttt{annee}, \texttt{niveau}, \texttt{nomClasse}.
+%
+%  \subsection{Codes de maîtrise}%
+%   \begin{seqColItem}%
+%    \item \texttt{I} : Insuffisant (rouge)
+%    \item \texttt{F} : \`A consolider (jaune)
+%    \item \texttt{A} : Satisfaisant (vert clair)
+%    \item \texttt{E} : Très bon (vert foncé)
+%    \item \texttt{NE} : Non évalué
+%    \item \texttt{-} : Absent ou non concerné
+%   \end{seqColItem}%
+
+% Fin du module doc
+%</package>
+%
+% \endinput

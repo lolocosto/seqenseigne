@@ -1,0 +1,1148 @@
+% \iffalse
+%<*driver>
+\ProvidesFile{seqenseigne-core.dtx}%
+[2025/10/24 v1.0-dev seqenseigne – Module core (coeur fonctionnel)]
+%</driver>
+% \fi
+%
+% =============================================================
+% seqenseigne-core.dtx
+% Module : CORE
+% Rôle   : coeur logique du package seqenseigne :
+%          - version et meta
+%          - options du package
+%          - chargement des dépendances LaTeX communes
+%          - macros structurelles "publiques" \seq...
+%          - macros internes \seq@...
+%          - environnements structurants (ex: série d'exercices,
+%            blocs de séquence, etc.)
+%
+% Convention de nommage :
+%  - commandes publiques    \seqTruc
+%  - commandes internes     \seq@Truc
+%  - couleurs               \seqCouleurTruc (→ plutôt dans theme, mais
+%                           les variables globales peuvent être déclarées ici)
+%
+% Toute macro ou environnement utilisé activement dans les livrets /
+% cartes mentales / plans de travail va ici, sauf si :
+%  - c'est purement visuel          → seqenseigne-theme.dtx
+%  - c'est du chargement de données → seqenseigne-data.dtx
+%  - c'est de l'ancien code         → seqenseigne-legacy.dtx
+%
+% =============================================================
+% Structure des documents de référence :
+% ------------------------
+% Livret de séquence
+% ------------------------
+% Exercice
+% ------------------------
+% Connaissance
+% ------------------------
+% Savoir-faire
+% ------------------------
+% Livret de plans de travail
+% ------------------------
+% Fiches de résumé à compléter
+% ------------------------
+% Bilan par compétence
+% ------------------------
+% Evaluation notée
+% ------------------------
+% Suivi autonome de progression
+% =============================================================
+% Structure des documents de suivi de classe :
+% ------------------------
+% Suivi annuel par élève
+% ------------------------
+% Suivi annuel par séquence
+% =============================================================
+%
+%<*package>
+\NeedsTeXFormat{LaTeX2e}%
+\ProvidesPackage{seqenseigne-core}%
+[2025/10/24 v1.0-dev seqenseigne core module]
+
+%% ------------------------------------------------------------------
+%% ---- Chargement des extentions  ----------------------------------
+%% ------------------------------------------------------------------
+% --- Saisie en UTF8
+\RequirePackage[utf8]{inputenc}%
+% --- Police en Latin Modern 1 avec les caractères accentués et 
+% --- résolution des pb de pixelisation avec lmodern
+\RequirePackage[T1]{fontenc}%
+\RequirePackage{lmodern}%
+% --- Traduction en français et commandes spécifiques
+\RequirePackage[french]{babel}%
+% --- Réglage de la taille de la page
+\RequirePackage{geometry}%
+% --- Symboles mathématiques
+\RequirePackage{amsmath}%
+\RequirePackage{amssymb}% \leqslant, \geqslant, \mathbb, etc. utilisés dans les exercices
+% amsfonts supprimé : chargé automatiquement par amssymb
+% --- Calcul des pages (numéros, entêtes, pieds de page)
+\RequirePackage{lastpage}%
+\RequirePackage{fancyhdr}%
+% --- plusieurs colonnes par pages, plusieurs lignes regroupées dans un tableau
+\RequirePackage{multicol}%
+\RequirePackage{multirow}%
+% --- Gestion de tableaux
+% tabularx supprimé : 0 usage dans le paquet (les documents peuvent le charger si besoin)
+\RequirePackage{tabularray} \UseTblrLibrary{booktabs}%
+\RequirePackage{xltabular}%
+\RequirePackage{booktabs}%
+% --- Gestion des couleurs
+\RequirePackage{colortbl}%
+\RequirePackage{xcolor}%
+% --- Gestion des commandes et des environnements
+\RequirePackage{etoolbox}%
+\RequirePackage{xkeyval}%
+% --- Mise en forme conditionnelle, boucles
+\RequirePackage{xifthen}%
+\RequirePackage{forloop}%
+% --- Graphiques
+\RequirePackage{tikz}%
+\usetikzlibrary{babel}%  compatibilite tikz+babel
+% tkz-euclide, tkz-tab, tkz-base : charges via option [geometrie]
+% (voir \DeclareOption{geometrie} ci-dessous)
+% kvoptions supprimé : 0 usage dans le paquet
+% --- Liens hypertexte
+\RequirePackage{hyperref}%
+% scratch3 chargé via option [scratch] (voir DeclareOption ci-dessous)
+% --- Symbole euro
+\RequirePackage{eurosym}%
+\RequirePackage{environ}%
+\RequirePackage{xintexpr}%
+% ---- Format de date
+\RequirePackage{datetime}%
+
+%% ------------------------------------------------------------------
+%% ---- Traitement des options --------------------------------------
+%% ------------------------------------------------------------------
+\newif\ifdocstd\docstdtrue
+\DeclareOption{ltxdoc}{\docstdfalse}%
+%% Option geometrie : charge tkz-euclide, tkz-base, tkz-tab
+%% Utilisation : \usepackage[geometrie]{seqenseigne}%
+%% A ajouter dans les livrets/exercices de géométrie (S10-S13 typiquement)
+\newif\ifseq@geometrie\seq@geometriefalse
+\DeclareOption{geometrie}{\seq@geometrietrue}%
+%% Option scratch : charge scratch3 (blocs Scratch, algorithmique)
+%% Utilisation : \usepackage[scratch]{seqenseigne}%
+%% Nécessaire uniquement pour les séquences d'algorithmique
+\newif\ifseq@scratch\seq@scratchfalse
+\DeclareOption{scratch}{\seq@scratchtrue}%
+\ProcessOptions\relax
+\ifseq@geometrie
+    \RequirePackage{tkz-base}%
+    \RequirePackage{tkz-euclide}%
+    \RequirePackage{tkz-tab}%
+    \usetikzlibrary{intersections,mindmap}%
+\fi
+\ifseq@scratch
+    \RequirePackage{scratch3}%
+\fi
+
+% -------------------------------------------------------------
+% Options globales du package
+% (si tu avais \DeclareOption etc. dans ton dtx d'origine,
+% copie-les dans ce bloc)
+% -------------------------------------------------------------
+% \DeclareOption{...}{...}%
+% \ProcessOptions\relax
+
+%% ------------------------------------------------------------------
+%% ---- Variables globales ------------------------------------------
+%% ------------------------------------------------------------------
+% Ces commandes peuvent être redéfinies dans macro_config.tex
+\providecommand{\nomCollege}{Établissement}%
+\providecommand{\codeNiveau}{N00}%
+\providecommand{\numNiveau}{numéro du niveau}%
+\providecommand{\nomNiveau}{nom du niveau}%
+\providecommand{\codeNiveauPrec}{N00}%
+\providecommand{\numNiveauPrec}{numéro du niveau précédent}%
+\providecommand{\nomNiveauPrec}{niveau précédent}%
+\providecommand{\nomClasse}{Classe}%
+\providecommand{\annee}{2024/2025}%
+\providecommand{\dirPrefix}{.}%
+\providecommand{\exoDir}{../Exos}%
+\providecommand{\codeObj}{Objectif 00}%
+\providecommand{\seqCodeObj}{Objectif 00}%
+%
+%% ------------------------------------------------------------------
+%% ---- Variables internes : niveau et séquence courants -----------
+%% ------------------------------------------------------------------
+% \begin{macro}{\seq@code@niveau}%
+% \begin{macro}{\seq@code@sequence}%
+% Variables internes (\gdef) : niveau et séquence en cours de traitement.
+% Ne pas utiliser directement — passer par \seqCodeNiveau et \seqCodeSequence.
+% \begin{macrocode}%
+\gdef\seq@code@niveau{N00}%
+\gdef\seq@code@sequence{S00}%
+% \end{macrocode}%
+% \end{macro}%
+% \end{macro}%
+%
+% \begin{macro}{\seqCodeNiveau}%
+% \begin{macro}{\seqCodeSequence}%
+% Accesseurs publics en lecture (expansibles).
+% \begin{macrocode}%
+\newcommand{\seqCodeNiveau}{\seq@code@niveau}%
+\newcommand{\seqCodeSequence}{\seq@code@sequence}%
+% \end{macrocode}%
+% \end{macro}%
+% \end{macro}%
+%
+% \begin{macro}{\seqSetCodeNiveau}%
+% \IndexMacro{\seqSetCodeNiveau}%
+% \begin{macro}{\seqSetCodeSequence}%
+% \IndexMacro{\seqSetCodeSequence}%
+% Mutateurs publics.
+% #1 : nouveau code niveau (ex. \verb|N10|) ou séquence (ex. \verb|S03|).
+% \begin{macrocode}%
+\newcommand{\seqSetCodeNiveau}[1]{\gdef\seq@code@niveau{#1}}%
+\newcommand{\seqSetCodeSequence}[1]{\gdef\seq@code@sequence{#1}}%
+% \end{macrocode}%
+% \end{macro}%
+% \end{macro}%
+%
+%% ------------------------------------------------------------------
+%% ---- Gestion des chemins de fichiers ----------------------------
+%% ------------------------------------------------------------------
+% \begin{macro}{\seqDefChemin}%
+% \IndexMacro{\seqDefChemin}%
+% Définit les chemins pour \input et \graphicspath
+% #1 : liste de chemins (format : {{chemin1}{chemin2}...})
+% \begin{macrocode}%
+\newcommand{\seqDefChemin}[1]{%
+    \def\input@path{#1}%
+    \graphicspath{#1}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+%
+% \begin{macro}{\seqDefCheminImages}%
+% \IndexMacro{\seqDefCheminImages}%
+% Définit un dossier centralisé pour les images, en complément du
+% \cs{graphicspath} déjà posé par \cs{seqDefChemin}.
+%
+% Conçu pour le scénario de la version 0.7 où toutes les images sont
+% rassemblées dans un dossier plat (typiquement
+% \texttt{appli/data/images/}) et nommées d'après le \texttt{.tex} qui
+% les utilise. Cette macro \emph{ajoute} le chemin sans écraser ceux
+% déjà déclarés par \cs{seqDefChemin}, ce qui permet aux deux
+% conventions de cohabiter pendant la transition.
+%
+% Variable interne : \cs{seq@chemin@images} (utilisable par d'autres
+% macros du paquet pour résoudre une image par son nom).
+%
+% \#1 : chemin absolu ou relatif vers le dossier d'images
+%       (sans accolades doubles, on ajoute nous-mêmes le wrapping).
+%
+% Exemple : \verb|\seqDefCheminImages{D:/Enseignement/seqenseigne/appli/data/images/}|
+% \begin{macrocode}%
+\gdef\seq@chemin@images{}%
+\newcommand{\seqDefCheminImages}[1]{%
+    \gdef\seq@chemin@images{#1}%
+    \g@addto@macro\Ginput@path{{#1}}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+%
+% \begin{macro}{\seqCheminImages}%
+% \IndexMacro{\seqCheminImages}%
+% Accesseur public en lecture sur \cs{seq@chemin@images}. Renvoie la
+% chaîne vide si aucun chemin n'a été défini par
+% \cs{seqDefCheminImages}.
+% \begin{macrocode}%
+\newcommand{\seqCheminImages}{\seq@chemin@images}%
+% \end{macrocode}%
+% \end{macro}%
+%
+% =============================================================
+% Macros structurelles / "API publique"
+% =============================================================
+% Ici : toutes les commandes \seq... qui décrivent la structure
+% pédagogique d'une séquence, sans faire appel directement au style.
+%
+% EXEMPLES À COLLER DE TON DTX :
+%   - \seqTitreSequence
+%   - \seqNiveauCourant / \seqSequenceCourante (ou équivalent)
+%   - les macros qui construisent les en-têtes de livret
+%   - gestion d'encarts de type "Objectifs", "Pré-requis" si la mise
+%     en forme n'est pas directement graphique
+%
+% Chaque macro doit être documentée puis codée dans un bloc macrocode.
+%
+% \begin{macro}{\seqNomDeSequence}%
+% \IndexMacro{\seqNomDeSequence}%
+% Description pédagogique...
+% \begin{macrocode}%
+% \newcommand{\seqNomDeSequence}{...}%
+% \end{macrocode}%
+% \end{macro}%
+%
+% =============================================================
+
+
+%% ------------------------------------------------------------------
+%% ---- Plan de travail ---------------------------------------------
+%% ------------------------------------------------------------------
+
+% -----------------------------------------------
+% \seqBoiteTitrePlan
+%  - Titre du plan de travail de la séquence 
+%  - Utilise \seqCodeSequence, \annee \nomClasse et \nomCollege
+% -----------------------------------------------
+%    \begin{macro}{\seqBoiteTitrePlan}%
+%% ---- Options 
+\define@cmdkey[seq]{boiteTitrePlan}{afficheSeq}[oui]{}%
+\define@cmdkey[seq]{boiteTitrePlan}{affichePlan}[oui]{}%
+\define@cmdkey[seq]{boiteTitrePlan}{titre}{}%
+\newcommand{\seqBoiteTitrePlan}[1][]{%
+	\setkeys[seq]{boiteTitrePlan}{afficheSeq,affichePlan,#1}%
+	\begin{boiteTitreGen}{\ifthenelse{\equal{\cmdseq@boiteTitrePlan@afficheSeq}{oui}}{\large \textbf{Séquence \seqCodeSequence}}{}}%
+		\begin{minipage}[c][50pt][c]{\linewidth}%
+			\vfill { \small \textit{\ifthenelse{\equal{\cmdseq@boiteTitrePlan@affichePlan}{oui}}{Plan de Travail}{}} \hfill \textit{Année \annee} }%
+			\vfill \centering {\Large \textbf{\cmdseq@boiteTitrePlan@titre}}%
+			\vfill { \small \hfill \textit{\nomCollege\;-\;\nomClasse} }%
+		\end{minipage}%
+	\end{boiteTitreGen}%
+}%
+%    \end{macro}%
+
+
+
+% -----------------------------------------------
+% \seqPlanObjectif
+%  - Bloc repères temporels
+%  - Bloc niveaux atteints
+%  - Utilise \seq@code@niveau et \seq@code@sequence (variables globales)
+% Paramètres:
+%  #1 : code objectif (Ex: 02)
+%  #2 : Connaissances (Ex: \og \seqConnaissanceGetNom{\seq@code@niveau}{\seq@code@sequence}{03} \fg{})
+%  #3 : numéros des exos série F (Ex: 1,2)
+%  #4 : numéros des exos série A (Ex: 1,2)
+%  #5 : numéros des exos série E (Ex: 1,2)
+% -----------------------------------------------
+\newcommand{\seqPlanObjectif}[5]{%
+	\begin{boitePaleNoBreak}{\begin{minipage}{0.6\textwidth} \textbf{#1}: \seqObjectifGetNom{#1} \end{minipage}}%
+		\begin{seqColItem}[nbCols=1,label=\ding{109}]
+			\item Notions: #2
+		\end{seqColItem}%
+		\begin{itemize*}[label=\qquad\ding{109}]
+			\item Série fondamentale: #3 \item Série avancée: #4	\item Série exploration: #5
+		\end{itemize*}%
+	\end{boitePaleNoBreak}%
+}%
+
+
+%% ------------------------------------------------------------------
+%% ---- Fiche PPRE (Plan Personnalisé de Réussite Éducative) --------
+%% ------------------------------------------------------------------
+%
+% Une fiche PPRE accompagne un élève bénéficiant d'un plan personnalisé
+% de réussite. Pour chaque objectif d'une séquence, elle rappelle les
+% exercices du livret (numéros F / A / E, identiques à \seqPlanObjectif)
+% et ajoute, pour chaque série, une aide spécifique à cet élève :
+% indice de démarrage, guide de rédaction, mémo-formule, schéma, etc.
+%
+% La zone d'aide est entièrement libre (contenu LaTeX quelconque).
+% Si elle est vide, la boîte d'aide n'est pas affichée.
+%
+% UNE PAGE PAR OBJECTIF.
+%
+% -----------------------------------------------------------------------
+% \seqPPRE — macro principale
+% -----------------------------------------------------------------------
+% Options (toutes passées dans l'argument optionnel clé=valeur) :
+%
+%   niveau     : code niveau            (ex. N11)         [obligatoire]
+%   sequence   : code séquence          (ex. S03)         [obligatoire]
+%   objectif   : code objectif          (ex. 02)          [obligatoire]
+%   exosF      : numéros exos série F   (ex. {1,2,3})     [obligatoire]
+%   exosA      : numéros exos série A   (ex. {4,5})       [obligatoire]
+%   exosE      : numéros exos série E   (ex. {6})         [obligatoire]
+%   aideF      : aide pour la série F   (contenu LaTeX)   [optionnel]
+%   aideA      : aide pour la série A   (contenu LaTeX)   [optionnel]
+%   aideE      : aide pour la série E   (contenu LaTeX)   [optionnel]
+%   eleve      : nom de l'élève                           [optionnel]
+%   notions    : notions associées (texte libre)          [optionnel]
+%
+% La fiche utilise les macros Get* pour lire le libellé de l'objectif,
+% le critère de réussite (MaitriseS = niveau satisfaisant attendu)
+% et le nom de la séquence depuis les bases .dbtex.
+% Requiert \seqLoadData préalablement appelé.
+%
+% Usage minimal :
+%   \seqPPRE[
+%     niveau=N11, sequence=S03, objectif=02,
+%     exosF={1,2,3}, exosA={4,5}, exosE={6},
+%     eleve={Alice MARTIN},
+%     aideF={Pour l'exercice 1 : dessine d'abord le tableau.},
+%     aideA={Pour l'exercice 4 : pense à utiliser le produit en croix.},
+%   ]
+%
+% -----------------------------------------------------------------------
+%    \begin{macro}{\seqPPRE}%
+%% Options
+\define@cmdkey[seq]{PPRE}{objectif}{}%
+\define@cmdkey[seq]{PPRE}{exosF}{}%
+\define@cmdkey[seq]{PPRE}{exosA}{}%
+\define@cmdkey[seq]{PPRE}{exosE}{}%
+\define@cmdkey[seq]{PPRE}{aideF}[]{}%
+\define@cmdkey[seq]{PPRE}{aideA}[]{}%
+\define@cmdkey[seq]{PPRE}{aideE}[]{}%
+\define@cmdkey[seq]{PPRE}{eleve}[]{}%
+\define@cmdkey[seq]{PPRE}{notions}[]{}%
+%
+\newcommand{\seqPPRE}[1][]{%
+    \setkeys[seq]{PPRE}{aideF,aideA,aideE,eleve,notions,#1}%
+    %% ---- Saut de page systématique (une page par objectif)
+    \ifdocstd\newpage\fi
+    %% ---- Couleurs du thème de la séquence
+    \seqSetColors%
+    %% ---- En-têtes et pieds de page
+    \ifdocstd
+        \pagestyle{fancy}\fancyhf{}%
+        \lhead{\small PPRE~— \seqNiveauGetNomCourt{\seq@code@niveau}~— \annee}%
+        \chead{\small \nomCollege~— \nomClasse}%
+        \rhead{\small Objectif~\cmdseq@PPRE@objectif}%
+        \lfoot{\small Le \today}%
+        \rfoot{\small Page \thepage}%
+    \fi
+    %% ---- Bandeau titre
+    \begin{boiteTitreGen}{%
+        \seqSequenceGetNom%
+        \hfill
+        Objectif~\cmdseq@PPRE@objectif%
+    }%
+        \begin{minipage}[c][52pt][c]{\linewidth}%
+            \vfill
+            {\large\bfseries\color{\seq@couleuri@vif}%
+                \seqObjectifGetNom{\seq@code@niveau}{\seq@code@sequence}{\cmdseq@PPRE@objectif}}%
+            \vfill
+            \small
+            \ifx\cmdseq@PPRE@eleve\empty\else
+                \textbf{Élève~:} \cmdseq@PPRE@eleve\hfill
+            \fi
+            Niveau actuel~: \fbox{\strut\;F\;}\;\fbox{\strut\;A\;}\;\fbox{\strut\;E\;}%
+            \quad (encadrer le niveau noté)%
+        \end{minipage}%
+    \end{boiteTitreGen}%
+    \vspace{4pt}%
+    %% ---- Critère de réussite (niveau satisfaisant = niveau attendu)
+    \begin{boitePaleNoBreakNoTitle}%
+        \small\textit{Pour atteindre le niveau satisfaisant (A)~:}\quad
+        \seqObjectifGetMaitriseS{\seq@code@niveau}{\seq@code@sequence}{\cmdseq@PPRE@objectif}%
+        \ifx\cmdseq@PPRE@notions\empty\else
+            \par\vspace{2pt}%
+            \textit{Notions associées~:}\quad \cmdseq@PPRE@notions%
+        \fi
+    \end{boitePaleNoBreakNoTitle}%
+    \vspace{4pt}%
+    %% ---- Bloc Série Fondamentale (F)
+    \begin{seqPPRE@boite}%
+        {Série fondamentale~F — exercices~: \cmdseq@PPRE@exosF}%
+        {\seqCouleurSerieF}%
+        {\seqCouleurSerieFCadre}%
+    \small
+    \textit{Ces exercices ont des corrigés en fin de livret.
+            Vérifie tes réponses et mesure ce que tu sais déjà faire.}\par
+    \ifthenelse{\isempty{\cmdseq@PPRE@aideF}}{%
+        \vspace{18pt}%
+    }{%
+        \vspace{4pt}%
+        \begin{boitePaleNoBreakNoTitle}%
+            \footnotesize\textbf{Aide~:}\quad \cmdseq@PPRE@aideF%
+        \end{boitePaleNoBreakNoTitle}%
+    }%
+    \end{seqPPRE@boite}%
+    \vspace{4pt}%
+    %% ---- Bloc Série Avancée (A)
+    \begin{seqPPRE@boite}%
+        {Série avancée~A — exercices~: \cmdseq@PPRE@exosA}%
+        {\seqCouleurSerieA}%
+        {\seqCouleurSerieACadre}%
+    \small
+    \textit{Ces exercices ne sont pas corrigés dans le livret.
+            Montre ton travail à l'enseignant.}\par
+    \ifthenelse{\isempty{\cmdseq@PPRE@aideA}}{%
+        \vspace{18pt}%
+    }{%
+        \vspace{4pt}%
+        \begin{boitePaleNoBreakNoTitle}%
+            \footnotesize\textbf{Aide~:}\quad \cmdseq@PPRE@aideA%
+        \end{boitePaleNoBreakNoTitle}%
+    }%
+    \end{seqPPRE@boite}%
+    \vspace{4pt}%
+    %% ---- Bloc Série Exploration (E)
+    \begin{seqPPRE@boite}%
+        {Série exploration~E — exercices~: \cmdseq@PPRE@exosE}%
+        {\seqCouleurSerieE}%
+        {\seqCouleurSerieECadre}%
+    \small
+    \textit{Ces exercices vont au-delà du niveau attendu.}\par
+    \ifthenelse{\isempty{\cmdseq@PPRE@aideE}}{%
+        \vspace{18pt}%
+    }{%
+        \vspace{4pt}%
+        \begin{boitePaleNoBreakNoTitle}%
+            \footnotesize\textbf{Aide~:}\quad \cmdseq@PPRE@aideE%
+        \end{boitePaleNoBreakNoTitle}%
+    }%
+    \end{seqPPRE@boite}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ---- \seqPPRESequence — génère une fiche par objectif de la séquence
+%    \begin{macro}{\seqPPRESequence}%
+%    \IndexMacro{\seqPPRESequence}%
+%
+% Génère automatiquement une fiche PPRE pour TOUS les objectifs d'une
+% séquence en bouclant sur la base filtrée.
+% Les exercices F/A/E doivent être fournis via une macro de dispatch :
+%   \cmdExos{codeObjectif}{F|A|E} → numéros des exercices
+% Les aides sont optionnelles via une macro de dispatch :
+%   \cmdAide{codeObjectif}{F|A|E} → contenu LaTeX (peut être vide)
+%
+% #1 (optionnel) : options clé=valeur
+%   niveau   : code niveau (ex. N11)
+%   sequence : code séquence (ex. S03)
+%   eleve    : nom de l'élève (optionnel)
+% #2 : macro de dispatch des exercices \cmdExos
+% #3 : macro de dispatch des aides \cmdAide
+%
+% Exemple de macros de dispatch :
+%   \newcommand{\mesExos}[2]{%
+%     \ifthenelse{\equal{#1}{02}}{%
+%       \ifthenelse{\equal{#2}{F}}{1,2,3}{%
+%       \ifthenelse{\equal{#2}{A}}{4,5}{6}}%
+%     }{}% objectifs inconnus : vide
+%   }%
+%   \newcommand{\mesAides}[2]{%
+%     \ifthenelse{\equal{#1}{02}\and\equal{#2}{F}}{%
+%       Pour l'exercice 1 : dessine d'abord le triangle.
+%     }{}%
+%   }%
+%   \seqPPRESequence[niveau=N11,sequence=S03,eleve={Alice MARTIN}]
+%     {\mesExos}{\mesAides}%
+%
+% \begin{macrocode}%
+\define@cmdkey[seq]{PPRESeq}{eleve}[]{}%
+%
+\newcommand{\seqPPRESequence}[3][]{%
+    \setkeys[seq]{PPRESeq}{eleve,#1}%
+    \seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
+    \DTLforeach*{seq@objectifs@sequence}{%
+        \seqPPRE@tmpCode=CodeObjectif%
+    }{%
+        \seqPPRE@tmpExosF{}%  sera redéfini par #2
+        \seqPPRE@tmpExosA{}%
+        \seqPPRE@tmpExosE{}%
+        \seqPPRE@tmpAideF{}%
+        \seqPPRE@tmpAideA{}%
+        \seqPPRE@tmpAideE{}%
+        % Appel des macros de dispatch
+        \edef\seqPPRE@tmpExosF{#2{\seqPPRE@tmpCode}{F}}%
+        \edef\seqPPRE@tmpExosA{#2{\seqPPRE@tmpCode}{A}}%
+        \edef\seqPPRE@tmpExosE{#2{\seqPPRE@tmpCode}{E}}%
+        \def\seqPPRE@tmpAideF{#3{\seqPPRE@tmpCode}{F}}%
+        \def\seqPPRE@tmpAideA{#3{\seqPPRE@tmpCode}{A}}%
+        \def\seqPPRE@tmpAideE{#3{\seqPPRE@tmpCode}{E}}%
+        \seqPPRE[%
+            % niveau et sequence lus depuis \seq@code@niveau / \seq@code@sequence%
+            %
+            objectif = \seqPPRE@tmpCode,%
+            exosF    = \seqPPRE@tmpExosF,%
+            exosA    = \seqPPRE@tmpExosA,%
+            exosE    = \seqPPRE@tmpExosE,%
+            aideF    = \seqPPRE@tmpAideF,%
+            aideA    = \seqPPRE@tmpAideA,%
+            aideE    = \seqPPRE@tmpAideE,%
+            eleve    = \cmdseq@PPRESeq@eleve,%
+        ]%
+    }%
+}%
+% \end{macrocode}%
+%    \end{macro}%
+
+% Variables temporaires internes pour \seqPPRESequence
+\newcommand{\seqPPRE@tmpCode}{}%
+\newcommand{\seqPPRE@tmpExosF}{}%
+\newcommand{\seqPPRE@tmpExosA}{}%
+\newcommand{\seqPPRE@tmpExosE}{}%
+\newcommand{\seqPPRE@tmpAideF}{}%
+\newcommand{\seqPPRE@tmpAideA}{}%
+\newcommand{\seqPPRE@tmpAideE}{}%
+
+
+%% ------------------------------------------------------------------
+%% ---- Livret de séquence ------------------------------------------
+%% ------------------------------------------------------------------
+
+%% ---- Titre de section --------------------------------------------
+%    \begin{macro}{\seqTitreSection}%
+\newcommand{\seqTitreSection}[1]{%
+	\ifdocstd
+		\newpage
+		\newgeometry{left=35pt,right=35pt,top=65pt,bottom=70pt}%
+	\fi
+	\begin{boiteTitreSection}%
+		\begin{minipage}[c][20pt][c]{\linewidth}%
+			\centering \Large \textbf{#1}%
+		\end{minipage}%
+	\end{boiteTitreSection}%
+	\par\vspace{10pt}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%    \begin{macro}{\seqTitreSectionCorrige}%
+\newcommand{\seqTitreSectionCorrige}[1]{%
+	\par\vspace{10pt}%
+	\begin{boiteTitreSection}%
+		\begin{minipage}[c][20pt][c]{\linewidth}%
+			\centering \Large \textbf{#1}%
+		\end{minipage}%
+	\end{boiteTitreSection}%
+	\par\vspace{5pt}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ---- Pour chaque annexe -----------------------------------------
+%    \begin{macro}{\seqAnnexe}%
+%% Ecrit le corrigé de l'exercice dans un fichier séparé
+\newcommand{\seqAnnexe}[1]{%
+	\refstepcounter{AnnexeNum}\label{annexe:\theAnnexeNum}\theAnnexeNum\kern-0.5em%
+	\immediate\write\annfile{%
+		\unexpanded{\par\nopagebreak\vspace{5pt}\nopagebreak%
+			\begin{boiteTitreExo}}%
+				Annexe\noexpand\;\theAnnexeNum
+				\unexpanded{\end{boiteTitreExo}%
+			\par\nopagebreak\vspace{5pt}\nopagebreak}%
+		\noexpand\input{Annexes/a\theAnnexeNum.tex}%
+	}%
+	\scantokens{\begin{tcbverbatimwrite}%
+			{Annexes/a\theAnnexeNum.tex} #1
+		\end{tcbverbatimwrite}%
+	}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ---- Regroupe les annexes des exercices ----------------------
+%    \begin{macro}{\seqAfficheAnnexes}%
+\newcommand{\seqAfficheAnnexes}{ \immediate\closeout\annfile \ifnumcomp{\theAnnexeNum}{=}{0}{}{\input{AnnList.tex}\newpage}}%
+%    \end{macro}%
+
+%% ---- v0.11.5 — Macros liées aux exercices déplacées dans
+%%                seqenseigne-core-exos.dtx :
+%%                  \seqAfficheCorriges, \seqCorrige, \seqCorrigesExos,
+%%                  \seqInitCorriges, \seqAfficheCorrigesBilan (reste ici),
+%%                  \seq@ecrit@corrige@serieExos, \seq@ecrit@corrige@Exo,
+%%                  seqSerieExos, seqExercice.
+%%                Le module core-exos est chargé par seqenseigne.sty
+%%                APRÈS ce module core, donc \seqInitCorriges utilisée par
+%%                \seqTitreLivret plus bas est bien définie au moment où
+%%                l'utilisateur invoque \seqTitreLivret dans son document.
+% -------------------------------------------------------------
+
+% ---- Gestion des compteurs
+\newcommand\seqCreeCompteurs{%
+	\newcounter{NotionNum}%
+	\newcounter{DefinitionNum}%
+	\newcounter{ProprieteNum}%
+	\newcounter{MethodeNum}%
+	\newcounter{SerieExosNum}%
+	\newcounter{ExoNum}%
+	\newcounter{AnnexeNum}%
+	%	\newcounter{SousSection}%
+	%% --- Ancres hyperref uniques : theH<compteur> inclut le numéro de série
+	%% Sans cela, hyperref génère "ExoNum.1" à chaque série → warnings
+	%% "destination with the same identifier"
+	\renewcommand{\theHExoNum}{\theSerieExosNum-\theExoNum}%
+	\renewcommand{\theHNotionNum}{\theSerieExosNum-\theNotionNum}%
+	\renewcommand{\theHMethodeNum}{\theSerieExosNum-\theMethodeNum}%
+	\renewcommand{\theHDefinitionNum}{\theSerieExosNum-\theDefinitionNum}%
+	\renewcommand{\theHProprieteNum}{\theSerieExosNum-\theProprieteNum}%
+}%
+
+\newcommand\seqRAZCompteurs{%
+	\setcounter{NotionNum}{0}%
+	\setcounter{DefinitionNum}{0}%
+	\setcounter{ProprieteNum}{0}%
+	\setcounter{MethodeNum}{0}%
+	\setcounter{SerieExosNum}{0}%
+	\setcounter{ExoNum}{0}%
+	\setcounter{AnnexeNum}{0}%
+	%	\setcounter{SousSection}{0}%
+}%
+
+%% ---- Initialisation des annexes ---------------------------------
+\newcommand{\seqInitAnnexes}{%
+	%% ---- Création du fichier pour les annexes
+	\newwrite\annfile
+	\immediate\openout\annfile=AnnList.tex
+	\immediate\write\annfile{\noexpand\newpage\noexpand\seqTitreSectionCorrige{Annexes}}%
+}%
+
+%% ---- Titre du livret de séquence ---------------------------------
+%    \begin{macro}{\seqTitreLivret}%
+%% ---- Options 
+%    \begin{macrocode}%
+\define@cmdkey[seq]{titreLivret}{corriges}[non]{}%
+\newcommand{\seqTitreLivret}[1][]{%
+	%% ---- Options
+	\setkeys[seq]{titreLivret}{corriges,#1}%
+	%% ---- Initialisation des corrigés et des annexes
+	\seqInitCorriges
+	\seqInitAnnexes
+	%% ---- Corrigés ?
+	\ifthenelse{\equal{\cmdseq@titreLivret@corriges}{oui}}%
+		{\renewcommand{\seqCorrigesExos}{oui}}%
+		{\renewcommand{\seqCorrigesExos}{non}}%
+	%% ---- Entêtes et pieds de page
+	\ifdocstd
+		\pagestyle{fancy}%
+		\fancyhf{}%
+		\lfoot{}%
+		\rfoot{Page \thepage/\pageref{LastPage}}%
+		\lfoot{\seqSequenceGetNom}%
+	\fi
+	%% ---- Couleurs
+	\seqSetColors
+	%% ---- Compteurs
+	\seqCreeCompteurs
+	%% ---- Boîte de titre
+	\begin{boiteTitreGen}{Séquence \seqSequenceGetNumero}%
+		\begin{minipage}[c][100pt][c]{\linewidth}%
+			\vfill \textit{Livret de séquence} \hfill
+			\vfill \centering {\Huge \textbf{\seqSequenceGetNom}}%
+			\vfill Version de \datemoisannee\today \hfill \textit{Classe de \seqNiveauGetNomCourt{\seq@code@niveau}}%
+		\end{minipage}%
+	\end{boiteTitreGen}%
+}%
+%    \end{macro}%
+% -------------------------------------------------------------
+
+%% ---- Titre du livret de séquence (mode auto) ---------------------
+%    \begin{macro}{\seqTitrelivretauto}%
+%    \begin{macrocode}%
+\define@cmdkey[seq]{titreLivretAuto}{corriges}[non]{}%
+\newcommand{\seqTitreLivretAuto}[1][]{%
+	%% ---- Options
+	\setkeys[seq]{titreLivretAuto}{corriges,#1}%
+	\seqTitreLivret[corriges=\cmdseq@titreLivretAuto@corriges]
+}%
+%    \end{macro}%
+
+%% v0.13.5.2 — Code des évaluations (Bilan modèle 2021 + Eval modèle 2019) déplacé.
+%%   - Bilan 2021    → seqenseigne-legacy.dtx
+%%   - Eval 2019     → seqenseigne-core-eval.dtx
+%%   - QCM (env.)    → seqenseigne-core-exos.dtx
+%% Voir aussi le bloc final (compteurs/writes) en fin de fichier.
+
+%% ------------------------------------------------------------------
+%% ---- Bilan et Évaluation -----------------------------------------
+%% ------------------------------------------------------------------
+%% v0.13.5.2 étape 1 — Déplacement du code des évaluations sommatives :
+%%   - Modèle Bilan 2021 → seqenseigne-legacy.dtx
+%%       (\seqBilan, \seqBilanItemAlea, \seqBilanCorrigeExo, ...)
+%%   - Modèle Eval 2019  → seqenseigne-core-eval.dtx
+%%       (\titreEval renommé \seqTitreEval en étape 2,
+%%        \corrigeExoEval renommé \seqEvalCorrigeExo en étape 2,
+%%        \seqEvalBaremeItem, \seqEvalAfficheCorriges, ...)
+%%   - Environnement qcm → seqenseigne-core-exos.dtx (renommé seqQcm
+%%        en étape 2, refactorisé en environnement enfant)
+%%
+%% v0.13.5.2 étape 2 — Centralisation des compteurs (cf. fin de fichier) :
+%%   tous les \newcounter sont désormais dans core, indépendamment du
+%%   module qui les utilise.
+%%
+%% Le \newwrite\corrfileeval, partagé entre eval (core-eval) et
+%% bilan (legacy), reste dans core (squelette commun, cf. fin de
+%% fichier).
+% -------------------------------------------------------------
+
+
+
+% =============================================================
+% Environnements structurants
+% =============================================================
+% Ici tu colles les environnements qui organisent le contenu
+% pédagogique (par ex. les séries d'exercices, les blocs de cours,
+% les plans de travail…), quand leur *logique* n'est pas purement visuelle.
+%
+% Exemple schématique :
+%
+% \begin{environment}{seqSerieExos}%
+% \IndexEnv{seqSerieExos}%
+% Environnement listant une série d'exercices.
+% \begin{macrocode}%
+% \newenvironment{seqSerieExos}[1][]{%
+%   % code début d'environnement
+% }{%
+%   % code fin d'environnement
+% }%
+% \end{macrocode}%
+% \end{environment}%
+%
+%% ------------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% ---- Plan de travail ---------------------------------------------
+%% ------------------------------------------------------------------
+
+%    \begin{environment}{titrePlan}%
+%% Options
+\define@cmdkey[seq]{titrePlan}{titreSeq}{}%
+\define@cmdkey[seq]{titrePlan}{numSeq}{}%
+\define@cmdkey[seq]{titrePlan}{classe}{}%
+\define@cmdkey[seq]{titrePlan}{etab}{}%
+\define@cmdkey[seq]{titrePlan}{annee}{}%
+\define@cmdkey[seq]{titrePlan}{enseignant}{}%
+\define@cmdkey[seq]{titrePlan}{theme}[gris]{}%
+%% ---- Titre du plan de travail ------------------------------------
+\newenvironment{titrePlan}[1][]{%
+	%% ---- Options
+	\setkeys[seq]{titrePlan}{theme,#1}%
+	%% ---- Entêtes et pieds de page
+	\ifdocstd
+		\pagestyle{fancy}%
+		\fancyhf{}%
+		\lfoot{Le \today}%
+		\rfoot{Page \thepage/\pageref{LastPage}}%
+	\fi
+	%% ---- Couleurs
+	\seq@setColors{\cmdseq@titrePlan@theme}%
+	%% ---- Boîte de titre
+	\begin{boiteTitreGen}{Séquence \cmdseq@titrePlan@numSeq}%
+		\begin{minipage}[c][70pt][c]{\linewidth}%
+			\vfill \textit{Plan de travail}%
+			\ifx\cmdseq@titrePlan@annee\undefined\else
+				\hfill \textit{Année \cmdseq@titrePlan@annee}%
+			\fi
+			\vfill \centering {\Huge \textbf{\cmdseq@titrePlan@titreSeq}}%
+			\vfill
+			\ifx\cmdseq@titrePlan@enseignant\undefined\else
+				\textit{Enseignant : \cmdseq@titrePlan@enseignant}%
+			\fi
+			\hfill \textit{\cmdseq@titrePlan@etab - \cmdseq@titrePlan@classe}%
+		\end{minipage}%
+	\end{boiteTitreGen}%
+	\xltabular{\linewidth}{*{2}{p{0.45\linewidth}}}%
+}{%
+	\endxltabular
+}%
+%    \end{environment}%
+
+%    \begin{environment}{blocReperesNiveaux}%
+\newenvironment{blocReperesNiveaux}[1]{%
+	\begin{boiteVariableWidthHeightTitre}{\large \textbf{#1}}{\linewidth}{170pt}%
+		\begin{dinglist}{224}%
+			}{%
+		\end{dinglist}%
+	\end{boiteVariableWidthHeightTitre}%
+}%
+%    \end{environment}%
+
+
+%% ------------------------------------------------------------------
+%% ---- Livret de séquence ------------------------------------------
+%% ------------------------------------------------------------------
+
+
+%% ---- Objectifs de niveau 1 et 2 ----------------------------------
+%    \begin{environment}{seqObjectifs}%
+\newenvironment{seqObjectifs}[1][
+	Les capacités suivantes sont les objectifs de la séquence :
+	ce sont elles qui seront évaluées en fin de séquence.
+]{%
+	\par\vspace{20pt}%
+	\begin{boitePaleNoBreak}{Objectifs de fin de séquence}%
+		#1
+		\tcblower
+		\begin{minipage}{\linewidth}%
+			\begin{multicols}{2} \begin{dinglist}{224}%
+					}{%
+				\end{dinglist} \end{multicols}%
+		\end{minipage}%
+	\end{boitePaleNoBreak}%
+	\par\vspace{10pt}%
+}%
+%    \end{environment}%
+
+%    \begin{environment}{seqObjectifsN2}%
+\newenvironment{seqObjectifsN2}{%
+	\begin{dinglist}{118}%
+		}{%
+	\end{dinglist}%
+}%
+%    \end{environment}%
+
+%% ---- Carte mentale des connaissances -----------------------------
+%    \begin{environment}{seqCarteMentale}%
+\newenvironment{seqCarteMentale}[1][La carte mentale suivante
+	représente de manière très synthétique l'ensemble
+	des connaissances de la séquence.
+]{%
+	\par\vspace{20pt}%
+	\begin{boitePaleNoBreak}{Carte mentale}%
+		#1
+		\tcblower
+		}{%
+	\end{boitePaleNoBreak}%
+	\par\vspace{10pt}%
+}%
+%    \end{environment}%
+
+%% ---- Notions ---------------------------------------------------
+%    \begin{environment}{notion}%
+\newenvironment{seqNotion}[2]{%
+	\refstepcounter{NotionNum}\label{notion:\theNotionNum}%
+	\setlength{\columnsep}{10pt}%
+	\par\vspace{5pt}%
+	\begin{boitePaleBreakFitHeight}{%
+			Notion~\theNotionNum
+			\ifthenelse{\isempty{#1}}{}%
+			{ :\quad \begin{minipage}{0.5\linewidth}#1\end{minipage}}%
+		}%
+		#2
+		\tcblower
+		}{%
+	\end{boitePaleBreakFitHeight}%
+	\par\vspace{5pt}%
+}%
+%    \end{environment}%
+
+%% ---- Définitions -----------------------------------------------
+%    \begin{environment}{definition}%
+\newenvironment{seqDefinition}[2]{%
+	\refstepcounter{DefinitionNum}\label{def:\theDefinitionNum}%
+	\setlength{\columnsep}{10pt}%
+	\par\vspace{5pt}%
+	\begin{boitePaleBreakFitHeight}{%
+			Définition~\theDefinitionNum
+			\ifthenelse{\isempty{#1}}{}%
+			{ :\quad \begin{minipage}{0.5\linewidth}#1\end{minipage}}%
+		}%
+		#2
+		\tcblower
+		}{%
+	\end{boitePaleBreakFitHeight}%
+	\par\vspace{5pt}%
+}%
+%    \end{environment}%
+
+%% ---- Propriétés -----------------------------------------------
+%    \begin{environment}{propriete}%
+\newenvironment{seqPropriete}[2]{%
+	\refstepcounter{ProprieteNum}\label{prop:\theProprieteNum}%
+	\setlength{\columnsep}{10pt}%
+	\par\vspace{5pt}%
+	\begin{boitePaleBreakFitHeight}{%
+			Propriété~\theProprieteNum
+			\ifthenelse{\isempty{#1}}{}%
+			{ :\quad \begin{minipage}{0.5\linewidth}#1\end{minipage}}%
+		}%
+		#2
+		\tcblower
+		}{%
+	\end{boitePaleBreakFitHeight}%
+	\par\vspace{5pt}%
+}%
+%    \end{environment}%
+
+%% ---- Méthodes -----------------------------------------------
+%    \begin{environment}{methode}%
+\newenvironment{seqMethode}[2]{%
+	\refstepcounter{MethodeNum}\label{methode:\theMethodeNum}%
+	\setlength{\columnsep}{10pt}%
+	\par\vspace{5pt}%
+	\begin{boitePaleBreakFitHeight}{%
+			Méthode~\theMethodeNum
+			\ifthenelse{\isempty{#1}}{}%
+			{ :\quad \begin{minipage}{0.5\linewidth}#1\end{minipage}}%
+		}%
+		#2
+		\tcblower
+		}{%
+	\end{boitePaleBreakFitHeight}%
+	\par\vspace{5pt}%
+}%
+%    \end{environment}%
+
+%    \begin{environment}{seqSerieExos}%
+%% ---- v0.11.5 — seqSerieExos et seqExercice déplacés dans
+%%                seqenseigne-core-exos.dtx, ainsi que les helpers
+%%                \seq@ecrit@corrige@serieExos et \seq@ecrit@corrige@Exo
+%%                qui les accompagnent.
+% -------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% v0.13.5.2 — Environnements eval/bilan déplacés (cf. note plus haut).
+
+
+
+
+% =============================================================
+% Macros internes \seq@...
+% =============================================================
+% Les helpers internes non destinés à l'utilisateur.
+% Garde leur doc interne, leurs commentaires, etc.
+% -------------------------------------------------------------
+% \begin{macro}{\seq@TrucInterne}%
+% Macro interne.
+% \begin{macrocode}%
+% \newcommand{\seq@TrucInterne}[2]{...}%
+% \end{macrocode}%
+% \end{macro}%
+
+% \begin{macro}{\seq@ecrit@corrige@serieExos}%
+% \begin{macro}{\seq@ecrit@corrige@Exo}%
+%% v0.11.5 — Helpers déplacés dans seqenseigne-core-exos.dtx, avec
+%% au passage le patch D4 : \noexpand\newpage → \noexpand\clearpage
+%% dans \seq@ecrit@corrige@serieExos pour forcer la sortie des flottants
+%% en attente entre deux séries de corrigés.
+% \end{macro}%
+% \end{macro}%
+% -------------------------------------------------------------
+
+%% v0.13.5.2 — \seq@Eval@QcmItemNum déplacé dans seqenseigne-core-eval.dtx,
+%%             \repCodes déplacé dans seqenseigne-core-exos.dtx.
+
+
+
+% -------------------------------------------------------------
+% Hooks divers, patchs, compat low-level, mesures, longueurs...
+% (toutes les \newlength, \setlength, \newcounter, etc.
+% qui ne sont pas purement de la déco)
+% -------------------------------------------------------------
+
+%% ------------------------------------------------------------------
+%% ---- Compteurs et writes centralisés -----------------------------
+%% ------------------------------------------------------------------
+%% v0.13.5.2 étape 2 : centralisation de tous les compteurs dans core,
+%% pour visibilité globale et pour éviter les dépendances croisées de
+%% \newcounter entre modules.
+
+%% ---- Compteurs pour les QCM (utilisés par core-exos)
+%% Note v0.13.5.2 étape 2 : le compteur seqQcmItemNum a été supprimé.
+%% La numérotation des items du QCM se fait désormais via \therownum
+%% (compteur fourni par tabularray, robuste face aux passes multiples
+%% du moteur), avec décalage de -2 pour les 2 lignes d'en-tête.
+%% Les helpers de construction de l'en-tête A B C... restent.
+
+%% Helpers internes pour la construction de l'en-tête de colonnes
+%% (A, B, C...) du QCM. seq@qcm@iter sert de variable de boucle,
+%% seq@qcm@alphcode sert à générer le code ASCII des lettres.
+%% Renommés depuis i et AlphCode (v0.13.5.2 étape 2) pour préfixage
+%% cohérent et pour éviter toute collision avec un éventuel \i ou
+%% AlphCode utilisateur.
+\newcounter{seq@qcm@iter}%
+\newcounter{seq@qcm@alphcode}%
+
+%% ---- Compteur pour le modèle Bilan 2021 (utilisé par legacy)
+\newcounter{seqBilanExoNum}%
+
+%% ---- Compteur pour les flashcards (utilisé par flashcard)
+\newcounter{flashcardnb}%
+
+%% ------------------------------------------------------------------
+%% ---- Fractions avec strut ----------------------------------------
+%% ------------------------------------------------------------------
+%    \begin{macro}{\seqFrac}%
+%    \IndexMacro{\seqFrac}%
+%    Fraction avec struts pour un espacement vertical uniforme
+%    #1 : numérateur
+%    #2 : dénominateur
+%    \begin{macrocode}%
+\newcommand{\seqFrac}[2]{\dfrac{\strut{} #1}{\strut{} #2}}%
+%    \end{macrocode}%
+%    \end{macro}%
+
+%% ------------------------------------------------------------------
+%% ---- Dénominateur de fraction vers texte -------------------------
+%% ------------------------------------------------------------------
+\newcommand\seqFracToText[1]{%
+	\ifnum#1=2{demi\;}\else
+		\ifnum#1=3{tiers\;}\else
+			\ifnum#1=4{quart\;}\else
+				\ifnum#1=5{cinquième\;}\else
+					\ifnum#1=6{sixième\;}\else
+						\ifnum#1=7{septième\;}\else
+							\ifnum#1=8{huitième\;}\else
+								\ifnum#1=9{neuvième\;}\else
+									\ifnum#1=10{dixième\;}\else
+										{inconnu\;}%
+									\fi
+								\fi
+							\fi
+						\fi
+					\fi
+				\fi
+			\fi
+		\fi
+	\fi
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Nombre vers texte -------------------------------------------
+%% ------------------------------------------------------------------
+\newcommand\seqNbToText[1]{%
+	\ifnum#1=2{deux\;}\else
+		\ifnum#1=3{trois\;}\else
+			\ifnum#1=4{quatre\;}\else
+				\ifnum#1=5{cinq\;}\else
+					\ifnum#1=6{six\;}\else
+						{inconnu\;}%
+					\fi
+				\fi
+			\fi
+		\fi
+	\fi
+}%
+
+%% ------------------------------------------------------------------
+%% ---- Macros de convenance pour documents de suivi ---------------
+%% ------------------------------------------------------------------
+
+% \begin{macro}{\seqTitreSuivi}%
+% \IndexMacro{\seqTitreSuivi}%
+% Configure les en-têtes/pieds de page pour documents de suivi
+% #1 : classe
+% #2 : titre
+% #3 : année
+% \begin{macrocode}%
+\newcommand{\seqTitreSuivi}[3]{%
+    \pagestyle{fancy}%
+    \fancyhf{}%
+    \lhead{#1}%
+    \chead{#2}%
+    \rhead{#3}%
+    \lfoot{Le \today}%
+    \rfoot{Page \thepage/\pageref{LastPage}}%
+    \setlength{\footskip}{20.0pt}%
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% \begin{macro}{\seqSuiviSequence}%
+% \IndexMacro{\seqSuiviSequence}%
+% Génère le suivi d'une séquence unique
+% #1 : code niveau
+% #2 : code séquence
+% \begin{macrocode}%
+\newcommand{\seqSuiviSequence}[2]{%
+    \seqSetCodeNiveau{#1}%
+    \seqSetCodeSequence{#2}%
+    \chead{Suivi périodique: #2~-~\seqSequenceGetNom}%
+    \seqSuiviAnnuelParSequence[sequence=#2,niveau=#1]\newpage
+}%
+% \end{macrocode}%
+% \end{macro}%
+
+% Fin du module core
+%</package>
