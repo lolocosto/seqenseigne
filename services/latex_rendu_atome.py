@@ -52,6 +52,7 @@ PAQUETS_SCRATCH = frozenset({'scratch3'})
 # Couleurs de thème valides (arguments de \seqSetColorsTheme)
 THEMES_VALIDES = frozenset({
     'nombres', 'donnees', 'grandeurs', 'geometrie', 'algorithmique', 'gris',
+    'proportionnalite',                                   # v0.52.0
 })
 
 # Types d'atomes et leurs tables associées

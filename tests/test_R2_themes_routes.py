@@ -49,7 +49,7 @@ class TestCouleurs:
         assert r.status_code == 200
         data = r.get_json()
         assert "familles" in data
-        assert len(data["familles"]) == 6
+        assert len(data["familles"]) == 7   # v0.52.0 : + proportionnalite
 
     def test_famille_a_les_champs(self, client):
         r = client.get("/api/couleurs_themes")

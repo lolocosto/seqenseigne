@@ -170,15 +170,18 @@ def _cycle(conn, data_dir: Path | None, niveau: str) -> dict | None:
     themes_id = {}
     themes = []
     if _table(conn, "themes"):
-        for t in conn.execute("SELECT * FROM themes WHERE cycle_code=? ORDER BY ordre, code",
-                              (cycle,)).fetchall():
+        for t in conn.execute("SELECT * FROM themes WHERE cycle_code=? AND code NOT LIKE 'X%' "
+                              "ORDER BY ordre, code", (cycle,)).fetchall():
             themes_id[t["id"]] = t["code"]
             themes.append({"code": t["code"], "nom": _t(t["nom"]),
                            "couleur": t["code_couleur"] or ""})
     csv_objs = _objectifs_csv(data_dir, cycle, niveau)
+    # v0.52.0 — Les séquences d'archive (codes X01…, ancien découpage du
+    # cycle 3 remplacé par l'import des séquences de 6e) ne sont pas proposées.
     sequences_cycle = [dict(r) for r in conn.execute(
-        "SELECT * FROM sequences_du_cycle WHERE cycle_code=? ORDER BY numero",
-        (cycle,)).fetchall()]
+        "SELECT * FROM sequences_du_cycle WHERE cycle_code=? AND code NOT LIKE 'X%' "
+        "ORDER BY numero", (cycle,)).fetchall()]
+    noms_csv = {s["code"]: s["nom"] for s in _cycle_csv(data_dir, cycle)[1]}
     if not sequences_cycle:
         # Repli : découpage du cycle d'après <cycle>_themes.csv / _sequences.csv.
         themes, sequences_cycle = _cycle_csv(data_dir, cycle)
@@ -186,7 +189,13 @@ def _cycle(conn, data_dir: Path | None, niveau: str) -> dict | None:
     seqs = []
     for s in sequences_cycle:
         parties = _parties_atelier(conn, niveau, s["code"])
-        par_code = {o["code"]: o for o in csv_objs.get(s["code"], [])}
+        # v0.52.0 — Les objectifs du CSV ne valent que pour la séquence du CSV
+        # (même code ET même nom) : après le remplacement du découpage du
+        # cycle 3, S04 « Pré-algèbre » ne reçoit pas les objectifs de l'ancienne
+        # S04 « Calcul mental et en ligne ».
+        csv_valide = noms_csv.get(s["code"], "").strip() == (s["nom"] or "").strip()
+        par_code = ({o["code"]: o for o in csv_objs.get(s["code"], [])}
+                    if csv_valide else {})
         if parties:
             for p in parties:
                 for o in p["objectifs"]:

@@ -5,7 +5,24 @@
 
 ## Version déployée
 
-**v0.51.19** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+
+## Chantier en cours : référentiel de 6e (v0.52)
+
+Cadrage : `doc/redemarrage_v0_52_0.md`. Les séquences de 6e (nouveau
+programme, contenus de l'équipe de 6e repris en LaTeX, lots S01, S02, S03…)
+sont importées dans l'atelier interne (N09) ; le découpage du cycle 3 est
+remplacé par 10 séquences groupées en 6 thèmes (A à F).
+- v0.52.0 livrée : outil `outils/import_lot6e.py` (essai à blanc / --apply,
+  sauvegarde, idempotent), référentiel `outils/objectifs_6e.json`, archivage
+  réversible de l'ancien cycle 3 (codes X01…X16, thèmes XA…XC, 411 anciens
+  exercices de 6e recodés Snn → Xnn), couleur de thème `proportionnalite` ;
+  travaux personnels, activités complémentaires, séances d'atelier et
+  évaluations écrits en `.tex` (hors base). Exige `seqenseigne-style6e` v0.4
+  et l'option `sixieme` du paquet (livrés à part dans `paquet/`).
+- À venir : v0.52.1 livret de séquence au style de l'équipe de 6e ; lots
+  S04 à S10 ; mises en route M01 à M07. La mise en ligne (prévue en v0.52)
+  prendra le numéro suivant.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -81,8 +98,9 @@ LaTeX) et appli en ligne « classe » (suivi, sans LaTeX), sur un seul code.
 - v0.51.19 livrée : fiches de résumé — zone d'exemple de N lignes sous
   chaque zone de texte (fiche sur plusieurs pages), zone « Exemples » de
   fin de page optionnelle (cochée par défaut).
-- À venir : v0.52 mise en ligne (authentification, HTTPS, VPS ; transport des
-  envois : dossier synchronisé ou API réduite à la boîte aux lettres).
+- À venir : mise en ligne (authentification, HTTPS, VPS ; transport des
+  envois : dossier synchronisé ou API réduite à la boîte aux lettres) —
+  après le chantier 6e (v0.52).
 
 ## Chantier précédent : documents imprimables sans LaTeX (v0.50, terminé)
 
@@ -214,8 +232,18 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - **Établissements** : création uniquement par sélecteur + « Ajouter un
   collège » (académie dans la liste connue) ; fusion refusée si la source a un
   EdT, des indisponibilités ou une grille personnalisée.
+- **Archives du cycle 3** (v0.52.0) : codes de séquence `Xnn` et thèmes
+  `XA`… = ancien découpage archivé ; ne pas les réutiliser pour du neuf ;
+  exclus du modèle « programme du cycle ».
 
 ## Dettes restantes (mineures)
+
+- Installation neuve : `param_niveaux` amorce la table `cycles` avant
+  l'auto-import des cycles, qui croit alors C03/C04 déjà importés (thèmes et
+  séquences du cycle restent vides ; repli CSV dans les modèles). Constaté
+  en v0.52.0, sans effet sur une base existante ; non corrigé.
+- v0.52.0 : les précédences du cycle 4 vers N09/Snn (anciens codes) ne sont
+  pas modifiées par l'import ; l'outil les liste, à revoir dans l'atelier.
 
 - `services/tableau_bord.py` (`_NIVEAU_LABEL`) et
   `services/latex_rendu_atome.py` ont encore leurs propres libellés de niveaux

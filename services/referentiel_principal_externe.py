@@ -597,6 +597,7 @@ def _renumeroter_sequences(conn, rid):
 COULEURS_THEMES = (("nombres", "Nombres et calculs"), ("grandeurs", "Grandeurs et mesures"),
                    ("geometrie", "Espace et géométrie"), ("donnees", "Organisation et gestion "
                    "des données"), ("algorithmique", "Algorithmique et programmation"),
+                   ("proportionnalite", "Proportionnalité"),      # v0.52.0
                    ("noir_gris", "Neutre"))
 
 

@@ -53,6 +53,13 @@ FAMILLES_COULEURS = [
         "hex_principal": "#c41e80",   # magenta!85!black
     },
     {
+        # v0.52.0 — Thème E « Proportionnalité » du cycle 3 (couleur ajoutée
+        # au paquet : Canard / Orange, cf. seqenseigne-theme).
+        "slug":          "proportionnalite",
+        "libelle":       "Canard / Orange",
+        "hex_principal": "#00808a",
+    },
+    {
         "slug":          "noir_gris",
         "libelle":       "Noir / Gris",
         "hex_principal": "#262626",   # black!85!black

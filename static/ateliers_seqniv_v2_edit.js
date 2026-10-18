@@ -999,7 +999,8 @@
 
   const COULEUR_FAMILLE = {
     nombres: '#c0392b', donnees: '#2980b9', grandeurs: '#d35400',
-    geometrie: '#8e44ad', algorithmique: '#e91e63', noir_gris: '#555555',
+    geometrie: '#8e44ad', algorithmique: '#e91e63', proportionnalite: '#00808a',
+    noir_gris: '#555555',
   };
   function _couleurTheme(famille) { return COULEUR_FAMILLE[famille] || '#777'; }
 

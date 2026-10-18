@@ -1,0 +1,321 @@
+{
+ "source": "col6/ref6e_v2.md (sections S01 à S03), 18 octobre 2026",
+ "niveau": "N09",
+ "cycle": "C03",
+ "themes": [
+  {
+   "code": "A",
+   "nom": "Nombres, calcul et résolution de problèmes",
+   "code_couleur": "nombres",
+   "ordre": 1
+  },
+  {
+   "code": "B",
+   "nom": "Grandeurs et mesures",
+   "code_couleur": "grandeurs",
+   "ordre": 2
+  },
+  {
+   "code": "C",
+   "nom": "Espace et géométrie",
+   "code_couleur": "geometrie",
+   "ordre": 3
+  },
+  {
+   "code": "D",
+   "nom": "Organisation et gestion de données, probabilités",
+   "code_couleur": "donnees",
+   "ordre": 4
+  },
+  {
+   "code": "E",
+   "nom": "Proportionnalité",
+   "code_couleur": "proportionnalite",
+   "ordre": 5
+  },
+  {
+   "code": "F",
+   "nom": "Initiation à la pensée informatique",
+   "code_couleur": "algorithmique",
+   "ordre": 6
+  }
+ ],
+ "sequences": [
+  {
+   "code": "S01",
+   "numero": 1,
+   "nom": "Nombres entiers et décimaux, fractions",
+   "theme": "A"
+  },
+  {
+   "code": "S02",
+   "numero": 2,
+   "nom": "Comparaison de nombres",
+   "theme": "A"
+  },
+  {
+   "code": "S03",
+   "numero": 3,
+   "nom": "Opérations",
+   "theme": "A"
+  },
+  {
+   "code": "S04",
+   "numero": 4,
+   "nom": "Pré-algèbre",
+   "theme": "A"
+  },
+  {
+   "code": "S05",
+   "numero": 5,
+   "nom": "Géométrie plane",
+   "theme": "C"
+  },
+  {
+   "code": "S06",
+   "numero": 6,
+   "nom": "Symétrie axiale",
+   "theme": "C"
+  },
+  {
+   "code": "S07",
+   "numero": 7,
+   "nom": "Gestion de données",
+   "theme": "D"
+  },
+  {
+   "code": "S08",
+   "numero": 8,
+   "nom": "Probabilité",
+   "theme": "D"
+  },
+  {
+   "code": "S09",
+   "numero": 9,
+   "nom": "Proportionnalité",
+   "theme": "E"
+  },
+  {
+   "code": "S10",
+   "numero": 10,
+   "nom": "Pensée informatique",
+   "theme": "F"
+  }
+ ],
+ "objectif_cours": {
+  "nom": "Connaître les notions et les méthodes.",
+  "critere_F": "A noté la trace écrite en classe",
+  "critere_A": "A complété les fiches de résumé.",
+  "critere_E": "Sait résumer le cours à l'oral."
+ },
+ "parties": {
+  "S01": [
+   {
+    "numero": 1,
+    "libelle": "Entiers et décimaux",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Utiliser la valeur des chiffres selon leur rang",
+      "critere_F": "Donne le chiffre et le nombre de dizaines, centaines, milliers d'un entier.",
+      "critere_A": "Utilise la valeur des chiffres d'un décimal et les liens entre unités de numération.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Écrire un grand nombre en chiffres et en lettres",
+      "critere_F": "Écrit en chiffres un nombre donné en lettres, jusqu'au million.",
+      "critere_A": "Écrit les grands nombres en chiffres et en lettres, jusqu'au milliard.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Passer d'une écriture d'un décimal à une autre (à virgule, fraction décimale, nombre mixte, pourcentage)",
+      "critere_F": "Passe d'une fraction décimale à l'écriture à virgule et inversement.",
+      "critere_A": "Passe d'une écriture à l'autre, pourcentage compris.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Fractions",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Interpréter une fraction comme le quotient de deux entiers",
+      "critere_F": "Écrit la division qui correspond à une fraction.",
+      "critere_A": "Complète des égalités à trous multiplicatives avec la définition du quotient.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Établir des égalités de fractions",
+      "critere_F": "Trouve une fraction égale en multipliant numérateur et dénominateur.",
+      "critere_A": "Dit si deux fractions sont égales sans calculer les quotients.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "14",
+      "nom": "Reconnaître si une fraction représente un entier, un décimal ou un nombre non décimal",
+      "critere_F": "Reconnaît une fraction égale à un entier.",
+      "critere_A": "Dit si une fraction représente un entier, un décimal non entier ou un nombre non décimal, en justifiant.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S02": [
+   {
+    "numero": 1,
+    "libelle": "Repérage sur une demi-droite graduée",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Placer un nombre décimal sur une demi-droite graduée",
+      "critere_F": "Lit l'abscisse d'un point sur une demi-droite graduée.",
+      "critere_A": "Place un point d'abscisse décimale sur une demi-droite graduée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Placer une fraction sur une demi-droite graduée",
+      "critere_F": "Place une fraction de dénominateur 2, 4 ou 10.",
+      "critere_A": "Gradue un segment et place une fraction.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Comparer et ranger",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Ranger des nombres décimaux",
+      "critere_F": "Compare deux décimaux ayant le même nombre de décimales.",
+      "critere_A": "Range une liste de décimaux dans l'ordre croissant ou décroissant.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Encadrer un nombre décimal",
+      "critere_F": "Encadre un décimal à l'unité.",
+      "critere_A": "Encadre un décimal au dixième et intercale un décimal entre deux autres.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "14",
+      "nom": "Ranger des fractions et des nombres mixtes",
+      "critere_F": "Compare deux fractions de même dénominateur.",
+      "critere_A": "Range une liste de fractions et de nombres mixtes.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "15",
+      "nom": "Encadrer une fraction par deux entiers",
+      "critere_F": "Compare une fraction à 1.",
+      "critere_A": "Encadre une fraction par deux entiers consécutifs.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S03": [
+   {
+    "numero": 1,
+    "libelle": "Ordre de grandeur",
+    "objectifs": [
+     {
+      "code": "03",
+      "nom": "Contrôler un résultat avec un ordre de grandeur",
+      "critere_F": "Donne un ordre de grandeur d'une somme ou d'un produit d'entiers.",
+      "critere_A": "Repère un résultat faux grâce à un ordre de grandeur.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Multiplication",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Multiplier un nombre par 0,1, 0,01 ou 0,001",
+      "critere_F": "Multiplie et divise un entier par 10, 100, 1 000.",
+      "critere_A": "Multiplie un décimal par 0,1, 0,01, 0,001 et fait le lien avec la division par 10, 100, 1 000.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Calculer le produit de deux nombres décimaux",
+      "critere_F": "Pose la multiplication d'un décimal par un entier.",
+      "critere_A": "Pose la multiplication de deux décimaux.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "14",
+      "nom": "Résoudre un problème de multiplication de décimaux",
+      "critere_F": "Résout un problème à une étape.",
+      "critere_A": "Résout un problème à plusieurs étapes.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 3,
+    "libelle": "Divisions",
+    "objectifs": [
+     {
+      "code": "22",
+      "nom": "Effectuer une division euclidienne par un entier inférieur à 100",
+      "critere_F": "Pose une division euclidienne par un entier à un chiffre.",
+      "critere_A": "Pose une division euclidienne par un entier à deux chiffres.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "23",
+      "nom": "Résoudre un problème de division euclidienne",
+      "critere_F": "Interprète le quotient et le reste dans un problème simple.",
+      "critere_A": "Résout un problème de division euclidienne.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "24",
+      "nom": "Diviser un nombre décimal par un entier inférieur à 10",
+      "critere_F": "Divise un décimal par 2, 4 ou 5.",
+      "critere_A": "Divise un décimal par un entier inférieur à 10 jusqu'à un reste nul ou une précision donnée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "25",
+      "nom": "Résoudre un problème de division décimale",
+      "critere_F": "Résout un problème de partage à une étape.",
+      "critere_A": "Résout un problème de division décimale à plusieurs étapes.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 4,
+    "libelle": "Problèmes avec des fractions",
+    "objectifs": [
+     {
+      "code": "34",
+      "nom": "Résoudre un problème mettant en jeu des fractions",
+      "critere_F": "Résout un problème à une étape avec une fraction simple.",
+      "critere_A": "Résout un problème à plusieurs étapes avec des fractions.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "35",
+      "nom": "Inventer un problème mettant en jeu des fractions",
+      "critere_F": "Complète l'énoncé d'un problème pour qu'il se résolve par un calcul de fractions donné.",
+      "critere_A": "Invente un problème dont la résolution utilise une fraction donnée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ]
+ }
+}
