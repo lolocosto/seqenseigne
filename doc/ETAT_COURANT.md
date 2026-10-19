@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.5** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -69,7 +69,21 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   l'assemblage ; « Connaître le cours » ; module `seqenseigne-style6e` v0.5
   (niveau paramétrable : `tex seqenseigne.ins` à relancer). Cycle 4
   inchangé au caractère près. Détails : `doc/redemarrage_v0_52_4.md`.
-- À venir : lots S04 à S10 ; mises en route M01 à M07 ; outil d'import
+- v0.52.5 livrée : `outils/objectifs_6e.json` complété de S01 à S13
+  après le découpage de la géométrie (19 octobre 2026 : S05 Points,
+  segments, droites ; S06 Cercles ; S07 Angles ; S08 Triangles ; anciennes
+  S06 à S10 → S09 à S13 ; l'import renomme sur place les séquences du
+  cycle 3 et crée S11 à S13) (52 objectifs, transcription exacte de `outils/ref6e_v2.md`, protégée par
+  un test ; séquence sans partie déclarée = une partie « nom de la
+  séquence ») ; module `seqenseigne-style6e` v0.6 (macros du lot S05 :
+  `\seqLocCadreTrace`, `\seqLocAngle`, `\seqLocRapporteur`, style TikZ
+  `seqLocCorr` ; du lot S04 : schémas en barres et balance ;
+  `tex seqenseigne.ins` à relancer) ; lots S04 « Pré-algèbre », S05 à S08
+  (géométrie découpée) et S09 « Symétrie axiale » dans `reference\lot6e` ; l'import signale une macro `\seqLoc`
+  absente du module ; page de garde du livret 6e par partie (titre « Partie
+  n — libellé », trait de la couleur du thème). Cycle 4 inchangé au
+  caractère près. Détails : `doc/redemarrage_v0_52_5.md`.
+- À venir : lots S10 à S13 ; mises en route M01 à M07 ; outil d'import
   paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
   numéro suivant.
 

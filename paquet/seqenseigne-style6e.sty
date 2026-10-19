@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/19 v0.5 seqenseigne : style des documents de 6e]
+    [2026/10/19 v0.6 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -77,16 +77,26 @@
 \NewDocumentCommand{\seqCaseCocher}{o m}{%
   \ifseq@corrige\IfValueTF{#1}{{\color{seqSixRouge}$\boxtimes$}}{$\square$}%
   \else$\square$\fi\ #2\quad}
-\newcommand{\seqCouvertureLivretSix}[2]{%
+\NewDocumentCommand{\seqCouvertureLivretSix}{s m m}{%
   \noindent\begin{minipage}[t]{0.5\linewidth}\small
     NOM : \seqTrous[4cm]\\[2pt]Prénom : \seqTrous[3.6cm]\\[2pt]
     \seqNiveauExposant\ \seqTrous[1.2cm]\end{minipage}\par
-  \begin{center}{\huge\bfseries #1}\\[2pt]
+  \begin{center}{\huge\bfseries #2}\\[2pt]
     {\LARGE\bfseries Niveau \seqNiveauExposant}\end{center}
   \noindent{\bfseries\underline{Objectifs du chapitre :}}
+  \IfBooleanTF{#1}{\par\smallskip#3}{%
   \begin{itemize}[itemsep=0pt,topsep=2pt]
-    \foreach \seq@c/\seq@t in {#2}{\item\textit{\seq@c\ : \seq@t}}
-  \end{itemize}}
+    \foreach \seq@c/\seq@t in {#3}{\item\textit{\seq@c\ : \seq@t}}
+  \end{itemize}}}
+\colorlet{seqSixTheme}{seqSixBleu}
+\newcommand{\seqPartieCouvertureSix}[2]{%
+  \par\addvspace{5pt}\noindent{\bfseries\color{seqSixTheme}#1}\par\nobreak
+  \begin{tcolorbox}[enhanced, blanker, borderline west={2pt}{0pt}{seqSixTheme},
+      left=8pt, top=1pt, bottom=1pt, before skip=2pt, after skip=2pt]
+    \begin{itemize}[itemsep=0pt,topsep=0pt,leftmargin=1.2em]
+      \foreach \seq@c/\seq@t in {#2}{\item\textit{\seq@c\ : \seq@t}}
+    \end{itemize}
+  \end{tcolorbox}}
 \newcommand{\seqBandeauCapacite}[2]{%
   \par\addvspace{0.6\baselineskip}%
   \begin{tcolorbox}[enhanced, colback=white, colframe=black, boxrule=1.2pt,
@@ -433,6 +443,67 @@
 \newcommand{\seqLocEcran}[1]{\tikz[baseline=(e.base)]\node[draw=seqSixGrisTexte,
   line width=0.8pt, rounded corners=3pt, fill=seqSixBleu!8, inner sep=5pt,
   font=\ttfamily\large](e){#1};}
+\NewDocumentCommand{\seqLocCadreTrace}{O{5cm} m}{\par\smallskip
+  \begin{tcolorbox}[enhanced, width=\dimexpr\linewidth-\leftskip\relax,
+      height=#1, colback=white, colframe=seqSixGrisTexte!40, boxrule=0.4pt,
+      arc=1pt, valign=center, halign=center, left=2pt, right=2pt, top=2pt,
+      bottom=2pt]%
+    \ifseq@corrige #2\else\mbox{}\fi
+  \end{tcolorbox}}
+\newcommand{\seqLocAngle}[1]{\ensuremath{\widehat{#1}}}
+\tikzset{seqLocCorr/.style={color=seqSixRouge, line width=0.8pt}}
+\NewDocumentCommand{\seqLocRapporteur}{O{3} m m}{%
+  \begin{scope}[shift={#2}, rotate=#3]
+    \fill[seqSixBleu!8, fill opacity=0.75] (#1,0) arc (0:180:#1) -- cycle;
+    \draw[seqSixGrisTexte, line width=0.4pt] (-#1-0.15,0) -- (#1+0.15,0) (#1,0) arc (0:180:#1);
+    \draw[seqSixGrisTexte, line width=0.3pt] (#1*0.55,0) arc (0:180:#1*0.55);
+    \draw[seqSixGrisTexte, line width=0.25pt] \foreach \seq@a in {0,...,180}{(\seq@a:#1) -- (\seq@a:#1-0.08)}
+      \foreach \seq@a in {0,5,...,180}{(\seq@a:#1-0.08) -- (\seq@a:#1-0.16)}
+      \foreach \seq@a in {0,10,...,180}{(\seq@a:#1-0.16) -- (\seq@a:#1-0.24)};
+    \foreach \seq@a in {0,10,...,180}{%
+      \pgfmathtruncatemacro{\seq@b}{180-\seq@a}%
+      \node[font=\fontsize{4.5}{5}\selectfont, rotate=\seq@a-90, inner sep=0pt] at (\seq@a:#1-0.36) {\seq@a};
+      \node[font=\fontsize{4.5}{5}\selectfont, rotate=\seq@a-90, inner sep=0pt, seqSixRouge!80!black] at (\seq@a:#1-0.62) {\seq@b};}
+    \draw[seqSixGrisTexte, line width=0.4pt] (0,0) -- (0,0.22) (-0.12,0) -- (0.12,0);
+  \end{scope}}
+\usetikzlibrary{decorations.pathreplacing}
+\tikzset{seqLocBarre/.style={draw=seqSixBleu!80!black, fill=seqSixBleu!12, line width=0.6pt},
+  seqLocBarreR/.style={seqLocBarre, draw=seqSixRouge!80!black, fill=seqSixRouge!10},
+  seqLocBarreV/.style={seqLocBarre, draw=seqSixVert!80!black, fill=seqSixVert!14},
+  seqLocBarreQ/.style={seqLocBarre, fill=white, dashed}}
+\NewDocumentCommand{\seqLocBloc}{O{seqLocBarre} m m m m}{%
+  \draw[#1] (#2,#3) rectangle ++(#4,0.6);
+  \node[font=\small, inner sep=1pt] at ($(#2,#3)+(#4/2,0.3)$) {#5};}
+\NewDocumentCommand{\seqLocAccolade}{O{below} m m m m}{%
+  \def\seq@acc@pos{#1}\def\seq@acc@below{below}%
+  \ifx\seq@acc@pos\seq@acc@below
+    \draw[decorate, decoration={brace, amplitude=5pt, mirror}, line width=0.6pt]
+      (#2,#4) -- (#3,#4) node[midway, below=5pt, font=\small, inner sep=1pt] {#5};
+  \else
+    \draw[decorate, decoration={brace, amplitude=5pt}, line width=0.6pt]
+      (#2,#4) -- (#3,#4) node[midway, above=5pt, font=\small, inner sep=1pt] {#5};
+  \fi}
+\NewDocumentCommand{\seqLocBalance}{O{2.4} m m}{%
+  \begin{tikzpicture}[baseline=(seqbal.base)]
+    \fill[seqSixGrisTexte!45] (-0.7,0) rectangle (0.7,0.15);
+    \fill[seqSixGrisTexte!70] (-0.18,0.15) -- (0.18,0.15) -- (0.06,1.05) -- (-0.06,1.05) -- cycle;
+    \draw[line width=1.8pt, seqSixGrisTexte] (-#1,1.05) -- (#1,1.05);
+    \fill[seqSixGrisTexte] (0,1.05) circle (2.2pt);
+    \draw[line width=1.2pt, seqSixGrisTexte] (-#1,1.05) -- (-#1,1.35) (#1,1.05) -- (#1,1.35);
+    \draw[line width=2.2pt, seqSixGrisTexte] (-#1-0.45*#1-0.3,1.38) -- (-#1+0.45*#1+0.3,1.38)
+      (#1-0.45*#1-0.3,1.38) -- (#1+0.45*#1+0.3,1.38);
+    \node[anchor=south, inner sep=1pt] at (-#1,1.45) {#2};
+    \node[anchor=south, inner sep=1pt] at (#1,1.45) {#3};
+    \node[inner sep=0pt] (seqbal) at (0,0) {\strut};
+  \end{tikzpicture}}
+\newcommand{\seqLocSac}[1]{\tikz[baseline=(s.base)]\node[draw=seqSixBleu!80!black,
+  fill=seqSixBleu!18, rounded corners=3pt, minimum width=0.62cm, minimum height=0.62cm,
+  inner sep=1pt, font=\small\bfseries](s){#1};}
+\newcommand{\seqLocMasse}[1]{\tikz[baseline=(m.base)]\node[draw=black, fill=seqSixGrisTexte!25,
+  trapezium, trapezium angle=70, minimum height=0.5cm, inner sep=1.5pt,
+  font=\scriptsize\bfseries](m){#1};}
+\NewDocumentCommand{\seqLocObjet}{O{seqSixRouge} m}{\tikz[baseline=(o.base)]\node[draw=#1!80!black,
+  fill=#1!25, circle, minimum size=0.62cm, inner sep=0.5pt, font=\scriptsize\bfseries](o){#2};}
 \endinput
 %%
 %% End of file `seqenseigne-style6e.sty'.

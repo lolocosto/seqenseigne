@@ -397,8 +397,11 @@ def test_livret_6e_structure_par_objectif(app_6e):
     corps = tex.split(r"\begin{document}")[1]
     i = corps.index
     # Couverture : capacités seulement (L3), nom de séquence du cycle 3 (L6).
-    assert (r"\seqCouvertureLivretSix{Nombres entiers et décimaux}"
-            r"{S01-02/{Utiliser la valeur des chiffres},S01-03/{Écrire un grand nombre}}") in corps
+    # v0.52.5 (C2, changement voulu) : objectifs rangés par partie, libellé
+    # de outils/objectifs_6e.json, trait de la couleur du thème.
+    assert (r"\seqCouvertureLivretSix*{Nombres entiers et décimaux}{%" "\n"
+            r"\seqPartieCouvertureSix{Partie 1 --- Entiers et décimaux}"
+            r"{S01-02/{Utiliser la valeur des chiffres},S01-03/{Écrire un grand nombre}}}") in corps
     assert "S01-01" not in corps
     # Partie → activité de partie (L1) → objectif 02 : fiche puis F, A, E.
     assert i("Partie 1") < i("Un sudoku") < i(r"\seqBandeauCapacite{S01-02}") \

@@ -1,5 +1,5 @@
 {
- "source": "col6/ref6e_v2.md (sections S01 à S03), 18 octobre 2026",
+ "source": "col6/ref6e_v2.md (sections S01 à S13 ; copie : outils/ref6e_v2.md), 19 octobre 2026 (découpage de la géométrie)",
  "niveau": "N09",
  "cycle": "C03",
  "themes": [
@@ -68,36 +68,54 @@
   {
    "code": "S05",
    "numero": 5,
-   "nom": "Géométrie plane",
+   "nom": "Points, segments, droites",
    "theme": "C"
   },
   {
    "code": "S06",
    "numero": 6,
-   "nom": "Symétrie axiale",
+   "nom": "Cercles",
    "theme": "C"
   },
   {
    "code": "S07",
    "numero": 7,
-   "nom": "Gestion de données",
-   "theme": "D"
+   "nom": "Angles",
+   "theme": "C"
   },
   {
    "code": "S08",
    "numero": 8,
-   "nom": "Probabilité",
-   "theme": "D"
+   "nom": "Triangles",
+   "theme": "C"
   },
   {
    "code": "S09",
    "numero": 9,
-   "nom": "Proportionnalité",
-   "theme": "E"
+   "nom": "Symétrie axiale",
+   "theme": "C"
   },
   {
    "code": "S10",
    "numero": 10,
+   "nom": "Gestion de données",
+   "theme": "D"
+  },
+  {
+   "code": "S11",
+   "numero": 11,
+   "nom": "Probabilité",
+   "theme": "D"
+  },
+  {
+   "code": "S12",
+   "numero": 12,
+   "nom": "Proportionnalité",
+   "theme": "E"
+  },
+  {
+   "code": "S13",
+   "numero": 13,
    "nom": "Pensée informatique",
    "theme": "F"
   }
@@ -312,6 +330,308 @@
       "nom": "Inventer un problème mettant en jeu des fractions",
       "critere_F": "Complète l'énoncé d'un problème pour qu'il se résolve par un calcul de fractions donné.",
       "critere_A": "Invente un problème dont la résolution utilise une fraction donnée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S04": [
+   {
+    "numero": 1,
+    "libelle": "Pré-algèbre",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Résoudre un problème avec un schéma en barres ou une balance",
+      "critere_F": "Représente un problème simple par un schéma en barres.",
+      "critere_A": "Résout un problème à deux étapes avec un schéma en barres ou une balance.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Identifier la structure d'un motif évolutif",
+      "critere_F": "Prolonge un motif évolutif.",
+      "critere_A": "Trouve le nombre d'éléments à une étape donnée en expliquant la règle.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S05": [
+   {
+    "numero": 1,
+    "libelle": "Premiers éléments",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Tracer les éléments de base : point, droite, segment, demi-droite",
+      "critere_F": "Trace un segment et une droite passant par deux points.",
+      "critere_A": "Trace une figure décrite par ses éléments.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Utiliser les notations et le codage des éléments de géométrie",
+      "critere_F": "Distingue [AB], (AB) et [AB).",
+      "critere_A": "Décrit une figure codée avec les notations et en déduit une égalité de longueurs ou un angle droit.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Résoudre un problème d'appartenance, d'alignement, de distance ou de milieu",
+      "critere_F": "Place le milieu d'un segment.",
+      "critere_A": "Utilise distance et milieu pour placer des points.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Médiatrice",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Construire la médiatrice d'un segment",
+      "critere_F": "Construit la médiatrice à l'équerre.",
+      "critere_A": "Construit la médiatrice à la règle et au compas, puis rédige son programme de construction (livret, p. 28, 35).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Utiliser la propriété caractéristique de la médiatrice",
+      "critere_F": "Dit si un point est à égale distance des extrémités d'un segment.",
+      "critere_A": "Justifie, à l'oral ou par écrit et sans rédaction imposée, qu'un point appartient ou non à la médiatrice.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S06": [
+   {
+    "numero": 1,
+    "libelle": "Cercles",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Placer des points à une distance donnée à l'aide d'un cercle",
+      "critere_F": "Trace un cercle de centre et de rayon donnés et nomme rayon, diamètre, corde.",
+      "critere_A": "Utilise des cercles pour trouver les points vérifiant une ou deux conditions de distance (cercle et disque comme ensembles de points).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Construire un triangle",
+      "critere_F": "Construit un triangle connaissant ses trois côtés.",
+      "critere_A": "Construit un triangle connaissant deux côtés et un angle, ou un côté et deux angles.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S07": [
+   {
+    "numero": 1,
+    "libelle": "Angles",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Utiliser le vocabulaire des angles",
+      "critere_F": "Nomme un angle et dit s'il est aigu, droit ou obtus.",
+      "critere_A": "Reconnaît des angles adjacents, opposés par le sommet, supplémentaires.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Mesurer un angle",
+      "critere_F": "Mesure un angle aigu au rapporteur.",
+      "critere_A": "Mesure un angle obtus et repère une lecture fausse.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Construire un angle de mesure donnée",
+      "critere_F": "Construit un angle aigu de mesure donnée.",
+      "critere_A": "Construit un angle obtus de mesure donnée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Construire la bissectrice d'un angle",
+      "critere_F": "Trace la bissectrice d'un angle au rapporteur.",
+      "critere_A": "Utilise la bissectrice pour construire une figure.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S08": [
+   {
+    "numero": 1,
+    "libelle": "Triangles",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Calculer un angle d'un triangle",
+      "critere_F": "Calcule le troisième angle avec la somme des angles.",
+      "critere_A": "Calcule un angle avec les propriétés des triangles particuliers.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Droites remarquables",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Construire le cercle circonscrit à un triangle",
+      "critere_F": "Trace les médiatrices d'un triangle.",
+      "critere_A": "Construit le cercle circonscrit et l'utilise dans un problème.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S09": [
+   {
+    "numero": 1,
+    "libelle": "Symétrie axiale",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Construire le symétrique d'un point par rapport à une droite",
+      "critere_F": "Construit le symétrique d'un point sur quadrillage, l'axe suivant les lignes du quadrillage.",
+      "critere_A": "Construit le symétrique d'un point sur papier blanc, à l'équerre ou au compas, en s'appuyant sur la définition (l'axe est la médiatrice du segment).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Construire le symétrique d'une figure sur quadrillage",
+      "critere_F": "Construit le symétrique d'une figure simple, l'axe suivant les lignes du quadrillage.",
+      "critere_A": "Construit le symétrique d'une figure par rapport à un axe oblique sur quadrillage.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Construire le symétrique d'une figure sur papier blanc",
+      "critere_F": "Construit le symétrique d'un segment ou d'un cercle sur papier blanc.",
+      "critere_A": "Construit le symétrique d'une figure en justifiant avec les propriétés de conservation.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S10": [
+   {
+    "numero": 1,
+    "libelle": "Gestion de données",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Filtrer les données d'un tableau selon un critère",
+      "critere_F": "Lit une donnée dans un tableau ou un diagramme en barres.",
+      "critere_A": "Filtre les données d'un tableau selon un critère pour répondre à une question.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Planifier une enquête statistique",
+      "critere_F": "Formule la question de l'enquête et choisit les données à recueillir.",
+      "critere_A": "Organise le recueil des données : questionnaire ou relevés.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Consigner des mesures dans un tableau",
+      "critere_F": "Reporte des mesures données dans un tableau.",
+      "critere_A": "Réalise des mesures et les consigne dans un tableau, avec les unités.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S11": [
+   {
+    "numero": 1,
+    "libelle": "Probabilité",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Situer la probabilité d'un événement entre 0 et 1",
+      "critere_F": "Dit si un événement est impossible (0), certain (1) ou possible.",
+      "critere_A": "Place des événements sur une échelle de 0 à 1 et écrit une probabilité en fraction, décimal ou pourcentage.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Calculer une probabilité en situation d'équiprobabilité",
+      "critere_F": "Écrit sous la forme a/b une probabilité donnée en « a chances sur b », pour une face d'un dé ou une couleur dans une urne.",
+      "critere_A": "Calcule la probabilité d'un événement réalisé par plusieurs issues.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Comparer une probabilité aux résultats d'une expérience répétée",
+      "critere_F": "Note les résultats d'une expérience répétée ou simulée et calcule une fréquence.",
+      "critere_A": "Compare les fréquences observées à la probabilité calculée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S12": [
+   {
+    "numero": 1,
+    "libelle": "Comprendre la proportionnalité",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Utiliser la définition de la proportionnalité entre deux grandeurs",
+      "critere_F": "Explique une expression comme « prix au kilo » ou « pages par minute » en faisant apparaître l'unité cachée : pour 1 kilo, en 1 minute.",
+      "critere_A": "Justifie avec la définition que deux grandeurs sont proportionnelles.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Reconnaître si une situation relève de la proportionnalité",
+      "critere_F": "Dit si deux grandeurs sont proportionnelles dans une situation de la vie courante.",
+      "critere_A": "Justifie qu'une situation n'est pas proportionnelle : tarif dégressif, longueur d'un train avec sa locomotive (livret, p. 22-24).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Résoudre un problème par un retour à l'unité",
+      "critere_F": "Calcule la quantité pour une unité (prix d'un stylo, litres par heure).",
+      "critere_A": "Résout par un retour à l'unité un problème où aucun rapport simple ne convient (15 L en 4 h, combien en 7 h ?).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Représenter une situation de proportionnalité",
+      "critere_F": "Écrit l'énoncé avec des flèches : 90 pages → 2 minutes.",
+      "critere_A": "Réécrit l'énoncé dans un tableau qui donne le nom et l'unité de chaque grandeur.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "S13": [
+   {
+    "numero": 1,
+    "libelle": "Pensée informatique",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Écrire une séquence d'instructions pour un déplacement",
+      "critere_F": "Exécute une séquence d'instructions de déplacement sur un quadrillage.",
+      "critere_A": "Écrit la séquence d'instructions d'un déplacement donné.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Écrire un programme Scratch avec une boucle de répétition",
+      "critere_F": "Prévoit ce que trace un programme Scratch avec une boucle.",
+      "critere_A": "Écrit un programme avec une boucle « répéter n fois ».",
       "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
      }
     ]

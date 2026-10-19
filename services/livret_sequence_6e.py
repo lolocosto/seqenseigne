@@ -53,7 +53,9 @@ Décisions (doc/redemarrage_v0_52_1.md) :
 
 from __future__ import annotations
 
+import json
 import sqlite3
+from pathlib import Path
 
 from services.gabarits_documents import REMEDIATIONS_6E, VERSIONS_6E
 from services.latex_rendu_atome import (
@@ -205,8 +207,12 @@ def lire_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_code: str) 
         parties.append({"numero": numero, "activites": activites, "fiches": fiches_partie,
                         "objectifs": objectifs})
     nom, numero = _nom_sequence(conn, niveau, sequence_code)
+    libelles = libelles_parties(niveau, sequence_code)          # C1 (v0.52.5)
+    for p in parties:
+        p["libelle"] = libelles.get(p["numero"], "")
     return {"code": sequence_code, "nom": nom or sn.get("sequence_nom") or sequence_code,
-            "numero": numero, "niveau": niveau, "parties": parties}
+            "numero": numero, "niveau": niveau, "parties": parties,
+            "theme_couleur": sn.get("theme_code_couleur") or ""}
 
 
 def _nom_sequence(conn, niveau: str, sequence_code: str) -> tuple[str, int | None]:
@@ -299,10 +305,53 @@ def _emettre_exercice(L: list, ex: dict, serie: str, opts: dict, remeds_fin: lis
             remeds_fin.append(ex)
 
 
+_OBJECTIFS_6E = Path(__file__).resolve().parent.parent / "outils" / "objectifs_6e.json"
+
+
+def libelles_parties(niveau: str, sequence_code: str) -> dict[int, str]:
+    """C1 (v0.52.5) — Libellés des parties d'une séquence. L'atelier n'en
+    stocke pas (`sequence_parties` n'a que le numéro) : seul le référentiel
+    de 6e `outils/objectifs_6e.json` en donne, pour son niveau (N09).
+    {} si le fichier manque, est illisible ou ne concerne pas ce niveau."""
+    try:
+        ref = json.loads(_OBJECTIFS_6E.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if ref.get("niveau") != niveau:
+        return {}
+    return {p["numero"]: (p.get("libelle") or "").strip()
+            for p in (ref.get("parties") or {}).get(sequence_code, [])}
+
+
+def titre_partie_couverture(seq: dict, p: dict) -> str:
+    """« Partie n — libellé », ou « Partie n » sans libellé ou quand le
+    libellé répète le nom de la séquence (séquence à une seule partie,
+    décision O2) — C3."""
+    lib = p.get("libelle") or ""
+    if lib and lib != seq.get("nom"):
+        return f"Partie {p['numero']} --- {lib}"
+    return f"Partie {p['numero']}"
+
+
 def couverture(seq: dict) -> str:
-    liste = ",".join(f"{seq['code']}-{o['code']}/{{{o['nom']}}}"
-                     for p in seq["parties"] for o in p["objectifs"])
-    return r"\seqCouvertureLivretSix{" + seq["nom"] + "}{" + liste + "}"
+    """Page de garde. C2 (v0.52.5, demande de Laurent) : objectifs rangés
+    par partie (`\\seqCouvertureLivretSix*` + `\\seqPartieCouvertureSix`,
+    module v0.6), trait vertical de la couleur du thème de la séquence
+    (`seqSixTheme`, bleu du module si le thème n'a pas de couleur connue).
+    Une partie sans objectif de capacité n'apparaît pas."""
+    from services.couleurs_themes import famille_par_slug
+    blocs = []
+    for p in seq["parties"]:
+        if not p["objectifs"]:
+            continue
+        liste = ",".join(f"{seq['code']}-{o['code']}/{{{o['nom']}}}" for o in p["objectifs"])
+        blocs.append(r"\seqPartieCouvertureSix{" + titre_partie_couverture(seq, p) + "}{"
+                     + liste + "}")
+    fam = famille_par_slug(seq.get("theme_couleur") or "")
+    couleur = (r"\definecolor{seqSixTheme}{HTML}{" + fam["hex_principal"].lstrip("#").upper()
+               + "}") if fam else ""
+    return (couleur + r"\seqCouvertureLivretSix*{" + seq["nom"] + "}{%\n"
+            + "\n".join(blocs) + "}")
 
 
 def entete(seq: dict, corrige: bool) -> str:

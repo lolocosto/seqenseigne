@@ -3,7 +3,7 @@
 r"""outils/import_lot6e.py — v0.52.0, documents en base depuis v0.52.2
 
 Importe les séquences de 6e (lots S01, S02, S03…) dans l'atelier interne
-(niveau N09), remplace les séquences du cycle 3 par les dix séquences du
+(niveau N09), remplace les séquences du cycle 3 par les treize séquences du
 nouveau référentiel et archive, sans rien supprimer, l'ancien découpage.
 
 Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
@@ -17,8 +17,14 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      séquences du cycle 3) passe du code Snn au code Xnn. Les identifiants
      ne changent pas : les liens existants (objectifs, évaluations,
      révisions du cycle 4) suivent. Le cycle 4 n'est jamais modifié.
-  2. **Cycle 3** — six thèmes (A à F) et dix séquences (S01 à S10) d'après
-     `outils/objectifs_6e.json`.
+  2. **Cycle 3** — six thèmes (A à F) et treize séquences (S01 à S13) d'après
+     `outils/objectifs_6e.json`. Depuis le découpage de la géométrie
+     (19 octobre 2026, `doc/redemarrage_v0_52_5.md`) : une base qui a déjà
+     les dix séquences de la v0.52.0 est mise à jour sur place (S05 à S10
+     renommées, thèmes, S11 à S13 créées ; identifiants inchangés). Une
+     séquence dont le nom change alors qu'une séquence-niveau du cycle 3
+     existe déjà sous ce code (contenu de l'ancien sens) n'est pas renommée :
+     anomalie, et son lot n'est pas importé.
   3. **Import N09** — séquence-niveau, parties, objectifs (dont l'objectif
      « Cours » de chaque partie), exercices F/A/E avec remédiations,
      activités d'introduction (série approche AE, rattachées à la partie
@@ -208,6 +214,9 @@ class Rapport:
         self.figures: list[str] = []
         self.documents: list[str] = []
         self.journal: dict = {"archivage": [], "import": []}
+        # Découpage de la géométrie : séquences dont le code a changé de sens
+        # alors qu'un contenu de l'ancien sens existe (lot non importé).
+        self.sequences_bloquees: set = set()
 
     def seq(self, code: str) -> dict:
         return self.sequences.setdefault(code, {"lignes": [], "objectifs": OrderedDict(),
@@ -452,13 +461,35 @@ def appliquer_cycle3(conn, ref: dict, rapport: Rapport) -> dict:
                          (_nid("sc"), CYCLE, s["code"], s["numero"], s["nom"], tid))
             etat = "créée"
         elif (r["numero"], r["nom"], r["theme_id"]) != (s["numero"], s["nom"], tid):
-            conn.execute("UPDATE sequences_du_cycle SET numero=?, nom=?, theme_id=? WHERE id=?",
-                         (s["numero"], s["nom"], tid, r["id"]))
-            etat = "mise à jour"
+            # Découpage de la géométrie (19 octobre 2026) : S05 à S10 changent
+            # de nom (S06 Symétrie axiale → Cercles…). Une séquence-niveau du
+            # cycle 3 déjà présente sous ce code porte le contenu de l'ancien
+            # sens : renommer la séquence le rattacherait au nouveau sens.
+            existantes = _seq_niveaux_cycle3(conn, s["code"]) if r["nom"] != s["nom"] else []
+            if existantes:
+                rapport.sequences_bloquees.add(s["code"])
+                liste = ", ".join(f"{n}/{s['code']} ({e})" for n, e in existantes)
+                rapport.anomalie(
+                    f"séquence {s['code']} : « {r['nom']} » devient « {s['nom']} » "
+                    f"(découpage de la géométrie), mais la séquence-niveau {liste} "
+                    "existe déjà avec le contenu de l'ancien sens : séquence non renommée, "
+                    "lot non importé — à revoir dans l'atelier")
+                etat = "non modifiée (anomalie)"
+            else:
+                conn.execute("UPDATE sequences_du_cycle SET numero=?, nom=?, theme_id=? "
+                             "WHERE id=?", (s["numero"], s["nom"], tid, r["id"]))
+                etat = "mise à jour" if r["nom"] == s["nom"] else f"renommée (était « {r['nom']} »)"
         else:
             etat = "inchangée"
         rapport.cycle.append(f"séquence {s['code']} {s['nom']} (thème {s['theme']}) : {etat}")
     return themes
+
+
+def _seq_niveaux_cycle3(conn, code: str) -> list[tuple[str, str]]:
+    """[(niveau, état)] des séquences-niveaux du cycle 3 (CM1, CM2, 6e) au code donné."""
+    return [(r[0], r[1] or "") for r in conn.execute(
+        "SELECT niveau, etat_code FROM sequences_par_niveau WHERE sequence_code=? AND niveau IN "
+        f"({','.join('?' * len(NIVEAUX_CYCLE3))}) ORDER BY niveau", (code, *NIVEAUX_CYCLE3))]
 
 
 # ── 3. Import d'une séquence de 6e ───────────────────────────────────────────
@@ -634,6 +665,10 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
     if s_ref is None or not parties_ref:
         rapport.anomalie(f"{seq} : séquence absente de objectifs_6e.json, lot non importé")
         return figures
+    if seq in rapport.sequences_bloquees:          # anomalie déjà signalée (cycle 3)
+        rapport.seq(seq)["lignes"].append("lot non importé : la séquence a changé de sens "
+                                          "(voir les anomalies)")
+        return figures
     sr = rapport.seq(seq)
     sr["lignes"].append(f"{s_ref['nom']} (lot : « {lot.get('titre', '')} »)")
     sn = _seq_niveau(conn, seq, rapport)
@@ -780,7 +815,8 @@ def copier_figures(lots: list[dict], noms_par_seq: dict, images: Path, rapport: 
 
 def macros_locales(lots: list[dict]) -> dict:
     """{séquence: [\\seqLoc… utilisées]} dans les contenus LaTeX des lots
-    (le module seqenseigne-style6e v0.4 les fournit)."""
+    (le module seqenseigne-style6e les fournit : v0.4 pour S01 à S03, v0.6
+    pour S05)."""
     out = {}
     for lot in lots:
         contenu = {k: v for k, v in lot.items() if k not in ("_dossier", "macros_locales")}
@@ -1069,10 +1105,17 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         figures[lot["sequence"]] = importer_lot(conn, lot, ref, rapport)
     copier_figures(lots, figures, images, rapport, ecrire_fichiers)
     signaler_cycle4(conn, rapport)
+    from services.style6e import MACROS as MACROS_STYLE6E
     for seq, ms in macros_locales(lots).items():
         if ms:
             rapport.infos.append(f"{seq} : macros locales utilisées (fournies par "
-                                 f"seqenseigne-style6e v0.4) : {', '.join(ms)}")
+                                 f"seqenseigne-style6e v0.6) : {', '.join(ms)}")
+        # v0.52.5 — Une macro \seqLoc… que le module ne fournit pas ferait
+        # échouer la compilation de tous les documents de la séquence.
+        absentes = [m for m in ms if m not in MACROS_STYLE6E]
+        if absentes:
+            rapport.anomalie(f"{seq} : macros locales absentes du module seqenseigne-style6e "
+                             f"(à verser dans le .dtx) : {', '.join(absentes)}")
 
 
 def resoudre_base(db: str | None, racine: Path = RACINE_APPLI) -> Path:

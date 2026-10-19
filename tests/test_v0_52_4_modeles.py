@@ -422,7 +422,8 @@ def test_t1_module_style6e_v0_5_sans_6e_en_dur_dans_les_en_tetes():
     """Le .sty livré est celui que `tex seqenseigne.ins` produit du .dtx."""
     dtx = (RACINE / "paquet" / "seqenseigne-style6e.dtx").read_text(encoding="utf-8")
     sty = (RACINE / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
-    assert "v0.5 seqenseigne" in dtx and "v0.5 seqenseigne" in sty
+    # v0.52.5 : module en v0.6 (macros du lot S05) ; T1 reste en place.
+    assert "v0.6 seqenseigne" in dtx and "v0.6 seqenseigne" in sty
     assert r"\changes{v0.5}" in dtx
     for src in (dtx, sty):
         assert r"\newcommand{\seqNiveauCourt}{6e}" in src

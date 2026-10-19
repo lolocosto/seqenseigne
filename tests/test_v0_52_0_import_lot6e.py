@@ -360,12 +360,13 @@ def test_c03_remplace_sans_perte_anciennes_sequences_et_themes_archives(base, lo
         assert rows[sid]["code"].startswith("X") and rows[sid]["nom"] == nom + " (archive)"
         assert rows[sid]["numero"] > 100
     nouvelles = {r["code"]: r for r in rows.values() if r["code"].startswith("S")}
-    assert sorted(nouvelles) == [f"S{i:02d}" for i in range(1, 11)]
-    assert nouvelles["S09"]["nom"] == "Proportionnalité"
+    # Découpage de la géométrie (19 octobre 2026) : treize séquences, S12 Proportionnalité.
+    assert sorted(nouvelles) == [f"S{i:02d}" for i in range(1, 14)]
+    assert nouvelles["S12"]["nom"] == "Proportionnalité"
     themes = {r["code"]: r for r in c.execute("SELECT * FROM themes WHERE cycle_code='C03'")}
     assert {"A", "B", "C", "D", "E", "F", "XA", "XB", "XC"} == set(themes)
     assert themes["E"]["code_couleur"] == "proportionnalite"
-    assert nouvelles["S09"]["theme_id"] == themes["E"]["id"]
+    assert nouvelles["S12"]["theme_id"] == themes["E"]["id"]
     assert themes["XA"]["nom"] == "Nombres et Calculs (archive)"
     assert rows[next(i for i in anciennes if rows[i]["code"] == "X16")]["theme_id"] == themes["XC"]["id"]
 
@@ -544,12 +545,15 @@ def test_base_par_defaut_celle_du_profil_atelier_et_base_classe_refusee(tmp_path
 
 def test_objectifs_6e_json_coherent_avec_le_referentiel():
     ref = imp.charger_referentiel()
-    assert [s["code"] for s in ref["sequences"]] == [f"S{i:02d}" for i in range(1, 11)]
+    assert [s["code"] for s in ref["sequences"]] == [f"S{i:02d}" for i in range(1, 14)]
     assert [t["code"] for t in ref["themes"]] == list("ABCDEF")
-    assert {s["code"]: s["theme"] for s in ref["sequences"]}["S10"] == "F"
+    assert {s["code"]: s["theme"] for s in ref["sequences"]}["S13"] == "F"   # découpage : S10 → S13
     objs = [(seq, p["numero"], o["code"]) for seq, ps in ref["parties"].items() for p in ps
             for o in p["objectifs"]]
-    assert len(objs) == 22
+    # v0.52.5 : S04 à S10 ajoutées (22 objectifs de S01 à S03, 52 de S01 à S10),
+    # puis découpage de la géométrie : mêmes 52 objectifs en S01 à S13
+    # (transcription du markdown testée dans tests/test_v0_52_5_objectifs_s05.py).
+    assert len(objs) == 52
     assert all(int(code[0]) + 1 == num for _, num, code in objs)    # 02 en partie 1, 12 en 2…
 
 

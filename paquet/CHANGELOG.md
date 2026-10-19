@@ -21,6 +21,34 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.6 — 2026-10-19
+
+### Ajouté
+
+- Macros de géométrie plane du lot S05 (noms gardés : les énoncés du lot les utilisent tels quels) :
+  - `\seqLocCadreTrace[hauteur]{figure}` : zone de tracé, vide en version élève, avec la figure
+    en version corrigée, même hauteur dans les deux versions (5 cm par défaut) ;
+  - `\seqLocAngle{ABC}` : angle géométrique avec chapeau, en texte ou en maths ;
+  - `\seqLocRapporteur[rayon]{centre}{orientation}` : demi-rapporteur semi-transparent à double
+    graduation, dans un `tikzpicture` (remplace `\tkzProtractor`) ;
+  - style TikZ `seqLocCorr` : tracés du corrigé (rouge, 0,8 pt).
+- Macros de pré-algèbre du lot S04 (noms gardés) :
+  - styles TikZ `seqLocBarre` (bleu), `seqLocBarreR` (rouge), `seqLocBarreV` (vert),
+    `seqLocBarreQ` (pointillé : quantité cherchée) des schémas en barres ;
+  - `\seqLocBloc[style]{x}{y}{longueur}{étiquette}` : bloc de barre ;
+  - `\seqLocAccolade[below|above]{x1}{x2}{y}{étiquette}` : accolade horizontale ;
+  - `\seqLocBalance[demi-largeur]{gauche}{droite}` : balance de Roberval en équilibre ;
+  - `\seqLocSac{nom}`, `\seqLocMasse{valeur}`, `\seqLocObjet[couleur]{texte}` : objets de la balance.
+  Bibliothèque TikZ `decorations.pathreplacing` chargée par le module.
+- Page de garde du livret par partie : forme étoilée `\seqCouvertureLivretSix*{titre}{parties}`,
+  où chaque partie est un `\seqPartieCouvertureSix{titre de la partie}{liste}` (titre de partie, puis
+  ses objectifs avec un trait vertical de la couleur `seqSixTheme`, bleu du module par défaut,
+  redéfinie par l'appli avec la couleur du thème). La forme sans étoile est inchangée.
+- Documentation et `\changes` dans le `.dtx` ; `.sty` régénéré par `tex seqenseigne.ins`
+  (seqenseigne v0.52.5).
+
+---
+
 ## seqenseigne-style6e v0.5 — 2026-10-19
 
 ### Modifié
