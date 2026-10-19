@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -38,9 +38,18 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   (`services/livret_sequence_6e.py`) ; format d'échange 1.1 ; côté classe,
   documents du référentiel de la progression, actifs, du gabarit. Cycle 4
   inchangé au caractère près. Détails : `doc/redemarrage_v0_52_1.md`.
-- À venir : v0.52.2 séries TP, AC, AT, EV, évaluations au rendu 6e, sujet B
-  en remédiation, activités rattachées à leur objectif ; lots S04 à S10 ;
-  mises en route M01 à M07. La mise en ligne (prévue en v0.52)
+- v0.52.2 livrée : documents de 6e hors livret dans les ateliers existants —
+  séries EV (sujet A dans l'énoncé, sujet B dans la remédiation, cadre
+  « Sujet B »), TP, AC, AT de l'atelier d'exercices (hors de tous les
+  livrets : listes fermées, audit), évaluations 6e (module Évaluations,
+  barème par compétence, bonus hors total, sujet A/B, version), catalogue
+  `sixieme` complété (évaluations, travaux personnels, activités
+  complémentaires, séances d'atelier ; proposés côté classe avec leur
+  séquence, délai sur l'association) ; import 6e en base (plus de `.tex`,
+  activités reliées à leur objectif). Cycle 4 inchangé au caractère près.
+  Détails : `doc/redemarrage_v0_52_2.md`.
+- À venir : lots S04 à S10 ; mises en route M01 à M07 ; zones de liens
+  EV/TP/AC/AT dans l'assemblage. La mise en ligne (prévue en v0.52)
   prendra le numéro suivant.
 
 ## Comment reprendre (pour l'assistant)
@@ -255,6 +264,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   s'ajoute au catalogue `services/gabarits_documents.py` (et à
   `peremption_atomes`) ; ne jamais renommer une clé de type (chaînes
   `type|cible` enregistrées côté classe).
+- **Séries « documents »** (v0.52.2) : EV, TP, AC, AT
+  (`services/atomes.SERIES_DOCUMENTS`) ne vont dans aucun livret ; tout
+  générateur ou liste qui lit `objectif_exos` ou `exercices.serie_code` lit
+  une liste fermée de séries (ou exclut `SERIES_HORS_LIVRET`).
 - **Archives du cycle 3** (v0.52.0) : codes de séquence `Xnn` et thèmes
   `XA`… = ancien découpage archivé ; ne pas les réutiliser pour du neuf ;
   exclus du modèle « programme du cycle ».
@@ -271,6 +284,15 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   Non corrigé pour ne rien changer au cycle 4.
 - v0.52.0 : les précédences du cycle 4 vers N09/Snn (anciens codes) ne sont
   pas modifiées par l'import ; l'outil les liste, à revoir dans l'atelier.
+- v0.52.2 : les liens objectif ↔ EV/TP/AC/AT ne se voient pas dans
+  l'assemblage (posés par l'import, ou par l'API `objectif_exos`) ;
+  évaluation de l'import repérée par son titre (la renommer puis relancer
+  l'import en créerait une seconde).
+- Antérieur (constaté en v0.52.2) : l'aperçu d'un exercice **sans corrigé**
+  dans l'atelier d'exercices s'arrête sur « Corriges/cNeM.tex not found »
+  (cas des F/A de 6e importés sans corrigé et des atomes EV/TP/AC/AT) ; ces
+  documents se compilent par « Documents à publier » et le module
+  Évaluations. Non corrigé (rendu des atomes du cycle 4).
 
 - `services/tableau_bord.py` (`_NIVEAU_LABEL`) et
   `services/latex_rendu_atome.py` ont encore leurs propres libellés de niveaux

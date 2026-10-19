@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-r"""outils/import_lot6e.py — v0.52.0
+r"""outils/import_lot6e.py — v0.52.0, documents en base depuis v0.52.2
 
 Importe les séquences de 6e (lots S01, S02, S03…) dans l'atelier interne
 (niveau N09), remplace les séquences du cycle 3 par les dix séquences du
@@ -21,27 +21,34 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      `outils/objectifs_6e.json`.
   3. **Import N09** — séquence-niveau, parties, objectifs (dont l'objectif
      « Cours » de chaque partie), exercices F/A/E avec remédiations,
-     activités d'introduction (série approche AE, rattachées à la partie),
-     fiches de résumé (une par objectif, sections), liens objectif ↔
-     exercice et objectif ↔ fiche, figures copiées dans `images\`.
-     Tout est créé « en cours ».
-  4. **Documents hors base** — travaux personnels, activités
-     complémentaires, séances d'atelier et évaluations : fichiers `.tex`
-     compilables (version élève et version corrigée) dans un dossier de
-     sortie.
+     activités d'introduction (série approche AE, rattachées à la partie
+     et, depuis v0.52.2, à leur objectif), fiches de résumé (une par
+     objectif, sections), liens objectif ↔ exercice et objectif ↔ fiche,
+     figures copiées dans `images\`. Tout est créé « en cours ».
+  4. **Documents (v0.52.2, en base)** — travaux personnels, activités
+     complémentaires, séances d'atelier : un atome par document dans les
+     séries TP, AC, AT de l'atelier d'exercices, numérotés par série dans la
+     séquence, reliés aux objectifs visés (objectif_exos). Évaluations et
+     tests courts : pour chaque paire de sujets A/B, un atome de série EV
+     par exercice (sujet A dans l'énoncé, sujet B dans la remédiation) et
+     l'évaluation du module Évaluations (note et critères, barème par
+     exercice, objectifs évalués). Une évaluation dont le découpage échoue
+     est signalée en anomalie et n'est pas importée. Plus aucun `.tex` n'est
+     écrit (les `.tex` de la v0.52.0 restent où ils sont).
 
-Idempotence : objectifs repérés par (niveau, séquence, code), exercices par
-(niveau, séquence, série, num), fiches par leur objectif. Une deuxième
-exécution ne crée rien ; un contenu modifié dans le lot est mis à jour (sauf
-élément validé dans l'atelier, laissé tel quel et signalé).
+Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
+documents par (niveau, séquence, série, num), fiches par leur objectif,
+évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
+contenu modifié dans le lot est mis à jour (sauf élément validé dans
+l'atelier, laissé tel quel et signalé).
 
 Usage (Windows, depuis `appli\`) :
     ..\outils\python\python.exe .\outils\import_lot6e.py                 # essai à blanc
     ..\outils\python\python.exe .\outils\import_lot6e.py --apply         # applique (confirmation)
     ..\outils\python\python.exe .\outils\import_lot6e.py --apply --yes   # sans confirmation
-Options : --db CHEMIN (base), --lots DOSSIER (défaut ..\reference\lot6e),
---sortie DOSSIER (défaut ..\reference\lot6e\documents_tex),
---documents-seulement (écrit les .tex, ne touche pas à la base).
+Options : --db CHEMIN (base), --lots DOSSIER (défaut ..\reference\lot6e).
+v0.52.2 : --sortie et --documents-seulement retirés (les documents vont en
+base ; décision O1, doc/redemarrage_v0_52_2.md).
 
 Codes de sortie : 0 succès / essai, 1 annulé, 2 base ou lots introuvables,
 3 erreur (rien n'est écrit : transaction annulée).
@@ -66,7 +73,7 @@ if str(RACINE_APPLI) not in sys.path:          # lancement par chemin (Windows)
     sys.path.insert(0, str(RACINE_APPLI))
 
 from services import fiches_resume as svc_fiches          # noqa: E402
-from services.atomes import _deduire_type_format          # noqa: E402
+from services.atomes import SERIES_DOCUMENTS, _deduire_type_format  # noqa: E402
 
 NIVEAU = "N09"
 CYCLE = "C03"
@@ -76,7 +83,12 @@ REFERENTIEL = Path(__file__).resolve().parent / "objectifs_6e.json"
 LOTS_DEFAUT = RACINE_APPLI.parent / "reference" / "lot6e"
 SUFFIXE_ARCHIVE = " (archive)"
 
-SERIE_TEXTE = {"F": "fondamental", "A": "avancé", "E": "exploration", "AE": "approche"}
+SERIE_TEXTE = {"F": "fondamental", "A": "avancé", "E": "exploration", "AE": "approche",
+               **SERIES_DOCUMENTS}                      # v0.52.2 : EV, TP, AC, AT
+# v0.52.2 — Documents du lot rangés dans les séries « documents ».
+DOCUMENTS_LOT = (("travaux_personnels", "TP", "travail personnel"),
+                 ("activites_complementaires", "AC", "activité complémentaire"),
+                 ("seances_atelier", "AT", "séance d'atelier"))
 RE_GRAPHIQUE = re.compile(r"\\includegraphics\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}")
 RE_LOC = re.compile(r"\\(seqLoc[A-Za-z]+)")
 
@@ -243,7 +255,7 @@ class Rapport:
         L += [f"  {x}" for x in self.figures] or ["  aucune"]
         if self.documents:
             L.append("")
-            L.append("== Documents hors base (.tex) ==")
+            L.append("== Documents et évaluations (séries TP, AC, AT, EV) ==")
             L += [f"  {x}" for x in self.documents]
         L.append("")
         L.append(f"== Anomalies ({len(self.anomalies)}) ==")
@@ -640,6 +652,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
 
     approche: dict[int, list] = {n: [] for n in parties}
     vus: dict = {}
+    objectifs_ids: dict[str, str] = {}          # « S01-02 » → id (v0.52.2)
     for o in lot.get("objectifs", []):
         code = o.get("code", "")
         if code not in objs_ref:
@@ -685,6 +698,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
             if ids:
                 n = _ordonner(conn, "objectif_exos", {"objectif_id": oid, "serie": sc}, ids)
                 Rapport.compter(ro, "liens objectif-exercice", "créés", n)
+        act_obj = []
         for a in o.get("activites", []):
             cle = ("AE", int(a["num"]))
             if cle in vus:
@@ -693,11 +707,20 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
             vus[cle] = code
             eid, etat_a = _exercice(conn, seq, "AE", cle[1], a)
             approche[numero].append(eid)
+            act_obj.append(eid)
             Rapport.compter(ro, "activités AE", etat_a)
             figures |= _figures(lot, a)
             rapport.journal["import"].append({"cle": f"{NIVEAU}/{seq}/AE{cle[1]:02d}",
                                               "id": eid, "objectif": code,
                                               "origine": a.get("origine", "")})
+        if act_obj:
+            # v0.52.2 (L1) — l'activité est aussi rattachée à son objectif
+            # (objectif_exos, série AE) : le livret 6e l'affiche sous le
+            # bandeau de l'objectif, et seulement là ; le lien à la partie
+            # est gardé (numérotation, plan de travail).
+            n = _ordonner(conn, "objectif_exos", {"objectif_id": oid, "serie": "AE"}, act_obj)
+            Rapport.compter(ro, "liens activité-objectif", "créés", n)
+        objectifs_ids[code] = oid
         if o.get("fiche_resume"):
             fid, etat_f = _fiche(conn, seq, oid, cours_ids[numero], o["fiche_resume"])
             Rapport.compter(ro, "fiche", etat_f)
@@ -718,6 +741,17 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
     for o in objs_ref:
         if o not in {x.get("code") for x in lot.get("objectifs", [])}:
             rapport.anomalie(f"{o} : objectif du référentiel sans contenu dans le lot")
+    # v0.52.2 — Objectifs du référentiel présents en base (pour les liens des
+    # documents et des évaluations, y compris un objectif sans contenu).
+    for c_obj, (num_p, d) in objs_ref.items():
+        if c_obj not in objectifs_ids:
+            r = conn.execute("SELECT o.id FROM objectifs o JOIN sequence_parties p ON "
+                             "p.id = o.partie_id WHERE p.sequence_par_niveau_id = ? AND "
+                             "o.code = ?", (sn["id"], d["code"])).fetchone()
+            if r is not None:
+                objectifs_ids[c_obj] = r["id"]
+    figures |= importer_documents(conn, lot, objectifs_ids, rapport)
+    importer_evaluations(conn, lot, objectifs_ids, rapport)
     return figures
 
 
@@ -755,85 +789,254 @@ def macros_locales(lots: list[dict]) -> dict:
     return out
 
 
-# ── 4. Documents hors base (.tex) ────────────────────────────────────────────
+# ── 4. Documents et évaluations en base (v0.52.2) ───────────────────────────
 
-PREAMBULE = r"""\documentclass[11pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{amssymb}
-\usepackage{needspace}
-\usepackage[sixieme,geometrie]{seqenseigne}
-\graphicspath{{figures/}}
-\renewcommand{\familydefault}{\sfdefault}
-\pagestyle{fancy}\fancyhf{}\renewcommand{\headrulewidth}{0pt}
-\fancyhead[R]{\small\bfseries %(entete)s -- page \thepage}
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{2pt}\setlength{\emergencystretch}{3em}
-\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}
-"""
+def _lier_objectifs(conn, liens: "OrderedDict[tuple, list]") -> int:
+    """Pose les liens objectif_exos accumulés {(objectif_id, série): [ids]}
+    (dans l'ordre du lot, en tête, sans toucher aux liens de l'auteur)."""
+    n = 0
+    for (oid, serie), ids in liens.items():
+        n += _ordonner(conn, "objectif_exos", {"objectif_id": oid, "serie": serie}, ids)
+    return n
 
 
-def _document_tex(entete: str, corps: str, corrige: bool, source: str) -> str:
-    return ("%% Généré par outils/import_lot6e.py (seqenseigne v0.52.0) — " + source + "\n"
-            + PREAMBULE % {"entete": entete}
-            + "\\begin{document}\n"
-            + ("\\seqVersionCorrigee\n" if corrige else "")
-            + corps.strip() + "\n\\end{document}\n")
-
-
-def documents_hors_base(lot: dict, ref: dict) -> list[dict]:
-    """Liste des documents hors base d'un lot : {nom, type, titre, latex, meta}."""
+def importer_documents(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -> set:
+    """Travaux personnels, activités complémentaires, séances d'atelier :
+    un atome par document (séries TP, AC, AT), numéroté par série dans la
+    séquence (ordre du lot), relié aux objectifs listés dans `objectifs`.
+    Retourne les figures utilisées."""
     seq = lot["sequence"]
-    s_ref = next((s for s in ref["sequences"] if s["code"] == seq), {"nom": lot.get("titre", seq)})
-    docs = []
-    for k, tp in enumerate(lot.get("travaux_personnels", []), start=1):
-        docs.append({"nom": f"{seq}_TP{k}", "type": "travail_personnel", "src": tp})
-    for k, ac in enumerate(lot.get("activites_complementaires", []), start=1):
-        docs.append({"nom": f"{seq}_AC{k}", "type": "activite_complementaire", "src": ac})
-    for k, at in enumerate(lot.get("seances_atelier", []), start=1):
-        docs.append({"nom": f"{seq}_ATELIER{k}", "type": "seance_atelier", "src": at})
-    n, titres = 0, {}
-    for ev in lot.get("evaluations", []):
-        t = ev.get("titre", "")
-        if t not in titres:
-            n += 1
-            titres[t] = n
-        docs.append({"nom": f"{seq}_EV{titres[t]}{ev.get('sujet', '') or ''}",
-                     "type": "evaluation", "src": ev})
-    for d in docs:
-        d["titre"] = d["src"].get("titre", "")
-        d["entete"] = s_ref["nom"]
-    return docs
+    figures: set = set()
+    liens: "OrderedDict[tuple, list]" = OrderedDict()
+    for cle_lot, serie, libelle in DOCUMENTS_LOT:
+        for k, src in enumerate(lot.get(cle_lot, []) or [], start=1):
+            eid, etat = _exercice(conn, seq, serie, k, {"titre": src.get("titre", ""),
+                                                        "enonce": src.get("latex", ""),
+                                                        "corrige": src.get("corrige", "")})
+            code = f"{serie}{k:02d}"
+            if etat == "validé, non modifié":
+                rapport.anomalie(f"{NIVEAU}/{seq}/{code} validé dans l'atelier : contenu du lot "
+                                 "non appliqué")
+            cibles = []
+            for oc in src.get("objectifs", []) or []:
+                if oc in objectifs_ids:
+                    liens.setdefault((objectifs_ids[oc], serie), []).append(eid)
+                    cibles.append(oc)
+                else:
+                    rapport.anomalie(f"{seq} {code} : objectif {oc!r} inconnu, lien ignoré")
+            figures |= _figures(lot, src)
+            info = f" — délai {src['delai_jours']} j (à régler côté classe)" \
+                if src.get("delai_jours") else ""
+            rapport.documents.append(f"{seq} {code} {libelle} « {src.get('titre', '')} » : "
+                                     f"{etat} ; objectifs {', '.join(cibles) or 'aucun'}{info}")
+            rapport.journal["import"].append({"cle": f"{NIVEAU}/{seq}/{code}", "id": eid,
+                                              "objectifs": cibles,
+                                              "origine": src.get("origine", "")})
+    n = _lier_objectifs(conn, liens)
+    if n:
+        rapport.seq(seq)["lignes"].append(f"documents TP/AC/AT : {n} lien(s) objectif créé(s)")
+    return figures
 
 
-def ecrire_documents(lots: list[dict], ref: dict, sortie: Path, rapport: Rapport,
-                     ecrire: bool) -> None:
-    for lot in lots:
-        seq = lot["sequence"]
-        docs = documents_hors_base(lot, ref)
-        if not docs:
+# Évaluations : `\seqExoEval{titre}{N pts --- Snn-nn}` ouvre chaque exercice.
+MARQUE_EXO_EVAL = "\\seqExoEval"
+RE_ETIQUETTE_EVAL = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*pts?\s*---\s*(S\d\d-\d\d)\s*$")
+
+
+def decouper_evaluation(latex: str) -> list[dict]:
+    r"""Exercices d'une évaluation du lot : [{titre, points, objectif, corps}].
+
+    Découpe à chaque `\seqExoEval{titre}{N pts --- Snn-nn}` ; l'en-tête
+    (identification, titre, barème) qui précède le premier exercice n'est
+    pas gardé : le rendu 6e le recalcule depuis la base. Lève ImportErreur
+    si un exercice n'a pas cette forme."""
+    pos = []
+    k = latex.find(MARQUE_EXO_EVAL)
+    while k >= 0:
+        j = k + len(MARQUE_EXO_EVAL)
+        if latex[j:j + 1].isalpha():                     # autre macro (\seqExoEvalX)
+            k = latex.find(MARQUE_EXO_EVAL, j)
             continue
-        dossier = Path(sortie) / seq
-        index = []
-        for d in docs:
-            src = d["src"]
-            meta = {k: v for k, v in src.items() if k != "latex"}
-            index.append({"fichier": d["nom"], "type": d["type"], **meta})
-            rapport.documents.append(f"{d['nom']}_eleve.tex / _corrige.tex — {d['type']} — "
-                                     f"{d['titre']}")
-            if ecrire:
-                dossier.mkdir(parents=True, exist_ok=True)
-                for corr, suff in ((False, "eleve"), (True, "corrige")):
-                    (dossier / f"{d['nom']}_{suff}.tex").write_text(
-                        _document_tex(d["entete"], src.get("latex", ""), corr,
-                                      f"{seq} {d['type']} : {d['titre']}"),
-                        encoding="utf-8")
-        if ecrire:
-            figs = lot["_dossier"] / "figures"
-            if figs.is_dir() and any(figs.iterdir()):
-                shutil.copytree(figs, dossier / "figures", dirs_exist_ok=True)
-            (dossier / "documents.json").write_text(
-                json.dumps(index, ensure_ascii=False, indent=1), encoding="utf-8")
+        while j < len(latex) and latex[j].isspace():
+            j += 1
+        if latex[j:j + 1] != "{":
+            raise ImportErreur(f"{MARQUE_EXO_EVAL} sans titre")
+        titre, j = _accolade(latex, j)
+        while j < len(latex) and latex[j].isspace():
+            j += 1
+        if latex[j:j + 1] != "{":
+            raise ImportErreur(f"{MARQUE_EXO_EVAL}{{{titre}}} sans barème")
+        etiquette, j = _accolade(latex, j)
+        m = RE_ETIQUETTE_EVAL.match(etiquette)
+        if not m:
+            raise ImportErreur(f"barème illisible « {etiquette} » ({titre})")
+        pos.append((k, j, titre.strip(), float(m.group(1).replace(",", ".")), m.group(2)))
+        k = latex.find(MARQUE_EXO_EVAL, j)
+    if not pos:
+        raise ImportErreur(f"aucun {MARQUE_EXO_EVAL}")
+    out = []
+    for i, (k, fin, titre, pts, obj) in enumerate(pos):
+        suite = pos[i + 1][0] if i + 1 < len(pos) else len(latex)
+        out.append({"titre": titre, "points": pts, "objectif": obj,
+                    "corps": latex[fin:suite].strip()})
+    return out
+
+
+def _est_bonus(exo: dict) -> bool:
+    return exo["titre"].lower().startswith("bonus")
+
+
+def paires_evaluations(lot: dict) -> "OrderedDict[str, dict]":
+    """{titre: {"A": évaluation, "B": évaluation}} dans l'ordre du lot."""
+    out: "OrderedDict[str, dict]" = OrderedDict()
+    for ev in lot.get("evaluations", []) or []:
+        out.setdefault(ev.get("titre", ""), {})[(ev.get("sujet") or "A").upper()] = ev
+    return out
+
+
+def preparer_evaluation(titre: str, paire: dict) -> list[dict]:
+    """Exercices EV d'une paire A/B, mis en correspondance par position.
+
+    Contrôles (sinon ImportErreur → anomalie, évaluation non importée) :
+    sujets A et B présents, même nombre d'exercices, mêmes points et même
+    objectif à chaque position ; barème par objectif du lot = somme des
+    points des exercices (hors bonus), bonus = exercices « Bonus… »
+    (décision B1 : sans objectif)."""
+    if set(paire) != {"A", "B"}:
+        raise ImportErreur(f"sujets {', '.join(sorted(paire)) or 'aucun'} (A et B attendus)")
+    a = decouper_evaluation(paire["A"].get("latex", ""))
+    b = decouper_evaluation(paire["B"].get("latex", ""))
+    if len(a) != len(b):
+        raise ImportErreur(f"{len(a)} exercice(s) au sujet A, {len(b)} au sujet B")
+    for i, (x, y) in enumerate(zip(a, b), start=1):
+        if (x["points"], x["objectif"]) != (y["points"], y["objectif"]):
+            raise ImportErreur(f"exercice {i} : {x['points']:g} pts {x['objectif']} au sujet A, "
+                               f"{y['points']:g} pts {y['objectif']} au sujet B")
+    attendu: dict = {}
+    for oc, pts in paire["A"].get("bareme") or []:
+        attendu[oc] = attendu.get(oc, 0) + float(pts)
+    calcule: dict = {}
+    for x in a:
+        cle = "Bonus" if _est_bonus(x) else x["objectif"]
+        calcule[cle] = calcule.get(cle, 0) + x["points"]
+    if attendu and attendu != calcule:
+        raise ImportErreur("barème du lot "
+                           + ", ".join(f"{k}/{v:g}" for k, v in attendu.items())
+                           + " ≠ exercices " + ", ".join(f"{k}/{v:g}" for k, v in calcule.items()))
+    return [{**x, "bonus": _est_bonus(x), "titre_b": y["titre"], "corps_b": y["corps"]}
+            for x, y in zip(a, b)]
+
+
+def _sujet_b(exo: dict) -> str:
+    r"""remed_enonce : énoncé du sujet B, précédé de « % titre B : … » quand
+    son titre diffère de celui du sujet A (décision E3, lue par le rendu)."""
+    from services.render_evaluation import MARQUE_TITRE_B
+    entete = f"{MARQUE_TITRE_B} {exo['titre_b']}\n" if exo["titre_b"] != exo["titre"] else ""
+    return entete + exo["corps_b"]
+
+
+def _evaluation(conn, titre: str, rapport: Rapport, seq: str):
+    """(id, état) de l'évaluation N09 de ce titre ; état « validée » : rien
+    n'y est touché."""
+    from services import evaluations as svc_eval
+    r = conn.execute("SELECT id, etat_code FROM evaluations WHERE niveau = ? AND titre = ? "
+                     "ORDER BY numero LIMIT 1", (NIVEAU, titre)).fetchone()
+    if r is None:
+        ev = svc_eval.creer_evaluation(conn, niveau=NIVEAU, titre=titre,
+                                       mode_notation="note_criteres")
+        return ev["id"], "créée"
+    if r["etat_code"] == "valide":
+        rapport.anomalie(f"{seq} évaluation « {titre} » validée dans le module Évaluations : "
+                         "non modifiée")
+        return r["id"], "validée, non modifiée"
+    return r["id"], "existante"
+
+
+def _poser_exercices_evaluation(conn, ev_id: str, voulus: list[tuple]) -> int:
+    """Exercices importés (id, points) en tête, dans l'ordre du lot ; ceux
+    que l'auteur a ajoutés passent après. Retourne le nombre de changements."""
+    actuels = [(r["exercice_id"], r["bareme_points"]) for r in conn.execute(
+        "SELECT exercice_id, bareme_points FROM evaluation_exercices WHERE evaluation_id = ? "
+        "ORDER BY ordre", (ev_id,))]
+    ids = [i for i, _ in voulus]
+    ordre = ids + [i for i, _ in actuels if i not in ids]
+    pts = dict(actuels)
+    pts.update(dict(voulus))
+    if [(i, pts[i]) for i in ordre] == actuels:
+        return 0
+    conn.execute("UPDATE evaluation_exercices SET ordre = -ordre - 1000 WHERE evaluation_id = ?",
+                 (ev_id,))
+    deja = {i for i, _ in actuels}
+    for k, i in enumerate(ordre, start=1):
+        if i in deja:
+            conn.execute("UPDATE evaluation_exercices SET ordre = ?, bareme_points = ? "
+                         "WHERE evaluation_id = ? AND exercice_id = ?", (k, pts[i], ev_id, i))
+        else:
+            conn.execute("INSERT INTO evaluation_exercices (evaluation_id, exercice_id, ordre, "
+                         "bareme_points) VALUES (?,?,?,?)", (ev_id, i, k, pts[i]))
+    conn.execute("UPDATE evaluations SET mtime = CURRENT_TIMESTAMP WHERE id = ?", (ev_id,))
+    return 1
+
+
+def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -> None:
+    """Évaluations et tests courts : atomes EV (sujet A → enonce, sujet B →
+    remed_enonce, corrigés vides : la version corrigée vient des macros de
+    réponse) numérotés EV01… dans l'ordre du lot, reliés à leur objectif
+    (série EV ; le bonus n'en a pas) ; évaluation « note et critères » du
+    module Évaluations avec barème par exercice et objectifs évalués."""
+    seq = lot["sequence"]
+    num = 0
+    liens: "OrderedDict[tuple, list]" = OrderedDict()
+    for titre, paire in paires_evaluations(lot).items():
+        try:
+            exos = preparer_evaluation(titre, paire)
+            inconnus = sorted({x["objectif"] for x in exos if not x["bonus"]}
+                              - set(objectifs_ids))
+            if inconnus:
+                raise ImportErreur(f"objectif(s) inconnu(s) : {', '.join(inconnus)}")
+        except ImportErreur as e:
+            rapport.anomalie(f"{seq} évaluation « {titre} » non importée : découpage impossible "
+                             f"({e})")
+            continue
+        voulus, etats = [], {}
+        for x in exos:
+            num += 1
+            eid, etat = _exercice(conn, seq, "EV", num, {
+                "titre": x["titre"], "enonce": x["corps"], "corrige": "",
+                "remed_enonce": _sujet_b(x), "remed_corrige": ""})
+            etats[etat] = etats.get(etat, 0) + 1
+            if etat == "validé, non modifié":
+                rapport.anomalie(f"{NIVEAU}/{seq}/EV{num:02d} validé dans l'atelier : contenu du "
+                                 "lot non appliqué")
+            if not x["bonus"]:
+                liens.setdefault((objectifs_ids[x["objectif"]], "EV"), []).append(eid)
+            voulus.append((eid, x["points"]))
+            rapport.journal["import"].append({
+                "cle": f"{NIVEAU}/{seq}/EV{num:02d}", "id": eid, "evaluation": titre,
+                "objectif": None if x["bonus"] else x["objectif"],
+                "origine": paire["A"].get("origine", "")})
+        ev_id, etat_ev = _evaluation(conn, titre, rapport, seq)
+        n_obj = 0
+        if etat_ev != "validée, non modifiée":
+            change = _poser_exercices_evaluation(conn, ev_id, voulus)
+            for oc in dict.fromkeys(x["objectif"] for x in exos if not x["bonus"]):
+                if conn.execute("SELECT 1 FROM evaluation_objectifs WHERE evaluation_id = ? AND "
+                                "objectif_id = ?", (ev_id, objectifs_ids[oc])).fetchone() is None:
+                    conn.execute("INSERT INTO evaluation_objectifs (evaluation_id, objectif_id) "
+                                 "VALUES (?,?)", (ev_id, objectifs_ids[oc]))
+                    n_obj += 1
+            if etat_ev == "existante":
+                etat_ev = "mise à jour" if (change or n_obj) else "inchangée"
+        bonus = sum(x["points"] for x in exos if x["bonus"])
+        total = sum(x["points"] for x in exos if not x["bonus"])
+        rapport.documents.append(
+            f"{seq} évaluation « {titre} » : {etat_ev} — {len(exos)} exercice(s) EV "
+            f"(EV{num - len(exos) + 1:02d}–EV{num:02d} : "
+            + ", ".join(f"{e} {n}" for e, n in etats.items())
+            + f"), total {total:g}" + (f" + bonus {bonus:g}" if bonus else ""))
+    n = _lier_objectifs(conn, liens)
+    if n:
+        rapport.seq(seq)["lignes"].append(f"évaluations : {n} lien(s) exercice EV-objectif créé(s)")
 
 
 # ── Orchestration ────────────────────────────────────────────────────────────
@@ -913,14 +1116,12 @@ def essai_a_blanc(db: Path, lots, ref, images: Path) -> Rapport:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Import des séquences de 6e dans l'atelier (v0.52.0)")
+    ap = argparse.ArgumentParser(description="Import des séquences de 6e dans l'atelier "
+                                             "(v0.52.2)")
     ap.add_argument("--apply", action="store_true", help="applique (sinon essai à blanc)")
     ap.add_argument("--yes", action="store_true", help="sans confirmation")
     ap.add_argument("--db", help="chemin de la base (défaut : base du profil atelier)")
     ap.add_argument("--lots", default=str(LOTS_DEFAUT), help="dossier des lots S01, S02…")
-    ap.add_argument("--sortie", help="dossier des .tex hors base (défaut : <lots>\\documents_tex)")
-    ap.add_argument("--documents-seulement", action="store_true",
-                    help="écrit seulement les .tex hors base (ne touche pas à la base)")
     args = ap.parse_args(argv)
     for flux in (sys.stdout, sys.stderr):
         try:
@@ -937,15 +1138,6 @@ def main(argv=None) -> int:
     if not lots:
         print(f"Aucun lot (S01\\S01.json…) dans {lots_dir}")
         return 2
-    sortie = Path(args.sortie) if args.sortie else lots_dir / "documents_tex"
-
-    if args.documents_seulement:
-        r = Rapport()
-        ecrire_documents(lots, ref, sortie, r, ecrire=True)
-        print("\n".join(r.documents))
-        print(f"\nDocuments écrits dans {sortie}")
-        return 0
-
     db = resoudre_base(args.db)
     if not db.is_file():
         print(f"Base introuvable : {db}")
@@ -964,7 +1156,6 @@ def main(argv=None) -> int:
     print(f"Lots : {', '.join(l['sequence'] for l in lots)} ({lots_dir})\n")
 
     rapport = essai_a_blanc(db, lots, ref, images)
-    ecrire_documents(lots, ref, sortie, rapport, ecrire=False)
     print(rapport.texte())
     if not args.apply:
         print("\n(essai à blanc : rien n'a été écrit — relancer avec --apply pour appliquer)")
@@ -990,7 +1181,6 @@ def main(argv=None) -> int:
         conn.close()
     copier_figures(lots, {l["sequence"]: _figures_du_journal(l) for l in lots}, images,
                    Rapport(), ecrire=True)
-    ecrire_documents(lots, ref, sortie, rapport, ecrire=True)
     journal = db.parent / "sauvegardes" / f"journal_import_lot6e_{datetime.now():%Y-%m-%d_%H%M%S}.json"
     journal.write_text(json.dumps({"base": str(db), "sauvegarde": str(sauvegarde),
                                    **rapport.journal}, ensure_ascii=False, indent=1),
@@ -998,17 +1188,22 @@ def main(argv=None) -> int:
     (journal.parent / journal.name.replace("journal_", "rapport_").replace(".json", ".txt")
      ).write_text(rapport.texte(), encoding="utf-8")
     print(f"Journal (correspondances, retour arrière) : {journal}")
-    print(f"Documents hors base : {sortie}")
     print("\nImport appliqué.")
     return 0
 
 
 def _figures_du_journal(lot: dict) -> set:
-    """Figures utilisées par les éléments importés en base d'un lot."""
+    """Figures utilisées par les éléments importés en base d'un lot
+    (v0.52.2 : documents TP, AC, AT et évaluations compris)."""
     noms: set = set()
     for o in lot.get("objectifs", []):
         for e in o.get("exercices", []) + o.get("activites", []):
             noms |= _figures(lot, e)
+    for cle, _, _ in DOCUMENTS_LOT:
+        for d in lot.get(cle, []) or []:
+            noms |= _figures(lot, d)
+    for ev in lot.get("evaluations", []) or []:
+        noms |= _figures(lot, ev)
     return noms
 
 

@@ -108,7 +108,11 @@ class AtelierExercice extends AtelierEditeur {
     // faire DEUX lettres ('AE') : il faut le reconnaître avant la première
     // lettre, sinon 'AE01' est lu comme 'A' (→ rangé à tort en Avancés).
     // (Fallback historique sur serie_code/serie si un appel les fournit.)
-    const buckets = { F: [], A: [], E: [], AE: [], Autres: [] };
+    // v0.52.2 — Séries « documents » de la 6e (EV, TP, AC, AT) : une
+    // section chacune, affichée seulement si elle contient des atomes (rien
+    // ne change pour le cycle 4).
+    const buckets = { F: [], A: [], E: [], AE: [], EV: [], TP: [], AC: [], AT: [],
+                      Autres: [] };
     for (const ex of items) {
       const code = ex.serie_code
                  || AtelierExercice.SERIE_EN_CODE[ex.serie]
@@ -120,10 +124,12 @@ class AtelierExercice extends AtelierEditeur {
 
     // Construction des sections
     const ordre = ['F', 'A', 'E', 'AE', 'Autres'];
+    ordre.splice(4, 0, ...AtelierExercice.SERIES_DOCUMENTS);   // v0.52.2 : EV TP AC AT
     const sections = [];
     for (const code of ordre) {
       const exos = buckets[code];
-      if (code === 'Autres' && exos.length === 0) continue;
+      if (exos.length === 0
+          && (code === 'Autres' || AtelierExercice.SERIES_DOCUMENTS.includes(code))) continue;
 
       const itemsHtml = exos.length > 0
         ? exos.map(ex => this.rendreItem(ex, code)).join('')
@@ -385,6 +391,11 @@ class AtelierExercice extends AtelierEditeur {
         resolve(null);
         return;
       }
+      // v0.52.2 (I1) — séries « documents » proposées en 6e seulement.
+      const docs6e = (window.ATL_FILTRE_NIVEAU || '') === 'N09';
+      overlay.querySelectorAll('[data-serie-document-creation]').forEach(el => {
+        el.style.display = docs6e ? '' : 'none';
+      });
       overlay.style.display = 'flex';
       // Écouteur Esc actif tant que la modale est ouverte
       this._gestionnaireEscSerie = (ev) => {
@@ -468,6 +479,12 @@ class AtelierExercice extends AtelierEditeur {
         btn.className = 'serie-btn' + classeActive;
       }
     });
+    // v0.52.2 — Boutons des séries « documents » (6e).
+    for (const [code, serie] of Object.entries(AtelierExercice.SERIE_DOCUMENT)) {
+      const btn = document.getElementById('atl-serie-' + code);
+      if (btn) btn.className = 'serie-btn' + (serie === s ? ' active-document' : '');
+    }
+    this.majSeriesDocuments();
     if (this.itemActif) this.itemActif.serie = s;
     this.majVisibiliteRemediation();
     if (marquerDirty && this.itemActif) {
@@ -488,12 +505,30 @@ class AtelierExercice extends AtelierEditeur {
    *      visible uniquement si la case « Rédiger une remédiation » est
    *      cochée (cf. décision Q1=b).
    */
+  /**
+   * v0.52.2 (décision I1) — Boutons des séries « documents » (EV, TP, AC,
+   * AT) : visibles en 6e (N09) seulement, ou si l'atome en porte une ; même
+   * règle dans la modale de création.
+   */
+  majSeriesDocuments() {
+    const visibles = AtelierExercice.seriesDocumentsVisibles(
+      window.ATL_FILTRE_NIVEAU || '', this.serieCourante);
+    document.querySelectorAll('[data-serie-document]').forEach(el => {
+      el.style.display = visibles ? '' : 'none';
+    });
+  }
+
   majVisibiliteRemediation() {
     const cadre = this.$('cadre-remediation');
     if (!cadre) return;
+    // v0.52.2 — Série EV : le cadre « Remédiation » porte le sujet B de
+    // l'évaluation (même structure exercice par exercice) et s'intitule
+    // « Sujet B ». TP, AC, AT : pas de remédiation (cadre masqué).
+    const estEval = this.serieCourante === AtelierExercice.SERIE_DOCUMENT.EV;
     const serieAutorise = (this.serieCourante === 'fondamental'
-                       || this.serieCourante === 'avancé');
+                       || this.serieCourante === 'avancé' || estEval);
     cadre.style.display = serieAutorise ? '' : 'none';
+    AtelierExercice.libellerCadreRemediation(estEval);
 
     // Le contenu (champs et toggle de cadre de réponse) ne s'affiche
     // que si la case est cochée.
@@ -625,7 +660,9 @@ class AtelierExercice extends AtelierEditeur {
 AtelierExercice.prefixeSerie = function (code) {
   if (!code || typeof code !== 'string') return '';
   // Préfixes connus à 2 lettres d'abord, puis 1 lettre.
-  const m = code.match(/^(AE|[FAER])/);
+  // v0.52.2 — EV, TP, AC, AT (séries documents de la 6e) : AC et AT
+  // commencent par A, il faut les reconnaître avant.
+  const m = code.match(/^(AE|EV|TP|AC|AT|[FAER])/);
   return m ? m[1] : '';
 };
 
@@ -634,7 +671,54 @@ AtelierExercice.SERIE_BUCKETS = {
   A:      { label: 'Avancés',       defautReplie: false },
   E:      { label: 'Exploration',   defautReplie: true  },
   AE:     { label: 'Approche (AE)', defautReplie: true  },
+  // v0.52.2 — Séries « documents » (6e) : hors livrets.
+  EV:     { label: 'Évaluations (EV)',              defautReplie: true },
+  TP:     { label: 'Travaux personnels (TP)',       defautReplie: true },
+  AC:     { label: 'Activités complémentaires (AC)', defautReplie: true },
+  AT:     { label: "Séances d'atelier (AT)",        defautReplie: true },
   Autres: { label: 'Autres',        defautReplie: true  },
+};
+
+// v0.52.2 — Séries « documents » : code court → série longue (services/atomes.py).
+AtelierExercice.SERIE_DOCUMENT = {
+  EV: 'évaluation',
+  TP: 'travail personnel',
+  AC: 'activité complémentaire',
+  AT: "séance d'atelier",
+};
+AtelierExercice.SERIES_DOCUMENTS = Object.keys(AtelierExercice.SERIE_DOCUMENT);
+
+// v0.52.2 (décision I1) — Les séries documents ne sont proposées qu'en 6e
+// (N09), ou pour un atome qui en porte déjà une.
+AtelierExercice.seriesDocumentsVisibles = function (niveau, serie) {
+  return niveau === 'N09'
+    || Object.values(AtelierExercice.SERIE_DOCUMENT).includes(serie);
+};
+
+// v0.52.2 — Libellés du cadre « Remédiation » : « Sujet B » pour une
+// évaluation, libellés historiques sinon.
+AtelierExercice.LIBELLES_CADRE_REMED = {
+  normal: { titre: 'Remédiation',
+            case: 'Rédiger une remédiation pour cet exercice',
+            enonce: 'Énoncé de remédiation', corrige: 'Corrigé de remédiation' },
+  eval:   { titre: 'Sujet B',
+            case: 'Rédiger le sujet B de cet exercice',
+            enonce: 'Énoncé du sujet B', corrige: 'Corrigé du sujet B (facultatif : réponses dans l\'énoncé)' },
+};
+AtelierExercice.libellerCadreRemediation = function (estEval) {
+  const L = AtelierExercice.LIBELLES_CADRE_REMED[estEval ? 'eval' : 'normal'];
+  const poser = (id, txt) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  };
+  poser('atl-exercice-remed-titre', L.titre);
+  poser('atl-exercice-remed-case-libelle', L.case);
+  poser('atl-exercice-remed-enonce-libelle', L.enonce);
+  poser('atl-exercice-remed-corrige-libelle', L.corrige);
+  const aide = document.getElementById('atl-exercice-remed-aide');
+  if (aide) aide.style.display = estEval ? 'none' : '';
+  const aideEval = document.getElementById('atl-exercice-remed-aide-eval');
+  if (aideEval) aideEval.style.display = estEval ? '' : 'none';
 };
 
 // Mapping série longue → code court pour le bucketing.
@@ -643,6 +727,11 @@ AtelierExercice.SERIE_EN_CODE = {
   'avancé':      'A',
   'exploration': 'E',
   'approche':    'AE',
+  // v0.52.2
+  'évaluation':              'EV',
+  'travail personnel':       'TP',
+  'activité complémentaire': 'AC',
+  "séance d'atelier":        'AT',
 };
 
 // ── Instance singleton et exposition globale ──────────────────────────────

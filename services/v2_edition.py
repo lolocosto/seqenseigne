@@ -1424,6 +1424,11 @@ def lister_notions_de_sequence(conn, niveau: str, sequence: str) -> list[dict]:
 # côté UI.
 
 _SERIES_VALIDES = ("AE", "F", "A", "E")  # v0.18.3 : 'EA'→'AE' (cf. SERIES_V2)
+# v0.52.2 — Séries « documents » (EV, TP, AC, AT) : un atome est relié aux
+# objectifs qu'il vise, avec sa série, comme F/A/E. Ces liens ne sont lus par
+# aucun livret (listes fermées) ; seuls l'import 6e, les évaluations et les
+# documents du gabarit 6e s'en servent.
+_SERIES_VALIDES = _SERIES_VALIDES + ("EV", "TP", "AC", "AT")
 
 # Mapping série v2 → serie_code dans la table `exercices`.
 # v0.18.3 — Unification : la série « approche » a pour code 'AE' partout
@@ -1437,6 +1442,7 @@ _SERIE_CODE_EQUIVALENT = {
     "F":  "F",
     "A":  "A",
     "E":  "E",
+    "EV": "EV", "TP": "TP", "AC": "AC", "AT": "AT",   # v0.52.2
 }
 
 
@@ -1816,6 +1822,10 @@ def lister_exos_disponibles_pour_revision(
         """,
         (origin_niveau, origin_seq),
     ).fetchall()
+    # v0.52.2 — Les séries « documents » (EV, TP, AC, AT) ne se piochent
+    # pas en révision : elles ne vont dans aucun livret.
+    from services.atomes import SERIES_HORS_LIVRET
+    rows = [r for r in rows if (r["serie_code"] or "") not in SERIES_HORS_LIVRET]
     return [
         {
             "id":         r["id"],

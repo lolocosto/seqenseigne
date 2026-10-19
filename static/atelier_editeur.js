@@ -1529,6 +1529,15 @@ class AtelierEditeur extends Atelier {
    * Handlers câblés par addEventListener (pas d'onclick inline) : la base n'a
    * pas à connaître le nom de la variable globale de l'instance.
    */
+  /**
+   * v0.52.2 — Paramètres de requête ajoutés à l'appel de compilation
+   * (`…/rendu-pdf`). Aucun par défaut ; l'atelier Évaluation passe le sujet
+   * et la version d'une évaluation de 6e.
+   */
+  parametresRendu() {
+    return '';
+  }
+
   _assurerToolbarRendu() {
     const conteneur = this.$('rendu-toolbar');
     if (!conteneur || conteneur.dataset.genere === '1') return;
@@ -1783,7 +1792,8 @@ class AtelierEditeur extends Atelier {
 
     try {
       const resp = await fetch(
-        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-pdf`,
+        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-pdf`
+          + this.parametresRendu(),
         { method: 'POST' },
       );
       // v0.13.7.6.1.1.2 — Si une exécution plus récente est en cours

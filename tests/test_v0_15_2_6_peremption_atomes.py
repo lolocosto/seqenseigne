@@ -75,6 +75,11 @@ def test_mapping_decisions_laurent_v0_15_2_6():
         'livret_sequence_6e':     ['exercices', 'fiches_resume'],
         'fiches_cours_6e':        ['fiches_resume'],
         'corriges_6e':            ['exercices', 'fiches_resume'],
+        # v0.52.2 — évaluations et documents du gabarit 6e
+        'evaluation_6e':          ['exercices', 'evaluations'],
+        'travaux_personnels_6e':  ['exercices'],
+        'activites_complementaires_6e': ['exercices'],
+        'seances_atelier_6e':     ['exercices'],
     }
     assert ATOMES_PAR_TYPE_DOCUMENT == attendu
 

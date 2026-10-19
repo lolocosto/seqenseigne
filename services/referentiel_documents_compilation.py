@@ -250,6 +250,11 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
 
     if type_document in ('livret_sequence_6e', 'fiches_cours_6e', 'corriges_6e'):
         return _cibles_6e(conn, doc_id, niveau, type_document)
+    if type_document == 'evaluation_6e':
+        return _cibles_evaluations_6e(conn, niveau)
+    if type_document in ('travaux_personnels_6e', 'activites_complementaires_6e',
+                         'seances_atelier_6e'):
+        return _cibles_documents_6e(conn, niveau, type_document)
 
     if type_document == 'livret_cartes_planches':
         # v0.15.2.5 — uniquement des cibles par séquence.
@@ -358,6 +363,61 @@ def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,
                 'niveau':      niveau,
                 'sequence':    seq,
             })
+    return cibles
+
+
+def _cibles_evaluations_6e(conn: sqlite3.Connection, niveau: str) -> list[dict]:
+    """v0.52.2 — Une cible par évaluation du niveau (options du type :
+    sujet, version). Identifiant « EV01/N09/S01 » : le numéro de
+    l'évaluation (stable) et la séquence de ses exercices — la cible se
+    termine par « /S01 », comme celles des livrets, pour être proposée côté
+    classe avec cette séquence ; `titre_doc` distingue les documents d'une
+    même séquence."""
+    from collections import Counter
+    cibles = []
+    for r in conn.execute("SELECT id, numero, titre FROM evaluations WHERE niveau = ? "
+                          "ORDER BY ordre, numero, id", (niveau,)).fetchall():
+        seqs = Counter(x[0] for x in conn.execute(
+            "SELECT e.sequence FROM evaluation_exercices ee JOIN exercices e "
+            "ON e.id = ee.exercice_id WHERE ee.evaluation_id = ? AND e.sequence <> ''",
+            (r['id'],)))
+        seq = seqs.most_common(1)[0][0] if seqs else ''
+        if seq.startswith('X'):
+            continue
+        code = f"EV{int(r['numero']):02d}"
+        titre = r['titre'] or '(sans titre)'
+        c = {'cible_id':    f"{code}/{niveau}/{seq}" if seq else code,
+             'libelle':     f"Évaluation {code} : {titre}",
+             'nom_fichier': f"evaluation_6e__{niveau}__{seq or 'sans_sequence'}__{code}.pdf",
+             'niveau':      niveau,
+             'eval_id':     r['id'],
+             'titre_doc':   titre}
+        if seq:
+            c['sequence'] = seq
+        cibles.append(c)
+    return cibles
+
+
+def _cibles_documents_6e(conn: sqlite3.Connection, niveau: str,
+                         type_document: str) -> list[dict]:
+    """v0.52.2 — Une cible par atome de la série (TP, AC ou AT) du niveau,
+    hors archives Xnn. Identifiant « TP01/N09/S01 » (cf. évaluations)."""
+    from services.documents_6e import TYPES_SERIES, LIBELLES_COURTS, atomes_de_la_serie
+    serie = TYPES_SERIES[type_document]
+    cibles = []
+    for a in atomes_de_la_serie(conn, niveau, serie):
+        code = f"{serie}{int(a['num'] or 0):02d}"
+        seq = a['sequence']
+        titre = a['titre'] or '(sans titre)'
+        cibles.append({
+            'cible_id':    f"{code}/{niveau}/{seq}",
+            'libelle':     f"{LIBELLES_COURTS[serie]} {seq} {code} : {titre}",
+            'nom_fichier': f"{type_document}__{niveau}__{seq}__{code}.pdf",
+            'niveau':      niveau,
+            'sequence':    seq,
+            'exercice_id': a['id'],
+            'titre_doc':   titre,
+        })
     return cibles
 
 

@@ -622,3 +622,38 @@ def _produire_corriges_6e(conn, cible, options, tikz, tblr):
     return generer_corriges_6e(conn, niveau, sequence=cible.get('sequence'),
                                options=options, tikz_libraries=tikz,
                                tblr_libraries=tblr)
+
+
+# ── v0.52.2 — Évaluations et documents du gabarit « sixieme » ───────────────
+#
+# Cibles : services/referentiel_documents_compilation._cibles_6e (une par
+# évaluation du niveau, une par atome des séries TP, AC, AT).
+
+
+@enregistrer_producteur('evaluation_6e')
+def _produire_evaluation_6e(conn, cible, options, tikz, tblr):
+    """Évaluation au gabarit de l'équipe de 6e (sujet A ou B)."""
+    from services.render_evaluation import generer_tex_evaluation_6e
+    eval_id = cible.get('eval_id')
+    if not eval_id:
+        raise ProducteurErreur(
+            f"evaluation_6e requiert eval_id : reçu {cible!r}", code='cible_invalide')
+    return generer_tex_evaluation_6e(conn, eval_id, options=options,
+                                     tikz_libraries=tikz, tblr_libraries=tblr)
+
+
+def _produire_document_6e(conn, cible, options, tikz, tblr):
+    """Travail personnel, activité complémentaire ou séance d'atelier (un
+    atome des séries TP, AC, AT)."""
+    from services.documents_6e import generer_document_6e
+    exo_id = cible.get('exercice_id')
+    if not exo_id:
+        raise ProducteurErreur(
+            f"document 6e : exercice_id requis, reçu {cible!r}", code='cible_invalide')
+    return generer_document_6e(conn, exo_id, options=options,
+                               tikz_libraries=tikz, tblr_libraries=tblr)
+
+
+for _type_doc_6e in ('travaux_personnels_6e', 'activites_complementaires_6e',
+                     'seances_atelier_6e'):
+    enregistrer_producteur(_type_doc_6e)(_produire_document_6e)

@@ -1,10 +1,16 @@
-"""tests/test_v0_52_0_import_lot6e.py — v0.52.0
+"""tests/test_v0_52_0_import_lot6e.py — v0.52.0 (adapté en v0.52.2)
 
 Outil `outils/import_lot6e.py` : import des séquences de 6e dans l'atelier
 (N09), remplacement du découpage du cycle 3, archivage réversible de
 l'ancien. Base de test reconstruite à chaque test (jamais de base réelle) :
 appli atelier neuve + vrais CSV de cycle + anciens exercices de 6e aux codes
 S01…S16 + un morceau de cycle 4 qui pointe vers eux.
+
+v0.52.2 (doc/redemarrage_v0_52_2.md) : les documents hors base vont en base
+(séries TP, AC, AT, EV ; décision O1 : plus de `.tex`, options --sortie et
+--documents-seulement retirées) et les activités sont aussi reliées à leur
+objectif (L1). Les tests qui figeaient l'ancien comportement sont adaptés ici ;
+le nouveau est testé dans tests/test_v0_52_2_documents_6e.py.
 """
 
 from __future__ import annotations
@@ -157,9 +163,8 @@ def _conn(db):
 
 
 def _appliquer(db, lots_dir, sortie=None):
+    # v0.52.2 (O1) : `sortie` n'est plus transmis (plus de .tex hors base).
     args = ["--db", str(db), "--lots", str(lots_dir), "--apply", "--yes"]
-    if sortie:
-        args += ["--sortie", str(sortie)]
     assert imp.main(args) == 0
 
 
@@ -194,12 +199,11 @@ TABLES_IMPORT = ("themes", "sequences_du_cycle", "sequences_par_niveau", "sequen
 def test_essai_a_blanc_n_ecrit_rien_car_il_travaille_sur_une_copie_en_memoire(base, lots, tmp_path,
                                                                                capsys):
     avant = _md5(base)
-    sortie = tmp_path / "tex"
-    assert imp.main(["--db", str(base), "--lots", str(lots), "--sortie", str(sortie)]) == 0
+    assert imp.main(["--db", str(base), "--lots", str(lots)]) == 0
     out = capsys.readouterr().out
     assert "essai à blanc" in out and "S01-02" in out
     assert _md5(base) == avant
-    assert not (base.parent / "images").exists() and not sortie.exists()
+    assert not (base.parent / "images").exists() and not (lots / "documents_tex").exists()
     assert not (base.parent / "sauvegardes").exists()
 
 
@@ -239,9 +243,9 @@ def test_application_cree_structure_n09_en_cours(base, lots):
     assert etats == {"en_cours"}
     assert {r[0] for r in c.execute("SELECT etat_code FROM fiches_resume WHERE niveau='N09' "
                                     "AND sequence='S01'")} == {"en_cours"}
-    n = c.execute("SELECT COUNT(*) FROM exercices WHERE niveau='N09' AND sequence='S01'"
-                  ).fetchone()[0]
-    assert n == 4 + 1 + 3          # F01 F02 A01 E01, F03, AE01-03
+    n = c.execute("SELECT COUNT(*) FROM exercices WHERE niveau='N09' AND sequence='S01' "
+                  "AND serie_code IN ('F', 'A', 'E', 'AE')").fetchone()[0]
+    assert n == 4 + 1 + 3          # F01 F02 A01 E01, F03, AE01-03 (v0.52.2 : + TP01, AC01)
     assert (base.parent / "images" / "fig-a.png").is_file()
     assert list((base.parent / "sauvegardes").glob("avant_import_lot6e_*.db"))
     assert list((base.parent / "sauvegardes").glob("journal_import_lot6e_*.json"))
@@ -324,8 +328,9 @@ def test_archivage_n_est_fait_qu_une_fois_sinon_les_nouveaux_s01_seraient_archiv
     _appliquer(base, lots)
     _appliquer(base, lots)
     c = _conn(base)
-    assert c.execute("SELECT COUNT(*) FROM exercices WHERE niveau='N09' AND sequence='S01'"
-                     ).fetchone()[0] == 8
+    # v0.52.2 : séries du livret seulement (+ TP01 et AC01 en séries documents).
+    assert c.execute("SELECT COUNT(*) FROM exercices WHERE niveau='N09' AND sequence='S01' "
+                     "AND serie_code IN ('F', 'A', 'E', 'AE')").fetchone()[0] == 8
     assert c.execute("SELECT COUNT(*) FROM sequences_du_cycle WHERE cycle_code='C03' AND "
                      "code LIKE 'XX%'").fetchone()[0] == 0
 
@@ -414,7 +419,8 @@ def test_liens_objectif_exercice_par_serie_dans_l_ordre_du_lot(base, lots):
     rows = c.execute(
         "SELECT oe.serie, oe.ordre, e.serie_code, e.num FROM objectif_exos oe "
         "JOIN exercices e ON e.id = oe.exercice_id JOIN objectifs o ON o.id = oe.objectif_id "
-        "WHERE e.niveau='N09' AND e.sequence='S01' AND o.code='02' ORDER BY oe.serie, oe.ordre"
+        "WHERE e.niveau='N09' AND e.sequence='S01' AND o.code='02' "
+        "AND oe.serie IN ('F', 'A', 'E') ORDER BY oe.serie, oe.ordre"   # v0.52.2 : + AE (L1)
     ).fetchall()
     assert [tuple(r) for r in rows] == [("A", 1, "A", 1), ("E", 1, "E", 1),
                                         ("F", 1, "F", 1), ("F", 2, "F", 2)]
@@ -422,7 +428,9 @@ def test_liens_objectif_exercice_par_serie_dans_l_ordre_du_lot(base, lots):
 
 def test_activites_en_approche_rattachees_a_la_partie_car_le_livret_ignore_ae_d_objectif(base, lots):
     """L'atelier rattache l'approche à la partie (rôle EA) : c'est ce que
-    lisent le livret et le plan de travail (numerotation_livret)."""
+    lisent le livret et le plan de travail (numerotation_livret).
+    v0.52.2 (L1) : le lien à la partie est gardé ; l'activité est en plus
+    reliée à son objectif (série AE), que la numérotation ignore."""
     _appliquer(base, lots)
     c = _conn(base)
     rows = c.execute(
@@ -432,7 +440,7 @@ def test_activites_en_approche_rattachees_a_la_partie_car_le_livret_ignore_ae_d_
         "AND e.sequence='S01' ORDER BY p.numero, pe.ordre").fetchall()
     assert [tuple(r) for r in rows] == [(1, 1, "AE", 1, "approche"), (1, 2, "AE", 2, "approche"),
                                         (2, 1, "AE", 3, "approche")]
-    assert c.execute("SELECT COUNT(*) FROM objectif_exos WHERE serie='AE'").fetchone()[0] == 0
+    assert c.execute("SELECT COUNT(*) FROM objectif_exos WHERE serie='AE'").fetchone()[0] == 3
     from services.numerotation_livret import numeroter_sequence
     sn = c.execute("SELECT id FROM sequences_par_niveau WHERE niveau='N09' AND "
                    "sequence_code='S01'").fetchone()[0]
@@ -486,27 +494,22 @@ def test_rapport_par_sequence_et_par_objectif(base, lots):
     assert o["c"]["remédiations"] == {"présentes": 1} and o["c"]["fiche"] == {"créée": 1}
 
 
-# ── Documents hors base ──────────────────────────────────────────────────────
+# ── Documents hors base (v0.52.2 : en base, plus de .tex) ────────────────────
 
-def test_documents_hors_base_en_tex_eleve_et_corrige_sans_local_tex(base, lots, tmp_path):
-    sortie = tmp_path / "tex"
-    _appliquer(base, lots, sortie)
-    fichiers = sorted(p.name for p in (sortie / "S01").glob("*.tex"))
-    assert fichiers == ["S01_AC1_corrige.tex", "S01_AC1_eleve.tex", "S01_EV1A_corrige.tex",
-                        "S01_EV1A_eleve.tex", "S01_EV1B_corrige.tex", "S01_EV1B_eleve.tex",
-                        "S01_TP1_corrige.tex", "S01_TP1_eleve.tex"]
-    eleve = (sortie / "S01" / "S01_TP1_eleve.tex").read_text(encoding="utf-8")
-    corr = (sortie / "S01" / "S01_TP1_corrige.tex").read_text(encoding="utf-8")
-    assert "\\usepackage[sixieme,geometrie]{seqenseigne}" in eleve
-    assert "local.tex" not in eleve and "\\seqVersionCorrigee" not in eleve
-    assert "\\seqVersionCorrigee" in corr and "\\end{document}" in corr
-    assert (sortie / "S01" / "figures" / "fig-a.png").is_file()
-    index = json.loads((sortie / "S01" / "documents.json").read_text(encoding="utf-8"))
-    assert {d["type"] for d in index} == {"travail_personnel", "activite_complementaire",
-                                          "evaluation"}
-    # Les évaluations ne vont pas dans le module Évaluations (modèle 4e incompatible).
+def test_plus_de_tex_hors_base_car_les_documents_vont_en_base(base, lots, tmp_path):
+    """O1 (v0.52.2) : travaux personnels, activités complémentaires et
+    évaluations vont dans l'atelier (séries TP, AC, AT, EV), plus en `.tex`.
+    Une évaluation dont le découpage échoue (ici, pas de \\seqExoEval)
+    n'est pas importée et est signalée."""
+    r = _essai(base, lots)
+    _appliquer(base, lots)
+    assert not (lots / "documents_tex").exists()
     c = _conn(base)
+    series = dict(c.execute("SELECT serie_code, COUNT(*) FROM exercices WHERE niveau='N09' "
+                            "AND serie_code IN ('TP','AC','AT','EV') GROUP BY 1").fetchall())
+    assert series == {"TP": 1, "AC": 1}
     assert c.execute("SELECT COUNT(*) FROM evaluations").fetchone()[0] == 0
+    assert any("non importée : découpage impossible" in a for a in r.anomalies)
 
 
 # ── Lancement, base, référentiel ─────────────────────────────────────────────

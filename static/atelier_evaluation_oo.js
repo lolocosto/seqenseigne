@@ -498,6 +498,7 @@ class AtelierEvaluation extends AtelierAssemblage {
     if (btnLatex) btnLatex.style.display = '';
     if (btnSuppr) btnSuppr.style.display = '';
     if (btnSave)  btnSave.style.display  = '';
+    this._majSelecteursRendu6e();   // v0.52.2
 
     // v0.16.5 (2b-2) — Verrou « validé = lecture seule » pour l'évaluation.
     // Le <form id="atl-eval-form"> existant permet de réutiliser la méthode
@@ -1256,11 +1257,61 @@ class AtelierEvaluation extends AtelierAssemblage {
   // nom — cf. bas de fichier). `voirLatex` est conservé ci-dessous car il
   // n'existe pas dans la base (ouvre la modale LaTeX commune).
 
+  // v0.52.2 — Évaluation de 6e (N09) : rendu au gabarit de l'équipe, sujet A
+  // ou B, version élève ou corrigée (sélecteurs ajoutés à la barre du rendu).
+  _assurerToolbarRendu() {
+    super._assurerToolbarRendu();
+    const conteneur = this.$('rendu-toolbar');
+    if (!conteneur || document.getElementById('atl-eval-rendu-sujet')) return;
+    const mk = (id, titre, choix) => {
+      const sel = document.createElement('select');
+      sel.id = id;
+      sel.className = 'btn-sm';
+      sel.title = titre;
+      sel.dataset.rendu6e = '1';
+      for (const [v, lib] of choix) {
+        const o = document.createElement('option');
+        o.value = v;
+        o.textContent = lib;
+        sel.appendChild(o);
+      }
+      return sel;
+    };
+    const sujet = mk('atl-eval-rendu-sujet', 'Sujet (6e)', [['A', 'Sujet A'], ['B', 'Sujet B']]);
+    const version = mk('atl-eval-rendu-version', 'Version (6e)',
+                       [['eleve', 'Élève'], ['corrigee', 'Corrigée']]);
+    const status = conteneur.querySelector('[id$="-rendu-status"]');
+    conteneur.insertBefore(sujet, status);
+    conteneur.insertBefore(version, status);
+    this._majSelecteursRendu6e();
+  }
+
+  _estEval6e() {
+    return !!(this.itemActif && this.itemActif.niveau === 'N09');
+  }
+
+  _majSelecteursRendu6e() {
+    document.querySelectorAll('[data-rendu6e]').forEach(el => {
+      el.style.display = this._estEval6e() ? '' : 'none';
+    });
+  }
+
+  parametresRendu() {
+    if (!this._estEval6e()) return '';
+    const s = document.getElementById('atl-eval-rendu-sujet');
+    const v = document.getElementById('atl-eval-rendu-version');
+    const p = new URLSearchParams();
+    if (s) p.set('sujet', s.value);
+    if (v) p.set('version', v.value);
+    return '?' + p.toString();
+  }
+
   async voirLatex() {
     if (!this.itemActif) return;
     try {
       const r = await fetch(
-        `/api/evaluations/${encodeURIComponent(this.itemActif.id)}/rendu-tex`,
+        `/api/evaluations/${encodeURIComponent(this.itemActif.id)}/rendu-tex`
+          + this.parametresRendu(),
         { method: 'GET' },
       );
       if (!r.ok) {

@@ -1,4 +1,4 @@
-"""services/gabarits_documents.py — v0.52.1
+"""services/gabarits_documents.py — v0.52.1 (types 6e complétés en v0.52.2)
 
 Gabarit de documents d'un référentiel : la liste des documents qu'il
 publie et leur mise en forme. Champ `referentiel_niveaux.gabarit_documents` :
@@ -7,7 +7,9 @@ publie et leur mise en forme. Champ `referentiel_niveaux.gabarit_documents` :
                   mêmes clés, mêmes options — **rien ne change** ;
   - « sixieme » : documents au style de l'équipe de 6e (module LaTeX
                   `seqenseigne-style6e`) : livret de séquence 6e, fiches de
-                  cours 6e, corrigés enseignant 6e.
+                  cours 6e, corrigés enseignant 6e ; v0.52.2 : évaluations,
+                  travaux personnels, activités complémentaires, séances
+                  d'atelier.
 
 Décisions (cadrage du 19 octobre, `doc/redemarrage_v0_52_1.md`) :
 
@@ -129,6 +131,8 @@ def _catalogue_cycle4() -> tuple:
 VERSIONS_6E = ("eleve", "corrigee")
 REMEDIATIONS_6E = ("apres_exercice", "en_fin", "aucune")
 DECOUPAGES_6E = ("par_sequence", "annuel", "les_deux")
+SUJETS_6E = ("A", "B")                                   # v0.52.2
+CALCULATRICE_6E = ("interdite", "autorisee", "non_precisee")
 
 _CATALOGUE_SIXIEME = (
     TypeDocument(
@@ -172,6 +176,52 @@ _CATALOGUE_SIXIEME = (
                   ("les_deux", "les deux"))),
                 ("inclure_activites", "Activités d'introduction", None),
                 ("inclure_serie_E", "Exercices d'expertise (E)", None)),
+    ),
+    # v0.52.2 — Évaluations (module Évaluations, exercices de la série EV :
+    # sujet A dans l'énoncé, sujet B dans la remédiation) et documents rangés
+    # dans l'atelier d'exercices (séries TP, AC, AT : un atome = un document).
+    TypeDocument(
+        cle="evaluation_6e",
+        libelle="Évaluations (6e)",
+        description=("Une par évaluation du niveau, au gabarit de l'équipe de 6e : "
+                     "barème par compétence, sujet A ou B."),
+        options={"actif": False, "sujet": "A", "version": "eleve",
+                 "calculatrice": "interdite"},
+        valeurs={"sujet": SUJETS_6E, "version": VERSIONS_6E,
+                 "calculatrice": CALCULATRICE_6E},
+        generateur="services.render_evaluation.generer_tex_evaluation_6e",
+        champs=(("sujet", "Sujet", (("A", "A"), ("B", "B"))),
+                ("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),
+                ("calculatrice", "Calculatrice",
+                 (("interdite", "interdite"), ("autorisee", "autorisée"),
+                  ("non_precisee", "non précisée")))),
+    ),
+    TypeDocument(
+        cle="travaux_personnels_6e",
+        libelle="Travaux personnels (6e)",
+        description="Un document par travail personnel (série TP de l'atelier d'exercices).",
+        options={"actif": False, "version": "eleve"},
+        valeurs={"version": VERSIONS_6E},
+        generateur="services.documents_6e.generer_document_6e",
+        champs=(("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),),
+    ),
+    TypeDocument(
+        cle="activites_complementaires_6e",
+        libelle="Activités complémentaires (6e)",
+        description="Un document par activité complémentaire (série AC).",
+        options={"actif": False, "version": "eleve"},
+        valeurs={"version": VERSIONS_6E},
+        generateur="services.documents_6e.generer_document_6e",
+        champs=(("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),),
+    ),
+    TypeDocument(
+        cle="seances_atelier_6e",
+        libelle="Séances d'atelier (6e)",
+        description="Un document par séance d'atelier (série AT).",
+        options={"actif": False, "version": "eleve"},
+        valeurs={"version": VERSIONS_6E},
+        generateur="services.documents_6e.generer_document_6e",
+        champs=(("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),),
     ),
 )
 
@@ -222,6 +272,25 @@ def valider_gabarit(valeur) -> str:
 def gabarit_par_defaut(niveau: str) -> str:
     """G1 — Valeur proposée à la création d'un référentiel."""
     return "sixieme" if (niveau or "").strip() in NIVEAUX_SIXIEME else GABARIT_DEFAUT
+
+
+def gabarit_atelier_du_niveau(conn, niveau: str) -> str:
+    """Décision R1 (v0.52.1), partagée en v0.52.2 avec le module
+    Évaluations : gabarit des documents que l'atelier produit pour un niveau
+    sans paramètre explicite = celui du référentiel interne principal
+    « en_cours » le plus récent du niveau, sinon la valeur proposée pour le
+    niveau (N09 → sixieme, N10 à N12 → cycle4)."""
+    try:
+        r = conn.execute(
+            "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat = 'en_cours' "
+            "AND COALESCE(source, 'interne') <> 'externe' "
+            "AND COALESCE(type_ref, 'principal') = 'principal' "
+            "ORDER BY version DESC, id DESC LIMIT 1", (niveau,)).fetchone()
+    except Exception:
+        r = None
+    if r is not None:
+        return gabarit_du_referentiel(conn, r[0])
+    return gabarit_par_defaut(niveau)
 
 
 # ── Validation des options (G4) ──────────────────────────────────────────────

@@ -202,7 +202,11 @@ def test_catalogue_cycle4_reprend_les_9_cles_et_options_car_les_chaines_type_cib
     assert [t.cle for t in cat] == list(rd.TYPES_DOCUMENT)
     for t in cat:
         assert t.options == rd.OPTIONS_PAR_DEFAUT[t.cle]
-    assert set(gd.types("sixieme")) == {"livret_sequence_6e", "fiches_cours_6e", "corriges_6e"}
+    # v0.52.2 : + évaluations, travaux personnels, activités complémentaires,
+    # séances d'atelier (clés nouvelles, aucune renommée).
+    assert set(gd.types("sixieme")) == {"livret_sequence_6e", "fiches_cours_6e", "corriges_6e",
+                                        "evaluation_6e", "travaux_personnels_6e",
+                                        "activites_complementaires_6e", "seances_atelier_6e"}
     assert not set(gd.types("sixieme")) & set(rd.TYPES_DOCUMENT)
 
 
@@ -302,7 +306,7 @@ def test_onglet_documents_ne_liste_que_le_gabarit_et_garde_l_autre_en_base(app_6
         assert [d["type_document"] for d in rd.lister_documents(c, "R09")] == \
             list(rd.TYPES_DOCUMENT)
         assert c.execute("SELECT COUNT(*) FROM referentiel_documents WHERE referentiel_id="
-                         "'R09'").fetchone()[0] == 12
+                         "'R09'").fetchone()[0] == 9 + len(gd.types("sixieme"))
         assert "libelle" not in rd.lister_documents(c, "R09")[0]       # cycle 4 inchangé
 
 

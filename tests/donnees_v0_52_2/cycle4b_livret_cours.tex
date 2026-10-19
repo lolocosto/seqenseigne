@@ -1,0 +1,120 @@
+%% Livret Récap cours — généré pour rendu agrégé.
+%% Niveau : N11
+
+\documentclass[a4paper,11pt,twoside]{article}
+
+%% ── Paquets externes (noyau pour atome) ───────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{etoolbox}
+\usepackage{xkeyval}
+\usepackage{xifthen}
+\usepackage{environ}
+\usepackage{forloop}
+\usepackage{xcolor}
+\usepackage{ninecolors}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{tabularray}
+\usepackage{multicol}
+\usepackage[inline]{enumitem}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage[theorems,breakable,skins]{tcolorbox}
+\usepackage{pifont}
+
+%% ── Marges (alignées sur les livrets) ───────────────
+\newgeometry{left=35pt,right=35pt,top=65pt,bottom=70pt}
+
+%% ── Initialisations de bibliothèques ─────────────────
+\UseTblrLibrary{booktabs}
+\UseTblrLibrary{varwidth}
+
+%% ── Définitions du paquet seqenseigne (inlinées) ─────
+%%    Fermeture transitive des macros effectivement utilisées
+%%    par l'atome — au lieu de \usepackage{seqenseigne}
+%%    qui chargerait ~110 paquets.
+\makeatletter
+\makeatother
+
+%% ── Macros transverses ───────────────────────────────
+\providecommand{\acompleter}[1]{\;\underline{\phantom{#1}}\;}
+
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\geometry{vmargin=70pt,hmargin=50pt,headheight=50pt,headsep=15pt,footskip=20pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{\rightmark}
+\rfoot{Page \thepage/\pageref{LastPage}}
+\lfoot{Le \today}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\renewcommand{\subsectionmark}[1]{\markright{#1}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\section}[frame]{\normalfont}{\filright\footnotesize\enspace SECTION \thesection\enspace}{30pt}{\huge\bfseries\filcenter}
+\titleformat{\subsection}[block]{\normalfont\sffamily}{\thesubsection}{.5em}{\titlerule[2pt]\\[1em]\bfseries\sc\Large\filcenter}[\vspace{2ex}\titlerule]
+\titleformat{\subsubsection}{\normalfont\bfseries}{\thesubsubsection}{1em}{}
+
+\setcounter{tocdepth}{2}
+
+\begin{document}
+
+\providecommand{\theHExoNum}{\theExoNum}
+\providecommand{\theHNotionNum}{\theNotionNum}
+\providecommand{\theHMethodeNum}{\theMethodeNum}
+\providecommand{\theHDefinitionNum}{\theDefinitionNum}
+\providecommand{\theHProprieteNum}{\theProprieteNum}
+
+\seqCreeCompteurs
+\seqSetCodeNiveau{N11}
+\seqInitAnnexes
+
+\thispagestyle{empty}
+\begin{center}
+\vspace*{2em}
+{\Huge\bfseries Livret de cours}\\[2em]
+{\Large Collège}\\[1em]
+{\LARGE Classe de 4\ieme{}}\\[3em]
+\end{center}
+
+\begin{itemize}
+  \item Représentations d'un nombre
+\end{itemize}
+
+\newpage
+
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+
+\cleardoublepage
+\seqSetColorsTheme{nombres}
+\section{Nombres}
+
+\seqSetCodeSequence{S01}
+\subsection{Représentations d'un nombre}
+
+\subsubsection{Connaissances}
+
+\begin{seqNotion}{Notion 1}{La fréquence est ...}
+\end{seqNotion}
+
+\subsubsection{Savoir-faire}
+
+\begin{seqMethode}{Calculer une fréquence}{On compte ...}
+\end{seqMethode}
+
+\seqAfficheAnnexes
+\end{document}

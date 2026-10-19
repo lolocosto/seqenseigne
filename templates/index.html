@@ -917,6 +917,11 @@
               <button class="serie-btn" id="atl-serie-avancé" onclick="ATELIER_EXERCICE.changerSerie('avancé')">Avancé</button>
               <button class="serie-btn" id="atl-serie-exploration" onclick="ATELIER_EXERCICE.changerSerie('exploration')">Exploration</button>
               <button class="serie-btn" id="atl-serie-AP" onclick="ATELIER_EXERCICE.changerSerie('approche')">Activité d'approche</button>
+              <!-- v0.52.2 — Séries « documents » de la 6e (hors livrets), visibles en N09 (I1). -->
+              <button class="serie-btn" id="atl-serie-EV" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie('évaluation')">Évaluation</button>
+              <button class="serie-btn" id="atl-serie-TP" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie('travail personnel')">Travail personnel</button>
+              <button class="serie-btn" id="atl-serie-AC" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie('activité complémentaire')">Activité complémentaire</button>
+              <button class="serie-btn" id="atl-serie-AT" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie(&quot;séance d'atelier&quot;)">Séance d'atelier</button>
               <!-- v0.11.2 — Série « Révision » supprimée (cf. sidebar plus haut). -->
             </div>
           </div>
@@ -1026,8 +1031,14 @@
                champs vidés à la sauvegarde (cf. Q2=a : pas de champ booléen
                en base, l'état est dérivé). -->
           <div class="atl-cadre" id="atl-exercice-cadre-remediation" style="display:none">
-            <div class="atl-cadre-titre">Remédiation</div>
-            <div style="font-size:11px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:10px;line-height:1.5">
+            <div class="atl-cadre-titre" id="atl-exercice-remed-titre">Remédiation</div>
+            <!-- v0.52.2 — Série EV : ce cadre porte le sujet B de l'évaluation. -->
+            <div id="atl-exercice-remed-aide-eval" style="display:none;font-size:11px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:10px;line-height:1.5">
+              Le <strong>sujet B</strong> de l'évaluation : même exercice, mêmes points, même
+              objectif que le sujet A (cadre ci-dessus). Les réponses s'écrivent dans
+              l'énoncé (macros de réponse) : la version corrigée les affiche.
+            </div>
+            <div id="atl-exercice-remed-aide" style="font-size:11px;color:var(--text-secondary);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:10px;line-height:1.5">
               Section optionnelle. Pour cet exercice, on peut proposer
               une <strong>remédiation</strong> (énoncé alternatif plus
               simple + corrigé) destinée aux élèves qui n'auraient pas
@@ -1041,7 +1052,7 @@
               <label class="atl-cadre-rep-toggle">
                 <input type="checkbox" id="atl-exercice-remed-actif"
                        onchange="ATELIER_EXERCICE.toggleRemediation()">
-                <span>Rédiger une remédiation pour cet exercice</span>
+                <span id="atl-exercice-remed-case-libelle">Rédiger une remédiation pour cet exercice</span>
               </label>
             </div>
 
@@ -1051,7 +1062,7 @@
               <!-- Énoncé de remédiation -->
               <div class="atl-field">
                 <label class="atl-label">
-                  Énoncé de remédiation
+                  <span id="atl-exercice-remed-enonce-libelle">Énoncé de remédiation</span>
                   <span class="atl-label-obligatoire" title="Obligatoire si la remédiation est cochée">*</span>
                 </label>
                 <textarea id="atl-exercice-remed-enonce" class="latex-textarea" rows="6"
@@ -1062,7 +1073,7 @@
               <!-- Corrigé de remédiation -->
               <div class="atl-field">
                 <label class="atl-label">
-                  Corrigé de remédiation
+                  <span id="atl-exercice-remed-corrige-libelle">Corrigé de remédiation</span>
                   <span class="atl-label-obligatoire" title="Obligatoire si la remédiation est cochée">*</span>
                 </label>
                 <textarea id="atl-exercice-remed-corrige" class="latex-textarea" rows="6"
@@ -3897,6 +3908,23 @@
         <button class="serie-btn active-approche"
                 onclick="ATELIER_EXERCICE._validerChoixSerie('approche')">
           EA — Approche
+        </button>
+        <!-- v0.52.2 — Séries « documents » de la 6e (I1 : N09 seulement). -->
+        <button class="serie-btn active-document" data-serie-document-creation style="display:none"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('évaluation')">
+          EV — Évaluation (sujets A et B)
+        </button>
+        <button class="serie-btn active-document" data-serie-document-creation style="display:none"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('travail personnel')">
+          TP — Travail personnel
+        </button>
+        <button class="serie-btn active-document" data-serie-document-creation style="display:none"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('activité complémentaire')">
+          AC — Activité complémentaire
+        </button>
+        <button class="serie-btn active-document" data-serie-document-creation style="display:none"
+                onclick="ATELIER_EXERCICE._validerChoixSerie(&quot;séance d'atelier&quot;)">
+          AT — Séance d'atelier
         </button>
       </div>
     </div>

@@ -544,6 +544,17 @@ def api_exos_disponibles(niveau):
             "ORDER BY spn.sequence_code, e.serie, e.titre",
             (niveau,),
         ).fetchall()
+        # v0.52.2 — Séries « documents » : TP, AC, AT ne sont pas des
+        # exercices d'évaluation ; un exercice EV sans objectif (le bonus)
+        # est proposé quand même, dans la séquence qu'il porte.
+        rows = [r for r in rows if (r["serie_code"] or "") not in ("TP", "AC", "AT")]
+        deja = {r["id"] for r in rows}
+        rows += [r for r in conn.execute(
+            "SELECT e.id, e.titre, e.serie, e.type_format, e.niveau, e.serie_code, "
+            "       e.num, e.sequence AS sequence_code "
+            "FROM exercices AS e WHERE e.niveau = ? AND e.serie_code = 'EV' "
+            "ORDER BY e.sequence, e.num", (niveau,)).fetchall()
+            if r["id"] not in deja]
 
     # Grouper par séquence pour l'UI
     par_sequence = {}
@@ -636,6 +647,43 @@ def _racine_appli():
     return Path(current_app.root_path)
 
 
+def _rendu_gabarit_options(conn, eval_id: str) -> tuple:
+    """v0.52.2 — Gabarit et options du rendu depuis le module Évaluations.
+
+    Gabarit : paramètre `gabarit` s'il est donné, sinon la règle R1 de
+    l'atelier (référentiel interne principal en cours du niveau, sinon
+    N09 → sixieme, N10 à N12 → cycle4) : un niveau du cycle 4 garde son
+    rendu. Options du rendu 6e (query string ou body JSON) : `sujet`
+    (A|B), `version` (eleve|corrigee), `calculatrice`."""
+    from services import gabarits_documents as gd
+    payload = request.get_json(silent=True) if request.is_json else None
+    payload = payload if isinstance(payload, dict) else {}
+    explicite = payload.get('gabarit') or request.args.get('gabarit')
+    if explicite:
+        gabarit = gd.valider_gabarit(explicite)
+    else:
+        ev = svc.lire_evaluation(conn, eval_id)
+        gabarit = gd.gabarit_atelier_du_niveau(conn, ev['niveau'])
+    options = {k: (payload.get(k) or request.args.get(k))
+               for k in ('sujet', 'version', 'calculatrice')
+               if payload.get(k) or request.args.get(k)}
+    return gabarit, options
+
+
+def _tex_evaluation(conn, eval_id: str, config) -> str:
+    from services.render_evaluation import generer_tex_evaluation
+    gabarit, options = _rendu_gabarit_options(conn, eval_id)
+    if gabarit == 'sixieme':
+        return generer_tex_evaluation(
+            conn, eval_id, tikz_libraries=config.tikz_libraries(),
+            tblr_libraries=config.tblr_libraries(), gabarit=gabarit, options=options)
+    return generer_tex_evaluation(
+        conn, eval_id,
+        tikz_libraries=config.tikz_libraries(),
+        tblr_libraries=config.tblr_libraries(),
+    )
+
+
 @bp.route('/api/evaluations/<eval_id>/rendu-tex', methods=['GET'])
 def api_eval_rendu_tex(eval_id: str):
     """Renvoie le .tex source qui serait compilé pour cette éval.
@@ -647,19 +695,18 @@ def api_eval_rendu_tex(eval_id: str):
       200 text/plain      : contenu .tex
       404 JSON            : évaluation introuvable
     """
-    from services.render_evaluation import generer_tex_evaluation
+    from services.gabarits_documents import GabaritErreur
+    from services.render_evaluation import Evaluation6eErreur
 
     config = _configuration()
     store = _store()
     try:
         with store._conn() as conn:
-            tex = generer_tex_evaluation(
-                conn, eval_id,
-                tikz_libraries=config.tikz_libraries(),
-                tblr_libraries=config.tblr_libraries(),
-            )
+            tex = _tex_evaluation(conn, eval_id, config)
     except svc.EvaluationIntrouvable:
         return jsonify({'error': 'evaluation_introuvable', 'id': eval_id}), 404
+    except (GabaritErreur, Evaluation6eErreur) as e:
+        return jsonify({'error': 'options_invalides', 'message': str(e)}), 400
 
     return Response(tex, mimetype='text/plain')
 
@@ -674,24 +721,23 @@ def api_eval_rendu_pdf(eval_id: str):
       422 JSON            : compilation échouée, détail des erreurs
       503 JSON            : pdflatex introuvable ou timeout
     """
-    from services.render_evaluation import generer_tex_evaluation
     from services.compilateur_pdf import compiler_atome
+    from services.gabarits_documents import GabaritErreur
+    from services.render_evaluation import Evaluation6eErreur
 
     config = _configuration()
     racine_sources = config.chemin_sources_livrets()
     dossier_images = Path(current_app.json_store.data_dir) / 'images'
 
-    # 1. Génération du .tex
+    # 1. Génération du .tex (v0.52.2 : selon le gabarit, cf. _rendu_gabarit_options)
     store = _store()
     try:
         with store._conn() as conn:
-            tex = generer_tex_evaluation(
-                conn, eval_id,
-                tikz_libraries=config.tikz_libraries(),
-                tblr_libraries=config.tblr_libraries(),
-            )
+            tex = _tex_evaluation(conn, eval_id, config)
     except svc.EvaluationIntrouvable:
         return jsonify({'error': 'evaluation_introuvable', 'id': eval_id}), 404
+    except (GabaritErreur, Evaluation6eErreur) as e:
+        return jsonify({'error': 'options_invalides', 'message': str(e)}), 400
 
     # 2. Compilation (compiler_atome est générique : prend un .tex, sort un PDF)
     resultat = compiler_atome(

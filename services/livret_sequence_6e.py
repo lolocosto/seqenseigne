@@ -26,11 +26,12 @@ exercices, fiches_resume et leurs sections) — jamais des lots.
 
 Décisions (doc/redemarrage_v0_52_1.md) :
 
-  - L1 Activités d'introduction. L'import 6e (v0.52.0, D6) les rattache à la
-    **partie** (`partie_exos_revision_approche`, type EA) : elles ouvrent la
-    partie, avant le premier objectif. Une activité rattachée à un objectif
-    dans l'atelier (`objectif_exos`, série AE) s'affiche sous son bandeau,
-    comme dans l'aperçu.
+  - L1 Activités d'introduction. Une activité rattachée à un objectif
+    (`objectif_exos`, série AE ; l'import 6e le fait depuis v0.52.2)
+    s'affiche sous son bandeau, comme dans l'aperçu, et seulement là ; une
+    activité rattachée à la seule **partie** (`partie_exos_revision_approche`,
+    type EA) ouvre la partie, avant le premier objectif. v0.52.2 : le lien à
+    la partie est gardé (numérotation, plan de travail) sans doublon.
   - L2 Fiche d'un objectif : `fiches_resume.objectif_id` ; une fiche
     attachée au « Cours » de la partie (`objectif_fiches`) sans objectif de
     la partie s'affiche en tête de partie, après les activités.
@@ -146,8 +147,18 @@ def lire_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_code: str) 
     parties = []
     for p in data["parties"]:
         numero = p["numero"]
+        # L1 (v0.52.2) — Une activité rattachée à un objectif de la partie
+        # (objectif_exos, série AE) s'affiche sous le bandeau de cet objectif
+        # et seulement là, même si elle reste aussi rattachée à la partie
+        # (lien gardé pour la numérotation et le plan de travail).
+        sous_objectif = {e.get("exercice_id")
+                         for o in p.get("objectifs", [])
+                         if not _est_objectif_cours(o["code"], numero)
+                         for e in ((o.get("exos_par_serie") or {}).get("AE") or [])}
         activites = []
         for e in (p.get("exos_revision_approche") or {}).get("EA", []) or []:
+            if e.get("exercice_id") in sous_objectif:
+                continue
             ex = _exercice(conn, e["exercice_id"]) if e.get("exercice_id") else None
             if ex and ex["id"] not in vus:
                 vus.add(ex["id"])

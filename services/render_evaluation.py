@@ -369,8 +369,15 @@ def generer_tex_evaluation(
     evaluation_id: str,
     tikz_libraries: list[str] | None = None,
     tblr_libraries: list[str] | None = None,
+    *,
+    gabarit: str | None = None,
+    options: dict | None = None,
 ) -> str:
     """Génère le .tex complet d'une évaluation.
+
+    v0.52.2 — `gabarit='sixieme'` : gabarit de l'équipe de 6e
+    (generer_tex_evaluation_6e, options `sujet`, `version`, `calculatrice`).
+    Sans gabarit (ou `cycle4`) : rendu du cycle 4, inchangé.
 
     Parameters
     ----------
@@ -392,6 +399,9 @@ def generer_tex_evaluation(
     services.evaluations.EvaluationIntrouvable
         Si l'éval n'existe pas.
     """
+    if gabarit == 'sixieme':
+        return generer_tex_evaluation_6e(conn, evaluation_id, options,
+                                         tikz_libraries, tblr_libraries)
     # 1. Lecture de l'éval (lire_evaluation lève EvaluationIntrouvable si KO)
     ev = svc_eval.lire_evaluation(conn, evaluation_id)
     exos = svc_eval.lister_exos_evaluation(conn, evaluation_id)
@@ -469,3 +479,171 @@ def generer_tex_evaluation(
     # 6. Assemblage final
     documentclass = r'\documentclass[a4paper,11pt]{article}'
     return '\n'.join([documentclass, preambule.texte, '', body]) + '\n'
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# v0.52.2 — Évaluation au gabarit de l'équipe de 6e (gabarit « sixieme »)
+# ═════════════════════════════════════════════════════════════════════════════
+#
+# Rendu visé : les évaluations des lots S01–S03 (clé `evaluations`) et leurs
+# pages dans les aperçus :
+#
+#     \seqIdentEleve
+#     \seqTitreEvalSix{titre}{Séquence n --- Sujet A --- calculatrice interdite}
+#     \seqBaremeCompetences{S01-02/9,S01-03/6,S01-04/5,Bonus/2}{20}
+#     \seqExoEval{titre}{N pts --- S01-02}   (un par exercice)
+#
+# Décisions (doc/redemarrage_v0_52_2.md) :
+#   - E1 Un exercice vise un seul objectif : le premier objectif de
+#     l'évaluation (evaluation_objectifs) auquel il est relié par
+#     objectif_exos (série EV d'abord). Barème par compétence = somme des
+#     points par objectif, objectifs dans l'ordre du tableau des objectifs.
+#   - B1 Bonus = exercice sans objectif de l'évaluation : colonne « Bonus »
+#     du barème, étiquette « N pts --- bonus », hors total (il s'ajoute
+#     « dans la limite » du total, comme dans les évaluations de l'équipe).
+#   - E3 Sujet B = remed_enonce / remed_corrige de chaque exercice ; une
+#     première ligne « % titre B : … » donne un titre propre au sujet B
+#     (sinon titre de l'atome). Version corrigée = \seqVersionCorrigee
+#     (macros de réponse) ; un corrigé non vide est une explication
+#     (\seqLocExplication, visible en version corrigée seulement).
+#   - E2 Mention « calculatrice » : option (interdite par défaut, comme les
+#     sept évaluations des lots).
+#   - Une seule géométrie, celle du module de 6e (livret_sequence_6e.document).
+
+from services.gabarits_documents import CALCULATRICE_6E, SUJETS_6E  # noqa: E402
+_MENTION_CALCULATRICE = {"interdite": "calculatrice interdite",
+                         "autorisee": "calculatrice autorisée",
+                         "non_precisee": ""}
+MARQUE_TITRE_B = "% titre B :"
+
+
+class Evaluation6eErreur(ValueError):
+    pass
+
+
+def options_evaluation_6e(options: dict | None) -> dict:
+    o = {"sujet": "A", "version": "eleve", "calculatrice": "interdite"}
+    for cle in o:
+        if (options or {}).get(cle) not in (None, ""):
+            o[cle] = (options or {})[cle]
+    from services.gabarits_documents import VERSIONS_6E
+    if o["sujet"] not in SUJETS_6E:
+        raise Evaluation6eErreur(f"sujet invalide : {o['sujet']!r}")
+    if o["version"] not in VERSIONS_6E:
+        raise Evaluation6eErreur(f"version invalide : {o['version']!r}")
+    if o["calculatrice"] not in CALCULATRICE_6E:
+        raise Evaluation6eErreur(f"calculatrice invalide : {o['calculatrice']!r}")
+    return o
+
+
+def _points(p) -> str:
+    """9 → '9' ; 1.5 → '1,5' (entre accolades dans les listes TikZ)."""
+    p = float(p or 0)
+    return str(int(p)) if p == int(p) else f"{p:g}".replace(".", ",")
+
+
+def _sujet_b(remed_enonce: str, titre_a: str) -> tuple[str, str]:
+    """(titre, énoncé) du sujet B : E3, ligne « % titre B : … » en tête."""
+    texte = remed_enonce or ""
+    premiere, _, reste = texte.partition("\n")
+    if premiere.strip().startswith(MARQUE_TITRE_B):
+        return premiere.strip()[len(MARQUE_TITRE_B):].strip() or titre_a, reste
+    return titre_a, texte
+
+
+def structure_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str) -> dict:
+    """Lecture : {titre, sequence, objectifs: [{id, etiquette, points}],
+    exercices: [{…, objectif (étiquette ou None), points}], bonus, total}."""
+    ev = svc_eval.lire_evaluation(conn, evaluation_id)
+    exos = svc_eval.lister_exos_evaluation(conn, evaluation_id)
+    objectifs = svc_eval.lister_objectifs_evaluation(conn, evaluation_id)
+    etiquette = {o["id"]: f"{o['sequence_code']}-{o['code']}" for o in objectifs}
+    points_obj = {o["id"]: 0.0 for o in objectifs}
+    sortie, bonus = [], 0.0
+    for eb in exos:
+        oid = None
+        for (lien,) in conn.execute(
+                "SELECT objectif_id FROM objectif_exos WHERE exercice_id = ? "
+                "ORDER BY (serie = 'EV') DESC, serie, ordre", (eb["exercice_id"],)):
+            if lien in etiquette:
+                oid = lien
+                break
+        pts = float(eb.get("bareme_points") or 0)
+        if oid is None:
+            bonus += pts
+        else:
+            points_obj[oid] += pts
+        sortie.append({**eb, "objectif": etiquette.get(oid), "points": pts})
+    seqs = [e["sequence"] for e in exos if e.get("sequence")]
+    sequence = max(set(seqs), key=seqs.count) if seqs else ""
+    return {"titre": (ev.get("titre") or "").strip() or "Évaluation", "niveau": ev["niveau"],
+            "sequence": sequence,
+            "objectifs": [{"id": o["id"], "etiquette": etiquette[o["id"]],
+                           "points": points_obj[o["id"]]} for o in objectifs],
+            "exercices": sortie, "bonus": bonus,
+            "total": sum(points_obj.values())}
+
+
+def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict) -> list[str]:
+    from services.livret_sequence_6e import _nom_sequence, entete
+    nom, numero = _nom_sequence(conn, st["niveau"], st["sequence"]) if st["sequence"] \
+        else ("", None)
+    sous_titre = " --- ".join(x for x in (
+        f"Séquence {numero}" if numero else "", f"Sujet {opts['sujet']}",
+        _MENTION_CALCULATRICE[opts["calculatrice"]]) if x)
+    colonnes = [f"{o['etiquette']}/{{{_points(o['points'])}}}" for o in st["objectifs"]]
+    if st["bonus"]:
+        colonnes.append(f"Bonus/{{{_points(st['bonus'])}}}")
+    L = [entete({"nom": nom or st["titre"]}, opts["version"] == "corrigee"),
+         r"\setcounter{seqExoEval}{0}",
+         r"\seqIdentEleve",
+         r"\seqTitreEvalSix{" + st["titre"] + "}{" + sous_titre + "}",
+         r"\seqBaremeCompetences{" + ",".join(colonnes) + "}{" + _points(st["total"]) + "}"]
+    if st["bonus"]:
+        # Légende (comme les évaluations de l'équipe qui ont un bonus) :
+        # exercices de chaque compétence, et la règle du bonus.
+        par_obj: dict = {}
+        for k, e in enumerate(st["exercices"], start=1):
+            if e["objectif"]:
+                par_obj.setdefault(e["objectif"], []).append(str(k))
+        morceaux = []
+        for o in st["objectifs"]:
+            nums = par_obj.get(o["etiquette"])
+            if nums:
+                morceaux.append(f"{o['etiquette']} : ex. "
+                                + (" et ".join([", ".join(nums[:-1]), nums[-1]])
+                                   if len(nums) > 1 else nums[0]))
+        L.append(r"{\scriptsize\color{seqSixGrisTexte}" + " ; ".join(morceaux)
+                 + f". Le bonus s'ajoute dans la limite de {_points(st['total'])}.}}")
+    for e in st["exercices"]:
+        atome = charger_atome(conn, "exercice", e["exercice_id"])
+        if opts["sujet"] == "B":
+            titre, enonce = _sujet_b(getattr(atome, "remed_enonce", "") or "", e["titre"])
+            corrige = getattr(atome, "remed_corrige", "") or ""
+            if not enonce.strip():
+                enonce = r"\emph{Sujet B non rédigé.}"
+        else:
+            titre, enonce, corrige = e["titre"], atome.corps or "", atome.corrige or ""
+        if (atome.variables or "").strip():
+            L.append(atome.variables.rstrip())
+        tag = f"{_points(e['points'])} pts --- {e['objectif'] or 'bonus'}"
+        L.append("")
+        L.append(r"\seqExoEval{" + titre + "}{" + tag + "}")
+        L.append(enonce.strip())
+        if corrige.strip():
+            L.append(r"\seqLocExplication{" + corrige.strip() + "}")
+    return L
+
+
+def generer_tex_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
+                              options: dict | None = None,
+                              tikz_libraries: list[str] | None = None,
+                              tblr_libraries: list[str] | None = None) -> str:
+    """Évaluation au gabarit de l'équipe de 6e (options : sujet A|B,
+    version eleve|corrigee, calculatrice)."""
+    from services.livret_sequence_6e import document
+    opts = options_evaluation_6e(options)
+    st = structure_evaluation_6e(conn, evaluation_id)
+    titre = f"Évaluation 6e — {st['titre']} — sujet {opts['sujet']}"
+    return document(conn, st["niveau"], titre, corps_evaluation_6e(conn, st, opts),
+                    opts["version"] == "corrigee", tikz_libraries, tblr_libraries)

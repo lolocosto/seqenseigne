@@ -197,8 +197,14 @@ def _trace_exos_de_objectif(conn: sqlite3.Connection,
          WHERE oe.objectif_id = ?
          ORDER BY oe.ordre, e.num
     """, (objectif_id,)).fetchall()
+    # v0.52.2 — Les séries « documents » (EV, TP, AC, AT : évaluations,
+    # travaux personnels…) sont reliées aux objectifs par objectif_exos,
+    # mais ce ne sont pas des exercices du livret : hors trace.
+    from services.atomes import SERIES_HORS_LIVRET
     out = []
     for r in rows:
+        if r['oe_serie'] in SERIES_HORS_LIVRET:
+            continue
         out.append({
             'num':   r['num'],
             'serie': _serie_label(r['oe_serie']),

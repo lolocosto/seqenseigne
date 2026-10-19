@@ -67,6 +67,13 @@ _LIBELLES_COMPILES = {
 }
 
 
+def _libelle_gabarit(type_doc: str) -> str:
+    """v0.52.2 — Libellé d'un type du gabarit 6e (catalogue)."""
+    from services.gabarits_documents import type_document
+    t = type_document(type_doc)
+    return t.libelle if t is not None else type_doc
+
+
 class FormatErreur(Exception):
     def __init__(self, message: str, code: str = "donnees_invalides"):
         super().__init__(message)
@@ -273,11 +280,15 @@ def _documents_compiles(conn, ref: dict, data_dir: Path | None,
         for c in cibles:
             cid = c.get("cible_id", "")
             seq = c.get("sequence") or (cid.split("/", 1)[1] if "/" in cid else "")
-            lib = _LIBELLES_COMPILES.get(type_doc, type_doc)
+            lib = _LIBELLES_COMPILES.get(type_doc) or _libelle_gabarit(type_doc)
             if seq:
                 lib += f" — {seq}"
             elif type_doc == "evaluation":
                 lib = c.get("libelle") or lib
+            if c.get("titre_doc"):
+                # v0.52.2 — plusieurs documents d'un type dans une séquence
+                # (évaluations, travaux personnels… de 6e) : leur titre.
+                lib += f" : {c['titre_doc']}"
             fichier = _pdf_compile(data_dir, ref["id"], c.get("nom_fichier", ""), fige)
             if fichier is None:
                 # v0.51.2 — Un document compilé sans PDF n'est pas publié

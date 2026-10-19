@@ -267,6 +267,10 @@ def _docs_internes(conn, ref_id: str | None, sequence: str, annuels: bool) -> li
             libelle = _libelle_type_doc(type_doc)
             if not est_annuel:
                 libelle += f" — {sequence}"
+            if c.get("titre_doc"):
+                # v0.52.2 — évaluations, travaux personnels… de 6e : un
+                # document par cible dans la séquence, nommé par son titre.
+                libelle += f" : {c['titre_doc']}"
             out.append({
                 "source": "interne",
                 "doc_ref": f"{type_doc}|{cid}",

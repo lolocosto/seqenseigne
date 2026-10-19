@@ -87,7 +87,10 @@ def atomes_non_rattaches_par_niveau(conn) -> list:
                 atomes = lister_atomes_sequence(conn, t, niv, "")
             except Exception:
                 atomes = []
-            nb = sum(1 for a in atomes if not a.get("liens"))
+            # v0.52.2 — Un exercice d'évaluation (série EV) appartient à son
+            # évaluation : le bonus, sans objectif, n'est pas « à rattacher ».
+            nb = sum(1 for a in atomes if not a.get("liens")
+                     and not (t == "exercice" and (a.get("code") or "").startswith("EV")))
             if nb:
                 d = par_niveau.setdefault(
                     niv, {"niveau": niv,

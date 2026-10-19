@@ -112,17 +112,7 @@ def _gabarit_demande(conn, niveau: str) -> str:
     explicite = explicite or request.args.get('gabarit')
     if explicite:
         return gd.valider_gabarit(explicite)
-    try:
-        r = conn.execute(
-            "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat = 'en_cours' "
-            "AND COALESCE(source, 'interne') <> 'externe' "
-            "AND COALESCE(type_ref, 'principal') = 'principal' "
-            "ORDER BY version DESC, id DESC LIMIT 1", (niveau,)).fetchone()
-    except Exception:
-        r = None
-    if r is not None:
-        return gd.gabarit_du_referentiel(conn, r['id'])
-    return gd.gabarit_par_defaut(niveau)
+    return gd.gabarit_atelier_du_niveau(conn, niveau)     # v0.52.2 : partagé
 
 
 def _options_6e_depuis_request() -> dict:

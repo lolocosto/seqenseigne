@@ -10,11 +10,32 @@ from persistence.ids import (
     nouveau_id_notion, nouveau_id_methode, nouveau_id_exercice
 )
 
+# v0.52.2 — Séries « documents » de l'atelier d'exercices (gabarit 6e) :
+# un atome = un document entier (évaluation : un exercice, sujet A dans
+# enonce/corrige et sujet B dans remed_enonce/remed_corrige). Code court →
+# libellé de série (`exercices.serie`). Ces séries ne vont dans AUCUN
+# livret : tous les générateurs lisent une liste fermée de séries
+# (F, A, E, AE, R/EA) — cf. SERIES_HORS_LIVRET et doc/redemarrage_v0_52_2.md.
+SERIES_DOCUMENTS = {
+    "EV": "évaluation",
+    "TP": "travail personnel",
+    "AC": "activité complémentaire",
+    "AT": "séance d'atelier",
+}
+SERIES_HORS_LIVRET = frozenset(SERIES_DOCUMENTS)
+LIBELLES_SERIES_DOCUMENTS = {
+    "EV": "Évaluations (sujets A et B)",
+    "TP": "Travaux personnels",
+    "AC": "Activités complémentaires",
+    "AT": "Séances d'atelier",
+}
+
 SERIES_VALIDES = frozenset(
     # v0.11.2 — 'révision' retiré. La notion de révision est portée
     # exclusivement par la table partie_exos_revision_approche (atelier
     # d'assemblage), pas comme attribut d'un exercice.
-    {"fondamental", "avancé", "exploration", "approche"}
+    {"fondamental", "avancé", "exploration", "approche",
+     *SERIES_DOCUMENTS.values()}
 )
 
 # v0.13.6.16.2 — Mapping série longue → code court utilisé en BdD.
@@ -29,6 +50,7 @@ _SERIE_VERS_CODE = {
     "avancé":      "A",
     "exploration": "E",
     "approche":    "EA",
+    **{lib: code for code, lib in SERIES_DOCUMENTS.items()},   # v0.52.2
 }
 
 
@@ -485,6 +507,12 @@ def _valider_methode_hook(conn, methode_id: str) -> None:
         )
 
 
+def _vpe_exercice(raisons: list, exo_id: str):
+    from services.etats_edition import ValidationPedagogiqueErreur as VPE
+    return VPE("L'exercice ne peut pas être validé en l'état.", raisons=raisons,
+               type_atome='exercice', atome_id=exo_id)
+
+
 def _valider_exercice_hook(conn, exo_id: str) -> None:
     """Refuse le passage en `valide` si l'exercice est incomplet.
 
@@ -505,7 +533,7 @@ def _valider_exercice_hook(conn, exo_id: str) -> None:
     # Schéma exercices : enonce, corrige, remed_enonce, remed_corrige
     # sont tous dans la table.
     row = conn.execute(
-        "SELECT enonce, corrige, remed_enonce, remed_corrige "
+        "SELECT enonce, corrige, remed_enonce, remed_corrige, serie_code "
         "FROM exercices WHERE id = ?",
         (exo_id,),
     ).fetchone()
@@ -515,6 +543,16 @@ def _valider_exercice_hook(conn, exo_id: str) -> None:
     raisons = []
     if not (row["enonce"] or "").strip():
         raisons.append("L'énoncé est vide.")
+    # v0.52.2 (décision V1) — Séries « documents » (EV, TP, AC, AT) : la
+    # version corrigée vient des macros de réponse de l'énoncé
+    # (\seqVersionCorrigee) ; le corrigé est facultatif (explication). Pour
+    # une évaluation, le sujet B (remed_enonce) est exigé.
+    if (row["serie_code"] or "") in SERIES_HORS_LIVRET:
+        if row["serie_code"] == "EV" and not (row["remed_enonce"] or "").strip():
+            raisons.append("Le sujet B est vide.")
+        if raisons:
+            raise _vpe_exercice(raisons, exo_id)
+        return
     if not (row["corrige"] or "").strip():
         raisons.append("Le corrigé est vide.")
 
