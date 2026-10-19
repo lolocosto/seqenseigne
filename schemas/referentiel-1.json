@@ -27,7 +27,8 @@
         "version": { "type": "string" },
         "etat": { "enum": ["en_cours", "valide", "verrouille", "utilise", "annule"] },
         "description": { "type": "string" },
-        "mode_seances": { "type": "string" }
+        "mode_seances": { "type": "string" },
+        "gabarit_documents": { "enum": ["cycle4", "sixieme"] }
       }
     },
     "structure": {

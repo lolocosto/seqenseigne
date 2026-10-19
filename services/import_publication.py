@@ -295,6 +295,12 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
                      "source, type_ref, annee, mode_seances, origine, publication_empreinte, "
                      "publication_importe_le, id) VALUES (?,?,?,?,?,?,?,?,'publication',?,?,?)",
                      valeurs + (rid,))
+    # v0.52.1 — gabarit de documents (format 1.1) ; absent (1.0) → cycle4.
+    from services import gabarits_documents as _gd
+    if "gabarit_documents" in {r[1] for r in conn.execute(
+            "PRAGMA table_info(referentiel_niveaux)")}:
+        conn.execute("UPDATE referentiel_niveaux SET gabarit_documents=? WHERE id=?",
+                     (_gd.normaliser(ref.get("gabarit_documents")), rid))
     for t in st["themes"]:
         conn.execute("INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur, "
                      "ordre) VALUES (?,?,?,?,?)",

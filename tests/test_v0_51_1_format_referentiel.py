@@ -122,7 +122,7 @@ def test_interne_structure_complete(app):
     rid = _interne(app)
     doc = _exporter(app, rid)
     assert fmt.valider(doc) == []
-    assert doc["format"] == "seqenseigne.referentiel" and doc["format_version"] == "1.0"
+    assert doc["format"] == "seqenseigne.referentiel" and doc["format_version"] == "1.1"   # v0.52.1
     r = doc["referentiel"]
     assert (r["id"], r["niveau"], r["annee"], r["type"], r["source"], r["etat"]) == \
         ("2025_N11", "N11", "2025-2026", "principal", "interne", "verrouille")

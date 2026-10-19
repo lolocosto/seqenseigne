@@ -42,8 +42,11 @@ def test_mapping_couvre_tous_les_types_document():
     TYPES_DOCUMENT sans mise à jour de ce mapping, ce test échoue et
     indique le manquant.
     """
-    manquants = set(TYPES_DOCUMENT) - set(ATOMES_PAR_TYPE_DOCUMENT.keys())
-    surplus  = set(ATOMES_PAR_TYPE_DOCUMENT.keys()) - set(TYPES_DOCUMENT)
+    # v0.52.1 — tous les types de tous les gabarits (cycle 4 et 6e).
+    from services.gabarits_documents import tous_les_types
+    tous = set(TYPES_DOCUMENT) | set(tous_les_types())
+    manquants = tous - set(ATOMES_PAR_TYPE_DOCUMENT.keys())
+    surplus  = set(ATOMES_PAR_TYPE_DOCUMENT.keys()) - tous
     assert manquants == set(), (
         f"Types absents du mapping ATOMES_PAR_TYPE_DOCUMENT : {manquants}. "
         "Ajouter une entrée dans services/peremption_atomes.py."
@@ -68,6 +71,10 @@ def test_mapping_decisions_laurent_v0_15_2_6():
         'evaluation':             ['exercices'],
         'livret_cartes_recap':    ['cartes_automatisme'],
         'livret_cartes_planches': ['cartes_automatisme'],
+        # v0.52.1 — gabarit « sixieme ».
+        'livret_sequence_6e':     ['exercices', 'fiches_resume'],
+        'fiches_cours_6e':        ['fiches_resume'],
+        'corriges_6e':            ['exercices', 'fiches_resume'],
     }
     assert ATOMES_PAR_TYPE_DOCUMENT == attendu
 

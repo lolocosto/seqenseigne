@@ -3,7 +3,9 @@ routes/livret_sequence.py — Génération du Livret de séquence (v0.11.2).
 
 Expose :
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-tex
-    body JSON optionnel : {"options": {...}}
+    body JSON optionnel : {"options": {...}, "gabarit": "cycle4"|"sixieme"}
+    v0.52.1 : sans `gabarit`, celui du référentiel interne en cours du
+    niveau, sinon celui du niveau (N09 → livret 6e) ; voir _gabarit_demande.
     → renvoie le source .tex (utile pour debug/inspection)
 
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-pdf
@@ -93,6 +95,68 @@ def _options_depuis_request() -> dict:
     return normaliser_options(payload.get('options'))
 
 
+# ── v0.52.1 — Gabarit de documents (livret 6e) ──────────────────────────────
+
+def _gabarit_demande(conn, niveau: str) -> str:
+    """Décision R1 (v0.52.1) — gabarit du livret produit par l'atelier :
+      1. paramètre explicite `gabarit` (body JSON ou query string) ;
+      2. sinon le gabarit du référentiel interne principal « en_cours » le
+         plus récent du niveau ;
+      3. sinon la valeur proposée pour le niveau (N09 → sixieme, N10 à N12
+         → cycle4).
+    Sans paramètre, un niveau du cycle 4 dont aucun référentiel en cours
+    n'a choisi « sixieme » produit donc le livret du cycle 4, comme avant."""
+    from services import gabarits_documents as gd
+    payload = request.get_json(silent=True) if request.is_json else None
+    explicite = (payload or {}).get('gabarit') if isinstance(payload, dict) else None
+    explicite = explicite or request.args.get('gabarit')
+    if explicite:
+        return gd.valider_gabarit(explicite)
+    try:
+        r = conn.execute(
+            "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat = 'en_cours' "
+            "AND COALESCE(source, 'interne') <> 'externe' "
+            "AND COALESCE(type_ref, 'principal') = 'principal' "
+            "ORDER BY version DESC, id DESC LIMIT 1", (niveau,)).fetchone()
+    except Exception:
+        r = None
+    if r is not None:
+        return gd.gabarit_du_referentiel(conn, r['id'])
+    return gd.gabarit_par_defaut(niveau)
+
+
+def _options_6e_depuis_request() -> dict:
+    """Options du livret 6e : `options` du body (clés du cycle 4 ignorées),
+    `version` aussi accepté en query string (?version=corrigee)."""
+    payload = request.get_json(silent=True) if request.is_json else None
+    opts = dict((payload or {}).get('options') or {}) if isinstance(payload, dict) else {}
+    if request.args.get('version'):
+        opts['version'] = request.args.get('version')
+    return opts
+
+
+def _generer_tex(conn, niveau: str, sequence: str, config) -> str:
+    """.tex du livret selon le gabarit (R1). Lève ValueError si options
+    ou gabarit invalides."""
+    from services.gabarits_documents import GabaritErreur
+    try:
+        gabarit = _gabarit_demande(conn, niveau)
+    except GabaritErreur as e:
+        raise ValueError(str(e)) from e
+    if gabarit == 'sixieme':
+        from services.livret_sequence_6e import generer_livret_sequence_6e
+        return generer_livret_sequence_6e(
+            conn, niveau, sequence, options=_options_6e_depuis_request(),
+            tikz_libraries=config.tikz_libraries(),
+            tblr_libraries=config.tblr_libraries())
+    return generer_livret_sequence(
+        conn, niveau, sequence,
+        options=_options_depuis_request(),
+        tikz_libraries=config.tikz_libraries(),
+        tblr_libraries=config.tblr_libraries(),
+    )
+
+
 # ── Route : .tex source ──────────────────────────────────────────────────────
 
 @bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/rendu-tex',
@@ -111,17 +175,11 @@ def api_livret_sequence_tex(niveau: str, sequence: str):
     if erreur:
         return erreur
 
-    options = _options_depuis_request()
     config = _configuration()
 
     try:
         with current_app.json_store._conn() as conn:
-            tex = generer_livret_sequence(
-                conn, niveau, sequence,
-                options=options,
-                tikz_libraries=config.tikz_libraries(),
-                tblr_libraries=config.tblr_libraries(),
-            )
+            tex = _generer_tex(conn, niveau, sequence, config)
     except ValueError as e:
         # v0.11.3 — Options invalides (ex : ni cours ni exercices à inclure).
         # Cas distinct des erreurs internes : c'est l'appelant qui a tort.
@@ -160,20 +218,14 @@ def api_livret_sequence_pdf(niveau: str, sequence: str):
     if erreur:
         return erreur
 
-    options = _options_depuis_request()
     config = _configuration()
     racine_sources = config.chemin_sources_livrets()
     dossier_images = Path(current_app.json_store.data_dir) / 'images'
 
-    # 1. Génération du .tex
+    # 1. Génération du .tex (v0.52.1 : selon le gabarit, cf. _gabarit_demande)
     try:
         with current_app.json_store._conn() as conn:
-            tex = generer_livret_sequence(
-                conn, niveau, sequence,
-                options=options,
-                tikz_libraries=config.tikz_libraries(),
-                tblr_libraries=config.tblr_libraries(),
-            )
+            tex = _generer_tex(conn, niveau, sequence, config)
     except ValueError as e:
         return jsonify({
             'error': 'options_invalides',

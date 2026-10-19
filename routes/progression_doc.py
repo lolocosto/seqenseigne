@@ -82,7 +82,9 @@ def api_disponibles():
     suivante = request.args.get("suivante")  # optionnel
     if not niveau or not sequence:
         return jsonify({"error": "niveau et sequence requis"}), 400
+    prog_ref = request.args.get("prog_ref") or None      # v0.52.1
     with _store()._conn() as conn:
         data = pd.documents_disponibles(conn, niveau, annee, sequence,
-                                        sequence_suivante=suivante)
+                                        sequence_suivante=suivante,
+                                        prog_ref=prog_ref)
     return jsonify(data)

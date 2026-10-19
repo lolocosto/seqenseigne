@@ -42,6 +42,9 @@ from typing import Any
 
 
 # ── Catalogue des 9 types et leurs options par défaut ───────────────────────
+# v0.52.1 — C'est le gabarit « cycle4 » de services/gabarits_documents.py
+# (mêmes clés, mêmes options) ; ne renommer aucune clé : les chaînes
+# « type|cible » sont enregistrées côté classe.
 
 TYPES_DOCUMENT = (
     'livret_sequence',
@@ -153,35 +156,43 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
                      data_dir=None) -> list[dict]:
     """Liste les documents publiables d'un référentiel.
 
-    Idempotence : si le référentiel n'a aucun document déclaré, on
-    initialise les 9 par défaut (cas premier accès à l'onglet).
+    v0.52.1 — Seuls les types du **gabarit** du référentiel sont listés
+    (services/gabarits_documents.py : `cycle4` = les 9 types historiques,
+    `sixieme` = les documents de 6e). Les lignes d'un autre gabarit restent en
+    base (options conservées si l'on revient en arrière) mais ne sont ni
+    listées, ni compilées, ni proposées côté classe.
+
+    Idempotence : si le référentiel n'a aucun document de son gabarit, on
+    initialise ceux de ce gabarit (cas premier accès à l'onglet, ou gabarit
+    qui vient de changer).
 
     Retourne une liste de dicts : `{id, type_document, options (dict
     Python), ordre, mtime, referentiel_id, compile_ok, compile_date,
     compile_log, compile_en_cours, etat_effectif}`. Triée par `ordre`
-    croissant.
+    croissant. Les types hors cycle 4 portent aussi `libelle`,
+    `description` et `champs` (interface générique de l'onglet).
 
     v0.13.6.5.1 : ajout des colonnes compile_* et du champ calculé
     `etat_effectif` (cf. services.referentiel_documents_compilation).
     """
-    rows = conn.execute("""
-        SELECT id, referentiel_id, type_document, options, ordre, mtime,
-               compile_ok, compile_date, compile_log, compile_en_cours
-          FROM referentiel_documents
-         WHERE referentiel_id = ?
-         ORDER BY ordre, type_document
-    """, (referentiel_id,)).fetchall()
+    from services import gabarits_documents as gd
+    gabarit = gd.gabarit_du_referentiel(conn, referentiel_id)
+    types_gabarit = gd.types(gabarit)
 
-    if not rows:
-        # Initialisation auto et relecture.
-        initialiser_documents_defaut(conn, referentiel_id)
-        rows = conn.execute("""
+    def _lire():
+        return [r for r in conn.execute("""
             SELECT id, referentiel_id, type_document, options, ordre, mtime,
                    compile_ok, compile_date, compile_log, compile_en_cours
               FROM referentiel_documents
              WHERE referentiel_id = ?
              ORDER BY ordre, type_document
-        """, (referentiel_id,)).fetchall()
+        """, (referentiel_id,)).fetchall() if r['type_document'] in types_gabarit]
+
+    rows = _lire()
+    if not rows:
+        # Initialisation auto et relecture.
+        initialiser_documents_defaut(conn, referentiel_id)
+        rows = _lire()
 
     # Import tardif pour éviter une dépendance circulaire à l'import
     # du module (referentiel_documents_compilation importe ce module).
@@ -195,7 +206,8 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
             opts = json.loads(r['options']) if r['options'] else {}
         except (TypeError, json.JSONDecodeError):
             opts = {}
-        defaut = OPTIONS_PAR_DEFAUT.get(r['type_document'], {})
+        t = gd.type_document(r['type_document'])
+        defaut = t.options if t is not None else {}
         doc = {
             'id':                r['id'],
             'referentiel_id':    r['referentiel_id'],
@@ -208,6 +220,8 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
             'compile_log':       r['compile_log'],
             'compile_en_cours':  bool(r['compile_en_cours']) if r['compile_en_cours'] is not None else False,
         }
+        if r['type_document'] not in TYPES_DOCUMENT:
+            doc.update(gd.description_interface(r['type_document']))
         doc['etat_effectif'] = etat_effectif_document(conn, doc, data_dir)
         out.append(doc)
     return out
@@ -215,13 +229,15 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
 
 def initialiser_documents_defaut(conn: sqlite3.Connection,
                                  referentiel_id: str) -> None:
-    """Insère les 9 entrées par défaut pour ce référentiel.
+    """Insère les entrées par défaut du gabarit de ce référentiel (les 9
+    types historiques pour le gabarit `cycle4`).
 
     Idempotent : INSERT OR IGNORE sur (referentiel_id, type_document).
     Appelable en toute sécurité à plusieurs reprises.
     """
-    for type_doc in TYPES_DOCUMENT:
-        opts = OPTIONS_PAR_DEFAUT[type_doc]
+    from services import gabarits_documents as gd
+    gabarit = gd.gabarit_du_referentiel(conn, referentiel_id)
+    for i, t in enumerate(gd.catalogue(gabarit), start=1):
         conn.execute("""
             INSERT OR IGNORE INTO referentiel_documents
                 (id, referentiel_id, type_document, options, ordre)
@@ -229,9 +245,9 @@ def initialiser_documents_defaut(conn: sqlite3.Connection,
         """, (
             f"rd_{uuid.uuid4().hex[:12]}",
             referentiel_id,
-            type_doc,
-            json.dumps(opts, ensure_ascii=False),
-            ORDRE_AFFICHAGE[type_doc],
+            t.cle,
+            json.dumps(t.options_par_defaut(), ensure_ascii=False),
+            i,
         ))
     conn.commit()
 
@@ -270,13 +286,18 @@ def maj_options(conn: sqlite3.Connection, doc_id: str,
     """, (json.dumps(fusionne, ensure_ascii=False), doc_id))
     conn.commit()
 
-    defaut = OPTIONS_PAR_DEFAUT.get(type_doc, {})
-    return {
+    from services import gabarits_documents as gd
+    t = gd.type_document(type_doc)
+    defaut = t.options if t is not None else {}
+    doc = {
         'id':            row['id'],
         'type_document': type_doc,
         'options':       {**defaut, **fusionne},
         'ordre':         row['ordre'],
     }
+    if type_doc not in TYPES_DOCUMENT:
+        doc.update(gd.description_interface(type_doc))
+    return doc
 
 
 # ── Validation ──────────────────────────────────────────────────────────────
@@ -284,50 +305,14 @@ def maj_options(conn: sqlite3.Connection, doc_id: str,
 def _valider_options(type_document: str, options: dict) -> dict:
     """Valide un dict d'options *partiel* pour un type donné.
 
-    - Clés autorisées : celles présentes dans `OPTIONS_PAR_DEFAUT[type]`.
+    - Clés autorisées : celles présentes dans les options par défaut du type.
     - Types : conserve le type du défaut (bool → bool, str → str).
-    - Pour les clés énumérées (`ENUMS`), valeur dans la liste autorisée.
+    - Pour les clés énumérées, valeur dans la liste autorisée.
+
+    v0.52.1 — Délègue au catalogue des gabarits
+    (services/gabarits_documents.valider_options) : les 9 types du cycle 4
+    y ont exactement les options et valeurs ci-dessus (OPTIONS_PAR_DEFAUT,
+    ENUMS) ; les types de 6e y ont les leurs.
     """
-    if type_document not in OPTIONS_PAR_DEFAUT:
-        raise DocumentErreur(
-            f"Type de document inconnu : {type_document!r}",
-            code='type_inconnu',
-        )
-    autorisees = OPTIONS_PAR_DEFAUT[type_document]
-    if not isinstance(options, dict):
-        raise DocumentErreur("Options doit être un objet/dict",
-                             code='options_non_dict')
-
-    erreurs = []
-    sortie = {}
-    for cle, val in options.items():
-        if cle not in autorisees:
-            erreurs.append(f"clé inconnue pour {type_document!r} : {cle!r}")
-            continue
-        attendu = type(autorisees[cle])
-        if attendu is bool:
-            if not isinstance(val, bool):
-                erreurs.append(f"{cle!r} attend bool, reçu {type(val).__name__}")
-                continue
-        elif attendu is str:
-            if not isinstance(val, str):
-                erreurs.append(f"{cle!r} attend str, reçu {type(val).__name__}")
-                continue
-            if cle in ENUMS and val not in ENUMS[cle]:
-                erreurs.append(
-                    f"{cle!r} : valeur {val!r} non autorisée "
-                    f"(attendu : {', '.join(ENUMS[cle])})"
-                )
-                continue
-        else:
-            erreurs.append(f"{cle!r} : type interne inattendu")
-            continue
-        sortie[cle] = val
-
-    if erreurs:
-        raise DocumentErreur(
-            "Options invalides",
-            code='options_invalides',
-            details={'erreurs': erreurs},
-        )
-    return sortie
+    from services import gabarits_documents as gd
+    return gd.valider_options(type_document, options)

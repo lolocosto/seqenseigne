@@ -543,6 +543,7 @@ def construire_preambule(
     tikz_libraries: list[str] | None = None,
     tblr_libraries: list[str] | None = None,
     omettre_inits_paquets: list[str] | None = None,
+    marges: str | None = None,
 ) -> Preambule:
     r"""Calcule et construit le préambule sur mesure pour un atome.
 
@@ -595,6 +596,12 @@ def construire_preambule(
         agrégé. Note : actuellement aucun appelant n'utilise ce
         paramètre — il est exposé pour laisser une porte ouverte au
         cas où un futur diagnostic identifierait un cas d'usage.
+    marges : str, optional
+        v0.52.1 — Commande de géométrie qui REMPLACE la ligne
+        `GEOMETRY_NEWGEOMETRY` (une seule géométrie par document). None
+        (défaut) : `GEOMETRY_NEWGEOMETRY`, inchangé pour le cycle 4. Le
+        livret de 6e y passe la géométrie que pose le paquet pour les
+        documents de l'équipe (services/livret_sequence_6e.GEOMETRIE_6E).
 
     Returns
     -------
@@ -658,7 +665,7 @@ def construire_preambule(
     # (cas concrets : N11/S12/Notion 01-02-03).
     lignes.append('')
     lignes.append(r'%% ── Marges (alignées sur les livrets) ───────────────')
-    lignes.append(GEOMETRY_NEWGEOMETRY)
+    lignes.append(GEOMETRY_NEWGEOMETRY if marges is None else marges)
 
     # --- Paquets optionnels ---
     if paquets_optionnels:

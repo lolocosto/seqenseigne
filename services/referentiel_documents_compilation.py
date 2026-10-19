@@ -248,6 +248,9 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
                 })
         return cibles
 
+    if type_document in ('livret_sequence_6e', 'fiches_cours_6e', 'corriges_6e'):
+        return _cibles_6e(conn, doc_id, niveau, type_document)
+
     if type_document == 'livret_cartes_planches':
         # v0.15.2.5 — uniquement des cibles par séquence.
         #
@@ -303,6 +306,59 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
         'nom_fichier': f"{type_document}.pdf",
         'niveau':      niveau,
     }]
+
+
+def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,
+               type_document: str) -> list[dict]:
+    """v0.52.1 — Cibles des documents du gabarit « sixieme ».
+
+    - livret_sequence_6e : une cible par séquence du niveau ;
+    - corriges_6e, fiches_cours_6e : option `decoupage` (par séquence,
+      annuel — cible 'unique' —, ou les deux) ; les fiches de cours ne
+      retiennent que les séquences qui ont des fiches de résumé.
+
+    Les séquences d'archive du cycle 3 (codes `Xnn`, v0.52.0 D1) ne sont
+    jamais des cibles : ce sont d'anciens contenus, pas des séquences du
+    référentiel.
+    """
+    from services.gabarits_documents import type_document as _type
+    r = conn.execute("SELECT options FROM referentiel_documents WHERE id = ?",
+                     (doc_id,)).fetchone()
+    try:
+        opts = json.loads(r['options']) if r and r['options'] else {}
+    except (TypeError, ValueError):
+        opts = {}
+    opts = {**_type(type_document).options, **opts}
+    if type_document == 'fiches_cours_6e':
+        rows = conn.execute("""
+            SELECT DISTINCT sequence AS seq FROM fiches_resume
+             WHERE niveau = ? ORDER BY sequence
+        """, (niveau,)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT DISTINCT sequence_code AS seq FROM sequences_par_niveau
+             WHERE niveau = ? ORDER BY sequence_code
+        """, (niveau,)).fetchall()
+    sequences = [x['seq'] for x in rows if x['seq'] and not x['seq'].startswith('X')]
+    libelles = {'livret_sequence_6e': 'Livret 6e', 'fiches_cours_6e': 'Fiches de cours 6e',
+                'corriges_6e': 'Corrigés 6e'}
+    decoupage = ('par_sequence' if type_document == 'livret_sequence_6e'
+                 else opts.get('decoupage') or 'par_sequence')
+    cibles = []
+    if decoupage in ('annuel', 'les_deux'):
+        cibles.append({'cible_id': 'unique',
+                       'libelle': f"{libelles[type_document]} (annuel)",
+                       'nom_fichier': f"{type_document}.pdf", 'niveau': niveau})
+    if decoupage in ('par_sequence', 'les_deux'):
+        for seq in sequences:
+            cibles.append({
+                'cible_id':    f"{niveau}/{seq}",
+                'libelle':     f"{libelles[type_document]} {niveau}/{seq}",
+                'nom_fichier': f"{type_document}__{niveau}__{seq}.pdf",
+                'niveau':      niveau,
+                'sequence':    seq,
+            })
+    return cibles
 
 
 def _niveau_du_referentiel(conn: sqlite3.Connection, ref_id: str) -> str:
@@ -452,6 +508,21 @@ def compiler_document(store, doc_id: str,
 
         cibles = lister_cibles_document(conn, doc_id, ref_id, type_document)
 
+        # v0.52.1 — Le producteur reçoit le référentiel, donc son gabarit
+        # de documents (clés ajoutées à une copie de la cible : les
+        # producteurs du cycle 4 les ignorent, leur .tex ne change pas).
+        from services.gabarits_documents import gabarit_du_referentiel, types
+        gabarit = gabarit_du_referentiel(conn, ref_id)
+        if type_document not in types(gabarit):
+            conn.execute("UPDATE referentiel_documents SET compile_en_cours = 0 "
+                         "WHERE id = ?", (doc_id,))
+            conn.commit()
+            raise CompilationErreur(
+                f"« {type_document} » n'est pas un document du gabarit "
+                f"« {gabarit} » de ce référentiel.",
+                code='hors_gabarit',
+            )
+
     # Initialiser le statut
     with _LOCK_STATUTS:
         _STATUTS_COMPILATION[doc_id] = _statut_initial(
@@ -518,7 +589,8 @@ def compiler_document(store, doc_id: str,
                     res = orch.compiler(
                         conn=conn,
                         type_cible=type_document,
-                        cible=cible,
+                        cible={**cible, 'referentiel_id': ref_id,
+                               'gabarit': gabarit},
                         options=options,
                         dossier_artefacts=dossier_artefacts,
                         cible_key=cible_key,

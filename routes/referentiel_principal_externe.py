@@ -50,13 +50,24 @@ def api_lister():
 
 @bp.route(P, methods=["POST"])
 def api_creer():
-    """v0.51.6 — `modele` (facultatif) : clé d'une structure modèle."""
+    """v0.51.6 — `modele` (facultatif) : clé d'une structure modèle.
+    v0.52.1 — `gabarit` (facultatif) : gabarit de documents."""
     from services import modeles_referentiel as mdl
+    from services import gabarits_documents as gd
     b = _b()
-    return _fait(lambda c: mdl.creer(c, _data_dir(), b.get("niveau", ""), b.get("annee", ""),
-                                     b.get("description", ""),
-                                     type_ref=b.get("type_ref", "principal"),
-                                     cle=b.get("modele") or None, aujourd_hui=_auj()), 201)
+
+    def _creer(c):
+        # v0.52.1 — gabarit de documents (liste préremplie selon le niveau).
+        gabarit = b.get("gabarit") or None
+        if gabarit is not None and gabarit not in gd.GABARITS:
+            raise RefExtErreur(f"Gabarit de documents inconnu : {gabarit!r}.")
+        r = mdl.creer(c, _data_dir(), b.get("niveau", ""), b.get("annee", ""),
+                      b.get("description", ""), type_ref=b.get("type_ref", "principal"),
+                      cle=b.get("modele") or None, aujourd_hui=_auj())
+        r["gabarit_documents"] = gd.poser_a_la_creation(c, r["id"], b.get("niveau", ""),
+                                                        gabarit)
+        return r
+    return _fait(_creer, 201)
 
 
 @bp.route(P + "/<rid>/sequences/<code>/parties/<int:num>/libelle", methods=["PUT"])

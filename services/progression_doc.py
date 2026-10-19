@@ -123,7 +123,8 @@ def supprimer(conn, assoc_id: str) -> None:
 # ── Documents disponibles pour une séquence (les sources) ────────────────────
 
 def documents_disponibles(conn, niveau: str, annee: str, sequence: str,
-                          sequence_suivante: str | None = None) -> dict:
+                          sequence_suivante: str | None = None,
+                          prog_ref: str | None = None) -> dict:
     """Documents proposables pour un créneau dont la séquence est `sequence`.
 
     Retour : {
@@ -133,17 +134,50 @@ def documents_disponibles(conn, niveau: str, annee: str, sequence: str,
     }
     Couvre : interne (réf. principal, par cible), externe (réf. principal ET
     MER, docs de partie + annuels).
+
+    v0.52.1 — `prog_ref` (progression principale) : les documents internes
+    viennent du référentiel DE LA PROGRESSION ; sans progression (appels
+    historiques), du référentiel interne le plus récent du niveau.
     """
-    seq = _docs_pour_sequence(conn, niveau, annee, sequence)
-    suiv = (_docs_pour_sequence(conn, niveau, annee, sequence_suivante)
+    ref_id = _referentiel_interne(conn, niveau, prog_ref)
+    seq = _docs_pour_sequence(conn, niveau, annee, sequence, ref_id)
+    suiv = (_docs_pour_sequence(conn, niveau, annee, sequence_suivante, ref_id)
             if sequence_suivante else [])
-    annuels = _docs_annuels(conn, niveau, annee)
+    annuels = _docs_annuels(conn, niveau, annee, ref_id)
     return {"sequence": seq, "suivante": suiv, "annuels": annuels}
 
 
-def _docs_pour_sequence(conn, niveau: str, annee: str, sequence: str) -> list:
+def _referentiel_interne(conn, niveau: str, prog_ref: str | None) -> str | None:
+    """Référentiel dont on propose les documents internes.
+
+    - Progression connue : son référentiel s'il est interne ; s'il est
+      externe, aucun document interne (ses fichiers sont proposés à part).
+    - Sinon (appel sans progression) : le plus récent interne du niveau
+      (comportement d'avant v0.52.1)."""
+    if prog_ref:
+        try:
+            r = conn.execute("SELECT referentiel_id FROM progressions WHERE id=?",
+                             (prog_ref,)).fetchone()
+        except Exception:
+            r = None
+        if r is not None:
+            rid = r["referentiel_id"]
+            if not rid:
+                return None
+            ext = conn.execute("SELECT COALESCE(source, 'interne') FROM referentiel_niveaux "
+                               "WHERE id=?", (rid,)).fetchone()
+            return rid if ext is not None and ext[0] != "externe" else None
+    ref = conn.execute(
+        "SELECT id FROM referentiel_niveaux WHERE niveau=? "
+        "AND COALESCE(source, 'interne') <> 'externe' "
+        "ORDER BY id DESC LIMIT 1", (niveau,)).fetchone()
+    return ref["id"] if ref is not None else None
+
+
+def _docs_pour_sequence(conn, niveau: str, annee: str, sequence: str,
+                        ref_id: str | None = None) -> list:
     docs = []
-    docs.extend(_docs_internes(conn, niveau, sequence, annuels=False))
+    docs.extend(_docs_internes(conn, ref_id, sequence, annuels=False))
     docs.extend(_docs_principal_externe(conn, niveau, annee, sequence))   # v0.48.2
     return docs
 
@@ -165,9 +199,9 @@ def _docs_principal_externe(conn, niveau: str, annee: str, sequence: str) -> lis
              "categorie": "sequence"} for f in fichiers]
 
 
-def _docs_annuels(conn, niveau: str, annee: str) -> list:
+def _docs_annuels(conn, niveau: str, annee: str, ref_id: str | None = None) -> list:
     docs = []
-    docs.extend(_docs_internes(conn, niveau, "", annuels=True))
+    docs.extend(_docs_internes(conn, ref_id, "", annuels=True))
     # v0.51.11 — Documents annuels des référentiels de la structure figée
     # (l'ancien modèle de MER est retiré).
     docs.extend({**d, "categorie": "annuel"}
@@ -177,21 +211,20 @@ def _docs_annuels(conn, niveau: str, annee: str) -> list:
 
 # ── Source interne (référentiel principal) ───────────────────────────────────
 
-def _docs_internes(conn, niveau: str, sequence: str, annuels: bool) -> list:
-    """Documents du référentiel principal INTERNE du niveau. Chaque document
-    compilable a des cibles : soit par séquence (cible_id = 'N11/S05'), soit
-    unique (annuel). On expose une entrée par (document, cible pertinente)."""
+def _docs_internes(conn, ref_id: str | None, sequence: str, annuels: bool) -> list:
+    """Documents du référentiel principal INTERNE `ref_id` (celui de la
+    progression, v0.52.1). Chaque document compilable a des cibles : soit
+    par séquence (cible_id = 'N11/S05'), soit unique (annuel). On expose une
+    entrée par (document, cible pertinente).
+
+    v0.52.1 — Seuls les documents **actifs** et **du gabarit** du
+    référentiel sont proposés (rd.lister_documents ne renvoie que ceux du
+    gabarit)."""
     from services import referentiel_documents as rd
     from services.referentiel_documents_compilation import (
         lister_cibles_document)
-    # Référentiel principal interne du niveau (le plus récent non archivé).
-    ref = conn.execute(
-        "SELECT id FROM referentiel_niveaux WHERE niveau=? "
-        "AND COALESCE(source, 'interne') <> 'externe' "
-        "ORDER BY id DESC LIMIT 1", (niveau,)).fetchone()
-    if ref is None:
+    if not ref_id:
         return []
-    ref_id = ref["id"]
     # v0.51.3 — Référentiel importé d'un paquet de publication (appli en
     # ligne) : ses PDF compilés sont listés dans referentiel_docs_publies (les
     # cibles ne se recalculent pas sans les atomes de l'atelier).
@@ -206,8 +239,18 @@ def _docs_internes(conn, niveau: str, sequence: str, annuels: bool) -> list:
         documents = rd.lister_documents(conn, ref_id)
     except Exception:
         documents = []
+    # v0.52.1 — Documents actifs seulement, tant que le référentiel se
+    # conçoit. Un référentiel figé (verrouillé / utilisé) garde le
+    # comportement d'avant : ses PDF ont été figés au verrouillage ou à
+    # l'import (v0.32.7) et la case « actif » n'y est pas tenue (ex. N11_v2025,
+    # en classe cette année, importé avec toutes ses cases décochées).
+    etat = conn.execute("SELECT etat FROM referentiel_niveaux WHERE id=?",
+                        (ref_id,)).fetchone()
+    fige = etat is not None and etat["etat"] in ("verrouille", "utilise")
     for doc in documents:
         type_doc = doc.get("type_document", "")
+        if not fige and not (doc.get("options") or {}).get("actif"):
+            continue
         try:
             cibles = lister_cibles_document(conn, doc["id"], ref_id, type_doc)
         except Exception:
@@ -244,11 +287,16 @@ def _docs_internes_publies(conn, ref_id: str, sequence: str, annuels: bool):
     if r is None or (r["origine"] or "locale") != "publication":
         return None
     seq = "" if annuels else sequence
+    # v0.52.1 — seulement les types du gabarit du référentiel (stocké à
+    # l'import ; fichier 1.0 sans le champ → cycle4).
+    from services.gabarits_documents import gabarit_du_referentiel, types
+    permis = types(gabarit_du_referentiel(conn, ref_id))
     return [{"source": "interne", "doc_ref": d["ref"], "libelle": d["libelle"],
              "categorie": "annuel" if annuels else "sequence"}
             for d in conn.execute("SELECT * FROM referentiel_docs_publies WHERE "
                                   "referentiel_id=? AND seq_code=? ORDER BY ordre",
-                                  (ref_id, seq)).fetchall()]
+                                  (ref_id, seq)).fetchall()
+            if (d["type_document"] or d["ref"].split("|", 1)[0]) in permis]
 
 
 _LIBELLES_TYPE_DOC = {
@@ -265,6 +313,10 @@ _LIBELLES_TYPE_DOC = {
 
 
 def _libelle_type_doc(type_doc: str) -> str:
-    return _LIBELLES_TYPE_DOC.get(type_doc, type_doc)
+    if type_doc in _LIBELLES_TYPE_DOC:
+        return _LIBELLES_TYPE_DOC[type_doc]
+    from services.gabarits_documents import type_document   # v0.52.1
+    t = type_document(type_doc)
+    return t.libelle if t is not None else type_doc
 
 

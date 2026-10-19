@@ -575,3 +575,50 @@ def _produire_livret_cartes_planches(conn, cible, options, tikz, tblr):
 # livret_cartes_planches). Tous sont désormais implémentés par les
 # producteurs ci-dessus. La constante et le bloc d'enregistrement
 # automatique ont été retirés.
+
+
+# ── v0.52.1 — Producteurs du gabarit « sixieme » ────────────────────────────
+#
+# Catalogue : services/gabarits_documents.py. La cible porte aussi
+# `referentiel_id` et `gabarit` (ajoutés par la compilation des documents
+# publiables) ; `sequence` absente = recueil annuel (cible 'unique').
+
+
+@enregistrer_producteur('livret_sequence_6e')
+def _produire_livret_sequence_6e(conn, cible, options, tikz, tblr):
+    """Livret de séquence au style de l'équipe de 6e."""
+    from services.livret_sequence_6e import generer_livret_sequence_6e
+    niveau, sequence = cible.get('niveau'), cible.get('sequence')
+    if not niveau or not sequence:
+        raise ProducteurErreur(
+            f"livret_sequence_6e requiert niveau et sequence : reçu {cible!r}",
+            code='cible_invalide',
+        )
+    return generer_livret_sequence_6e(conn, niveau, sequence, options=options,
+                                      tikz_libraries=tikz, tblr_libraries=tblr)
+
+
+@enregistrer_producteur('fiches_cours_6e')
+def _produire_fiches_cours_6e(conn, cible, options, tikz, tblr):
+    """Fiches de cours 6e (fiches de résumé complètes)."""
+    from services.livret_sequence_6e import generer_fiches_cours_6e
+    niveau = cible.get('niveau')
+    if not niveau:
+        raise ProducteurErreur(
+            f"fiches_cours_6e requiert niveau : reçu {cible!r}", code='cible_invalide')
+    return generer_fiches_cours_6e(conn, niveau, sequence=cible.get('sequence'),
+                                   options=options, tikz_libraries=tikz,
+                                   tblr_libraries=tblr)
+
+
+@enregistrer_producteur('corriges_6e')
+def _produire_corriges_6e(conn, cible, options, tikz, tblr):
+    """Corrigés enseignant 6e (livret corrigé, remédiations comprises)."""
+    from services.livret_sequence_6e import generer_corriges_6e
+    niveau = cible.get('niveau')
+    if not niveau:
+        raise ProducteurErreur(
+            f"corriges_6e requiert niveau : reçu {cible!r}", code='cible_invalide')
+    return generer_corriges_6e(conn, niveau, sequence=cible.get('sequence'),
+                               options=options, tikz_libraries=tikz,
+                               tblr_libraries=tblr)

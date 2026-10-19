@@ -40,7 +40,7 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.0"
+FORMAT_VERSION = "1.1"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
 VERSION_APPLI = "0.51.2"
 # v0.51.2 — Publications figées produites par un exporteur corrigé depuis
 # (accents LaTeX non convertis, type des objectifs internes) : régénérées au
@@ -325,6 +325,10 @@ def construire(conn, rid: str, data_dir: Path | None = None,
               "description": ref.get("description") or ""}
     if ref.get("mode_seances"):
         entete["mode_seances"] = ref["mode_seances"]
+    # v0.52.1 (format 1.1) — gabarit de documents ; facultatif à la lecture :
+    # un fichier 1.0 sans le champ est lu comme « cycle4 ».
+    from services.gabarits_documents import normaliser as _gabarit
+    entete["gabarit_documents"] = _gabarit(ref.get("gabarit_documents"))
     structure = _structure(conn, ref)
     compiles = _documents_compiles(conn, ref, data_dir, omis)
     cols_obj = _colonnes(conn, "referentiel_objectifs")

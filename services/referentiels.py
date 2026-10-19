@@ -121,6 +121,8 @@ def lister_par_niveau(store, niveau: str) -> list[dict]:
             "type_ref":    r.get("type_ref") or "principal",
             "source":      r.get("source") or "interne",
             "nom":         _nom(r),
+            # v0.52.1 — gabarit de documents (services/gabarits_documents.py).
+            "gabarit_documents": r.get("gabarit_documents") or "cycle4",
         }
         for r in refs
     ]

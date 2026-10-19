@@ -124,6 +124,7 @@ const _REFU_LIB = {
 function refuRendre() {
   const liste = document.getElementById('atl-ref-liste');
   if (!REFU.actif || !liste) return;
+  refuPreremplirGabarit();                                      // v0.52.1
   const tous = _refuItems();
   // Années connues (filtre).
   const selA = document.getElementById('refu-f-annee');
@@ -259,8 +260,27 @@ function _refuRendreDetailExterne() {
   if (empty) empty.style.display = 'none';
 }
 
+// v0.52.1 — Gabarit de documents proposé à la création, selon le niveau
+// (N09 → « sixieme », N10 à N12 → « cycle4 ») ; un choix manuel est gardé
+// tant que le niveau ne change pas.
+function refuGabaritParDefaut(niveau) {
+  return niveau === 'N09' ? 'sixieme' : 'cycle4';
+}
+
+function refuPreremplirGabarit() {
+  const sel = document.getElementById('refu-c-gabarit');
+  const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
+  if (!sel || sel.dataset.niveau === niveau) return;
+  sel.dataset.niveau = niveau;
+  sel.dataset.manuel = '';
+  sel.value = refuGabaritParDefaut(niveau);
+}
+
 async function refuCreer() {
   const source = document.getElementById('refu-c-source').value;
+  refuPreremplirGabarit();
+  const selG = document.getElementById('refu-c-gabarit');
+  const gabarit = selG ? selG.value : undefined;
   const type = document.getElementById('atl-ref-type').value;
   const desc = document.getElementById('refu-c-desc');
   const st = document.getElementById('refu-status');
@@ -270,7 +290,7 @@ async function refuCreer() {
     if (source === 'interne') {
       const r = await fetch('/api/referentiels/coquille', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ niveau, description: desc.value, type_ref: type }) });
+        body: JSON.stringify({ niveau, description: desc.value, type_ref: type, gabarit }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Erreur');
       await atelRefRechargerListe();
@@ -278,7 +298,7 @@ async function refuCreer() {
     } else {
       const modele = (document.getElementById('refu-c-modele') || {}).value || '';
       const r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
-        niveau, annee: _rpeAnnee(), description: desc.value, type_ref: type, modele }) });
+        niveau, annee: _rpeAnnee(), description: desc.value, type_ref: type, modele, gabarit }) });
       await rpeCharger();
       await refuChargerModeles();
       REFU.sel = 'E:' + r.id;

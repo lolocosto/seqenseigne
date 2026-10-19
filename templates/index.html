@@ -2527,6 +2527,11 @@
           <!-- v0.51.6 — Structure de départ d'un référentiel externe (aperçu à droite). -->
           <select id="refu-c-modele" class="refu-c-modele" title="Structure de départ" style="display:none"
                   onchange="refuApercuModele(this.value)"><option value="">Structure vide</option></select>
+          <!-- v0.52.1 — Gabarit de documents, prérempli selon le niveau
+               (6e → sixieme, 5e à 3e → cycle4) ; modifiable tant que le
+               référentiel est en cours. -->
+          <select id="refu-c-gabarit" title="Gabarit de documents" onchange="this.dataset.manuel='1'">
+            <option value="cycle4">Documents : cycle 4</option><option value="sixieme">Documents : 6e</option></select>
           <input id="refu-c-desc" placeholder="Description (facultative)">
           <button class="btn-prim rxa-btn-creer" id="atl-ref-btn-creer" onclick="refuCreer()"
                   title="Le nom est calculé : niveau, année, type">+ Créer</button>

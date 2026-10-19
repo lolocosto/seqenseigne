@@ -59,8 +59,11 @@ async function progDocsRemplirSelect() {
   const suivante = document.getElementById('prog-docs-suivante');
   // « Séquence suivante » = séquence du créneau suivant (fournie par le contexte).
   const seqSuiv = (suivante && suivante.checked) ? (ctx.sequence_suivante || '') : '';
+  // v0.52.1 — prog_ref : les documents internes viennent du référentiel de
+  // CETTE progression (et non plus du plus récent du niveau).
   const params = new URLSearchParams({
-    niveau: ctx.niveau, annee: ctx.annee, sequence: ctx.sequence });
+    niveau: ctx.niveau, annee: ctx.annee, sequence: ctx.sequence,
+    prog_ref: ctx.prog_ref || '' });
   if (seqSuiv) params.set('suivante', seqSuiv);
   try {
     PROG_DOCS_DISPO = await api('/api/progression-doc/disponibles?' + params.toString());

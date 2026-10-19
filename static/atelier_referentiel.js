@@ -1402,14 +1402,59 @@ function atelRefRendreDocuments() {
         Coche les documents que tu veux produire avec ce référentiel et
         configure leurs options.
       </div>
+      ${atelRefGabaritHtml()}
     </div>
     ${cadres}`;
 }
 
 
+// v0.52.1 — Gabarit de documents du référentiel : modifiable tant que le
+// référentiel est « en cours », figé ensuite. Seuls les documents du
+// gabarit sont listés (les autres restent en base, options conservées).
+const ATL_REF_GABARITS = [['cycle4', 'Cycle 4'], ['sixieme', '6e (style de l\'équipe)']];
+
+function atelRefGabaritHtml() {
+  if (!ATL_REF_SELECTION) return '';
+  const g = ATL_REF_SELECTION.gabarit_documents || 'cycle4';
+  const modifiable = ATL_REF_SELECTION.etat === 'en_cours';
+  const opts = ATL_REF_GABARITS.map(([v, lib]) =>
+    `<option value="${v}"${v === g ? ' selected' : ''}>${atelRefEscape(lib)}</option>`).join('');
+  return `
+    <div style="padding:0 8px 8px;font-size:12px;display:flex;align-items:center;gap:8px">
+      <label for="atl-ref-gabarit">Gabarit de documents :</label>
+      <select id="atl-ref-gabarit" ${modifiable ? '' : 'disabled'}
+              onchange="atelRefChangerGabarit(this.value)">${opts}</select>
+      ${modifiable ? '' : '<span style="color:var(--text-muted)">(figé)</span>'}
+    </div>`;
+}
+
+async function atelRefChangerGabarit(gabarit) {
+  if (!ATL_REF_SELECTION) return;
+  try {
+    const rep = await fetch(
+      `/api/referentiels/${encodeURIComponent(ATL_REF_SELECTION.id)}/gabarit-documents`,
+      { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gabarit }) });
+    const data = await rep.json().catch(() => ({}));
+    if (!rep.ok) {
+      alert(`Gabarit non modifié : ${data.message || rep.status}`);
+    } else {
+      ATL_REF_SELECTION.gabarit_documents = data.gabarit;
+      const r = (ATL_REF_LISTE || []).find(x => x.id === ATL_REF_SELECTION.id);
+      if (r) r.gabarit_documents = data.gabarit;
+    }
+  } catch (e) {
+    alert('Erreur réseau lors du changement de gabarit.');
+  }
+  atelRefChargerEtRendreDocuments();
+}
+
+
 function atelRefDocumentCadreHtml(doc, editable) {
-  const titre = ATL_REF_DOC_TITRES[doc.type_document] || doc.type_document;
-  const soustitre = ATL_REF_DOC_SOUS_TITRES[doc.type_document] || '';
+  // v0.52.1 — Types d'un autre gabarit : libellé et sous-titre fournis par
+  // le serveur (services/gabarits_documents.py).
+  const titre = ATL_REF_DOC_TITRES[doc.type_document] || doc.libelle || doc.type_document;
+  const soustitre = ATL_REF_DOC_SOUS_TITRES[doc.type_document] || doc.description || '';
   const actif = !!doc.options.actif;
 
   const fond = actif ? '#f0f7f0' : 'var(--surface)';
@@ -1888,6 +1933,14 @@ function atelRefDocumentOptionsHtml(doc, editable) {
       ${_atlRefCb(doc.id, 'inclure_serie_e', opts.inclure_serie_e,
                   'Série E', disabled)}
     `;
+  }
+
+  if (!inner.trim() && Array.isArray(doc.champs)) {
+    // v0.52.1 — Interface générique : champs décrits par le catalogue.
+    inner = doc.champs.map(c => c.type === 'bool'
+      ? _atlRefCb(doc.id, c.cle, opts[c.cle], c.libelle, disabled)
+      : _atlRefRadio(doc.id, c.cle, opts[c.cle], c.libelle, c.valeurs || [], disabled)
+    ).join('');
   }
 
   if (!inner.trim()) return '';

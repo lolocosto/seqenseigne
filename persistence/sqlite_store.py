@@ -1558,6 +1558,17 @@ class SqliteStore:
         except Exception:
             pass
 
+        # ── v0.52.1 — Gabarit de documents par référentiel (colonne
+        #    `gabarit_documents`, défaut 'cycle4') ; contrainte CHECK des 9
+        #    types de `referentiel_documents` levée (reconstruction unique,
+        #    sauvegarde JSON dans data/sauvegardes/) ─────────────────────────
+        try:
+            from services import gabarits_documents as _gd
+            _gd.migrer(conn, self.data_dir)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [gabarits_documents] migration impossible : {_e}")
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:

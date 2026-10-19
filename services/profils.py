@@ -95,6 +95,9 @@ ENDPOINTS = {
     # v0.51.12 — Vues de conception des référentiels (atomes) : atelier.
     "referentiels.api_arbre": "atelier",
     "referentiels.api_eligibilite_validation": "atelier",
+    # v0.52.1 — Gabarit de documents d'un référentiel : écriture de la
+    # structure (atelier seulement).
+    "referentiel_documents.api_gabarit": "structure",
     # v0.51.12 — Bascule de la base partagée : profil complet seulement.
     "bascule.api_apercu": "complet",
     "bascule.api_executer": "complet",

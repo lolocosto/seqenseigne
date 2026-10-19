@@ -121,3 +121,25 @@ def api_maj(ref_id: str, doc_id: str):
             }), 400
 
     return jsonify({"document": doc})
+
+
+# ── v0.52.1 — Gabarit de documents du référentiel ──────────────────────────
+
+@bp.route("/api/referentiels/<ref_id>/gabarit-documents", methods=["PUT"])
+def api_gabarit(ref_id: str):
+    """Change le gabarit de documents (`cycle4` | `sixieme`) d'un
+    référentiel « en_cours » ; figé au verrouillage (409 sinon).
+
+    Body JSON : {"gabarit": "sixieme"}. Les documents de l'autre gabarit
+    restent en base (non affichés). Retour : {gabarit, documents}."""
+    from services import gabarits_documents as gd
+    body = request.get_json(silent=True) or {}
+    store = _store()
+    with store._conn() as conn:
+        try:
+            g = gd.modifier(conn, ref_id, body.get("gabarit"))
+        except gd.GabaritErreur as e:
+            code = {"introuvable": 404, "fige": 409}.get(e.code, 400)
+            return jsonify({"error": e.code, "message": str(e)}), code
+        documents = svc.lister_documents(conn, ref_id, data_dir=store.data_dir)
+    return jsonify({"gabarit": g, "documents": documents})

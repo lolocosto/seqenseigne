@@ -115,7 +115,8 @@ def api_lister():
 def api_creer_coquille():
     """
     Crée une coquille de référentiel à l'état `en_cours`.
-    Body JSON : { niveau: str, description?: str }
+    Body JSON : { niveau: str, description?: str, type_ref?: str,
+                  gabarit?: 'cycle4' | 'sixieme' (v0.52.1) }
     Retour : 201 + { ref: {id, niveau, version, etat, ...} }
              400 si niveau manquant.
              409 si conflit unique (cas extrême : >25 référentiels même
@@ -132,10 +133,20 @@ def api_creer_coquille():
     if not hasattr(store, "_conn"):
         return jsonify({"error": "store non SQLite"}), 500
 
+    from services import gabarits_documents as gd
+    gabarit = body.get("gabarit") or None
+    if gabarit is not None and gabarit not in gd.GABARITS:
+        return jsonify({"error": f"Gabarit de documents inconnu : {gabarit!r}"}), 400
+
     with store._conn() as conn:
         try:
             ref = svc.creer_coquille(conn, niveau, description,
                                      type_ref=(body.get("type_ref") or "principal"))
+            # v0.52.1 — gabarit de documents choisi à la création (liste
+            # préremplie selon le niveau ; absent → valeur du niveau).
+            ref["gabarit_documents"] = gd.poser_a_la_creation(
+                conn, ref["id"], niveau, gabarit)
+            conn.commit()
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
         except RuntimeError as e:

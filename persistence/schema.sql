@@ -580,8 +580,8 @@ CREATE TABLE IF NOT EXISTS referentiel_obj_exos (
 -- livret_cartes_planches). Chaque entrée porte ses options sérialisées en
 -- JSON et un statut de compilation (colonnes `compile_*` ajoutées en
 -- v0.13.6.5.1). L'UNIQUE (referentiel_id, type_document) garantit qu'il
--- n'existe qu'une seule entrée par couple. La CHECK fige la liste des
--- types autorisés. La FK ON DELETE CASCADE assure que la suppression
+-- n'existe qu'une seule entrée par couple. v0.52.1 : la liste des types
+-- autorisés dépend du gabarit du référentiel (validation en Python). La FK ON DELETE CASCADE assure que la suppression
 -- d'un référentiel emporte ses documents.
 
 CREATE TABLE IF NOT EXISTS referentiel_documents (
@@ -602,12 +602,10 @@ CREATE TABLE IF NOT EXISTS referentiel_documents (
     compile_date     DATETIME,
     compile_log      TEXT,
     compile_en_cours INTEGER NOT NULL DEFAULT 0,
-    UNIQUE (referentiel_id, type_document),
-    CHECK (type_document IN (
-        'livret_sequence', 'livret_exercices', 'livret_cours',
-        'livret_fiches', 'livret_plans', 'livret_corriges',
-        'evaluation', 'livret_cartes_recap', 'livret_cartes_planches'
-    ))
+    -- v0.52.1 : plus de CHECK sur type_document — les types permis
+    -- dépendent du gabarit de documents du référentiel
+    -- (services/gabarits_documents.py, validation en Python).
+    UNIQUE (referentiel_id, type_document)
 );
 
 CREATE INDEX IF NOT EXISTS idx_referentiel_documents_referentiel_id

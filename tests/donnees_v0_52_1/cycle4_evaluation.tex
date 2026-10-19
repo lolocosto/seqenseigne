@@ -1,0 +1,79 @@
+\documentclass[a4paper,11pt]{article}
+%% ── Paquets externes (noyau pour atome) ───────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{etoolbox}
+\usepackage{xkeyval}
+\usepackage{xifthen}
+\usepackage{environ}
+\usepackage{forloop}
+\usepackage{xcolor}
+\usepackage{ninecolors}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{tabularray}
+\usepackage{multicol}
+\usepackage[inline]{enumitem}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage[theorems,breakable,skins]{tcolorbox}
+\usepackage{pifont}
+
+%% ── Marges (alignées sur les livrets) ───────────────
+\newgeometry{left=35pt,right=35pt,top=65pt,bottom=70pt}
+
+%% ── Initialisations de bibliothèques ─────────────────
+\UseTblrLibrary{booktabs}
+\UseTblrLibrary{varwidth}
+
+%% ── Définitions du paquet seqenseigne (inlinées) ─────
+%%    Fermeture transitive des macros effectivement utilisées
+%%    par l'atome — au lieu de \usepackage{seqenseigne}
+%%    qui chargerait ~110 paquets.
+\makeatletter
+\makeatother
+
+%% ── Macros transverses ───────────────────────────────
+\providecommand{\acompleter}[1]{\;\underline{\phantom{#1}}\;}
+
+\begin{document}
+
+\seqInitCorrigesEval
+\seqTitreEval[
+    titre={Bilan T1},
+    etab={\ldots},
+    classe={\dots}
+]
+
+
+%% Barème global
+\begin{seqEvalBareme}
+    Exercice I & 4 points \\
+    Exercice II & 6 points \\
+\end{seqEvalBareme}
+
+
+\begin{seqEvalExercice}[titre={F1}, bareme={4 points}]
+Énoncé F1
+\seqEvalCorrigeExo{%
+Corrigé F1
+}
+\end{seqEvalExercice}
+
+
+\begin{seqEvalExercice}[titre={A1}, bareme={6 points}]
+Énoncé A1
+\seqEvalCorrigeExo{%
+Corrigé A1
+}
+\end{seqEvalExercice}
+
+
+\seqEvalAfficheCorriges
+\end{document}

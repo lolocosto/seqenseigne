@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -31,8 +31,16 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   macros sont utilisées (pas importé par « Import mise en forme ») ;
   `reference\paquet` ajouté au TEXINPUTS ; dossier `Remediation\` créé avant
   pdflatex ; titres de section de fiche avec virgule entre accolades.
-- À venir : v0.52.1 livret de séquence au style de l'équipe de 6e ; lots
-  S04 à S10 ; mises en route M01 à M07. La mise en ligne (prévue en v0.52)
+- v0.52.1 livrée : gabarit de documents par référentiel
+  (`referentiel_niveaux.gabarit_documents` : `cycle4` défaut, `sixieme`
+  proposé en 6e ; catalogue `services/gabarits_documents.py` ; CHECK des 9
+  types levée) ; livret de séquence 6e, fiches de cours 6e, corrigés 6e
+  (`services/livret_sequence_6e.py`) ; format d'échange 1.1 ; côté classe,
+  documents du référentiel de la progression, actifs, du gabarit. Cycle 4
+  inchangé au caractère près. Détails : `doc/redemarrage_v0_52_1.md`.
+- À venir : v0.52.2 séries TP, AC, AT, EV, évaluations au rendu 6e, sujet B
+  en remédiation, activités rattachées à leur objectif ; lots S04 à S10 ;
+  mises en route M01 à M07. La mise en ligne (prévue en v0.52)
   prendra le numéro suivant.
 
 ## Comment reprendre (pour l'assistant)
@@ -243,6 +251,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - **Établissements** : création uniquement par sélecteur + « Ajouter un
   collège » (académie dans la liste connue) ; fusion refusée si la source a un
   EdT, des indisponibilités ou une grille personnalisée.
+- **Gabarits de documents** (v0.52.1) : tout nouveau type de document
+  s'ajoute au catalogue `services/gabarits_documents.py` (et à
+  `peremption_atomes`) ; ne jamais renommer une clé de type (chaînes
+  `type|cible` enregistrées côté classe).
 - **Archives du cycle 3** (v0.52.0) : codes de séquence `Xnn` et thèmes
   `XA`… = ancien découpage archivé ; ne pas les réutiliser pour du neuf ;
   exclus du modèle « programme du cycle ».
@@ -253,6 +265,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   l'auto-import des cycles, qui croit alors C03/C04 déjà importés (thèmes et
   séquences du cycle restent vides ; repli CSV dans les modèles). Constaté
   en v0.52.0, sans effet sur une base existante ; non corrigé.
+- v0.52.1 : `v2_lecture` joint `sequences_du_cycle` sur le seul code : depuis
+  v0.52.0 (S01…S10 en C03 et C04), le livret du cycle 4 d'un niveau N09 prend
+  le nom de la séquence du cycle 4 (le livret 6e lit le cycle du niveau).
+  Non corrigé pour ne rien changer au cycle 4.
 - v0.52.0 : les précédences du cycle 4 vers N09/Snn (anciens codes) ne sont
   pas modifiées par l'import ; l'outil les liste, à revoir dans l'atelier.
 
