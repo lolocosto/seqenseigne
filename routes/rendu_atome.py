@@ -87,6 +87,13 @@ def _valider_type(type_atome: str):
     return None
 
 
+def _options_rendu() -> dict:
+    """v0.52.3 — Options du rendu d'un exercice de 6e (décision A3) :
+    `version` (eleve | corrigee) et, pour une évaluation, `sujet` (A | B),
+    lues dans la query string. Ignorées pour le cycle 4."""
+    return {k: request.args.get(k) for k in ('version', 'sujet') if request.args.get(k)}
+
+
 # ── Rendu .tex (pour debug / inspection) ─────────────────────────────────────
 
 @bp.route('/api/atomes/<type_atome>/<atome_id>/rendu-tex', methods=['GET'])
@@ -106,7 +113,8 @@ def api_rendu_tex(type_atome: str, atome_id: str):
         with current_app.json_store._conn() as conn:
             tex = generer_tex_par_type(conn, type_atome, atome_id, racine_sources,
                                             tikz_libraries=config.tikz_libraries(),
-                                            tblr_libraries=config.tblr_libraries())
+                                            tblr_libraries=config.tblr_libraries(),
+                                            options=_options_rendu())
     except LookupError as e:
         return jsonify({'error': str(e)}), 404
     except ValueError as e:
@@ -162,6 +170,7 @@ def api_rendu_pdf_info(type_atome: str, atome_id: str):
                 conn, type_atome, atome_id, racine_sources,
                 tikz_libraries=config.tikz_libraries(),
                 tblr_libraries=config.tblr_libraries(),
+                options=_options_rendu(),
             )
     except LookupError as e:
         return jsonify({'error': str(e)}), 404
@@ -213,7 +222,8 @@ def api_rendu_pdf(type_atome: str, atome_id: str):
         with current_app.json_store._conn() as conn:
             tex = generer_tex_par_type(conn, type_atome, atome_id, racine_sources,
                                             tikz_libraries=config.tikz_libraries(),
-                                            tblr_libraries=config.tblr_libraries())
+                                            tblr_libraries=config.tblr_libraries(),
+                                            options=_options_rendu())
     except LookupError as e:
         return jsonify({'error': str(e)}), 404
     except ValueError as e:
@@ -285,7 +295,8 @@ def api_rendu_log(type_atome: str, atome_id: str):
         with current_app.json_store._conn() as conn:
             tex = generer_tex_par_type(conn, type_atome, atome_id, racine_sources,
                                             tikz_libraries=config.tikz_libraries(),
-                                            tblr_libraries=config.tblr_libraries())
+                                            tblr_libraries=config.tblr_libraries(),
+                                            options=_options_rendu())
     except LookupError as e:
         return jsonify({'error': str(e)}), 404
     except ValueError as e:

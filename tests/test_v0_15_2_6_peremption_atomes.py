@@ -80,6 +80,8 @@ def test_mapping_decisions_laurent_v0_15_2_6():
         'travaux_personnels_6e':  ['exercices'],
         'activites_complementaires_6e': ['exercices'],
         'seances_atelier_6e':     ['exercices'],
+        # v0.52.3 — plan de travail 6e (numéros du livret, fiches, évaluations)
+        'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations'],
     }
     assert ATOMES_PAR_TYPE_DOCUMENT == attendu
 

@@ -1395,7 +1395,8 @@ def generer_tex_par_type(conn: sqlite3.Connection,
                          type_atome: str, atome_id: str,
                          racine_sources: Path | None = None,
                          tikz_libraries: list[str] | None = None,
-                         tblr_libraries: list[str] | None = None) -> str:
+                         tblr_libraries: list[str] | None = None,
+                         options: dict | None = None) -> str:
     """Génère le .tex d'un atome quel que soit son type, en dispatchant
     vers le bon générateur interne.
 
@@ -1474,6 +1475,18 @@ def generer_tex_par_type(conn: sqlite3.Connection,
             if nom in ('CarteIntrouvable', 'CarteErreur'):
                 raise LookupError(str(e)) from e
             raise
+
+    # v0.52.3 — Exercice de 6e (gabarit « sixieme » du niveau, règle R1) :
+    # mise en forme de l'équipe (services/rendu_atome_6e.py, décision A1).
+    # `options` (version, sujet) ne sert qu'à ce rendu ; le cycle 4 l'ignore
+    # et produit exactement le même .tex qu'avant.
+    if type_atome == 'exercice':
+        from services.rendu_atome_6e import generer_tex_atome_6e_si_gabarit
+        tex6 = generer_tex_atome_6e_si_gabarit(
+            conn, atome_id, options=options,
+            tikz_libraries=tikz_libraries, tblr_libraries=tblr_libraries)
+        if tex6 is not None:
+            return tex6
 
     # 4 types classiques : délégation à generer_tex_atome.
     return generer_tex_atome(

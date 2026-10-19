@@ -470,6 +470,9 @@ class AtelierExercice extends AtelierEditeur {
 
   changerSerie(s, marquerDirty = true) {
     this.serieCourante = s;
+    // v0.52.3 — Le bouton « Activité d'approche » a l'id atl-serie-approche
+    // (il s'appelait atl-serie-AP : il n'était jamais sélectionné, la série
+    // d'une activité ouverte ne s'affichait pas dans l'en-tête).
     ['fondamental', 'avancé', 'exploration', 'approche'].forEach(k => {
       const btn = document.getElementById('atl-serie-' + k);
       if (btn) {
@@ -485,6 +488,7 @@ class AtelierExercice extends AtelierEditeur {
       if (btn) btn.className = 'serie-btn' + (serie === s ? ' active-document' : '');
     }
     this.majSeriesDocuments();
+    this.majSelecteursRendu6e();                     // v0.52.3
     if (this.itemActif) this.itemActif.serie = s;
     this.majVisibiliteRemediation();
     if (marquerDirty && this.itemActif) {
@@ -641,6 +645,62 @@ class AtelierExercice extends AtelierEditeur {
   // renommage vers le préfixe long « atl-exercice ». La parente
   // AtelierEditeur.basculerOnglet trouve maintenant la zone toute seule.
 
+  // v0.52.3 (décision A3) — Exercice de 6e : rendu au format de l'équipe
+  // (services/rendu_atome_6e.py). Sélecteurs « version » (élève / corrigée)
+  // et, pour une évaluation, « sujet » (A / B) dans la barre du rendu ;
+  // transmis à la compilation et à l'information de cache. Cycle 4 : rien.
+  _assurerToolbarRendu() {
+    super._assurerToolbarRendu();
+    const conteneur = this.$('rendu-toolbar');
+    if (!conteneur || document.getElementById('atl-exercice-rendu-version')) return;
+    const mk = (id, titre, choix) => {
+      const sel = document.createElement('select');
+      sel.id = id;
+      sel.className = 'btn-sm';
+      sel.title = titre;
+      for (const [v, lib] of choix) {
+        const o = document.createElement('option');
+        o.value = v;
+        o.textContent = lib;
+        sel.appendChild(o);
+      }
+      sel.addEventListener('change', () => this.verifierCacheEtAfficher());
+      return sel;
+    };
+    const version = mk('atl-exercice-rendu-version', 'Version (6e)',
+                       [['eleve', 'Élève'], ['corrigee', 'Corrigée']]);
+    const sujet = mk('atl-exercice-rendu-sujet', 'Sujet (évaluation de 6e)',
+                     [['A', 'Sujet A'], ['B', 'Sujet B']]);
+    const status = conteneur.querySelector('[id$="-rendu-status"]');
+    conteneur.insertBefore(version, status);
+    conteneur.insertBefore(sujet, status);
+    this.majSelecteursRendu6e();
+  }
+
+  estExercice6e() {
+    const niveau = (this.itemActif && this.itemActif.niveau) || window.ATL_FILTRE_NIVEAU || '';
+    return niveau === 'N09';
+  }
+
+  majSelecteursRendu6e() {
+    const v = document.getElementById('atl-exercice-rendu-version');
+    const s = document.getElementById('atl-exercice-rendu-sujet');
+    if (v) v.style.display = this.estExercice6e() ? '' : 'none';
+    if (s) s.style.display = (this.estExercice6e()
+      && this.serieCourante === AtelierExercice.SERIE_DOCUMENT.EV) ? '' : 'none';
+  }
+
+  parametresRendu() {
+    if (!this.estExercice6e()) return '';
+    const p = new URLSearchParams();
+    const v = document.getElementById('atl-exercice-rendu-version');
+    const s = document.getElementById('atl-exercice-rendu-sujet');
+    if (v) p.set('version', v.value);
+    if (s && this.serieCourante === AtelierExercice.SERIE_DOCUMENT.EV) p.set('sujet', s.value);
+    const q = p.toString();
+    return q ? '?' + q : '';
+  }
+
   // v0.17.2 — Génération LaTeX CLIENT retirée. Le LaTeX est produit côté
   // serveur (route /rendu-tex) et affiché par AtelierEditeur.voirLatex()
   // (hérité) dans la modale commune. Les anciennes voirLatex/genererLatex/
@@ -662,8 +722,13 @@ AtelierExercice.prefixeSerie = function (code) {
   // Préfixes connus à 2 lettres d'abord, puis 1 lettre.
   // v0.52.2 — EV, TP, AC, AT (séries documents de la 6e) : AC et AT
   // commencent par A, il faut les reconnaître avant.
-  const m = code.match(/^(AE|EV|TP|AC|AT|[FAER])/);
-  return m ? m[1] : '';
+  // v0.52.3 — 'EA' : code écrit par erreur pour une activité d'approche
+  // enregistrée avant v0.52.3 (atomes._SERIE_VERS_CODE) ; elle reste rangée
+  // en Approche (et non en Exploration) en attendant la réparation des
+  // données (outils/reparer_series_approche.py).
+  const m = code.match(/^(AE|EA|EV|TP|AC|AT|[FAER])/);
+  if (!m) return '';
+  return m[1] === 'EA' ? 'AE' : m[1];
 };
 
 AtelierExercice.SERIE_BUCKETS = {

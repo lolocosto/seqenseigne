@@ -598,6 +598,22 @@ def _produire_livret_sequence_6e(conn, cible, options, tikz, tblr):
                                       tikz_libraries=tikz, tblr_libraries=tblr)
 
 
+@enregistrer_producteur('plans_travail_6e')
+def _produire_plan_travail_6e(conn, cible, options, tikz, tblr):
+    """v0.52.3 — Plan de travail de l'équipe de 6e (une séquence) ; les
+    numéros sont ceux du livret 6e publié par le même référentiel."""
+    from services.plan_travail_6e import generer_plan_travail_6e
+    niveau, sequence = cible.get('niveau'), cible.get('sequence')
+    if not niveau or not sequence:
+        raise ProducteurErreur(
+            f"plans_travail_6e requiert niveau et sequence : reçu {cible!r}",
+            code='cible_invalide',
+        )
+    return generer_plan_travail_6e(conn, niveau, sequence, options=options,
+                                   tikz_libraries=tikz, tblr_libraries=tblr,
+                                   referentiel_id=cible.get('referentiel_id'))
+
+
 @enregistrer_producteur('fiches_cours_6e')
 def _produire_fiches_cours_6e(conn, cible, options, tikz, tblr):
     """Fiches de cours 6e (fiches de résumé complètes)."""

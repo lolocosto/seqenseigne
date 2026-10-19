@@ -1583,7 +1583,10 @@ class AtelierEditeur extends Atelier {
     const maGen = ++this._genRendu;
     try {
       const resp = await fetch(
-        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-pdf/info`,
+        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-pdf/info`
+          // v0.52.3 — mêmes paramètres que la compilation (sujet, version) :
+          // l'information de cache porte sur le PDF qui sera affiché.
+          + this.parametresRendu(),
         { method: 'GET' },
       );
       // Si un appel plus récent a démarré pendant le fetch, on
@@ -2007,7 +2010,7 @@ class AtelierEditeur extends Atelier {
       if (!dejaCharge && this.itemActif) {
         try {
           const resp = await fetch(
-            `${this.config.endpointRenduPdf}/${encodeURIComponent(this.itemActif.id)}/rendu-tex`,
+            `${this.config.endpointRenduPdf}/${encodeURIComponent(this.itemActif.id)}/rendu-tex` + this.parametresRendu(),   // v0.52.3
           );
           if (resp.ok) {
             const tex = await resp.text();
@@ -2096,7 +2099,7 @@ class AtelierEditeur extends Atelier {
     let tex;
     try {
       const resp = await fetch(
-        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-tex`,
+        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-tex` + this.parametresRendu(),   // v0.52.3
         { method: 'GET' },
       );
       if (!resp.ok) {

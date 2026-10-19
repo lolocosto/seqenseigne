@@ -711,6 +711,38 @@ def api_eval_rendu_tex(eval_id: str):
     return Response(tex, mimetype='text/plain')
 
 
+@bp.route('/api/evaluations/<eval_id>/rendu-pdf/info', methods=['GET'])
+def api_eval_rendu_pdf_info(eval_id: str):
+    """v0.52.3 — Indique si le PDF de cette évaluation (avec le sujet et la
+    version demandés) est déjà en cache, sans compiler : même contrat que
+    /api/atomes/<type>/<id>/rendu-pdf/info.
+
+    Sans cette route, l'onglet « Rendu PDF » du module Évaluations ne savait
+    pas se mettre à jour quand on changeait d'évaluation : il gardait le
+    dernier PDF compilé (retour de Laurent, v0.52.3).
+
+    Réponses : 200 {cache_valide: bool} ; 404 évaluation introuvable ;
+    400 options invalides.
+    """
+    from services.compilateur_pdf import chemin_pdf_cache, hash_tex
+    from services.gabarits_documents import GabaritErreur
+    from services.render_evaluation import Evaluation6eErreur
+
+    config = _configuration()
+    try:
+        with _store()._conn() as conn:
+            tex = _tex_evaluation(conn, eval_id, config)
+    except svc.EvaluationIntrouvable:
+        return jsonify({'error': 'evaluation_introuvable', 'id': eval_id}), 404
+    except (GabaritErreur, Evaluation6eErreur) as e:
+        return jsonify({'error': 'options_invalides', 'message': str(e)}), 400
+    except Exception as e:                       # route d'introspection : robuste
+        return jsonify({'cache_valide': False, 'raison': 'tex_indisponible',
+                        'message': str(e)}), 200
+    pdf = chemin_pdf_cache(_cache_dir(), hash_tex(tex))
+    return jsonify({'cache_valide': pdf.is_file()}), 200
+
+
 @bp.route('/api/evaluations/<eval_id>/rendu-pdf', methods=['POST'])
 def api_eval_rendu_pdf(eval_id: str):
     """Compile l'éval et renvoie le PDF.

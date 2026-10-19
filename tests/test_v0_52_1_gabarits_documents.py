@@ -206,7 +206,8 @@ def test_catalogue_cycle4_reprend_les_9_cles_et_options_car_les_chaines_type_cib
     # séances d'atelier (clés nouvelles, aucune renommée).
     assert set(gd.types("sixieme")) == {"livret_sequence_6e", "fiches_cours_6e", "corriges_6e",
                                         "evaluation_6e", "travaux_personnels_6e",
-                                        "activites_complementaires_6e", "seances_atelier_6e"}
+                                        "activites_complementaires_6e", "seances_atelier_6e",
+                                        "plans_travail_6e"}   # v0.52.3
     assert not set(gd.types("sixieme")) & set(rd.TYPES_DOCUMENT)
 
 

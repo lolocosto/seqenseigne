@@ -75,9 +75,30 @@ def _valider_niveau_sequence(niveau: str, sequence: str):
 
 def _generer_tex(niveau: str, sequence: str) -> str:
     """Génère le .tex du plan de travail de la séquence. Peut lever
-    SequenceParNiveauIntrouvable (→ 404) ou une autre exception (→ 500)."""
+    SequenceParNiveauIntrouvable (→ 404) ou une autre exception (→ 500).
+
+    v0.52.3 (décision P1) — Gabarit : paramètre `gabarit` s'il est donné,
+    sinon la règle R1 (référentiel interne principal en cours du niveau,
+    sinon N09 → sixieme). `sixieme` : plan de travail de l'équipe de 6e
+    (services/plan_travail_6e.py, option `fiches`) ; `cycle4` : plan
+    historique, inchangé."""
+    from services import gabarits_documents as gd
     config = _configuration()
     with current_app.json_store._conn() as conn:
+        explicite = request.args.get('gabarit')
+        gabarit = (gd.valider_gabarit(explicite) if explicite
+                   else gd.gabarit_atelier_du_niveau(conn, niveau))
+        if gabarit == 'sixieme':
+            from services.livret_sequence_6e import Livret6eErreur
+            from services.plan_travail_6e import generer_plan_travail_6e
+            options = {k: request.args.get(k) for k in ('fiches',) if request.args.get(k)}
+            try:
+                return generer_plan_travail_6e(
+                    conn, niveau, sequence, options,
+                    tikz_libraries=config.tikz_libraries(),
+                    tblr_libraries=config.tblr_libraries())
+            except Livret6eErreur as e:
+                raise SequenceParNiveauIntrouvable(niveau, sequence, str(e)) from e
         return generer_plan_de_travail_sequence(
             conn, niveau, sequence,
             tikz_libraries=config.tikz_libraries(),

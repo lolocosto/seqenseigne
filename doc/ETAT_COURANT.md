@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -48,6 +48,16 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   séquence, délai sur l'association) ; import 6e en base (plus de `.tex`,
   activités reliées à leur objectif). Cycle 4 inchangé au caractère près.
   Détails : `doc/redemarrage_v0_52_2.md`.
+- v0.52.3 livrée (retours de Laurent sur v0.52.2) : activité d'approche
+  enregistrée dans l'atelier qui changeait de code (AE03 → EA01, mapping
+  `atomes._SERIE_VERS_CODE`) et disparaissait de la liste — corrigé, outil
+  `outils/reparer_series_approche.py` à lancer AVANT tout réimport des lots ;
+  onglet « Rendu PDF » du module Évaluations qui restait figé ; rendu
+  d'atome des exercices de 6e au format de l'équipe
+  (`services/rendu_atome_6e.py`) ; plan de travail de séquence 6e au format
+  de l'équipe (`services/plan_travail_6e.py`, type `plans_travail_6e`) ;
+  lots S01–S03 complétés de leurs corrigés (`reference\lot6e`). Cycle 4
+  inchangé au caractère près. Détails : `doc/redemarrage_v0_52_3.md`.
 - À venir : lots S04 à S10 ; mises en route M01 à M07 ; zones de liens
   EV/TP/AC/AT dans l'assemblage. La mise en ligne (prévue en v0.52)
   prendra le numéro suivant.
@@ -268,6 +278,15 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   (`services/atomes.SERIES_DOCUMENTS`) ne vont dans aucun livret ; tout
   générateur ou liste qui lit `objectif_exos` ou `exercices.serie_code` lit
   une liste fermée de séries (ou exclut `SERIES_HORS_LIVRET`).
+- **Série approche** : code `AE` partout (base, `atomes._SERIE_VERS_CODE`,
+  JS) ; `EA` n'est qu'un RÔLE dans `partie_exos_revision_approche`.
+  Enregistrer un exercice sans changer sa série ne touche jamais à son code
+  ni à son numéro (l'import 6e retrouve un exercice par niveau, séquence,
+  code, numéro).
+- **Rendu 6e** (v0.52.3) : tout rendu de l'atelier pour la 6e suit la règle
+  R1 (`gabarit_atelier_du_niveau`) : livret, évaluations, atomes, plan de
+  travail ; les numéros d'exercices et d'activités sont ceux du livret 6e
+  (`livret_sequence_6e.numeros_livret`).
 - **Archives du cycle 3** (v0.52.0) : codes de séquence `Xnn` et thèmes
   `XA`… = ancien découpage archivé ; ne pas les réutiliser pour du neuf ;
   exclus du modèle « programme du cycle ».
@@ -289,10 +308,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   évaluation de l'import repérée par son titre (la renommer puis relancer
   l'import en créerait une seconde).
 - Antérieur (constaté en v0.52.2) : l'aperçu d'un exercice **sans corrigé**
-  dans l'atelier d'exercices s'arrête sur « Corriges/cNeM.tex not found »
-  (cas des F/A de 6e importés sans corrigé et des atomes EV/TP/AC/AT) ; ces
-  documents se compilent par « Documents à publier » et le module
-  Évaluations. Non corrigé (rendu des atomes du cycle 4).
+  dans l'atelier d'exercices s'arrête sur « Corriges/cNeM.tex not found ».
+  Réglé pour la 6e en v0.52.3 (rendu 6e) ; reste vrai au cycle 4.
+- v0.52.3 : notions, méthodes et fiches de 6e gardent le rendu d'atome du
+  cycle 4 ; plan de travail 6e sans référence du manuel, pages du livret ni
+  déroulé des activités (aucune donnée en base).
 
 - `services/tableau_bord.py` (`_NIVEAU_LABEL`) et
   `services/latex_rendu_atome.py` ont encore leurs propres libellés de niveaux

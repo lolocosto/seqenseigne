@@ -3413,15 +3413,16 @@ function atelRenderListe() {
   // Ordre fixe : F → A → E → EA → Autres. La section "Autres" capte tout
   // ce qui ne tombe pas dans les 4 séries standard (sécurité face aux
   // données legacy ou aux bugs de migration).
-  const buckets = { F: [], A: [], E: [], EA: [], Autres: [] };
+  // v0.52.3 — Série approche : code 'AE' (comme la base et atelier_exercice.js).
+  const buckets = { F: [], A: [], E: [], AE: [], Autres: [] };
   const labels  = {
     F: 'Fondamentaux', A: 'Avancés', E: 'Exploration',
-    EA: 'Approche (EA)', Autres: 'Autres',
+    AE: 'Approche (AE)', Autres: 'Autres',
   };
   // Mapping nom-long de série → code court. ex.serie est en nom long
   // ("fondamental", "avancé", "exploration", "approche").
   const serieEnCode = {
-    'fondamental': 'F', 'avancé': 'A', 'exploration': 'E', 'approche': 'EA',
+    'fondamental': 'F', 'avancé': 'A', 'exploration': 'E', 'approche': 'AE',
   };
 
   for (const ex of liste) {
@@ -3455,7 +3456,7 @@ function atelRenderListe() {
   // Construction des sections (uniquement celles non vides, sauf
   // ordre fixe pour les 4 standards, "Autres" affichée seulement si
   // contient au moins 1 exo).
-  const ordre = ['F', 'A', 'E', 'EA', 'Autres'];
+  const ordre = ['F', 'A', 'E', 'AE', 'Autres'];
   const sections = [];
   for (const code of ordre) {
     const exos = buckets[code];
@@ -3465,7 +3466,7 @@ function atelRenderListe() {
       : '<div style="padding:6px 4px;font-size:11px;color:var(--text-muted)">— aucun —</div>';
     // Par défaut, sections F/A ouvertes (les plus utilisées), E/EA/Autres
     // fermées. localStorage prime sur ce défaut s'il existe.
-    const defautReplie = (code === 'E' || code === 'EA' || code === 'Autres');
+    const defautReplie = (code === 'E' || code === 'AE' || code === 'Autres');
     const collapsed = atelCatEstReplie('exercice', code, defautReplie);
     sections.push(atelAsmCatHtml('exercice', code, labels[code],
                                  exos.length, items, { collapsed }));

@@ -362,6 +362,7 @@ class AtelierEvaluation extends AtelierAssemblage {
       if (tabE)  tabE.style.display  = 'none';
       if (tabR)  tabR.style.display  = 'none';
       this._majToolbar();
+      this._synchroniserRendu();
       return;
     }
 
@@ -387,6 +388,28 @@ class AtelierEvaluation extends AtelierAssemblage {
     this._remplirSelecteurExos();
     this._remplirSelecteurObjectifs();
     this._majToolbar();
+    this._synchroniserRendu();
+  }
+
+  /**
+   * v0.52.3 — L'onglet « Rendu PDF » suit l'évaluation affichée.
+   *
+   * Avant : changer d'évaluation (sélection, création, suppression) laissait
+   * dans l'onglet le dernier PDF compilé, quelle que soit l'évaluation
+   * choisie (retour de Laurent). Quand l'évaluation change : une compilation
+   * encore en vol est invalidée (génération `_genRendu`), la zone revient au
+   * placeholder, les sélecteurs sujet / version suivent le niveau, et si
+   * l'onglet Rendu est ouvert on recharge le PDF de la nouvelle évaluation
+   * (cache, ou compilation selon la préférence), comme les autres ateliers.
+   */
+  _synchroniserRendu() {
+    const id = this.itemActif ? this.itemActif.id : null;
+    if (id === this._renduItemId) return;
+    this._renduItemId = id;
+    this._genRendu = (this._genRendu || 0) + 1;
+    this._remettrePlaceholderRendu();
+    this._majSelecteursRendu6e();
+    if (id && this.tabCourant === 'rendu') this.verifierCacheEtAfficher();
   }
 
   /**
@@ -791,6 +814,13 @@ class AtelierEvaluation extends AtelierAssemblage {
     if (nom === 'rendu') {
       this._assurerToolbarRendu();
       this.majToolbar();  // synchronise la visibilité du bouton LaTeX
+      // v0.52.3 — Comme AtelierEditeur.basculerOnglet : le PDF affiché est
+      // celui de l'évaluation courante (cache ou compilation), jamais celui
+      // d'une évaluation vue avant.
+      if (this.itemActif) {
+        this._renduItemId = this.itemActif.id;
+        this.verifierCacheEtAfficher();
+      }
     }
   }
 
@@ -1275,6 +1305,8 @@ class AtelierEvaluation extends AtelierAssemblage {
         o.textContent = lib;
         sel.appendChild(o);
       }
+      // v0.52.3 — Changer de sujet ou de version recharge le rendu.
+      sel.addEventListener('change', () => this.verifierCacheEtAfficher());
       return sel;
     };
     const sujet = mk('atl-eval-rendu-sujet', 'Sujet (6e)', [['A', 'Sujet A'], ['B', 'Sujet B']]);

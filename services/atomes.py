@@ -42,14 +42,19 @@ SERIES_VALIDES = frozenset(
 # Doit rester cohérent avec persistence/sqlite_store.py:serie_vers_code
 # (qui ajoute des alias de sécurité pour l'ancien vocabulaire). Ici on
 # limite au strict nécessaire pour creer_exercice / modifier_exercice.
-# Convention 'approche' → 'EA' côté frontend/sidebar ; certaines
-# fonctions backend utilisent 'AE' (cf. v2_edition._SERIE_CODE_EQUIVALENT).
-# On reste sur 'EA' qui est ce que la sidebar affiche.
+# v0.52.3 — 'approche' → 'AE', le code de la base depuis v0.18.3
+# (v2_edition._SERIE_CODE_EQUIVALENT, outils/migrer_serie_ea_vers_ae.py,
+# import 6e, livrets, sidebar). Ce mapping était resté sur 'EA' : chaque
+# enregistrement d'une activité d'approche depuis l'atelier réécrivait son
+# code en 'EA' et lui donnait un nouveau numéro (AE03 → EA01), si bien
+# qu'elle quittait la section « Approche » de la liste et n'était plus
+# retrouvée par l'import (clé niveau, séquence, serie_code, num).
+# Réparation des données : outils/reparer_series_approche.py.
 _SERIE_VERS_CODE = {
     "fondamental": "F",
     "avancé":      "A",
     "exploration": "E",
-    "approche":    "EA",
+    "approche":    "AE",
     **{lib: code for code, lib in SERIES_DOCUMENTS.items()},   # v0.52.2
 }
 
@@ -290,6 +295,7 @@ def modifier_exercice(liste: list, exo_id: str,
     # (cadrage v0.11.6 Q2 option β), mais côté backend on accepte la
     # remédiation pour n'importe quelle série — l'UI fait juste de
     # l'auto-discipline.
+    ancienne_serie = liste[idx].get("serie")
     for champ in ("serie", "titre", "enonce", "corrige", "variables",
                   "remed_enonce", "remed_corrige"):
         if champ in data:
@@ -300,7 +306,12 @@ def modifier_exercice(liste: list, exo_id: str,
     # dans les livrets et l'assemblage). num est ré-attribué car l'ancien
     # numéro était relatif à l'ancienne série, et pourrait entrer en
     # collision dans la nouvelle.
-    if "serie" in data:
+    # v0.52.3 — Seulement si la série change vraiment (ou si l'exercice
+    # n'a pas encore de code) : un enregistrement qui renvoie la même série
+    # ne touche jamais au code ni au numéro (AE03 reste AE03, même si un
+    # mapping venait à diverger de la base).
+    if "serie" in data and (liste[idx]["serie"] != ancienne_serie
+                            or not liste[idx].get("serie_code")):
         nouvelle_serie_code = _SERIE_VERS_CODE.get(liste[idx]["serie"], "")
         ancienne_serie_code = liste[idx].get("serie_code", "")
         if nouvelle_serie_code != ancienne_serie_code:

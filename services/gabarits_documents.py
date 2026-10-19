@@ -129,6 +129,7 @@ def _catalogue_cycle4() -> tuple:
 # ── Gabarit 6e ───────────────────────────────────────────────────────────────
 
 VERSIONS_6E = ("eleve", "corrigee")
+FICHES_PLAN_6E = ("texte_complet", "titre")             # v0.52.3
 REMEDIATIONS_6E = ("apres_exercice", "en_fin", "aucune")
 DECOUPAGES_6E = ("par_sequence", "annuel", "les_deux")
 SUJETS_6E = ("A", "B")                                   # v0.52.2
@@ -213,6 +214,19 @@ _CATALOGUE_SIXIEME = (
         valeurs={"version": VERSIONS_6E},
         generateur="services.documents_6e.generer_document_6e",
         champs=(("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),),
+    ),
+    # v0.52.3 — Plan de travail de l'équipe de 6e (une cible par séquence).
+    TypeDocument(
+        cle="plans_travail_6e",
+        libelle="Plans de travail (6e)",
+        description=("Un plan de travail par séquence, au format de l'équipe de 6e : "
+                     "objectifs, activités, à retenir, exercices du livret O / ( ) / [ ], "
+                     "travaux personnels, synthèse et évaluation."),
+        options={"actif": False, "fiches": "texte_complet"},
+        valeurs={"fiches": FICHES_PLAN_6E},
+        generateur="services.plan_travail_6e.generer_plan_travail_6e",
+        champs=(("fiches", "À retenir",
+                 (("texte_complet", "fiche en entier"), ("titre", "titre seulement"))),),
     ),
     TypeDocument(
         cle="seances_atelier_6e",

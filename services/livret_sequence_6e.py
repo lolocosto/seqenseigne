@@ -310,8 +310,38 @@ def entete(seq: dict, corrige: bool) -> str:
             + (r" -- \textcolor{seqSixRouge}{corrigé}" if corrige else "") + "}")
 
 
-def corps_livret(seq: dict, opts: dict) -> list[str]:
-    """Lignes LaTeX du livret d'une séquence (sans préambule)."""
+class _Numeros:
+    """v0.52.3 — Numéros que le livret donne aux activités (compteur
+    `seqActiviteSix`) et aux exercices (compteur `seqExoSix`, remédiations
+    comprises), relevés pendant l'émission même du livret : le plan de
+    travail et le rendu d'un atome affichent exactement ces numéros."""
+
+    def __init__(self):
+        self.activite = 0
+        self.exo = 0
+        self.activites: dict[str, int] = {}
+        self.exercices: dict[str, int] = {}
+        self.remediations: dict[str, int] = {}
+
+    def noter_activite(self, ex: dict) -> None:
+        self.activite += 1
+        self.activites.setdefault(ex["id"], self.activite)
+
+    def noter_exercice(self, ex: dict) -> None:
+        self.exo += 1
+        self.exercices.setdefault(ex["id"], self.exo)
+
+    def noter_remediation(self, ex: dict) -> None:
+        self.exo += 1
+        self.remediations.setdefault(ex["id"], self.exo)
+
+
+def corps_livret(seq: dict, opts: dict, numeros: "_Numeros | None" = None) -> list[str]:
+    """Lignes LaTeX du livret d'une séquence (sans préambule).
+
+    v0.52.3 — `numeros` (facultatif) reçoit les numéros des activités et des
+    exercices ; le texte produit n'en dépend pas."""
+    N = numeros if numeros is not None else _Numeros()
     L = [entete(seq, opts["version"] == "corrigee"), couverture(seq)]
     remeds_fin: list = []
     for p in seq["parties"]:
@@ -322,6 +352,7 @@ def corps_livret(seq: dict, opts: dict) -> list[str]:
         if opts["inclure_activites"]:
             for ex in p["activites"]:
                 _emettre_activite(L, ex)
+                N.noter_activite(ex)
         for f in p["fiches"]:
             _emettre_fiche(L, f)
         # Le premier objectif suit le titre de partie (et ses activités, L1)
@@ -336,6 +367,7 @@ def corps_livret(seq: dict, opts: dict) -> list[str]:
             if opts["inclure_activites"]:
                 for ex in o["activites"]:
                     _emettre_activite(L, ex)
+                    N.noter_activite(ex)
             for f in o["fiches"]:
                 _emettre_fiche(L, f)
             for serie, titre in TITRES_SERIES:
@@ -348,12 +380,25 @@ def corps_livret(seq: dict, opts: dict) -> list[str]:
                 L.append(r"\seqPartieSix{" + titre + "}")
                 for ex in exos:
                     _emettre_exercice(L, ex, serie, opts, remeds_fin)
+                    N.noter_exercice(ex)
+                    if ((ex.get("remed_enonce") or "").strip()
+                            and opts["remediations"] == "apres_exercice"):
+                        N.noter_remediation(ex)
     if remeds_fin:
         L.append(r"\clearpage")
         L.append(r"\begin{center}{\Large\bfseries\color{seqSixVert}Remédiations}\end{center}")
         for ex in remeds_fin:
             _emettre_remediation(L, ex)
+            N.noter_remediation(ex)
     return L
+
+
+def numeros_livret(seq: dict, opts: dict) -> _Numeros:
+    """v0.52.3 — Numéros du livret de la séquence `seq` (lire_sequence_6e)
+    avec les options `opts` du livret (normaliser_options)."""
+    N = _Numeros()
+    corps_livret(seq, opts, N)
+    return N
 
 
 def corps_fiches(seq: dict) -> list[str]:
@@ -372,10 +417,37 @@ def corps_fiches(seq: dict) -> list[str]:
     return L
 
 
+def options_livret(conn, niveau: str, referentiel_id: str | None = None) -> dict:
+    """Options du livret 6e publié (numérotation) : celles du type
+    `livret_sequence_6e` du référentiel donné, sinon du référentiel interne
+    principal « en cours » du niveau (R1), sinon celles par défaut."""
+    import json
+    ref = referentiel_id
+    if not ref:
+        try:
+            r = conn.execute(
+                "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat = 'en_cours' "
+                "AND COALESCE(source, 'interne') <> 'externe' "
+                "AND COALESCE(type_ref, 'principal') = 'principal' "
+                "ORDER BY version DESC, id DESC LIMIT 1", (niveau,)).fetchone()
+            ref = r[0] if r else None
+        except sqlite3.Error:
+            ref = None
+    if not ref:
+        return {}
+    try:
+        r = conn.execute("SELECT options FROM referentiel_documents WHERE referentiel_id = ? "
+                         "AND type_document = 'livret_sequence_6e'", (ref,)).fetchone()
+        return json.loads(r[0]) if r and r[0] else {}
+    except (sqlite3.Error, TypeError, ValueError):
+        return {}
+
+
 # ── Préambule et document ────────────────────────────────────────────────────
 
 def document(conn: sqlite3.Connection, niveau: str, titre: str, corps: list[str],
-             version_corrigee: bool, tikz_libraries=None, tblr_libraries=None) -> str:
+             version_corrigee: bool, tikz_libraries=None, tblr_libraries=None,
+             preambule_sup: tuple | list = ()) -> str:
     r"""Document complet : préambule sur mesure (macros du cœur recopiées
     par `construire_preambule`, module `seqenseigne-style6e` chargé en
     entier par \usepackage, une seule géométrie — L5)."""
@@ -405,6 +477,7 @@ def document(conn: sqlite3.Connection, niveau: str, titre: str, corps: list[str]
          r"\setlength{\parindent}{0pt}",
          r"\setlength{\parskip}{2pt}\setlength{\emergencystretch}{3em}",
          r"\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}",
+         *preambule_sup,                       # v0.52.3 (plan de travail 6e)
          r"\begin{document}"]
     if version_corrigee:
         L.append(r"\seqVersionCorrigee")

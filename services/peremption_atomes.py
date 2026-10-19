@@ -68,6 +68,8 @@ ATOMES_PAR_TYPE_DOCUMENT: dict[str, list[str]] = {
     'travaux_personnels_6e':  ['exercices'],
     'activites_complementaires_6e': ['exercices'],
     'seances_atelier_6e':     ['exercices'],
+    # v0.52.3 — numéros du livret, fiches « à retenir », évaluations.
+    'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations'],
 }
 
 
