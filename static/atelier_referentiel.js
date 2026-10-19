@@ -446,7 +446,8 @@ function atelRefPartieHtml(p) {
   // comme demandé : "avant les révisions/approches"). Toujours
   // affichées, avec placeholder "(aucune)" si rien.
   const cartes = p.atomes_cartes || [];
-  const cartesHtml = `
+  // v0.52.4 — pas de cartes d'automatisme au modèle « Fiches ».
+  const cartesHtml = atelRefModeleFiches() ? '' : `
     <div style="padding:6px 8px;background:var(--surface);
                 border-bottom:1px solid var(--border);
                 display:flex;flex-direction:column;gap:4px;font-size:11px">
@@ -524,6 +525,13 @@ function atelRefLigneRaeHtml(libelle, items) {
 // selon la convention métier) : ils n'ont structurellement pas de
 // méthode, fiche ni exos. On affiche uniquement leur titre, sans aucune
 // ligne supplémentaire.
+// v0.52.4 — Le référentiel sélectionné est-il au modèle « Fiches de résumé
+// par objectif » ?
+function atelRefModeleFiches() {
+  return !!(typeof ATL_REF_SELECTION !== 'undefined' && ATL_REF_SELECTION
+            && ATL_REF_SELECTION.gabarit_documents === 'sixieme');
+}
+
 function atelRefObjectifHtml(o) {
   const fc = o.fin_cycle ? ' <span style="font-size:10px;color:#0d47a1">[fin cycle]</span>' : '';
 
@@ -537,10 +545,14 @@ function atelRefObjectifHtml(o) {
       </div>`;
   }
 
+  // v0.52.4 (A5) — Modèle « Fiches de résumé par objectif » : ni méthode ni
+  // notions ; on affiche la présence de la fiche de l'objectif.
+  const fiches = atelRefModeleFiches();
+
   // Ligne 1 : Méthode + Fiche
-  const lien_methode = o.methode
+  const lien_methode = fiches ? '' : (o.methode
     ? atelRefAtomeLibHtml(o.methode, 'Méthode')
-    : `<span style="color:#c0392b;opacity:.7;font-size:11px">Méthode (manquante)</span>`;
+    : `<span style="color:#c0392b;opacity:.7;font-size:11px">Méthode (manquante)</span>`);
   const lien_fiche = o.fiche
     ? atelRefAtomeLibHtml(o.fiche, 'Fiche de résumé')
     : `<span style="color:#c0392b;opacity:.7;font-size:11px">Fiche de résumé (manquante)</span>`;
@@ -552,7 +564,7 @@ function atelRefObjectifHtml(o) {
     </div>`;
 
   // Lignes notions : "Notion : <titre>" en flex-wrap
-  const lignes_notions = (o.notions || []).length === 0 ? '' : `
+  const lignes_notions = (fiches || (o.notions || []).length === 0) ? '' : `
     <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;
                 font-size:11px;margin-top:3px">
       ${(o.notions || []).map(n => atelRefAtomeNotionHtml(n)).join('')}
@@ -1411,25 +1423,63 @@ function atelRefRendreDocuments() {
 // v0.52.1 — Gabarit de documents du référentiel : modifiable tant que le
 // référentiel est « en cours », figé ensuite. Seuls les documents du
 // gabarit sont listés (les autres restent en base, options conservées).
-const ATL_REF_GABARITS = [['cycle4', 'Cycle 4'], ['sixieme', '6e (style de l\'équipe)']];
+// v0.52.4 (M1, G2b) — C'est le MODÈLE du référentiel : « Notions et
+// méthodes » (cycle4) ou « Fiches de résumé par objectif » (sixieme), avec
+// sa description. Modifiable en « en cours » et « validé » ; « (figé) » à
+// partir du verrouillage. Avertissement s'il reste des documents actifs de
+// l'ancien modèle.
+const ATL_REF_GABARITS = [['cycle4', 'Notions et méthodes'], ['sixieme', 'Fiches de résumé par objectif']];
+const ATL_REF_ETATS_MODELE_MODIFIABLE = ['en_cours', 'valide'];
+
+function atelRefModeleDescriptionHtml(g) {
+  const m = (typeof atlModele === 'function') ? atlModele(g) : null;
+  if (!m || !m.resume) return '';
+  const l = (t, v) => v ? `<p><strong>${t} :</strong> ${atelRefEscape(v)}</p>` : '';
+  return `<div class="atl-ref-modele-desc"><p>${atelRefEscape(m.resume)}</p>`
+    + l('Documents', m.documents) + l('Séries', m.series) + l('Pour valider', m.completude)
+    + '</div>';
+}
 
 function atelRefGabaritHtml() {
   if (!ATL_REF_SELECTION) return '';
+  // v0.52.4 — sans objet pour un référentiel de MER (ni pour un externe,
+  // qui n'a pas cet onglet).
+  if ((ATL_REF_SELECTION.type_ref || 'principal') !== 'principal') return '';
   const g = ATL_REF_SELECTION.gabarit_documents || 'cycle4';
-  const modifiable = ATL_REF_SELECTION.etat === 'en_cours';
+  const modifiable = ATL_REF_ETATS_MODELE_MODIFIABLE.includes(ATL_REF_SELECTION.etat);
   const opts = ATL_REF_GABARITS.map(([v, lib]) =>
     `<option value="${v}"${v === g ? ' selected' : ''}>${atelRefEscape(lib)}</option>`).join('');
   return `
     <div style="padding:0 8px 8px;font-size:12px;display:flex;align-items:center;gap:8px">
-      <label for="atl-ref-gabarit">Gabarit de documents :</label>
+      <label for="atl-ref-gabarit">Modèle du référentiel :</label>
       <select id="atl-ref-gabarit" ${modifiable ? '' : 'disabled'}
               onchange="atelRefChangerGabarit(this.value)">${opts}</select>
       ${modifiable ? '' : '<span style="color:var(--text-muted)">(figé)</span>'}
-    </div>`;
+    </div>
+    ${atelRefModeleDescriptionHtml(g)}`;
+}
+
+// v0.52.4 — Documents actifs du modèle courant : ils restent en base mais ne
+// seront plus publiés après le changement de modèle.
+function atelRefMessageChangementModele(documents, ancien, nouveau) {
+  const actifs = (documents || []).filter(d => d.options && d.options.actif);
+  if (!actifs.length || ancien === nouveau) return '';
+  const lib = v => (ATL_REF_GABARITS.find(x => x[0] === v) || [v, v])[1];
+  const titres = actifs.map(d => ATL_REF_DOC_TITRES[d.type_document] || d.libelle || d.type_document);
+  return `${actifs.length} document(s) actif(s) du modèle « ${lib(ancien)} » `
+    + `(${titres.join(', ')}) resteront en base mais ne seront plus publiés `
+    + `avec le modèle « ${lib(nouveau)} ».\n\nChanger de modèle ?`;
 }
 
 async function atelRefChangerGabarit(gabarit) {
   if (!ATL_REF_SELECTION) return;
+  const ancien = ATL_REF_SELECTION.gabarit_documents || 'cycle4';
+  const msg = atelRefMessageChangementModele(ATL_REF_DOCUMENTS, ancien, gabarit);
+  if (msg && !confirm(msg)) {
+    const sel = document.getElementById('atl-ref-gabarit');
+    if (sel) sel.value = ancien;
+    return;
+  }
   try {
     const rep = await fetch(
       `/api/referentiels/${encodeURIComponent(ATL_REF_SELECTION.id)}/gabarit-documents`,
@@ -1437,14 +1487,17 @@ async function atelRefChangerGabarit(gabarit) {
         body: JSON.stringify({ gabarit }) });
     const data = await rep.json().catch(() => ({}));
     if (!rep.ok) {
-      alert(`Gabarit non modifié : ${data.message || rep.status}`);
+      alert(`Modèle non modifié : ${data.message || rep.status}`);
     } else {
       ATL_REF_SELECTION.gabarit_documents = data.gabarit;
+      if (data.etat) ATL_REF_SELECTION.etat = data.etat;
       const r = (ATL_REF_LISTE || []).find(x => x.id === ATL_REF_SELECTION.id);
-      if (r) r.gabarit_documents = data.gabarit;
+      if (r) { r.gabarit_documents = data.gabarit; if (data.etat) r.etat = data.etat; }
+      if (typeof atlChargerGabarits === 'function') atlChargerGabarits();
+      if (typeof atelRefRendreSidebar === 'function') atelRefRendreSidebar();
     }
   } catch (e) {
-    alert('Erreur réseau lors du changement de gabarit.');
+    alert('Erreur réseau lors du changement de modèle.');
   }
   atelRefChargerEtRendreDocuments();
 }

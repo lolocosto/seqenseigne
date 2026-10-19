@@ -37,6 +37,10 @@ def api_lire_sequence_par_niveau(niveau: str, sequence_code: str):
     try:
         with store._conn() as conn:
             data = lire_sequence_par_niveau(conn, niveau, sequence_code)
+            # v0.52.4 — modèle du référentiel, fiche et séries documents de
+            # chaque objectif (atelier d'assemblage).
+            from services.v2_lecture import enrichir_pour_assemblage
+            enrichir_pour_assemblage(conn, data)
     except SequenceParNiveauIntrouvable as e:
         return jsonify({
             "error": str(e),

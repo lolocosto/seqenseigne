@@ -2103,7 +2103,7 @@ async function prefEnregistrerCriteresConnaitre() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         atelier_assemblage_criteres_connaitre: {
-          nom:       elNom.value || 'Connaître les notions et les méthodes',
+          nom:       elNom.value || 'Connaître le cours',
           critere_F: elF.value || '',
           critere_A: elA.value || '',
           critere_E: elE.value || '',

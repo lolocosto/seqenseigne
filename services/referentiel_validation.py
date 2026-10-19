@@ -68,17 +68,37 @@ def _niveau_du_referentiel(conn: sqlite3.Connection, ref_id: str) -> str | None:
     return row['niveau'] if isinstance(row, sqlite3.Row) else row[0]
 
 
+# v0.52.4 (M3) — Atomes que le modèle « Fiches de résumé par objectif »
+# (gabarit `sixieme`) ne publie pas : ils ne bloquent pas sa validation.
+_TABLES_HORS_MODELE_FICHES = ('notions', 'methodes', 'cartes_automatisme')
+
+
 def _compter_atomes_non_valides(conn: sqlite3.Connection,
-                                  niveau: str) -> dict[str, int]:
+                                  niveau: str,
+                                  gabarit: str = 'cycle4') -> dict[str, int]:
     """Pour chaque table d'atomes, compte ceux du niveau dont
     `etat_code != 'valide'`. Retourne un dict {table: count} (count=0
-    si table absente / niveau vide)."""
+    si table absente / niveau vide).
+
+    v0.52.4 (M3) :
+      - les archives `Xnn` (anciens exercices de 6e, v0.52.0 D1) ne sont
+        jamais comptées, quel que soit le modèle (le cycle 4 n'en a pas) ;
+      - modèle « Fiches de résumé par objectif » : notions, méthodes et
+        cartes d'automatisme ne sont pas comptées (0)."""
+    from services.gabarits_documents import est_modele_fiches
+    fiches = est_modele_fiches(gabarit)
     res: dict[str, int] = {}
     for t in _TABLES_ATOMES:
+        if fiches and t in _TABLES_HORS_MODELE_FICHES:
+            res[t] = 0
+            continue
         try:
+            cols = {r[1] for r in conn.execute(f"PRAGMA table_info({t})")}
+            hors_archives = (" AND COALESCE(sequence, '') NOT LIKE 'X%'"
+                             if "sequence" in cols else "")
             row = conn.execute(
                 f"SELECT COUNT(*) FROM {t} "
-                f"WHERE niveau = ? AND etat_code != 'valide'",
+                f"WHERE niveau = ? AND etat_code != 'valide'" + hors_archives,
                 (niveau,),
             ).fetchone()
             res[t] = int(row[0]) if row else 0
@@ -115,6 +135,12 @@ def _statut_documents_du_referentiel(conn: sqlite3.Connection,
           FROM referentiel_documents
          WHERE referentiel_id = ?
     """, (ref_id,)).fetchall()
+    # v0.52.4 (D2) — Seuls les types du gabarit du référentiel comptent : un
+    # document actif de l'autre modèle (resté en base après un changement de
+    # modèle, G5) ne bloque pas la validation.
+    from services.gabarits_documents import types_du_referentiel
+    du_gabarit = set(types_du_referentiel(conn, ref_id))
+    rows = [r for r in rows if r['type_document'] in du_gabarit]
 
     niveau = _niveau_du_referentiel(conn, ref_id)
     non_compiles = 0
@@ -176,7 +202,9 @@ def evaluer_eligibilite_validation(conn: sqlite3.Connection,
     niveau = row['niveau']
     etat = row['etat']
 
-    atomes = _compter_atomes_non_valides(conn, niveau)
+    from services.gabarits_documents import gabarit_du_referentiel
+    atomes = _compter_atomes_non_valides(conn, niveau,
+                                         gabarit_du_referentiel(conn, ref_id))
     evals = _compter_evaluations_non_valides(conn, niveau)
     docs = _statut_documents_du_referentiel(conn, ref_id)
 

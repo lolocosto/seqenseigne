@@ -15,7 +15,8 @@ autres modules :
     tous définis chez lui, aucun nom commun avec les autres modules), donc
     le charger entier est sûr et ne change rien au rendu du cycle 4.
 
-La liste ci-dessous est celle de seqenseigne-style6e v0.4 ; un test la
+La liste ci-dessous est celle de seqenseigne-style6e v0.5 (v0.52.4 :
+\\seqNiveauCourt, \\seqNiveauExposant) ; un test la
 compare au .dtx du dossier `paquet/` quand il est présent. Le dossier du
 paquet (`reference\\paquet` par défaut) est ajouté au TEXINPUTS par
 services/compilateur_pdf.py pour que pdflatex trouve le .sty.
@@ -40,7 +41,7 @@ MACROS = (
     "seqLocGrilleOp", "seqLocHiero", "seqLocHieroNombre", "seqLocLig",
     "seqLocPotence", "seqLocPotenceVisible", "seqLocSiCorrige", "seqLocSurligne",
     "seqLocTableauDecimal", "seqLocTableauNumeration", "seqLocTableauOG",
-    "seqLocTrait", "seqMotCle", "seqNumSix", "seqPartieSix", "seqPointilles",
+    "seqLocTrait", "seqMotCle", "seqNiveauCourt", "seqNiveauExposant", "seqNumSix", "seqPartieSix", "seqPointilles",
     "seqReponse", "seqScore", "seqSectionFicheSix", "seqTitreCM",
     "seqTitreComplementSix", "seqTitreEvalSix", "seqTitreFicheSix",
     "seqTitreTravailSix", "seqTrous", "seqVersionACompleter",

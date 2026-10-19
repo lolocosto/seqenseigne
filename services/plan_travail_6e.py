@@ -236,7 +236,7 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
     sous_titre = " --- ".join(x for x in (
         f"Séquence {seq['numero']}" if seq.get("numero") else "",
         f"{_fmt(duree)} séances" if duree else "",
-        "Livret de séquence 6e") if x)
+        r"Livret de séquence \seqNiveauCourt") if x)      # v0.52.4 (T1)
     L = [r"\begin{center}{\Large\bfseries\color{seqSixVert}" + souligner(seq["nom"]) + r"}\\[3pt]",
          r"{\small\color{seqSixBleu}" + sous_titre + r"\\" + legende + "}",
          r"\end{center}", r"\setlength{\parskip}{4pt}"]

@@ -147,6 +147,7 @@
         "objectifs": { "type": "array", "items": { "$ref": "#/$defs/objectif" } },
         "notions": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
         "methodes": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
+        "fiches": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
         "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } }
       }
     },

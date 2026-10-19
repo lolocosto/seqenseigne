@@ -419,20 +419,14 @@ def corps_fiches(seq: dict) -> list[str]:
 
 def options_livret(conn, niveau: str, referentiel_id: str | None = None) -> dict:
     """Options du livret 6e publié (numérotation) : celles du type
-    `livret_sequence_6e` du référentiel donné, sinon du référentiel interne
-    principal « en cours » du niveau (R1), sinon celles par défaut."""
+    `livret_sequence_6e` du référentiel donné, sinon du référentiel de
+    l'atelier du niveau (règle R1b, v0.52.4 : interne principal hors
+    « annule », le plus récent), sinon celles par défaut."""
     import json
     ref = referentiel_id
     if not ref:
-        try:
-            r = conn.execute(
-                "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat = 'en_cours' "
-                "AND COALESCE(source, 'interne') <> 'externe' "
-                "AND COALESCE(type_ref, 'principal') = 'principal' "
-                "ORDER BY version DESC, id DESC LIMIT 1", (niveau,)).fetchone()
-            ref = r[0] if r else None
-        except sqlite3.Error:
-            ref = None
+        from services.gabarits_documents import referentiel_atelier_du_niveau
+        ref = referentiel_atelier_du_niveau(conn, niveau)
     if not ref:
         return {}
     try:
@@ -444,6 +438,36 @@ def options_livret(conn, niveau: str, referentiel_id: str | None = None) -> dict
 
 
 # ── Préambule et document ────────────────────────────────────────────────────
+
+def noms_niveau(conn, niveau: str) -> tuple[str, str]:
+    r"""T1 (v0.52.4) — Nom court du niveau pour le module style6e v0.5 :
+    (texte simple, avec exposant), d'après `param_niveaux.nom_court`
+    (« 5ème » → « 5e », « 5\textsuperscript{e} »). Un nom qui n'est pas de la
+    forme « Nème » est repris tel quel ; niveau inconnu → défaut du module
+    (6e)."""
+    import re
+    try:
+        from services.param_niveaux import lire_nom_court
+        nc = (lire_nom_court(conn, niveau) or "").strip()
+    except Exception:
+        nc = ""
+    if not nc or nc == niveau:
+        nc = {"N09": "6ème", "N10": "5ème", "N11": "4ème", "N12": "3ème"}.get(niveau, "6ème")
+    m = re.fullmatch(r"(\d+)\s*(?:ème|e|eme)", nc)
+    if m:
+        return f"{m.group(1)}e", f"{m.group(1)}\\textsuperscript{{e}}"
+    return nc, nc
+
+
+def macros_niveau(conn, niveau: str) -> list[str]:
+    r"""T1 (v0.52.4) — Le modèle « Fiches de résumé par objectif » ne dépend
+    pas du niveau : chaque document redéfinit \seqNiveauCourt et
+    \seqNiveauExposant (module style6e v0.5, « 6e » par défaut) avec le nom
+    court du niveau du référentiel. Rendu de la 6e inchangé."""
+    court, expo = noms_niveau(conn, niveau)
+    return [r"\renewcommand{\seqNiveauCourt}{" + court + "}",
+            r"\renewcommand{\seqNiveauExposant}{" + expo + "}"]
+
 
 def document(conn: sqlite3.Connection, niveau: str, titre: str, corps: list[str],
              version_corrigee: bool, tikz_libraries=None, tblr_libraries=None,
@@ -477,6 +501,7 @@ def document(conn: sqlite3.Connection, niveau: str, titre: str, corps: list[str]
          r"\setlength{\parindent}{0pt}",
          r"\setlength{\parskip}{2pt}\setlength{\emergencystretch}{3em}",
          r"\setlist{itemsep=1pt,topsep=2pt,parsep=0pt}",
+         *macros_niveau(conn, niveau),         # v0.52.4 (T1)
          *preambule_sup,                       # v0.52.3 (plan de travail 6e)
          r"\begin{document}"]
     if version_corrigee:

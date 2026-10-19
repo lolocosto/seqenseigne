@@ -1287,7 +1287,8 @@ class AtelierEvaluation extends AtelierAssemblage {
   // nom — cf. bas de fichier). `voirLatex` est conservé ci-dessous car il
   // n'existe pas dans la base (ouvre la modale LaTeX commune).
 
-  // v0.52.2 — Évaluation de 6e (N09) : rendu au gabarit de l'équipe, sujet A
+  // v0.52.2 — Évaluation par compétence (modèle « Fiches de résumé par
+  // objectif », v0.52.4 : modèle du niveau et non plus « N09 ») : sujet A
   // ou B, version élève ou corrigée (sélecteurs ajoutés à la barre du rendu).
   _assurerToolbarRendu() {
     super._assurerToolbarRendu();
@@ -1309,8 +1310,8 @@ class AtelierEvaluation extends AtelierAssemblage {
       sel.addEventListener('change', () => this.verifierCacheEtAfficher());
       return sel;
     };
-    const sujet = mk('atl-eval-rendu-sujet', 'Sujet (6e)', [['A', 'Sujet A'], ['B', 'Sujet B']]);
-    const version = mk('atl-eval-rendu-version', 'Version (6e)',
+    const sujet = mk('atl-eval-rendu-sujet', 'Sujet', [['A', 'Sujet A'], ['B', 'Sujet B']]);
+    const version = mk('atl-eval-rendu-version', 'Version',
                        [['eleve', 'Élève'], ['corrigee', 'Corrigée']]);
     const status = conteneur.querySelector('[id$="-rendu-status"]');
     conteneur.insertBefore(sujet, status);
@@ -1318,8 +1319,12 @@ class AtelierEvaluation extends AtelierAssemblage {
     this._majSelecteursRendu6e();
   }
 
+  // v0.52.4 (I2) — modèle du niveau de l'évaluation (gabarits_atelier.js).
   _estEval6e() {
-    return !!(this.itemActif && this.itemActif.niveau === 'N09');
+    if (!this.itemActif) return false;
+    const n = this.itemActif.niveau || '';
+    return (typeof window.atlModeleFiches === 'function')
+      ? window.atlModeleFiches(n) : n === 'N09';
   }
 
   _majSelecteursRendu6e() {

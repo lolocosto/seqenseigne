@@ -217,7 +217,7 @@ function _rpePartie(r, s, p, verrou, ctl) {
       ${objs.map(o => _rpeObjectif(r, s, o, verrou, ctl)).join('') || '<div class="rpe-vide">Aucun objectif.</div>'}
       ${ctl(`<div class="rx-ajout">
         ${aConn ? '' : `<button class="btn-sm" onclick="rpeAjouterConnaissance('${r.id}', '${s.code}', ${p.numero})"
-          title="Objectif « Connaître les notions et les méthodes » (critères pré-remplis, toujours en tête)">+ objectif « Connaître »</button>`}
+          title="Objectif « Connaître le cours » (critères pré-remplis, toujours en tête)">+ objectif « Connaître »</button>`}
         <input id="rpe-obj-${r.id}-${s.code}-${p.numero}" placeholder="Nouvelle capacité"
           onkeydown="if(event.key==='Enter') rpeAjouterObj('${r.id}', '${s.code}', ${p.numero})">
         <button class="btn-sm" onclick="rpeAjouterObj('${r.id}', '${s.code}', ${p.numero})">+ capacité</button></div>`)}

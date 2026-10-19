@@ -2531,18 +2531,27 @@
             <option value="">Toutes</option><option value="interne">Interne</option><option value="externe">Externe</option></select></label>
         </div>
         <div class="refu-creer">
-          <select id="refu-c-source" title="Source du nouveau référentiel" onchange="refuChargerModeles()">
+          <select id="refu-c-source" title="Source du nouveau référentiel" onchange="refuChargerModeles(); refuMajChoixModele()">
             <option value="interne">Interne</option><option value="externe">Externe</option></select>
-          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel" onchange="refuChargerModeles()">
+          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel" onchange="refuChargerModeles(); refuMajChoixModele()">
             <option value="principal">Principal</option><option value="mer">MER</option></select>
           <!-- v0.51.6 — Structure de départ d'un référentiel externe (aperçu à droite). -->
           <select id="refu-c-modele" class="refu-c-modele" title="Structure de départ" style="display:none"
                   onchange="refuApercuModele(this.value)"><option value="">Structure vide</option></select>
           <!-- v0.52.1 — Gabarit de documents, prérempli selon le niveau
                (6e → sixieme, 5e à 3e → cycle4) ; modifiable tant que le
-               référentiel est en cours. -->
-          <select id="refu-c-gabarit" title="Gabarit de documents" onchange="this.dataset.manuel='1'">
-            <option value="cycle4">Documents : cycle 4</option><option value="sixieme">Documents : 6e</option></select>
+               référentiel n'est pas verrouillé.
+               v0.52.4 (M1) — c'est le MODÈLE du référentiel, indépendant du
+               niveau : choisi à la création, avec sa description ; proposé
+               pour un référentiel interne principal seulement. -->
+          <div id="refu-c-modele-bloc" class="refu-c-modele-bloc">
+            <label for="refu-c-gabarit" class="refu-c-modele-label">Modèle du référentiel</label>
+            <select id="refu-c-gabarit" title="Modèle du référentiel"
+                    onchange="this.dataset.manuel='1'; refuMajChoixModele()">
+              <option value="cycle4">Notions et méthodes</option>
+              <option value="sixieme">Fiches de résumé par objectif</option></select>
+            <div id="refu-c-modele-desc" class="refu-modele-desc" aria-live="polite"></div>
+          </div>
           <input id="refu-c-desc" placeholder="Description (facultative)">
           <button class="btn-prim rxa-btn-creer" id="atl-ref-btn-creer" onclick="refuCreer()"
                   title="Le nom est calculé : niveau, année, type">+ Créer</button>
@@ -3431,8 +3440,8 @@
         <div class="pref-cat-head" onclick="prefCatBasculer(this)">Séquence</div>
         <div class="pref-cat-body">
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">
-        Valeurs pré-remplies de l'objectif <em>« Connaître les notions et les
-        méthodes »</em> lorsqu'il est activé via le bouton dédié dans une
+        Valeurs pré-remplies de l'objectif <em>« Connaître le cours »</em>
+        lorsqu'il est activé via le bouton dédié dans une
         partie de séquence. Les critères F / A / E correspondent aux séries
         d'exercices Fondamental / Avancé / Exploration et aux niveaux de
         maîtrise <em>À consolider / Satisfaisant / Très bon</em>.
@@ -3448,7 +3457,7 @@
         <div class="pref-asm-row">
           <label for="pref-asm-nom">Nom de l'objectif</label>
           <input id="pref-asm-nom" type="text"
-                 value="Connaître les notions et les méthodes">
+                 value="Connaître le cours">
         </div>
         <div class="pref-asm-row">
           <label for="pref-asm-critF">F — À consolider</label>
@@ -3764,6 +3773,9 @@
 <script src="/static/atelier_commun.js"></script>
 <!-- v0.13.7.0c — atelier_atome_generique.js (legacy court-circuité) supprimé. -->
 <script src="/static/app.js"></script>
+<!-- v0.52.4 (I2) — Modèle de référentiel de chaque niveau, pour les ateliers
+     (remplace les tests sur « N09 »). -->
+<script src="/static/gabarits_atelier.js"></script>
 <!-- v0.13.6.9 chantier A — Redéfinit atelObjLiesEnTags pour le format
      unifié « obj 02 » / « S03 obj 02 » / « N11 S03 obj 02 ». Doit être
      chargé APRÈS app.js (la dernière définition de window.atelObjLiesEnTags

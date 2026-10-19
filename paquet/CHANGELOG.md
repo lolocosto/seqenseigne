@@ -21,6 +21,17 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.5 — 2026-10-19
+
+### Modifié
+
+- Niveau paramétrable : `\seqNiveauCourt` (`6e`) et `\seqNiveauExposant` (`6\textsuperscript{e}`)
+  remplacent « 6e » écrit en dur dans `\seqCouvertureLivretSix`, `\seqIdentEleve`,
+  `\seqTitreTravailSix` et `\seqTitreComplementSix`. L'appli les redéfinit avec le nom court
+  du niveau du référentiel (seqenseigne v0.52.4). Rendu inchangé en 6e.
+
+---
+
 ## [1.0.5-dev] — 2026-05-04 — Module CORE-EXOS et remédiation
 
 ### Ajouté

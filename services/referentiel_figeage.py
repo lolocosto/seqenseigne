@@ -465,7 +465,12 @@ def _trace_documents(conn: sqlite3.Connection, ref_id: str,
          WHERE referentiel_id = ?
          ORDER BY ordre
     """, (ref_id,)).fetchall()
+    # v0.52.4 (D2) — Seuls les types du gabarit du référentiel sont figés.
+    from services.gabarits_documents import types_du_referentiel
+    du_gabarit = set(types_du_referentiel(conn, ref_id))
     for r in rows:
+        if r['type_document'] not in du_gabarit:
+            continue
         try:
             options = json.loads(r['options'] or '{}')
         except (json.JSONDecodeError, TypeError):

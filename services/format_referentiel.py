@@ -40,7 +40,13 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.1"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+FORMAT_VERSION = "1.2"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+#                          v0.52.4 : + partie.fiches (modèle « Fiches de résumé »)
+# v0.52.4 (F2) — Un document ne déclare que la version dont il a besoin : un
+# référentiel « Notions et méthodes » (gabarit cycle4) n'a pas de `fiches` et
+# reste en 1.1, à l'identique (même empreinte) ; « Fiches de résumé par
+# objectif » passe en 1.2.
+FORMAT_VERSION_SANS_FICHES = "1.1"
 VERSION_APPLI = "0.51.2"
 # v0.51.2 — Publications figées produites par un exporteur corrigé depuis
 # (accents LaTeX non convertis, type des objectifs internes) : régénérées au
@@ -198,19 +204,32 @@ def _structure(conn, ref: dict) -> dict:
     return st
 
 
-def _notions_methodes(conn, niveau: str, seq: str, numero: int) -> tuple[list, list]:
+def _notions_methodes(conn, niveau: str, seq: str, numero: int,
+                      modele_fiches: bool = False) -> tuple[list, list, list]:
     """Titres des notions et méthodes rattachées aux objectifs de la partie
-    (mêmes règles que la synthèse Pronote). Vide pour un référentiel externe."""
+    (mêmes règles que la synthèse Pronote). Vide pour un référentiel externe.
+
+    v0.52.4 (M4) — Modèle « Fiches de résumé par objectif » : la partie
+    « cours » est faite des fiches de résumé (troisième liste) ; notions et
+    méthodes sont vides."""
     if not (_table_existe(conn, "objectifs") and _table_existe(conn, "sequence_parties")):
-        return [], []
-    from services.synthese_seance import candidats
+        return [], [], []
+    from services.synthese_seance import _fiches_des_objectifs, candidats
+    if modele_fiches:
+        ids = [r[0] for r in conn.execute(
+            "SELECT o.id FROM objectifs o JOIN sequence_parties p ON p.id=o.partie_id "
+            "JOIN sequences_par_niveau s ON s.id=p.sequence_par_niveau_id "
+            "WHERE s.niveau=? AND s.sequence_code=? AND p.numero=? ORDER BY o.code",
+            (niveau, seq, numero)).fetchall()]
+        return [], [], [{"id": f["id"], "titre": f["titre"]}
+                         for f in _fiches_des_objectifs(conn, ids)]
     try:
         c = candidats(conn, niveau, seq, numero, numero)
     except Exception:
-        return [], []
-    notions = [{"id": n["id"], "titre": n["titre"]} for n in c["notions"]]
-    methodes = [{"id": m["id"], "titre": m["titre"]} for m in c["methodes"]]
-    return notions, methodes
+        return [], [], []
+    notions = [{"id": n["id"], "titre": n["titre"]} for n in c.get("notions", [])]
+    methodes = [{"id": m["id"], "titre": m["titre"]} for m in c.get("methodes", [])]
+    return notions, methodes, []
 
 
 def _doc_fichier(f: dict, data_dir: Path | None) -> dict:
@@ -269,10 +288,14 @@ def _documents_compiles(conn, ref: dict, data_dir: Path | None,
             not _table_existe(conn, "referentiel_documents"):
         return out
     from services.referentiel_documents_compilation import lister_cibles_document
+    from services.gabarits_documents import types_du_referentiel
     fige = ref.get("etat") in ETATS_FIGES
+    du_gabarit = set(types_du_referentiel(conn, ref["id"]))     # v0.52.4 (D2)
     for doc in conn.execute("SELECT * FROM referentiel_documents WHERE referentiel_id=? "
                             "ORDER BY ordre, type_document", (ref["id"],)).fetchall():
         type_doc = doc["type_document"]
+        if type_doc not in du_gabarit:
+            continue
         try:
             cibles = lister_cibles_document(conn, doc["id"], ref["id"], type_doc)
         except Exception:
@@ -340,6 +363,7 @@ def construire(conn, rid: str, data_dir: Path | None = None,
     # un fichier 1.0 sans le champ est lu comme « cycle4 ».
     from services.gabarits_documents import normaliser as _gabarit
     entete["gabarit_documents"] = _gabarit(ref.get("gabarit_documents"))
+    modele_fiches = entete["gabarit_documents"] == "sixieme"          # v0.52.4
     structure = _structure(conn, ref)
     compiles = _documents_compiles(conn, ref, data_dir, omis)
     cols_obj = _colonnes(conn, "referentiel_objectifs")
@@ -361,11 +385,14 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                     "SELECT * FROM referentiel_objectifs WHERE referentiel_id=? AND "
                     "seq_code=? AND partie_numero=? ORDER BY code", (rid, code, num)).fetchall()):
                 o = dict(o)
-                # Interne : le 1er objectif de la partie est « Connaître les
-                # notions et les méthodes » (modèle des référentiels internes ;
-                # la colonne type_obj n'y est pas renseignée). Externe : type saisi.
+                # Interne : l'objectif « Cours » de la partie (code (n-1)1,
+                # « Connaître le cours ») est la connaissance ; v0.52.4 (M5) :
+                # règle de l'objectif Cours, et non plus le rang (le 1er
+                # objectif d'une partie sans Cours n'est pas une connaissance).
+                # Externe : type saisi.
                 if interne:
-                    type_obj = "connaissance" if rang == 0 else "capacite"
+                    type_obj = ("connaissance" if str(o["code"]).strip() == f"{num - 1}1"
+                                else "capacite")
                 else:
                     type_obj = (o.get("type_obj") if "type_obj" in cols_obj else None) \
                         or "capacite"
@@ -397,10 +424,13 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                         "SELECT * FROM referentiel_parties_seances WHERE referentiel_id=? "
                         "AND seq_code=? AND partie_numero=? ORDER BY niveau_cible, serie",
                         (rid, code, num)).fetchall()]
-            notions, methodes = ((_notions_methodes(conn, ref["niveau"], code, num))
-                                 if source == "interne" else ([], []))
+            notions, methodes, fiches = (
+                _notions_methodes(conn, ref["niveau"], code, num, modele_fiches)
+                if source == "interne" else ([], [], []))
             partie["notions"] = notions
             partie["methodes"] = methodes
+            if modele_fiches:
+                partie["fiches"] = fiches                 # v0.52.4 (format 1.2)
             partie["documents"] = [_doc_fichier(f, data_dir)
                                    for f in _fichiers(conn, rid, code, num)]
             parties.append(partie)
@@ -413,7 +443,8 @@ def construire(conn, rid: str, data_dir: Path | None = None,
     for code, docs in compiles.items():          # séquence hors découpage
         if code and code not in {s["code"] for s in sequences}:
             annuels += docs
-    doc = {"format": FORMAT, "format_version": FORMAT_VERSION,
+    doc = {"format": FORMAT,
+           "format_version": FORMAT_VERSION if modele_fiches else FORMAT_VERSION_SANS_FICHES,
            "exporte_le": datetime.now().astimezone().isoformat(timespec="seconds"),
            "exporte_par": f"seqenseigne {VERSION_APPLI}",
            "empreinte": "", "referentiel": entete, "structure": structure,

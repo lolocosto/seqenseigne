@@ -20,6 +20,7 @@ dans sequences_par_niveau.
 """
 
 from __future__ import annotations
+import sqlite3
 
 
 # v0.11.2 — Ordre pédagogique des séries d'un exercice. La série 'R' a été
@@ -104,6 +105,27 @@ def _charger_sequence_par_niveau(conn, niveau, sequence_code):
     select_etat = ("sn.etat_code AS etat_code"
                    if "etat_code" in cols_spn
                    else "'en_cours' AS etat_code")
+    # v0.52.4 (L6b) — Depuis v0.52.0, S01…S10 existent en C03 et en C04 : la
+    # jointure sur le seul code donnait à la 6e le nom d'une séquence du
+    # cycle 4. On préfère la séquence du cycle du niveau (param_niveaux),
+    # sinon on garde l'ancienne jointure (tables de test minimales, niveau
+    # absent de param_niveaux).
+    cycle = ""
+    try:
+        r_c = conn.execute("SELECT cycle_code FROM param_niveaux WHERE code = ?",
+                           (niveau,)).fetchone()
+        cycle = (r_c[0] or "") if r_c else ""
+    except Exception:
+        cycle = ""
+    if cycle:
+        conn_sc = ("LEFT JOIN sequences_du_cycle sc ON sc.id = ("
+                   "SELECT sc2.id FROM sequences_du_cycle sc2 "
+                   "WHERE sc2.code = sn.sequence_code "
+                   "ORDER BY (sc2.cycle_code = ?) DESC, sc2.cycle_code LIMIT 1)")
+        params = (cycle, niveau, sequence_code)
+    else:
+        conn_sc = "LEFT JOIN sequences_du_cycle sc ON sc.code = sn.sequence_code"
+        params = (niveau, sequence_code)
     row = conn.execute(
         f"""
         SELECT
@@ -119,13 +141,12 @@ def _charger_sequence_par_niveau(conn, niveau, sequence_code):
             th.nom                 AS theme_nom,
             th.code_couleur        AS theme_code_couleur
         FROM sequences_par_niveau sn
-        LEFT JOIN sequences_du_cycle sc
-               ON sc.code = sn.sequence_code
+        {conn_sc}
         LEFT JOIN themes th
                ON th.id = sc.theme_id
         WHERE sn.niveau = ? AND sn.sequence_code = ?
         """,
-        (niveau, sequence_code),
+        params,
     ).fetchone()
 
     if row is None:
@@ -573,3 +594,57 @@ def _charger_exos_par_serie(conn, objectif_id):
         })
 
     return resultat
+
+
+# ── v0.52.4 — Enrichissement pour l'atelier d'assemblage (route seulement) ──
+
+SERIES_DOCUMENTS_ASSEMBLAGE = ("EV", "TP", "AC", "AT")
+
+
+def enrichir_pour_assemblage(conn, data: dict) -> dict:
+    """Décisions I2 / A5 (v0.52.4) — ajoute à la réponse de la route de
+    l'atelier d'assemblage, sans toucher à `lire_sequence_par_niveau` (lue
+    par les livrets : cycle 4 inchangé) :
+
+      - `modele` : {gabarit, libelle} du référentiel de l'atelier du niveau
+        (règle R1b) ;
+      - pour chaque objectif : `fiche` (fiche de résumé de l'objectif,
+        `fiches_resume.objectif_id`, ou None) et `exos_documents` (séries
+        EV, TP, AC, AT reliées par objectif_exos, même forme que
+        `exos_par_serie`)."""
+    from services.gabarits_documents import LIBELLES_GABARITS, gabarit_atelier_du_niveau
+    sn = data.get("sequence_par_niveau") or {}
+    g = gabarit_atelier_du_niveau(conn, sn.get("niveau") or "")
+    data["modele"] = {"gabarit": g, "libelle": LIBELLES_GABARITS.get(g, g)}
+    for p in data.get("parties") or []:
+        for o in p.get("objectifs") or []:
+            try:
+                f = conn.execute(
+                    "SELECT id, titre, num_fiche, etat_code FROM fiches_resume "
+                    "WHERE objectif_id = ? ORDER BY num_fiche, id LIMIT 1",
+                    (o["id"],)).fetchone()
+            except sqlite3.Error:
+                f = None
+            o["fiche"] = ({"id": f["id"], "titre": f["titre"] or "",
+                           "num_fiche": f["num_fiche"],
+                           "etat_code": f["etat_code"] or "en_cours"} if f else None)
+            docs = {s: [] for s in SERIES_DOCUMENTS_ASSEMBLAGE}
+            try:
+                lignes = conn.execute(
+                    "SELECT oe.serie, oe.ordre, oe.exercice_id, ex.titre, ex.fichier, "
+                    "ex.serie_code, ex.num, ex.etat_code FROM objectif_exos oe "
+                    "LEFT JOIN exercices ex ON ex.id = oe.exercice_id "
+                    "WHERE oe.objectif_id = ? AND oe.serie IN ('EV','TP','AC','AT') "
+                    "ORDER BY oe.serie, oe.ordre", (o["id"],)).fetchall()
+            except sqlite3.Error:
+                lignes = []
+            for r in lignes:
+                docs[r["serie"]].append({
+                    "ordre": r["ordre"], "exercice_id": r["exercice_id"],
+                    "exercice": {"id": r["exercice_id"], "titre": r["titre"] or "",
+                                 "fichier": r["fichier"] or "",
+                                 "serie_code": r["serie_code"] or "", "num": r["num"],
+                                 "etat_code": r["etat_code"] or "en_cours"}})
+            o["exos_documents"] = docs
+    return data
+

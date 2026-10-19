@@ -1019,6 +1019,48 @@ def modifier_methode_objectif(conn, objectif_id: str, methode_id) -> dict:
     return _format_retour_objectif(conn, objectif_id)
 
 
+class FicheIntrouvableV2(V2EditionErreur):
+    def __init__(self, fiche_id):
+        super().__init__(f"Fiche de résumé introuvable : {fiche_id}",
+                         "fiche_introuvable", fiche_id=fiche_id)
+
+
+class FicheHorsSequence(V2EditionErreur):
+    def __init__(self, fiche_id, objectif_id):
+        super().__init__(
+            "Cette fiche de résumé appartient à une autre séquence que l'objectif.",
+            "fiche_hors_sequence", fiche_id=fiche_id, objectif_id=objectif_id)
+
+
+def lier_fiche_objectif(conn, objectif_id: str, fiche_id) -> dict:
+    """Décision A5 (v0.52.4) — « Fiche de l'objectif » dans l'assemblage
+    (modèle « Fiches de résumé par objectif ») : pose
+    `fiches_resume.objectif_id`. Une seule fiche par objectif : la fiche
+    qui occupait la place est détachée (objectif_id = NULL, elle reste dans
+    sa séquence). `fiche_id` None ou vide → détache la fiche de l'objectif.
+
+    Lien de structure : permis même si la fiche est validée (comme les
+    liens objectif ↔ exercice) ; la garde porte sur la séquence (route)."""
+    niveau, sequence = _lire_niv_seq_objectif(conn, objectif_id)
+    if fiche_id in (None, ""):
+        conn.execute("UPDATE fiches_resume SET objectif_id = NULL WHERE objectif_id = ?",
+                     (objectif_id,))
+        return {"objectif_id": objectif_id, "fiche": None}
+    f = conn.execute("SELECT id, titre, niveau, sequence, num_fiche, etat_code "
+                     "FROM fiches_resume WHERE id = ?", (fiche_id,)).fetchone()
+    if f is None:
+        raise FicheIntrouvableV2(fiche_id)
+    if (f["niveau"] or "", f["sequence"] or "") not in (("", ""), (niveau, sequence)):
+        raise FicheHorsSequence(fiche_id, objectif_id)
+    conn.execute("UPDATE fiches_resume SET objectif_id = NULL "
+                 "WHERE objectif_id = ? AND id <> ?", (objectif_id, fiche_id))
+    conn.execute("UPDATE fiches_resume SET objectif_id = ?, niveau = ?, sequence = ? "
+                 "WHERE id = ?", (objectif_id, niveau, sequence, fiche_id))
+    return {"objectif_id": objectif_id,
+            "fiche": {"id": f["id"], "titre": f["titre"] or "",
+                      "num_fiche": f["num_fiche"], "etat_code": f["etat_code"]}}
+
+
 def modifier_criteres_objectif(
     conn,
     objectif_id: str,
@@ -1853,7 +1895,7 @@ def lister_exos_disponibles_pour_revision(
 #       - reordonner_objectifs_dans_partie : les objectifs *dans* une partie
 #                                     (renomme les codes selon la position)
 #       - reordonner_exos_revision_approche : les exos R/EA *dans* une partie
-#   2. Activation de l'objectif "Connaître les notions et les méthodes"
+#   2. Activation de l'objectif « Cours » (« Connaître le cours »)
 #       - activer_objectif_connaitre : crée l'obj '0X' (X = numero_partie - 1)
 #         avec critères pré-remplis fournis par l'appelant
 #   3. Exos de révision/approche au niveau partie
@@ -2247,12 +2289,13 @@ def deplacer_objectif_avec_position(
 def activer_objectif_connaitre(
     conn,
     partie_id: str,
-    nom: str = "Connaître les notions et les méthodes",
+    nom: str = "Connaître le cours",
     critere_F: str = "",
     critere_A: str = "",
     critere_E: str = "",
 ) -> dict:
-    """Crée l'objectif "Connaître les notions et les méthodes" dans une partie.
+    """Crée l'objectif « Cours » (nom par défaut « Connaître le cours », v0.52.4
+    M6 ; « Connaître les notions et les méthodes » avant) dans une partie.
 
     Le code est calculé automatiquement via code_objectif_connaitre() :
     '01' en partie 1, '11' en partie 2, '21' en partie 3...
@@ -2299,9 +2342,14 @@ def creer_objectif_simple(
     critere_F: str = "",
     critere_A: str = "",
     critere_E: str = "",
+    reserver_cours: bool = False,
 ) -> dict:
     """v0.10.1 — Crée un objectif "simple" dans une partie, avec un code
     auto-incrémenté respectant la convention '0X/1X/2X'.
+
+    v0.52.4 (A5) — `reserver_cours=True` (création d'un objectif sans
+    méthode depuis l'assemblage) : le code de l'objectif « Cours » de la
+    partie ((n-1)1) n'est jamais pris, même s'il est encore libre.
 
     Stratégie de code :
       - prefixe = numero_partie - 1 (chiffre des dizaines)
@@ -2339,7 +2387,7 @@ def creer_objectif_simple(
     }
 
     # Trouver le prochain code libre. On essaie 1, 2, 3, ... 9 puis 10, 11...
-    for chiffre in range(1, 100):
+    for chiffre in range(2 if reserver_cours else 1, 100):
         code = f"{prefixe}{chiffre}"
         if code not in pris:
             break
@@ -3082,8 +3130,22 @@ def _valider_sequence_hook(conn, sn_id: str) -> None:
     Lève ValidationSequenceErreur(sn_id, raisons) si au moins une règle
     échoue. Les raisons sont libellées de façon actionnable (réutilisées
     telles quelles dans le toast côté UI).
+
+    v0.52.4 (M2) — Modèle « Fiches de résumé par objectif » (gabarit
+    `sixieme` du référentiel de l'atelier du niveau, règle R1b) : la série E
+    est facultative. Chaque objectif d'exercices a au moins un exercice F et
+    un exercice A, ses critères F et A (le critère E seulement s'il a des
+    exercices E) et sa fiche de résumé (`fiches_resume.objectif_id`). Le
+    modèle « Notions et méthodes » garde la règle F, A, E.
     """
     raisons: list[str] = []
+    row_sn = conn.execute("SELECT niveau FROM sequences_par_niveau WHERE id = ?",
+                          (sn_id,)).fetchone()
+    modele_fiches = False
+    if row_sn is not None:
+        from services.gabarits_documents import est_modele_fiches, gabarit_atelier_du_niveau
+        modele_fiches = est_modele_fiches(gabarit_atelier_du_niveau(conn, row_sn[0]))
+    series_exigees = ("F", "A") if modele_fiches else ("F", "A", "E")
 
     parties = conn.execute(
         "SELECT id, numero FROM sequence_parties "
@@ -3113,34 +3175,41 @@ def _valider_sequence_hook(conn, sn_id: str) -> None:
         for o in objs:
             est_cours = (o["code"] == code_cours)
             etiquette = f"L'objectif {o['code']}"
+            series_presentes = {
+                r["serie"] for r in conn.execute(
+                    "SELECT DISTINCT serie FROM objectif_exos "
+                    "WHERE objectif_id = ?",
+                    (o["id"],),
+                ).fetchall()
+            }
 
-            # Règle 3 — nom + 3 critères (cours ET exo)
+            # Règle 3 — nom + critères (cours ET exo). M2 : modèle Fiches,
+            # critère E exigé seulement si l'objectif a des exercices E.
             if not (o["nom"] or "").strip():
                 raisons.append(f"{etiquette} n'a pas de nom.")
-            for champ, libelle in (
-                ("critere_F", "F"), ("critere_A", "A"), ("critere_E", "E"),
-            ):
+            criteres = [("critere_F", "F"), ("critere_A", "A")]
+            if not modele_fiches or "E" in series_presentes:
+                criteres.append(("critere_E", "E"))
+            for champ, libelle in criteres:
                 if not (o[champ] or "").strip():
                     raisons.append(
                         f"{etiquette} n'a pas de critère {libelle}."
                     )
 
-            # Règle 4 — exos dans les 3 séries (exo seulement)
+            # Règle 4 — exos dans les séries exigées (exo seulement)
             if not est_cours:
-                series_presentes = {
-                    r["serie"] for r in conn.execute(
-                        "SELECT DISTINCT serie FROM objectif_exos "
-                        "WHERE objectif_id = ?",
-                        (o["id"],),
-                    ).fetchall()
-                }
-                manquantes = [s for s in ("F", "A", "E")
+                manquantes = [s for s in series_exigees
                               if s not in series_presentes]
                 if manquantes:
                     raisons.append(
                         f"{etiquette} n'a pas d'exercice dans la série "
                         f"{', '.join(manquantes)}."
                     )
+                # M2 — modèle Fiches : la fiche de résumé de l'objectif.
+                if modele_fiches and conn.execute(
+                        "SELECT 1 FROM fiches_resume WHERE objectif_id = ? LIMIT 1",
+                        (o["id"],)).fetchone() is None:
+                    raisons.append(f"{etiquette} n'a pas de fiche de résumé.")
 
     if raisons:
         raise ValidationSequenceErreur(sn_id, raisons)

@@ -44,19 +44,35 @@ describe('préfixes des séries documents', () => {
   });
 });
 
-describe('I1 : séries documents proposées en 6e seulement', () => {
-  let visibles;
-  beforeAll(() => {
-    const AtelierExercice = { SERIE_DOCUMENT: {
-      EV: 'évaluation', TP: 'travail personnel', AC: 'activité complémentaire',
-      AT: "séance d'atelier" } };
-    visibles = new Function('AtelierExercice', extraire('seriesDocumentsVisibles') + '\n')(
+describe('I1 / I2 : séries documents proposées au modèle « Fiches » du niveau (plus « N09 »)', () => {
+  // v0.52.4 (I2) — le modèle vient du référentiel de l'atelier du niveau
+  // (window.atlModeleFiches, static/gabarits_atelier.js), et non du code N09 :
+  // un référentiel de 5e peut choisir le modèle « Fiches de résumé par
+  // objectif », un référentiel de 6e le modèle « Notions et méthodes ».
+  const SERIE_DOCUMENT = { EV: 'évaluation', TP: 'travail personnel',
+    AC: 'activité complémentaire', AT: "séance d'atelier" };
+  const avecModeles = (gabarits) => {
+    const win = { atlModeleFiches: n => gabarits[n] === 'sixieme' };
+    const AtelierExercice = { SERIE_DOCUMENT };
+    AtelierExercice.modeleFiches = new Function('window', extraire('modeleFiches') + '\n')(win);
+    return new Function('AtelierExercice', extraire('seriesDocumentsVisibles') + '\n')(
       AtelierExercice);
-  });
-  it('N09 → visibles ; cycle 4 → masquées, sauf atome déjà dans une de ces séries', () => {
+  };
+  it('modèle Fiches → visibles ; Notions et méthodes → masquées, sauf atome déjà dans une de ces séries', () => {
+    const visibles = avecModeles({ N09: 'sixieme', N11: 'cycle4' });
     expect(visibles('N09', 'fondamental')).toBe(true);
     expect(visibles('N11', 'fondamental')).toBe(false);
     expect(visibles('N11', 'travail personnel')).toBe(true);
+  });
+  it('le niveau ne décide plus : N10 au modèle Fiches les propose, N09 au modèle Notions non', () => {
+    const visibles = avecModeles({ N09: 'cycle4', N10: 'sixieme' });
+    expect(visibles('N10', 'fondamental')).toBe(true);
+    expect(visibles('N09', 'fondamental')).toBe(false);
+  });
+  it('plus aucun test « === \'N09\' » pour décider du rendu ou des séries', () => {
+    expect(SRC).not.toMatch(/niveau === 'N09'\s*\|\|/);
+    expect(SRC).not.toMatch(/=== 'N09';\s*\n\s*overlay/);
+    expect(SRC).toMatch(/estExercice6e\(\) \{[\s\S]*?AtelierExercice\.modeleFiches\(niveau\)/);
   });
   it('les boutons sont masqués par défaut dans le formulaire et la modale', () => {
     const boutons = HTML.match(/data-serie-document(-creation)?\s+style="display:none"/g) || [];
@@ -94,8 +110,8 @@ describe('module Évaluations : sujet et version en 6e', () => {
     expect(EDIT).toMatch(/parametresRendu\(\) \{\s*return '';\s*\}/);
     expect(EDIT).toMatch(/\/rendu-pdf`\s*\+ this\.parametresRendu\(\)/);
   });
-  it("l'évaluation ne transmet sujet/version que pour N09", () => {
-    expect(EVAL).toMatch(/_estEval6e\(\) \{\s*return !!\(this\.itemActif && this\.itemActif\.niveau === 'N09'\);/);
+  it("l'évaluation ne transmet sujet/version qu'au modèle « Fiches » de son niveau (v0.52.4)", () => {
+    expect(EVAL).toMatch(/_estEval6e\(\) \{[\s\S]*?window\.atlModeleFiches\(n\)/);
     expect(EVAL).toMatch(/if \(!this\._estEval6e\(\)\) return '';/);
   });
 });

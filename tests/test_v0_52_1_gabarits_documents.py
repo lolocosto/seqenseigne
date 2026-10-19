@@ -302,7 +302,8 @@ def test_onglet_documents_ne_liste_que_le_gabarit_et_garde_l_autre_en_base(app_6
     with app_6e.json_store._conn() as c:
         docs = rd.lister_documents(c, "R09")
         assert [d["type_document"] for d in docs] == list(gd.types("sixieme"))
-        assert docs[0]["libelle"] == "Livret de séquence (6e)" and docs[0]["champs"]
+        # v0.52.4 (M1) : les libellés du catalogue perdent « (6e) ».
+        assert docs[0]["libelle"] == "Livret de séquence" and docs[0]["champs"]
         gd.modifier(c, "R09", "cycle4")
         assert [d["type_document"] for d in rd.lister_documents(c, "R09")] == \
             list(rd.TYPES_DOCUMENT)
@@ -495,7 +496,9 @@ def test_route_atelier_cycle4_inchangee(app_c4):
 
 def test_format_1_1_porte_le_gabarit_et_un_1_0_sans_champ_est_lu_cycle4(app_6e):
     from services import format_referentiel as fmt
-    assert fmt.FORMAT_VERSION == "1.1"
+    # v0.52.4 : format 1.2 (partie.fiches) ; un référentiel « Notions et
+    # méthodes » reste déclaré 1.1 (FORMAT_VERSION_SANS_FICHES).
+    assert fmt.FORMAT_VERSION == "1.2" and fmt.FORMAT_VERSION_SANS_FICHES == "1.1"
     prop = fmt.schema()["properties"]["referentiel"]["properties"]["gabarit_documents"]
     assert prop == {"enum": ["cycle4", "sixieme"]}
     with app_6e.json_store._conn() as c:

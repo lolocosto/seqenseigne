@@ -14,6 +14,7 @@ Endpoints édition objectif (R4e3) :
   PATCH  /api/v2/objectifs/<objectif_id>/code
   PATCH  /api/v2/objectifs/<objectif_id>/nom
   PATCH  /api/v2/objectifs/<objectif_id>/methode
+  PUT    /api/v2/objectifs/<objectif_id>/fiche      (v0.52.4)
   PATCH  /api/v2/objectifs/<objectif_id>/criteres
   GET    /api/v2/methodes?niveau=N11&sequence=S03   — catalogue read-only
 
@@ -40,6 +41,7 @@ from services.v2_edition import (
     modifier_code_objectif,
     modifier_nom_objectif,
     modifier_methode_objectif,
+    lier_fiche_objectif,             # v0.52.4
     modifier_criteres_objectif,
     lister_methodes_de_sequence,
     # v0.6.4
@@ -131,6 +133,8 @@ bp_v2_edition = Blueprint("v2_edition", __name__)
 
 _CODE_HTTP = {
     # 404
+    "fiche_introuvable":                404,     # v0.52.4
+    "fiche_hors_sequence":              409,     # v0.52.4
     "sequence_par_niveau_introuvable":  404,
     "partie_introuvable":               404,
     "objectif_introuvable":             404,
@@ -490,6 +494,27 @@ def api_modifier_methode_objectif(objectif_id: str):
             rep = modifier_methode_objectif(
                 conn, objectif_id, payload.get("methode_id"),
             )
+    except V2EditionErreur as e:
+        return _erreur(e)
+    return jsonify(rep)
+
+
+@bp_v2_edition.route(
+    "/api/v2/objectifs/<objectif_id>/fiche",
+    methods=["PUT"],
+)
+def api_lier_fiche_objectif(objectif_id: str):
+    """v0.52.4 (A5) — Fiche de résumé de l'objectif (modèle « Fiches de
+    résumé par objectif ») : `fiches_resume.objectif_id`.
+
+    Body JSON : {"fiche_id": "fr_xxx"} pour lier (la fiche précédente de
+                l'objectif est détachée), {"fiche_id": null} pour détacher.
+    """
+    payload = request.get_json(silent=True) or {}
+    try:
+        with _store_conn() as conn:
+            assert_sequence_modifiable_par_objectif(conn, objectif_id)
+            rep = lier_fiche_objectif(conn, objectif_id, payload.get("fiche_id"))
     except V2EditionErreur as e:
         return _erreur(e)
     return jsonify(rep)
@@ -908,11 +933,11 @@ def api_reordonner_objectifs_dans_partie(partie_id: str):
     methods=["POST"],
 )
 def api_activer_objectif_connaitre(partie_id: str):
-    """Crée l'objectif "Connaître les notions et les méthodes" dans une partie.
+    """Crée l'objectif « Cours » (« Connaître le cours », v0.52.4) dans une partie.
 
     Body JSON (tous optionnels) :
       {
-        "nom": "Connaître les notions et les méthodes",
+        "nom": "Connaître le cours",
         "critere_F": "...",
         "critere_A": "...",
         "critere_E": "..."
@@ -930,7 +955,7 @@ def api_activer_objectif_connaitre(partie_id: str):
             obj = activer_objectif_connaitre(
                 conn,
                 partie_id,
-                nom=payload.get("nom") or "Connaître les notions et les méthodes",
+                nom=payload.get("nom") or "Connaître le cours",   # v0.52.4 (M6)
                 critere_F=payload.get("critere_F") or "",
                 critere_A=payload.get("critere_A") or "",
                 critere_E=payload.get("critere_E") or "",
@@ -1125,6 +1150,7 @@ def api_creer_objectif(partie_id: str):
                 critere_F=payload.get("critere_F") or "",
                 critere_A=payload.get("critere_A") or "",
                 critere_E=payload.get("critere_E") or "",
+                reserver_cours=bool(payload.get("reserver_cours")),   # v0.52.4
             )
     except V2EditionErreur as e:
         return _erreur(e)

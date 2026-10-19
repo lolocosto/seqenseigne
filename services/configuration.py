@@ -160,14 +160,23 @@ CLES_DEFAUT = {
     #   F = Fondamental    → niveau de maîtrise "À consolider"
     #   A = Avancé         → niveau de maîtrise "Satisfaisant"
     #   E = Exploration    → niveau de maîtrise "Très bon"
+    # v0.52.4 (M6) — Nom par défaut « Connaître le cours » dans les deux
+    # modèles de référentiel (« Connaître les notions et les méthodes » avant ;
+    # une configuration qui garde exactement l'ancien défaut reçoit le
+    # nouveau, cf. NOM_CONNAITRE_ANCIEN).
     'atelier_assemblage_criteres_connaitre': {
-        'nom':       'Connaître les notions et les méthodes',
+        'nom':       'Connaître le cours',
         'critere_F': 'A noté la trace écrite en classe.',
         'critere_A': 'A complété les fiches de résumé.',
         'critere_E': "Sait résumer le cours à l'oral.",
     },
 }
 
+
+
+# v0.52.4 (M6) — Nom par défaut de l'objectif « Cours » d'une partie.
+NOM_CONNAITRE = 'Connaître le cours'
+NOM_CONNAITRE_ANCIEN = 'Connaître les notions et les méthodes'
 
 class Configuration:
     """Accès en lecture/écriture au fichier de configuration de l'appli."""
@@ -195,6 +204,11 @@ class Configuration:
         for k, v in data.items():
             if k in CLES_DEFAUT:
                 result[k] = v
+        # v0.52.4 (M6) — L'ancien nom par défaut de l'objectif Cours, enregistré
+        # tel quel par l'écran Préférences, suit le nouveau défaut.
+        cc = result.get('atelier_assemblage_criteres_connaitre')
+        if isinstance(cc, dict) and str(cc.get('nom', '')).strip() == NOM_CONNAITRE_ANCIEN:
+            result['atelier_assemblage_criteres_connaitre'] = {**cc, 'nom': NOM_CONNAITRE}
         return result
 
     def get(self, cle: str, defaut=None):
@@ -469,7 +483,7 @@ class Configuration:
 
     def atelier_assemblage_criteres_connaitre(self) -> dict:
         """v0.10.1 — Valeurs pré-remplies des critères F/A/E de l'objectif
-        "Connaître les notions et les méthodes" lors de son activation depuis
+        « Cours » (« Connaître le cours », v0.52.4) lors de son activation depuis
         l'atelier d'assemblage. Le frontend appelle l'API /configuration et
         applique ces valeurs au moment du clic sur "+ Activer Connaître".
 
@@ -477,7 +491,7 @@ class Configuration:
         complété par les défauts si la config est partielle ou absente.
         """
         defauts = {
-            'nom':       'Connaître les notions et les méthodes',
+            'nom':       NOM_CONNAITRE,
             'critere_F': 'A noté la trace écrite en classe.',
             'critere_A': 'A complété les fiches de résumé.',
             'critere_E': "Sait résumer le cours à l'oral.",
@@ -490,4 +504,8 @@ class Configuration:
             v = val.get(k)
             if isinstance(v, str) and v.strip():
                 out[k] = v
+        # v0.52.4 (M6) — L'ancien nom par défaut, enregistré tel quel par
+        # l'écran Préférences, n'est pas un choix : il suit le nouveau défaut.
+        if out['nom'].strip() == NOM_CONNAITRE_ANCIEN:
+            out['nom'] = NOM_CONNAITRE
         return out

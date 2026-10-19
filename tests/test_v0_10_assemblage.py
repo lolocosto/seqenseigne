@@ -439,7 +439,7 @@ class TestActiverObjectifConnaitre:
         # Code attendu : partie 3 → '21'
         assert rep["code"] == "21"
         assert rep["partie_id"] == "pt_A3"
-        assert rep["nom"] == "Connaître les notions et les méthodes"
+        assert rep["nom"] == "Connaître le cours"                 # v0.52.4 (M6)
         assert rep["critere_F"] == "A noté la trace écrite en classe."
         assert rep["critere_A"] == "A complété les fiches de résumé."
         assert rep["critere_E"] == "Sait résumer le cours à l'oral."
@@ -835,7 +835,7 @@ class TestRoutes:
         data = rep.get_json()
         assert data["code"] == "11"
         assert data["partie_id"] == "pt_X2"
-        assert data["nom"] == "Connaître les notions et les méthodes"
+        assert data["nom"] == "Connaître le cours"                # v0.52.4 (M6)
         assert data["critere_F"] == "F text"
 
     def test_activer_objectif_connaitre_409_si_existe(self, client, populated):

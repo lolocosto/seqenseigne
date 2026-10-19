@@ -28,7 +28,7 @@ function _refuItems() {
   (typeof ATL_REF_LISTE !== 'undefined' ? ATL_REF_LISTE : []).forEach(r => items.push({
     cle: 'I:' + r.id, id: r.id, source: 'interne', type: r.type_ref || 'principal',
     annee: _refuAnneeInterne(r.version), nom: r.nom || r.id, desc: r.description || '',
-    etat: r.etat }));
+    etat: r.etat, modele: r.gabarit_documents || 'cycle4' }));
   (typeof RPE !== 'undefined' ? RPE.liste : []).forEach(r => items.push({
     cle: 'E:' + r.id, id: r.id, source: 'externe', type: r.type_ref || 'principal',
     annee: r.annee || '', nom: r.nom, desc: r.description || '',
@@ -42,6 +42,7 @@ async function refuInit() {
   // figée).
   if (typeof rpeCharger === 'function') await rpeCharger();
   await refuChargerModeles();
+  if (typeof atlChargerGabarits === 'function') await atlChargerGabarits();  // v0.52.4
   refuRendre();
 }
 
@@ -125,6 +126,7 @@ function refuRendre() {
   const liste = document.getElementById('atl-ref-liste');
   if (!REFU.actif || !liste) return;
   refuPreremplirGabarit();                                      // v0.52.1
+  refuMajChoixModele();                                         // v0.52.4
   const tous = _refuItems();
   // Années connues (filtre).
   const selA = document.getElementById('refu-f-annee');
@@ -146,6 +148,7 @@ function refuRendre() {
   const ligne = i => `<div class="asm-item asm-item--clickable${i.cle === REFU.sel ? ' active' : ''}"
       onclick="refuChoisir('${i.cle}')">
       <div class="atl-item-id" style="display:flex;align-items:center;gap:6px">${pastille(i.etat)}<span>${_refuE(i.nom)}</span></div>
+      ${_refuBadgeModele(i)}
       ${i.desc ? `<div class="rxa-item-desc">${_refuE(i.desc)}</div>` : ''}</div>`;
   // Groupage récursif dans l'ordre année → type → source.
   const rendre = (lst, niv) => {
@@ -267,6 +270,44 @@ function refuGabaritParDefaut(niveau) {
   return niveau === 'N09' ? 'sixieme' : 'cycle4';
 }
 
+// v0.52.4 (M1) — Le gabarit est le MODÈLE du référentiel, indépendant du
+// niveau. Il n'est proposé à la création que pour un référentiel interne
+// principal (un externe ou une MER ne publie pas de documents compilés), avec
+// sa description : documents produits, séries proposées, règles de complétude.
+function refuModeleProposable(source, type) {
+  return source === 'interne' && (type || 'principal') === 'principal';
+}
+
+function refuDescriptionModele(m) {
+  if (!m) return '';
+  const l = (titre, v) => v ? `<p><strong>${titre} :</strong> ${_refuE(v)}</p>` : '';
+  return `${m.resume ? `<p>${_refuE(m.resume)}</p>` : ''}`
+    + l('Documents', m.documents) + l('Séries', m.series) + l('Pour valider', m.completude);
+}
+
+function refuMajChoixModele() {
+  const bloc = document.getElementById('refu-c-modele-bloc');
+  const sel = document.getElementById('refu-c-gabarit');
+  if (!bloc || !sel) return;
+  const source = (document.getElementById('refu-c-source') || {}).value || 'interne';
+  const type = (document.getElementById('atl-ref-type') || {}).value || 'principal';
+  const visible = refuModeleProposable(source, type);
+  bloc.style.display = visible ? '' : 'none';
+  const desc = document.getElementById('refu-c-modele-desc');
+  if (desc) {
+    const m = (typeof atlModele === 'function') ? atlModele(sel.value) : null;
+    desc.innerHTML = visible ? refuDescriptionModele(m) : '';
+  }
+}
+
+function _refuBadgeModele(i) {
+  if (i.source !== 'interne' || i.type !== 'principal') return '';
+  const lib = (typeof atlLibelleModele === 'function') ? atlLibelleModele(i.modele)
+    : (i.modele === 'sixieme' ? 'Fiches de résumé par objectif' : 'Notions et méthodes');
+  return `<span class="refu-modele-badge${i.modele === 'sixieme' ? ' refu-modele-badge--fiches' : ''}"
+    title="Modèle du référentiel">${_refuE(lib)}</span>`;
+}
+
 function refuPreremplirGabarit() {
   const sel = document.getElementById('refu-c-gabarit');
   const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
@@ -280,8 +321,10 @@ async function refuCreer() {
   const source = document.getElementById('refu-c-source').value;
   refuPreremplirGabarit();
   const selG = document.getElementById('refu-c-gabarit');
-  const gabarit = selG ? selG.value : undefined;
   const type = document.getElementById('atl-ref-type').value;
+  // v0.52.4 — modèle envoyé seulement s'il est proposé (interne principal) ;
+  // sinon le serveur applique la valeur par défaut du niveau.
+  const gabarit = (selG && refuModeleProposable(source, type)) ? selG.value : undefined;
   const desc = document.getElementById('refu-c-desc');
   const st = document.getElementById('refu-status');
   const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
@@ -305,6 +348,7 @@ async function refuCreer() {
     }
     desc.value = '';
     if (st) st.textContent = 'Référentiel créé.';
+    if (typeof atlChargerGabarits === 'function') await atlChargerGabarits();   // v0.52.4
     refuChoisir(REFU.sel);
   } catch (e) { if (st) st.textContent = e.message; }
 }

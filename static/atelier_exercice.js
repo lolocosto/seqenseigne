@@ -391,8 +391,10 @@ class AtelierExercice extends AtelierEditeur {
         resolve(null);
         return;
       }
-      // v0.52.2 (I1) — séries « documents » proposées en 6e seulement.
-      const docs6e = (window.ATL_FILTRE_NIVEAU || '') === 'N09';
+      // v0.52.2 (I1) — séries « documents » proposées au modèle « Fiches de
+      // résumé par objectif » seulement (v0.52.4, I2 : modèle du niveau,
+      // plus le test « N09 »).
+      const docs6e = AtelierExercice.modeleFiches(window.ATL_FILTRE_NIVEAU || '');
       overlay.querySelectorAll('[data-serie-document-creation]').forEach(el => {
         el.style.display = docs6e ? '' : 'none';
       });
@@ -511,7 +513,8 @@ class AtelierExercice extends AtelierEditeur {
    */
   /**
    * v0.52.2 (décision I1) — Boutons des séries « documents » (EV, TP, AC,
-   * AT) : visibles en 6e (N09) seulement, ou si l'atome en porte une ; même
+   * AT) : visibles au modèle « Fiches de résumé par objectif » seulement
+   * (v0.52.4 : modèle du niveau, I2), ou si l'atome en porte une ; même
    * règle dans la modale de création.
    */
   majSeriesDocuments() {
@@ -667,9 +670,9 @@ class AtelierExercice extends AtelierEditeur {
       sel.addEventListener('change', () => this.verifierCacheEtAfficher());
       return sel;
     };
-    const version = mk('atl-exercice-rendu-version', 'Version (6e)',
+    const version = mk('atl-exercice-rendu-version', 'Version (modèle Fiches)',
                        [['eleve', 'Élève'], ['corrigee', 'Corrigée']]);
-    const sujet = mk('atl-exercice-rendu-sujet', 'Sujet (évaluation de 6e)',
+    const sujet = mk('atl-exercice-rendu-sujet', 'Sujet (évaluation par compétence)',
                      [['A', 'Sujet A'], ['B', 'Sujet B']]);
     const status = conteneur.querySelector('[id$="-rendu-status"]');
     conteneur.insertBefore(version, status);
@@ -677,9 +680,14 @@ class AtelierExercice extends AtelierEditeur {
     this.majSelecteursRendu6e();
   }
 
+  // v0.52.4 (I2) — Rendu au modèle « Fiches de résumé par objectif » : selon
+  // le modèle du niveau de l'exercice, plus le test « N09 ». Les archives Xnn
+  // gardent le rendu du cycle 4 (services/rendu_atome_6e.py).
   estExercice6e() {
-    const niveau = (this.itemActif && this.itemActif.niveau) || window.ATL_FILTRE_NIVEAU || '';
-    return niveau === 'N09';
+    const it = this.itemActif || {};
+    const niveau = it.niveau || window.ATL_FILTRE_NIVEAU || '';
+    if (String(it.sequence || '').startsWith('X')) return false;
+    return AtelierExercice.modeleFiches(niveau);
   }
 
   majSelecteursRendu6e() {
@@ -753,10 +761,20 @@ AtelierExercice.SERIE_DOCUMENT = {
 };
 AtelierExercice.SERIES_DOCUMENTS = Object.keys(AtelierExercice.SERIE_DOCUMENT);
 
-// v0.52.2 (décision I1) — Les séries documents ne sont proposées qu'en 6e
-// (N09), ou pour un atome qui en porte déjà une.
+// v0.52.4 (I2) — Modèle « Fiches de résumé par objectif » du niveau
+// (static/gabarits_atelier.js) ; sans le module : règle de secours N09.
+AtelierExercice.modeleFiches = function (niveau) {
+  if (typeof window !== 'undefined' && typeof window.atlModeleFiches === 'function') {
+    return window.atlModeleFiches(niveau);
+  }
+  return niveau === 'N09';
+};
+
+// v0.52.2 (décision I1) — Les séries documents ne sont proposées qu'au modèle
+// « Fiches de résumé par objectif » (v0.52.4 : modèle du niveau, plus « N09 »),
+// ou pour un atome qui en porte déjà une.
 AtelierExercice.seriesDocumentsVisibles = function (niveau, serie) {
-  return niveau === 'N09'
+  return AtelierExercice.modeleFiches(niveau)
     || Object.values(AtelierExercice.SERIE_DOCUMENT).includes(serie);
 };
 

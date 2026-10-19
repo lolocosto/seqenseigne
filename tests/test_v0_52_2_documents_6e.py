@@ -399,7 +399,7 @@ def test_classe_propose_tp_et_evaluations_et_leur_donne_un_delai(app_6e):
         d = pgd.documents_disponibles(c, "N09", "2026-2027", "S01", prog_ref="pg6")
         refs = {x["doc_ref"]: x["libelle"] for x in d["sequence"] if x["source"] == "interne"}
         assert refs["travaux_personnels_6e|TP01/N09/S01"] == \
-            "Travaux personnels (6e) — S01 : Travail personnel n°1"
+            "Travaux personnels — S01 : Travail personnel n°1"     # v0.52.4 (M1)
         assert "evaluation_6e|EV01/N09/S01" in refs
         a = pgd.ajouter(c, prog_kind="principale", prog_ref="pg6", creneau_ref="cr", rang_seance=2,
                         doc_source="interne", doc_ref="travaux_personnels_6e|TP01/N09/S01",

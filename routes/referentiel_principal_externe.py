@@ -202,7 +202,7 @@ def api_obj_ajouter(rid, code, num):
             cfg = Configuration(_store().data_dir).atelier_assemblage_criteres_connaitre()
         except Exception:
             cfg = {}
-        nom = nom or cfg.get("nom") or "Connaître les notions et les méthodes"
+        nom = nom or cfg.get("nom") or "Connaître le cours"   # v0.52.4 (M6)
         criteres = {k: cfg.get(f"critere_{k.upper()}", "") for k in ("f", "a", "e")}
     return _fait(lambda c: svc.ajouter_objectif(c, rid, code, num, nom, b.get("nb_seances", 0),
                                                 _auj(), type_obj=type_obj, criteres=criteres), 201)

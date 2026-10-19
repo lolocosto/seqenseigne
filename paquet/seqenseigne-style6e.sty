@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/18 v0.4 seqenseigne : style des documents de 6e]
+    [2026/10/19 v0.5 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -33,6 +33,8 @@
 \RequirePackage{array}
 \RequirePackage{pifont}
 \RequirePackage{graphicx}
+\newcommand{\seqNiveauCourt}{6e}
+\newcommand{\seqNiveauExposant}{6\textsuperscript{e}}
 \definecolor{seqSixMauve}{HTML}{E8D5E8}
 \definecolor{seqSixMauveBord}{HTML}{6B3D6B}
 \definecolor{seqSixRouge}{HTML}{D7191C}
@@ -78,9 +80,9 @@
 \newcommand{\seqCouvertureLivretSix}[2]{%
   \noindent\begin{minipage}[t]{0.5\linewidth}\small
     NOM : \seqTrous[4cm]\\[2pt]Prénom : \seqTrous[3.6cm]\\[2pt]
-    6\textsuperscript{e}\ \seqTrous[1.2cm]\end{minipage}\par
+    \seqNiveauExposant\ \seqTrous[1.2cm]\end{minipage}\par
   \begin{center}{\huge\bfseries #1}\\[2pt]
-    {\LARGE\bfseries Niveau 6\textsuperscript{e}}\end{center}
+    {\LARGE\bfseries Niveau \seqNiveauExposant}\end{center}
   \noindent{\bfseries\underline{Objectifs du chapitre :}}
   \begin{itemize}[itemsep=0pt,topsep=2pt]
     \foreach \seq@c/\seq@t in {#2}{\item\textit{\seq@c\ : \seq@t}}
@@ -169,7 +171,7 @@
     \noindent\begin{minipage}[t][\seq@bande][t]{\linewidth}#2\end{minipage}%
     \ifnum\seq@k<#1\relax\seq@traitcoupe\fi}%
   \clearpage}{}
-\newcommand{\seqIdentEleve}[1][6e]{%
+\newcommand{\seqIdentEleve}[1][\seqNiveauCourt]{%
   \noindent\small Nom : \seqTrous[4cm]\hfill Prénom : \seqTrous[4cm]\hfill
   #1 \seqTrous[1cm]\hfill Date : \seqTrous[2.5cm]\par\normalsize}
 \newcommand{\seqTitreEvalSix}[2]{%
@@ -202,7 +204,7 @@
   boxrule=1pt, sharp corners, left=3pt, right=3pt, top=2pt, bottom=2pt}
 \NewDocumentCommand{\seqTitreTravailSix}{o m m m}{%
   \noindent\small Nom : \seqTrous[4cm]\hfill Prénom : \seqTrous[4cm]\hfill
-  6e \seqTrous[1cm]\IfValueT{#1}{\hfill\textbf{#1}}\normalsize
+  \seqNiveauCourt\ \seqTrous[1cm]\IfValueT{#1}{\hfill\textbf{#1}}\normalsize
   \begin{center}{\large\bfseries\color{seqSixVert}#2}\\[2pt]{\bfseries #3}\\[2pt]
   {\small\itshape #4}\end{center}}
 \newtcolorbox{seqEncadreIntroSix}{enhanced, colback=white, colframe=seqSixBleu,
@@ -213,7 +215,7 @@
 \newcommand{\seqTitreComplementSix}[2]{%
   \stepcounter{seqComplSix}%
   \noindent\small Nom : \seqTrous[4.5cm]\hfill Prénom : \seqTrous[4.5cm]\hfill
-  6e \seqTrous[1cm]\normalsize
+  \seqNiveauCourt\ \seqTrous[1cm]\normalsize
   \begin{center}{\large\bfseries\color{seqSixVert}Activité complémentaire
     \theseqComplSix\ \ \ding{72}}\\[2pt]
   {\Large\bfseries #1}\\[2pt]

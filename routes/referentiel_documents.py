@@ -127,11 +127,13 @@ def api_maj(ref_id: str, doc_id: str):
 
 @bp.route("/api/referentiels/<ref_id>/gabarit-documents", methods=["PUT"])
 def api_gabarit(ref_id: str):
-    """Change le gabarit de documents (`cycle4` | `sixieme`) d'un
-    référentiel « en_cours » ; figé au verrouillage (409 sinon).
+    """Change le modèle (gabarit de documents `cycle4` | `sixieme`) d'un
+    référentiel « en_cours » ou « valide » (G2b, v0.52.4) ; figé au
+    verrouillage (409 sinon).
 
-    Body JSON : {"gabarit": "sixieme"}. Les documents de l'autre gabarit
-    restent en base (non affichés). Retour : {gabarit, documents}."""
+    Body JSON : {"gabarit": "sixieme"}. Les documents de l'autre modèle
+    restent en base (non affichés, sans effet). Retour : {gabarit, etat,
+    documents, documents_actifs_hors_modele}."""
     from services import gabarits_documents as gd
     body = request.get_json(silent=True) or {}
     store = _store()
@@ -142,4 +144,22 @@ def api_gabarit(ref_id: str):
             code = {"introuvable": 404, "fige": 409}.get(e.code, 400)
             return jsonify({"error": e.code, "message": str(e)}), code
         documents = svc.lister_documents(conn, ref_id, data_dir=store.data_dir)
-    return jsonify({"gabarit": g, "documents": documents})
+        etat = conn.execute("SELECT etat FROM referentiel_niveaux WHERE id=?",
+                            (ref_id,)).fetchone()[0]
+        hors = gd.documents_actifs_hors_modele(conn, ref_id)
+    return jsonify({"gabarit": g, "etat": etat, "documents": documents,
+                    "documents_actifs_hors_modele": hors})
+
+
+@bp.route("/api/gabarits-documents", methods=["GET"])
+def api_gabarits_catalogue():
+    """v0.52.4 (M1, I2) — Les deux modèles de référentiel (libellé,
+    description : documents produits, séries, règles de complétude) et le
+    modèle de l'atelier de chaque niveau (règle R1b), pour l'interface.
+
+    Retour : {modeles: [{valeur, libelle, resume, documents, series,
+    completude}], niveaux: {N09: 'sixieme', …}}."""
+    from services import gabarits_documents as gd
+    with _store()._conn() as conn:
+        niveaux = gd.gabarits_atelier(conn)
+    return jsonify({"modeles": gd.description_modeles(), "niveaux": niveaux})

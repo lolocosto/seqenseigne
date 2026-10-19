@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/10/18 v0.4 seqenseigne : style des documents de 6e]
+    [2026/10/19 v0.5 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,10 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.5}{2026/10/19}{Niveau paramétrable : \cs{seqNiveauCourt} et
+%   \cs{seqNiveauExposant} (6e par défaut) remplacent « 6e » écrit en dur dans
+%   la couverture du livret, l'identification d'évaluation, les en-têtes de
+%   travail personnel et d'activité complémentaire}
 % \changes{v0.1}{2026/10/18}{Prototype : livret, calcul mental, évaluation, fiche de synthèse}
 % \changes{v0.2}{2026/10/18}{Activité d'introduction, fiche de résumé à compléter,
 %   fiche d'activité complémentaire, planches à découper au massicot}
@@ -94,6 +98,15 @@
 % redéfinies.
 %
 % \section{Utilisation}
+%
+% \subsection{Niveau}
+% \DescribeMacro{\seqNiveauCourt}\DescribeMacro{\seqNiveauExposant}
+% Le niveau des élèves s'affiche sur la couverture du livret et dans les champs
+% d'identification. \cs{seqNiveauCourt} vaut \texttt{6e} et \cs{seqNiveauExposant}
+% vaut 6\textsuperscript{e} par défaut. L'appli les redéfinit avec le nom court du
+% niveau du référentiel, par exemple |\renewcommand{\seqNiveauCourt}{5e}| et
+% |\renewcommand{\seqNiveauExposant}{5\textsuperscript{e}}| : le modèle de
+% documents ne dépend pas du niveau.
 %
 % \subsection{Couleurs}
 % Le module définit les couleurs \texttt{seqSixMauve}, \texttt{seqSixMauveBord},
@@ -240,6 +253,15 @@
 \RequirePackage{graphicx}
 %    \end{macrocode}
 %
+% \subsection{Niveau}
+% \begin{macro}{\seqNiveauCourt}\begin{macro}{\seqNiveauExposant}
+% Nom court du niveau (v0.5), en texte simple et avec l'exposant.
+%    \begin{macrocode}
+\newcommand{\seqNiveauCourt}{6e}
+\newcommand{\seqNiveauExposant}{6\textsuperscript{e}}
+%    \end{macrocode}
+% \end{macro}\end{macro}
+%
 % \subsection{Couleurs}
 %    \begin{macrocode}
 \definecolor{seqSixMauve}{HTML}{E8D5E8}
@@ -322,9 +344,9 @@
 \newcommand{\seqCouvertureLivretSix}[2]{%
   \noindent\begin{minipage}[t]{0.5\linewidth}\small
     NOM : \seqTrous[4cm]\\[2pt]Prénom : \seqTrous[3.6cm]\\[2pt]
-    6\textsuperscript{e}\ \seqTrous[1.2cm]\end{minipage}\par
+    \seqNiveauExposant\ \seqTrous[1.2cm]\end{minipage}\par
   \begin{center}{\huge\bfseries #1}\\[2pt]
-    {\LARGE\bfseries Niveau 6\textsuperscript{e}}\end{center}
+    {\LARGE\bfseries Niveau \seqNiveauExposant}\end{center}
   \noindent{\bfseries\underline{Objectifs du chapitre :}}
   \begin{itemize}[itemsep=0pt,topsep=2pt]
     \foreach \seq@c/\seq@t in {#2}{\item\textit{\seq@c\ : \seq@t}}
@@ -471,7 +493,7 @@
 %
 % \subsection{Évaluations}
 %    \begin{macrocode}
-\newcommand{\seqIdentEleve}[1][6e]{%
+\newcommand{\seqIdentEleve}[1][\seqNiveauCourt]{%
   \noindent\small Nom : \seqTrous[4cm]\hfill Prénom : \seqTrous[4cm]\hfill
   #1 \seqTrous[1cm]\hfill Date : \seqTrous[2.5cm]\par\normalsize}
 \newcommand{\seqTitreEvalSix}[2]{%
@@ -508,7 +530,7 @@
   boxrule=1pt, sharp corners, left=3pt, right=3pt, top=2pt, bottom=2pt}
 \NewDocumentCommand{\seqTitreTravailSix}{o m m m}{%
   \noindent\small Nom : \seqTrous[4cm]\hfill Prénom : \seqTrous[4cm]\hfill
-  6e \seqTrous[1cm]\IfValueT{#1}{\hfill\textbf{#1}}\normalsize
+  \seqNiveauCourt\ \seqTrous[1cm]\IfValueT{#1}{\hfill\textbf{#1}}\normalsize
   \begin{center}{\large\bfseries\color{seqSixVert}#2}\\[2pt]{\bfseries #3}\\[2pt]
   {\small\itshape #4}\end{center}}
 \newtcolorbox{seqEncadreIntroSix}{enhanced, colback=white, colframe=seqSixBleu,
@@ -519,7 +541,7 @@
 \newcommand{\seqTitreComplementSix}[2]{%
   \stepcounter{seqComplSix}%
   \noindent\small Nom : \seqTrous[4.5cm]\hfill Prénom : \seqTrous[4.5cm]\hfill
-  6e \seqTrous[1cm]\normalsize
+  \seqNiveauCourt\ \seqTrous[1cm]\normalsize
   \begin{center}{\large\bfseries\color{seqSixVert}Activité complémentaire
     \theseqComplSix\ \ \ding{72}}\\[2pt]
   {\Large\bfseries #1}\\[2pt]

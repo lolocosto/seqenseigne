@@ -217,18 +217,20 @@ function _tsRendre() {
   const d = TS.d;
   if (!z || !d) return;
   const bloc = (cle, titre) => {
-    const faits = new Set(d.deja_faits[cle]);
-    const neufs = d.candidats[cle].filter(x => !faits.has(x.id) || d.choix[cle].includes(x.id));
-    const anciens = d.candidats[cle].filter(x => faits.has(x.id) && !d.choix[cle].includes(x.id));
+    if (!d.candidats[cle]) return '';                 // v0.52.4 : clé absente
+    const faits = new Set(d.deja_faits[cle] || []);
+    const choix = d.choix[cle] || [];
+    const neufs = d.candidats[cle].filter(x => !faits.has(x.id) || choix.includes(x.id));
+    const anciens = d.candidats[cle].filter(x => faits.has(x.id) && !choix.includes(x.id));
     if (!d.candidats[cle].length) return '';
-    return `<div class="ts-groupe"><div class="ts-titre">${titre}</div>${_tsCases(neufs, d.choix[cle], cle)}
+    return `<div class="ts-groupe"><div class="ts-titre">${titre}</div>${_tsCases(neufs, choix, cle)}
       ${anciens.length ? `<details class="ts-faits"><summary>Déjà faits dans ce créneau (${anciens.length})</summary>
-        ${_tsCases(anciens, d.choix[cle], cle)}</details>` : ''}</div>`;
+        ${_tsCases(anciens, choix, cle)}</details>` : ''}</div>`;
   };
   const choisies = d.choix.activites;
   z.innerHTML = `
     <div class="ts-panneau">
-      ${d.externe ? '' : `<div class="ts-cours">${bloc('notions', 'Notions')}${bloc('methodes', 'Méthodes')}</div>`}
+      ${d.externe ? '' : `<div class="ts-cours">${bloc('notions', 'Notions')}${bloc('methodes', 'Méthodes')}${bloc('fiches', 'Fiches de résumé')}</div>`}
       <div class="ts-groupe"><div class="ts-titre">Activités (dans l'ordre de la séance)</div>
         <div class="ts-choisies">${choisies.length ? choisies.map((a, i) =>
           `<span class="ts-chip">${i + 1}. ${_twE(a)} <button class="btn-lien" onclick="tsRetirerActivite(${i})">✕</button></span>`).join('')
@@ -251,6 +253,7 @@ function _tsChoix() { return JSON.parse(JSON.stringify(TS.d.choix)); }
 
 function tsBasculer(cle, id, coche) {
   const c = _tsChoix();
+  c[cle] = c[cle] || [];                              // v0.52.4 : « fiches »
   c[cle] = coche ? [...c[cle].filter(x => x !== id), id] : c[cle].filter(x => x !== id);
   // Garder l'ordre des candidats (ordre de la partie).
   const ordre = TS.d.candidats[cle].map(x => x.id);

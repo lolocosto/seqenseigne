@@ -98,6 +98,9 @@ ENDPOINTS = {
     # v0.52.1 — Gabarit de documents d'un référentiel : écriture de la
     # structure (atelier seulement).
     "referentiel_documents.api_gabarit": "structure",
+    # v0.52.4 — Modèles de référentiel et modèle de l'atelier par niveau :
+    # lecture (structure : lisible partout).
+    "referentiel_documents.api_gabarits_catalogue": "structure",
     # v0.51.12 — Bascule de la base partagée : profil complet seulement.
     "bascule.api_apercu": "complet",
     "bascule.api_executer": "complet",

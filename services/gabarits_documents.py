@@ -35,7 +35,47 @@ from dataclasses import dataclass, field
 
 GABARITS = ("cycle4", "sixieme")
 GABARIT_DEFAUT = "cycle4"
-LIBELLES_GABARITS = {"cycle4": "Cycle 4", "sixieme": "6e (style de l'équipe)"}
+
+# v0.52.4 (M1) — Le gabarit est un **modèle de référentiel** (conception et
+# mise en forme), indépendant du niveau : tout référentiel de N09 à N12 peut
+# choisir l'un ou l'autre. Les valeurs techniques (`cycle4`, `sixieme`)
+# restent en base et dans le format d'échange ; seuls les libellés changent.
+LIBELLES_GABARITS = {"cycle4": "Notions et méthodes",
+                     "sixieme": "Fiches de résumé par objectif"}
+
+# Description affichée à la création et dans « Documents à publier » :
+# documents produits, séries proposées, règles de complétude.
+MODELES = {
+    "cycle4": {
+        "libelle": LIBELLES_GABARITS["cycle4"],
+        "resume": ("Chaque objectif reçoit une méthode et des notions ; "
+                   "livrets du cycle 4."),
+        "documents": ("livret de séquence, livrets d'exercices, de cours, de fiches, "
+                      "de plans de travail et de corrigés, évaluations, cartes "
+                      "d'automatisme"),
+        "series": "F, A, E ; révisions et activités d'approche",
+        "completude": ("par objectif d'exercices : au moins un exercice F, A et E, "
+                       "critères F, A et E ; notions, méthodes et cartes validées"),
+    },
+    "sixieme": {
+        "libelle": LIBELLES_GABARITS["sixieme"],
+        "resume": ("Pas de notions ni de méthodes : une fiche de résumé par objectif, "
+                   "à compléter dans le livret d'exercices, complète dans le plan de "
+                   "travail, distribuée pour le cahier de cours."),
+        "documents": ("livret de séquence (fiches à compléter), fiches de cours, plans "
+                      "de travail, corrigés, évaluations par compétence, travaux "
+                      "personnels, activités complémentaires, séances d'atelier"),
+        "series": ("F, A, E (facultative) ; activités d'introduction ; TP, AC, AT ; "
+                   "EV (sujet B dans la remédiation)"),
+        "completude": ("par objectif d'exercices : au moins un exercice F et un "
+                       "exercice A, critères F et A, la fiche de résumé de l'objectif"),
+    },
+}
+
+
+def est_modele_fiches(gabarit) -> bool:
+    """Modèle « Fiches de résumé par objectif » (valeur technique `sixieme`)."""
+    return normaliser(gabarit) == "sixieme"
 
 # Niveaux dont le gabarit proposé à la création est « sixieme ».
 NIVEAUX_SIXIEME = ("N09",)
@@ -138,8 +178,8 @@ CALCULATRICE_6E = ("interdite", "autorisee", "non_precisee")
 _CATALOGUE_SIXIEME = (
     TypeDocument(
         cle="livret_sequence_6e",
-        libelle="Livret de séquence (6e)",
-        description=("Un livret par séquence, au style de l'équipe de 6e : par objectif, "
+        libelle="Livret de séquence",
+        description=("Un livret d'exercices par séquence : par objectif, "
                      "activités d'introduction, fiche de résumé à compléter, "
                      "exercices F, A, E et remédiations."),
         options={"actif": False, "version": "eleve", "inclure_activites": True,
@@ -155,7 +195,7 @@ _CATALOGUE_SIXIEME = (
     ),
     TypeDocument(
         cle="fiches_cours_6e",
-        libelle="Fiches de cours (6e)",
+        libelle="Fiches de cours",
         description="Les fiches de résumé en version complète.",
         options={"actif": False, "decoupage": "par_sequence"},
         valeurs={"decoupage": DECOUPAGES_6E},
@@ -166,7 +206,7 @@ _CATALOGUE_SIXIEME = (
     ),
     TypeDocument(
         cle="corriges_6e",
-        libelle="Corrigés enseignant (6e)",
+        libelle="Corrigés enseignant",
         description="Le livret en version corrigée, remédiations comprises.",
         options={"actif": False, "decoupage": "par_sequence", "inclure_activites": True,
                  "inclure_serie_E": True},
@@ -183,9 +223,9 @@ _CATALOGUE_SIXIEME = (
     # dans l'atelier d'exercices (séries TP, AC, AT : un atome = un document).
     TypeDocument(
         cle="evaluation_6e",
-        libelle="Évaluations (6e)",
-        description=("Une par évaluation du niveau, au gabarit de l'équipe de 6e : "
-                     "barème par compétence, sujet A ou B."),
+        libelle="Évaluations",
+        description=("Une par évaluation du niveau : barème par compétence, "
+                     "sujet A ou B (le sujet B sert à la remédiation)."),
         options={"actif": False, "sujet": "A", "version": "eleve",
                  "calculatrice": "interdite"},
         valeurs={"sujet": SUJETS_6E, "version": VERSIONS_6E,
@@ -199,7 +239,7 @@ _CATALOGUE_SIXIEME = (
     ),
     TypeDocument(
         cle="travaux_personnels_6e",
-        libelle="Travaux personnels (6e)",
+        libelle="Travaux personnels",
         description="Un document par travail personnel (série TP de l'atelier d'exercices).",
         options={"actif": False, "version": "eleve"},
         valeurs={"version": VERSIONS_6E},
@@ -208,7 +248,7 @@ _CATALOGUE_SIXIEME = (
     ),
     TypeDocument(
         cle="activites_complementaires_6e",
-        libelle="Activités complémentaires (6e)",
+        libelle="Activités complémentaires",
         description="Un document par activité complémentaire (série AC).",
         options={"actif": False, "version": "eleve"},
         valeurs={"version": VERSIONS_6E},
@@ -218,8 +258,8 @@ _CATALOGUE_SIXIEME = (
     # v0.52.3 — Plan de travail de l'équipe de 6e (une cible par séquence).
     TypeDocument(
         cle="plans_travail_6e",
-        libelle="Plans de travail (6e)",
-        description=("Un plan de travail par séquence, au format de l'équipe de 6e : "
+        libelle="Plans de travail",
+        description=("Un plan de travail par séquence : "
                      "objectifs, activités, à retenir, exercices du livret O / ( ) / [ ], "
                      "travaux personnels, synthèse et évaluation."),
         options={"actif": False, "fiches": "texte_complet"},
@@ -230,7 +270,7 @@ _CATALOGUE_SIXIEME = (
     ),
     TypeDocument(
         cle="seances_atelier_6e",
-        libelle="Séances d'atelier (6e)",
+        libelle="Séances d'atelier",
         description="Un document par séance d'atelier (série AT).",
         options={"actif": False, "version": "eleve"},
         valeurs={"version": VERSIONS_6E},
@@ -288,23 +328,52 @@ def gabarit_par_defaut(niveau: str) -> str:
     return "sixieme" if (niveau or "").strip() in NIVEAUX_SIXIEME else GABARIT_DEFAUT
 
 
-def gabarit_atelier_du_niveau(conn, niveau: str) -> str:
-    """Décision R1 (v0.52.1), partagée en v0.52.2 avec le module
-    Évaluations : gabarit des documents que l'atelier produit pour un niveau
-    sans paramètre explicite = celui du référentiel interne principal
-    « en_cours » le plus récent du niveau, sinon la valeur proposée pour le
-    niveau (N09 → sixieme, N10 à N12 → cycle4)."""
+def referentiel_atelier_du_niveau(conn, niveau: str) -> str | None:
+    """Règle R1b (v0.52.4) — référentiel de l'atelier d'un niveau : le
+    référentiel **interne principal** du niveau, **quel que soit son état
+    sauf « annule »** (en_cours, valide, verrouille, utilise), le plus récent
+    (version décroissante, puis id). Avant v0.52.4 (R1), seul l'état
+    « en_cours » comptait : un référentiel auto-validé ou verrouillé faisait
+    retomber l'atelier sur le défaut du niveau."""
     try:
         r = conn.execute(
-            "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat = 'en_cours' "
+            "SELECT id FROM referentiel_niveaux WHERE niveau = ? AND etat <> 'annule' "
             "AND COALESCE(source, 'interne') <> 'externe' "
             "AND COALESCE(type_ref, 'principal') = 'principal' "
             "ORDER BY version DESC, id DESC LIMIT 1", (niveau,)).fetchone()
     except Exception:
         r = None
-    if r is not None:
-        return gabarit_du_referentiel(conn, r[0])
+    return r[0] if r is not None else None
+
+
+def gabarit_atelier_du_niveau(conn, niveau: str) -> str:
+    """Décision R1 (v0.52.1), partagée en v0.52.2 avec le module
+    Évaluations, règle R1b depuis v0.52.4 : gabarit des documents que
+    l'atelier produit pour un niveau sans paramètre explicite = celui du
+    référentiel de l'atelier (`referentiel_atelier_du_niveau`), sinon la
+    valeur proposée pour le niveau (N09 → sixieme, N10 à N12 → cycle4)."""
+    ref = referentiel_atelier_du_niveau(conn, niveau)
+    if ref is not None:
+        return gabarit_du_referentiel(conn, ref)
     return gabarit_par_defaut(niveau)
+
+
+def gabarits_atelier(conn) -> dict:
+    """{niveau: gabarit} de l'atelier (R1b) pour les niveaux connus
+    (param_niveaux, sinon N09 à N12) — mis à disposition de l'interface."""
+    try:
+        niveaux = [r[0] for r in conn.execute("SELECT code FROM param_niveaux ORDER BY ordre")]
+    except Exception:
+        niveaux = []
+    niveaux = niveaux or ["N09", "N10", "N11", "N12"]
+    return {n: gabarit_atelier_du_niveau(conn, n) for n in niveaux}
+
+
+def types_du_referentiel(conn, ref_id: str) -> tuple:
+    """D2 (v0.52.4) — Types de documents du gabarit du référentiel : seuls
+    ceux-là comptent pour la validation, le figeage et la publication (un
+    document actif d'un autre gabarit reste en base, sans effet)."""
+    return types(gabarit_du_referentiel(conn, ref_id))
 
 
 # ── Validation des options (G4) ──────────────────────────────────────────────
@@ -392,19 +461,58 @@ def poser_a_la_creation(conn, ref_id: str, niveau: str, gabarit=None) -> str:
     return g
 
 
+# G2b (v0.52.4) — États où le modèle se modifie : « en_cours » et
+# « valide » (auto-validation, qui retombe en « en_cours » dès que les
+# documents ne sont plus à jour) ; figé au verrouillage.
+ETATS_MODIFIABLES = ("en_cours", "valide")
+
+
 def modifier(conn, ref_id: str, gabarit: str) -> str:
-    """G2 — Change le gabarit d'un référentiel « en_cours » seulement."""
+    """G2 / G2b — Change le gabarit d'un référentiel « en_cours » ou
+    « valide » ; figé au verrouillage. Un référentiel « valide » est réévalué
+    aussitôt (ses documents du nouveau modèle ne sont pas compilés)."""
     valider_gabarit(gabarit)
     r = conn.execute("SELECT etat FROM referentiel_niveaux WHERE id=?", (ref_id,)).fetchone()
     if r is None:
         raise GabaritErreur(f"Référentiel introuvable : {ref_id}", code="introuvable")
-    if r[0] != "en_cours":
-        raise GabaritErreur("Le gabarit de documents est figé : il ne se modifie que "
-                            "tant que le référentiel est « en cours ».", code="fige")
+    if r[0] not in ETATS_MODIFIABLES:
+        raise GabaritErreur("Le modèle du référentiel est figé : il ne se modifie plus "
+                            "après le verrouillage.", code="fige")
     conn.execute("UPDATE referentiel_niveaux SET gabarit_documents=? WHERE id=?",
                  (gabarit, ref_id))
     conn.commit()
+    if r[0] == "valide":
+        try:
+            from services.referentiel_documents import initialiser_documents_defaut
+            from services.referentiel_validation import maj_etat_lazy
+            initialiser_documents_defaut(conn, ref_id)
+            maj_etat_lazy(conn, ref_id)
+        except Exception:
+            pass
     return gabarit
+
+
+def documents_actifs_hors_modele(conn, ref_id: str) -> int:
+    """Nombre de documents actifs d'un autre modèle que celui du référentiel
+    (restés en base après un changement de modèle, sans effet)."""
+    import json
+    garder = set(types_du_referentiel(conn, ref_id))
+    n = 0
+    for t, o in conn.execute("SELECT type_document, options FROM referentiel_documents "
+                             "WHERE referentiel_id=?", (ref_id,)).fetchall():
+        if t in garder:
+            continue
+        try:
+            if json.loads(o or "{}").get("actif"):
+                n += 1
+        except (TypeError, ValueError):
+            pass
+    return n
+
+
+def description_modeles() -> list:
+    """M1 — Les deux modèles, pour l'interface (création, Documents à publier)."""
+    return [{"valeur": g, **MODELES[g]} for g in GABARITS]
 
 
 # ── Migration (idempotente, appelée par persistence/sqlite_store.py) ─────────

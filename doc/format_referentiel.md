@@ -1,7 +1,9 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.1** (seqenseigne v0.52.1 : champ facultatif
-> `referentiel.gabarit_documents`). Version 1.0 : seqenseigne v0.51.1 ;
+> Version du format : **1.2** (seqenseigne v0.52.4 : champ facultatif
+> `partie.fiches`, modèle « Fiches de résumé par objectif »). Version 1.1 :
+> seqenseigne v0.52.1, champ facultatif `referentiel.gabarit_documents`.
+> Version 1.0 : seqenseigne v0.51.1 ;
 > précisions v0.51.2 : durée d'une partie, documents sans PDF, type des
 > objectifs internes, accents. Transport : paquet de publication, voir `doc/format_paquet.md`.
 > Schéma officiel : `schemas/referentiel-1.json` (JSON Schema 2020-12).
@@ -71,9 +73,11 @@ modèle de MER ne l'est pas : il faut d'abord le recréer.
 - `etat` : `en_cours`, `valide`, `verrouille`, `utilise`, `annule`.
 - `mode_seances` (facultatif, internes) : mode de calcul des séances repris
   tel quel (`par_objectif`, `par_serie`).
-- `gabarit_documents` (facultatif, 1.1) : gabarit de documents du
-  référentiel, `cycle4` (les 9 documents historiques) ou `sixieme`
-  (documents au style de l'équipe de 6e). Un fichier 1.0, sans le champ, est
+- `gabarit_documents` (facultatif, 1.1) : modèle du référentiel (v0.52.4),
+  `cycle4` = « Notions et méthodes » (les 9 documents historiques) ou
+  `sixieme` = « Fiches de résumé par objectif » (pas de notions ni de
+  méthodes ; une fiche de résumé par objectif ; séries TP, AC, AT, EV). Le
+  modèle ne dépend pas du niveau. Un fichier 1.0, sans le champ, est
   lu comme `cycle4`. L'appli en ligne le stocke à l'import et ne propose,
   dans la progression, que les documents de ce gabarit.
 
@@ -125,7 +129,7 @@ Une entrée par séquence du découpage, dans le même ordre.
   "parties": [ {
     "numero": 1, "libelle": "Développer", "nb_seances": 3, "nb_seances_saisie": 4,
     "objectifs": [ {
-      "code": "01", "type": "connaissance", "nom": "Connaître les notions et les méthodes",
+      "code": "01", "type": "connaissance", "nom": "Connaître le cours",
       "nb_seances": 1, "fin_cycle": false,
       "criteres": { "F": "…", "A": "…", "E": "…" }
     } ],
@@ -146,14 +150,20 @@ Une entrée par séquence du découpage, dans le même ordre.
   `nb_seances`).
 - Objectif : `code` (clé dans la séquence), `type` (`connaissance` ou
   `capacite`), `nom`, `nb_seances`, `fin_cycle`, `criteres` F / A / E. Pour
-  un référentiel **interne**, le type se déduit de la position : le premier
-  objectif de chaque partie est « Connaître les notions et les méthodes »
-  (`connaissance`), les autres sont des capacités ; pour un externe, c'est
-  le type saisi.
+  un référentiel **interne**, le type se déduit du code (v0.52.4) : l'objectif
+  « Cours » de la partie *n* porte le code *(n-1)*1 (`01`, `11`, `21`…, nom
+  par défaut « Connaître le cours », « Connaître les notions et les
+  méthodes » avant v0.52.4) et est la `connaissance` ; les autres sont des
+  capacités ; pour un externe, c'est le type saisi.
 - `notions`, `methodes` : **titres seulement**, pour la synthèse Pronote
   (ligne « Cours : ») — identifiants et titres, pas de contenu. Vides pour un
   référentiel externe. Le contenu (cours, exercices, fiches, cartes) est porté
   par les documents PDF.
+- `fiches` (facultatif, 1.2) : modèle « Fiches de résumé par objectif »
+  seulement — titres des fiches de résumé de la partie (fiche de chaque
+  objectif, puis celles rattachées à l'objectif « Cours »), qui forment la
+  partie « cours » de la synthèse Pronote (« Cours : fiches de résumé (…) ») ;
+  `notions` et `methodes` y sont vides. Absent pour « Notions et méthodes ».
 
 ## Documents
 
@@ -228,8 +238,12 @@ externe est toujours exporté à partir de son état du moment.
 ## Versions
 
 - Historique : 1.0 (v0.51.1) ; 1.1 (v0.52.1) ajoute
-  `referentiel.gabarit_documents`. Une publication figée produite en 1.0
-  est resservie telle quelle (sans le champ, donc lue `cycle4`).
+  `referentiel.gabarit_documents` ; 1.2 (v0.52.4) ajoute `partie.fiches`.
+  Une publication figée produite en 1.0 est resservie telle quelle (sans le
+  champ, donc lue `cycle4`).
+- Un document déclare la plus petite version qui décrit son contenu : un
+  référentiel « Notions et méthodes » reste en **1.1** (rien ne change pour
+  lui, empreinte comprise) ; « Fiches de résumé par objectif » est en 1.2.
 - `format_version` = `majeure.mineure`. Ajout d'un champ **facultatif** :
   version mineure (1.1, 1.2…) ; changement incompatible : version majeure
   (2.0).

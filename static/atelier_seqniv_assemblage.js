@@ -137,6 +137,18 @@
       return (this.data && this.data.sequence_par_niveau) || null;
     }
 
+    // v0.52.4 (A5) — Modèle du référentiel de l'atelier du niveau (règle R1b,
+    // fourni par la route : data.modele). « Fiches de résumé par objectif » :
+    // pas de méthode ni de notions ; une fiche de résumé par objectif ;
+    // séries EV, TP, AC, AT.
+    _modeleFiches() {
+      const m = this.data && this.data.modele;
+      if (m && m.gabarit) return m.gabarit === 'sixieme';
+      const sn = this._sn() || {};
+      return (typeof window.atlModeleFiches === 'function')
+        ? window.atlModeleFiches(sn.niveau || '') : false;
+    }
+
     _esc(s) { return _PUR.esc(s); }
     _escAttr(s) { return _PUR.escAttr(s); }
 
@@ -332,14 +344,14 @@
         const cfg = (rep.ok && rep.data) || {};
         const vals = cfg.atelier_assemblage_criteres_connaitre || {};
         this._critDefauts = {
-          nom:       vals.nom       || 'Connaître les notions et les méthodes',
+          nom:       vals.nom       || 'Connaître le cours',
           critere_F: vals.critere_F || 'A noté la trace écrite en classe.',
           critere_A: vals.critere_A || 'A complété les fiches de résumé.',
           critere_E: vals.critere_E || "Sait résumer le cours à l'oral.",
         };
       } catch (_) {
         this._critDefauts = {
-          nom:       'Connaître les notions et les méthodes',
+          nom:       'Connaître le cours',
           critere_F: 'A noté la trace écrite en classe.',
           critere_A: 'A complété les fiches de résumé.',
           critere_E: "Sait résumer le cours à l'oral.",
@@ -632,6 +644,9 @@
     // l'atelier Carte sur la carte précise (deeplink v0.13.6.3).
 
     _rendreZoneCartes(p) {
+      // v0.52.4 (A5) — pas de cartes d'automatisme au modèle « Fiches »
+      // (elles sont rattachées aux notions et méthodes).
+      if (this._modeleFiches()) return '';
       const cartes = p.cartes || [];
       const titreContenu = cartes.length === 0
         ? `<span class="asm-ra-titre-disabled-hint">— (aucune)</span>`
@@ -765,13 +780,24 @@
       const btnConnaitre = !aDejaConnaitre
         ? `<button class="asm-btn-connaitre"
                    onclick="ATELIER_SEQNIV.activerConnaitre('${this._escAttr(p.id)}')"
-                   title="Crée l'objectif Connaître les notions et les méthodes (code ${codeConnaitre})">
+                   title="Crée l'objectif Cours « Connaître le cours » (code ${codeConnaitre})">
               + Activer l'objectif Connaître (${codeConnaitre})
            </button>`
         : '';
 
       // Zone de drop générique pour les méthodes
-      const zoneDrop = `
+      // v0.52.4 (A5) — Modèle « Fiches de résumé par objectif » : pas de
+      // méthode ; un bouton crée un objectif sans méthode (code de l'objectif
+      // Cours réservé).
+      const zoneDrop = this._modeleFiches() ? `
+        <div class="asm-obj-vide-zone asm-obj-vide-zone--fiches" data-partie-id="${this._escAttr(p.id)}">
+          ${btnConnaitre}
+          <button class="asm-btn-connaitre asm-btn-nouvel-obj"
+                  onclick="ATELIER_SEQNIV.nouvelObjectifSansMethode('${this._escAttr(p.id)}')"
+                  title="Crée un objectif d'exercices (sans méthode) : nommez-le, puis glissez sa fiche de résumé et ses exercices">
+            + Nouvel objectif
+          </button>
+        </div>` : `
         <div class="asm-obj-vide-zone"
              data-zone="methode" data-partie-id="${this._escAttr(p.id)}"
              ondragover="ATELIER_SEQNIV.dragOver(event, this)"
@@ -810,6 +836,13 @@
       let resume;
       if (estConnaitre) {
         resume = '';
+      } else if (this._modeleFiches()) {
+        // v0.52.4 (A5) — la fiche de l'objectif plutôt que la méthode.
+        const fiche = o.fiche ? ' · fiche de résumé ✓' : ' · sans fiche de résumé';
+        const nbDocs = ['EV', 'TP', 'AC', 'AT'].reduce((acc, s) =>
+          acc + ((o.exos_documents && o.exos_documents[s]) || []).length, 0);
+        resume = `${nbExos > 0 ? nbExos + ' exo(s)' : 'aucun exo'}`
+          + `${nbDocs ? ' · ' + nbDocs + ' document(s)' : ''}${fiche}`;
       } else {
         const meth = o.methode_titre ? ` · méthode : ${this._esc(o.methode_titre)}` : '';
         resume = nbExos > 0
@@ -887,7 +920,8 @@
       // Méthode liée (en lecture, retirable + éditable). v0.10.3 : bouton
       // "Éditer la méthode" qui ouvre l'atelier dédié.
       const methEtat = this._classeEtatAtome(o.methode_etat_code, 'asm-obj-methode-tag');
-      const methBloc = o.methode_id
+      const modeleFiches = this._modeleFiches();                    // v0.52.4
+      const methBloc = (o.methode_id && !modeleFiches)
         ? `
           <div class="asm-obj-methode-row">
             <span>Méthode liée :</span>
@@ -989,7 +1023,9 @@
               </div>
             </div>`;
         }).join('');
-        zonesContenu = zoneNotions + zonesExos;
+        zonesContenu = modeleFiches
+          ? this._rendreZoneFicheObjectif(o) + zonesExos + this._rendreZonesDocuments(o)
+          : zoneNotions + zonesExos;
       }
 
       return `
@@ -1052,6 +1088,112 @@
             ${zonesContenu}
           </div>
         </div>`;
+    }
+
+    // ── v0.52.4 (A5) — Modèle « Fiches de résumé par objectif » ─────────────
+
+    // Zone « Fiche de l'objectif » : fiches_resume.objectif_id (une fiche).
+    _rendreZoneFicheObjectif(o) {
+      const f = o.fiche;
+      const chip = f ? `
+          <span class="asm-exo-chip${this._classeEtatAtome(f.etat_code, 'asm-exo-chip')}"
+                ondblclick="ATELIER_SEQNIV.editerFiche('${this._escAttr(f.id)}', event)"
+                title="Double-clic pour éditer la fiche">
+            <span class="asm-item-badge asm-item-badge--M">FR</span>
+            <span>${this._esc(f.titre || ('Fiche ' + (f.num_fiche || '')))}</span>
+            <button class="asm-exo-chip-rm"
+                    onclick="event.stopPropagation();ATELIER_SEQNIV.retirerFicheObjectif('${this._escAttr(o.id)}')"
+                    title="Détacher la fiche de l'objectif">×</button>
+          </span>` : '';
+      return `
+        <div class="asm-obj-exos asm-obj-fiche-objectif">
+          <div class="asm-obj-exos-titre">Fiche de l'objectif</div>
+          <div class="asm-obj-exos-zone"
+               data-obj-id="${this._escAttr(o.id)}" data-zone="fiche-objectif"
+               ondragover="ATELIER_SEQNIV.dragOver(event, this)"
+               ondragleave="ATELIER_SEQNIV.dragLeave(event, this)"
+               ondrop="ATELIER_SEQNIV.dropFicheObjectif(event, '${this._escAttr(o.id)}')">
+            ${chip || '<span class="asm-obj-exos-vide">Glisse ici la fiche de résumé de cet objectif (à compléter dans le livret, complète dans le plan de travail).</span>'}
+          </div>
+        </div>`;
+    }
+
+    // Zones des séries « documents » EV, TP, AC, AT (objectif_exos).
+    _rendreZonesDocuments(o) {
+      const libelles = {EV: 'Évaluation (EV)', TP: 'Travail personnel (TP)',
+                        AC: 'Activité complémentaire (AC)', AT: "Séance d'atelier (AT)"};
+      return ['EV', 'TP', 'AC', 'AT'].map(s => {
+        const exos = (o.exos_documents && o.exos_documents[s]) || [];
+        const chips = exos.map(e => {
+          const ex = e.exercice || {};
+          const lib = ex.fichier ? ex.fichier.replace(/\.tex$/i, '')
+            : (ex.serie_code ? `${ex.serie_code}${String(ex.num || '').padStart(2, '0')}` : (e.exercice_id || '?').slice(0, 12));
+          return `
+            <span class="asm-exo-chip${this._classeEtatAtome(ex.etat_code, 'asm-exo-chip')}"
+                  ondblclick="ATELIER_SEQNIV.editerAtome('exercice', '${this._escAttr(e.exercice_id)}', event)"
+                  title="${this._escAttr(ex.titre || '')} — double-clic pour éditer">
+              <span class="asm-item-badge asm-item-badge--${this._escAttr(s)}">${this._esc(s)}</span>
+              <span>${this._esc(lib)}</span>
+              <button class="asm-exo-chip-rm"
+                      onclick="event.stopPropagation();ATELIER_SEQNIV.retirerExoObj('${this._escAttr(o.id)}', '${this._escAttr(s)}', '${this._escAttr(e.exercice_id)}')"
+                      title="Retirer">×</button>
+            </span>`;
+        }).join('');
+        return `
+          <div class="asm-obj-exos asm-obj-exos--document">
+            <div class="asm-obj-exos-titre">${this._esc(libelles[s])}</div>
+            <div class="asm-obj-exos-zone"
+                 data-obj-id="${this._escAttr(o.id)}" data-serie="${this._escAttr(s)}"
+                 ondragover="ATELIER_SEQNIV.dragOver(event, this)"
+                 ondragleave="ATELIER_SEQNIV.dragLeave(event, this)"
+                 ondrop="ATELIER_SEQNIV.dropExoObj(event, '${this._escAttr(o.id)}', '${this._escAttr(s)}')">
+              ${chips || '<span class="asm-obj-exos-vide">Glisse un atome de la série ' + s + ' ici.</span>'}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async nouvelObjectifSansMethode(partieId) {
+      if (!this._garderAvantStructure()) return;
+      const rep = await apiJson('POST',
+        `/api/v2/parties/${encodeURIComponent(partieId)}/objectif`,
+        {nom: '', reserver_cours: true});
+      if (!rep.ok) {
+        this._status(`Échec création objectif : ${(rep.data && rep.data.error) || rep.status}`, true);
+        return;
+      }
+      this._status('Objectif créé : nommez-le, puis glissez sa fiche et ses exercices.', false);
+      await this._setObjOuvert(rep.data.id);
+      await this.rafraichir({preserverScroll: true});
+    }
+
+    async dropFicheObjectif(ev, objId) {
+      if (!this._garderAvantStructure()) return;
+      ev.preventDefault();
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      if (!this._drag || this._drag.kind !== 'fiche') { this._drag = null; return; }
+      const ficheId = this._drag.fiche_id;
+      this._drag = null;
+      const rep = await apiJson('PUT',
+        `/api/v2/objectifs/${encodeURIComponent(objId)}/fiche`, {fiche_id: ficheId});
+      if (!rep.ok) {
+        this._status(`Erreur : ${(rep.data && rep.data.error) || rep.status}`, true);
+        return;
+      }
+      this._status('Fiche de l\'objectif posée.', false);
+      await this.rafraichir({preserverScroll: true});
+    }
+
+    async retirerFicheObjectif(objId) {
+      if (!this._garderAvantStructure()) return;
+      const rep = await apiJson('PUT',
+        `/api/v2/objectifs/${encodeURIComponent(objId)}/fiche`, {fiche_id: null});
+      if (!rep.ok) {
+        this._status(`Erreur : ${(rep.data && rep.data.error) || rep.status}`, true);
+        return;
+      }
+      this._status('Fiche détachée.', false);
+      await this.rafraichir({preserverScroll: true});
     }
 
     // ── Sidebar : méthodes ou exercices selon objet ouvert ───────────────────
@@ -1244,7 +1386,8 @@
       let html = '';
 
       // ── Section Méthodes ──────────────────────────────────────────────
-      {
+      // v0.52.4 (A5) — pas de méthodes au modèle « Fiches de résumé ».
+      if (!this._modeleFiches()) {
         const methodes = (repMethodes.ok && repMethodes.data && repMethodes.data.methodes) || [];
         const items = methodes.map(m => {
           const lib = m.titre || m.fichier || m.id;
@@ -1347,8 +1490,13 @@
       sb.innerHTML = '<div class="asm-sidebar-empty">Chargement…</div>';
 
       // Notions de la séquence + exos F/A/E
-      const series = ['F', 'A', 'E'];
-      const promesseNotions = apiJson('GET',
+      // v0.52.4 (A5) — Modèle « Fiches de résumé par objectif » : fiches de
+      // résumé de la séquence au lieu des notions ; séries EV, TP, AC, AT.
+      const modeleFiches = this._modeleFiches();
+      const series = modeleFiches ? ['F', 'A', 'E', 'EV', 'TP', 'AC', 'AT'] : ['F', 'A', 'E'];
+      const promesseNotions = modeleFiches
+        ? apiJson('GET', `/api/fiches-resume?niveau=${encodeURIComponent(sn.niveau)}&sequence=${encodeURIComponent(sn.sequence_code)}`)
+        : apiJson('GET',
         `/api/v2/notions-de-sequence?niveau=${encodeURIComponent(sn.niveau)}&sequence=${encodeURIComponent(sn.sequence_code)}`);
       const promessesExos = series.map(s =>
         apiJson('GET',
@@ -1364,8 +1512,30 @@
 
       let html = '';
 
+      // ── v0.52.4 — Section Fiches de résumé (modèle « Fiches ») ──────────
+      if (modeleFiches) {
+        const fiches = (repNotions.ok && Array.isArray(repNotions.data)) ? repNotions.data : [];
+        const placees = this._placementsFiches();
+        const items = fiches.map(f => {
+          const lib = f.titre || f.code || f.id;
+          const code = placees.get(f.id);
+          return this._renduItem({
+            badge: 'FR', badgeClass: 'M',
+            lib, libTitle: lib,
+            placedTags: code ? [code] : [],
+            dragData: {kind: 'fiche', fiche_id: f.id, libelle: lib},
+            dblclickHandler: `ATELIER_SEQNIV.editerFiche('${this._escAttr(f.id)}', event)`,
+            etatCode: f.etat_code || 'en_cours',
+          });
+        }).join('');
+        const corps = fiches.length > 0
+          ? items
+          : '<div class="asm-sidebar-empty" style="padding:6px 4px">— aucune — (atelier Fiche de résumé)</div>';
+        html += this._renduSection('FR', 'Fiches de résumé', fiches.length, corps);
+      }
+
       // ── Section Notions ───────────────────────────────────────────────
-      {
+      if (!modeleFiches) {
         const notions = (repNotions.ok && repNotions.data && repNotions.data.notions) || [];
         const items = notions.map(n => {
           const lib = n.titre || n.fichier || n.id;
@@ -1405,10 +1575,22 @@
         const corps = exos.length > 0
           ? items
           : '<div class="asm-sidebar-empty" style="padding:6px 4px">— aucun —</div>';
-        html += this._renduSection(s, `Exos série ${s}`, exos.length, corps);
+        html += this._renduSection(s, `Exos série ${s}`, exos.length, corps,
+                                   {closedByDefault: ['EV', 'TP', 'AC', 'AT'].includes(s) && exos.length === 0});
       }
 
       sb.innerHTML = html;
+    }
+
+    // v0.52.4 — fiche → code de l'objectif qui la porte (fiches_resume.objectif_id).
+    _placementsFiches() {
+      const m = new Map();
+      for (const p of (this.data && this.data.parties) || []) {
+        for (const o of p.objectifs || []) {
+          if (o.fiche && o.fiche.id) m.set(o.fiche.id, o.code);
+        }
+      }
+      return m;
     }
 
     // ── Sidebar mode 3 : objectif Connaître ouvert ───────────────────────────

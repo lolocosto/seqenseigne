@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS referentiel_titres_publies (
     referentiel_id TEXT NOT NULL,
     seq_code       TEXT NOT NULL,
     partie_numero  INTEGER NOT NULL,
-    nature         TEXT NOT NULL,        -- 'notion' | 'methode'
+    nature         TEXT NOT NULL,        -- 'notion' | 'methode' | 'fiche' (v0.52.4)
     atome_id       TEXT NOT NULL,
     titre          TEXT NOT NULL DEFAULT '',
     ordre          INTEGER NOT NULL DEFAULT 0,
@@ -322,7 +322,10 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
                     "type_obj) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                     (rid, s["code"], o["code"], o["nom"], int(o["fin_cycle"]), c["F"], c["A"],
                      c["E"], p["numero"], o["nb_seances"], o["type"]))
-            for nature, liste in (("notion", p["notions"]), ("methode", p["methodes"])):
+            # v0.52.4 (format 1.2) — fiches de résumé de la partie (modèle
+            # « Fiches de résumé par objectif ») : nature 'fiche'.
+            for nature, liste in (("notion", p["notions"]), ("methode", p["methodes"]),
+                                  ("fiche", p.get("fiches") or [])):
                 for i, a in enumerate(liste):
                     conn.execute(
                         "INSERT OR IGNORE INTO referentiel_titres_publies (referentiel_id, "

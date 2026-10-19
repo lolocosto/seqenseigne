@@ -11,7 +11,9 @@ Deux zones, en texte brut :
        séance, dont « non faite ») ; rien si la classe n'a pas de MER ;
      - séquence principale : « <code> <nom> — <partie> (n/N) » ;
      - « Cours : notions (…) et méthodes (…) » : choix parmi les notions et
-       méthodes rattachées aux objectifs de la partie du créneau ;
+       méthodes rattachées aux objectifs de la partie du créneau ; v0.52.4
+       (M4) : modèle « Fiches de résumé par objectif », « Cours : fiche(s) de
+       résumé (…) » — choix parmi les fiches de résumé de la partie ;
      - activités cochées, dans l'ordre choisi (Évaluation, Révisions,
        Exercices, Correction… — liste extensible dans Paramétrage) ;
      - texte libre (référentiel externe, ou complément) ;
@@ -40,6 +42,7 @@ CREATE TABLE IF NOT EXISTS seance_contenu (
     methodes     TEXT NOT NULL DEFAULT '[]',
     activites    TEXT NOT NULL DEFAULT '[]',
     texte_libre  TEXT NOT NULL DEFAULT '',
+    fiches       TEXT NOT NULL DEFAULT '[]',
     PRIMARY KEY (classe_id, date, creneau_code)
 );
 CREATE TABLE IF NOT EXISTS activites_seance (
@@ -59,6 +62,10 @@ class SyntheseErreur(Exception):
 
 def migrer(conn) -> None:
     conn.executescript(SCHEMA)
+    # v0.52.4 (M4) — fiches de résumé choisies (modèle « Fiches »), idempotent.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(seance_contenu)")}
+    if "fiches" not in cols:
+        conn.execute("ALTER TABLE seance_contenu ADD COLUMN fiches TEXT NOT NULL DEFAULT '[]'")
     if conn.execute("SELECT COUNT(*) FROM activites_seance").fetchone()[0] == 0:
         for i, lib in enumerate(ACTIVITES_DEFAUT, start=1):
             conn.execute("INSERT INTO activites_seance (id, libelle, ordre) VALUES (?,?,?)",
@@ -118,6 +125,8 @@ def candidats(conn, niveau: str, seq_code: str, partie_debut: int, partie_fin: i
         "WHERE s.niveau=? AND s.sequence_code=? AND p.numero BETWEEN ? AND ? "
         "ORDER BY p.numero, o.code", (niveau, seq_code, partie_debut, partie_fin)).fetchall()
     notions, methodes, vus_n, vus_m = [], [], set(), set()
+    modele_fiches = _modele_fiches(conn, niveau)                       # M4
+    fiches = _fiches_des_objectifs(conn, [r["id"] for r in rows]) if modele_fiches else []
     for r in rows:
         for n in conn.execute(
                 "SELECT n.id, n.titre FROM objectif_notions x JOIN notions n ON n.id=x.notion_id "
@@ -148,11 +157,62 @@ def candidats(conn, niveau: str, seq_code: str, partie_debut: int, partie_fin: i
                     "seq_code=? AND partie_numero BETWEEN ? AND ? ORDER BY partie_numero, "
                     "nature, ordre", (ref["referentiel_id"], seq_code, partie_debut,
                                       partie_fin)).fetchall():
+                if t["nature"] == "fiche":                       # M4 (format 1.2)
+                    if t["atome_id"] not in {f["id"] for f in fiches}:
+                        fiches.append({"id": t["atome_id"], "titre": t["titre"]})
+                    continue
                 cible, vus = (notions, vus_n) if t["nature"] == "notion" else (methodes, vus_m)
                 if t["atome_id"] not in vus:
                     vus.add(t["atome_id"])
                     cible.append({"id": t["atome_id"], "titre": t["titre"]})
+    if modele_fiches or fiches:
+        # M4 — Modèle « Fiches de résumé par objectif » : la partie « cours »
+        # est faite des fiches de résumé, pas des notions et méthodes.
+        return {"notions": [], "methodes": [], "fiches": fiches}
     return {"notions": notions, "methodes": methodes}
+
+
+def _modele_fiches(conn, niveau: str) -> bool:
+    """Le niveau est-il conçu au modèle « Fiches de résumé par objectif » ?
+    Atelier : référentiel de l'atelier du niveau (R1b) ; base de classe
+    (sans objectifs) : référentiel publié le plus récemment importé."""
+    from services.gabarits_documents import est_modele_fiches, gabarit_atelier_du_niveau
+    from services.repartition import table_existe
+    if table_existe(conn, "objectifs"):
+        return est_modele_fiches(gabarit_atelier_du_niveau(conn, niveau))
+    try:
+        r = conn.execute("SELECT gabarit_documents FROM referentiel_niveaux WHERE niveau=? "
+                         "AND origine='publication' ORDER BY publication_importe_le DESC "
+                         "LIMIT 1", (niveau,)).fetchone()
+    except Exception:
+        r = None
+    return est_modele_fiches(r[0] if r else None)
+
+
+def _fiches_des_objectifs(conn, objectif_ids: list) -> list[dict]:
+    """M4 — Fiches de résumé des objectifs donnés (dans leur ordre), puis
+    celles attachées à l'objectif « Cours » (objectif_fiches) : même règle
+    que le livret (L2). [{id, titre}] sans doublon."""
+    out, vus = [], set()
+    if not objectif_ids:
+        return out
+    try:
+        for oid in objectif_ids:
+            for f in conn.execute("SELECT id, titre FROM fiches_resume WHERE objectif_id=? "
+                                  "ORDER BY num_fiche, id", (oid,)).fetchall():
+                if f["id"] not in vus:
+                    vus.add(f["id"])
+                    out.append({"id": f["id"], "titre": _texte(f["titre"]) or f["id"]})
+        for oid in objectif_ids:
+            for f in conn.execute("SELECT f.id, f.titre FROM objectif_fiches x JOIN "
+                                  "fiches_resume f ON f.id=x.fiche_id WHERE x.objectif_id=? "
+                                  "ORDER BY x.ordre", (oid,)).fetchall():
+                if f["id"] not in vus:
+                    vus.add(f["id"])
+                    out.append({"id": f["id"], "titre": _texte(f["titre"]) or f["id"]})
+    except Exception:
+        return out
+    return out
 
 
 # ── Contenu enregistré d'une séance ──────────────────────────────────────────
@@ -161,15 +221,17 @@ def lire_contenu(conn, classe_id: str, date_iso: str, creneau: str) -> dict:
     r = conn.execute("SELECT * FROM seance_contenu WHERE classe_id=? AND date=? AND "
                      "creneau_code=?", (classe_id, date_iso, creneau)).fetchone()
     if r is None:
-        return {"notions": [], "methodes": [], "activites": [], "texte_libre": ""}
+        return {"notions": [], "methodes": [], "fiches": [], "activites": [],
+                "texte_libre": ""}
     return {"notions": json.loads(r["notions"]), "methodes": json.loads(r["methodes"]),
+            "fiches": json.loads(r["fiches"]) if "fiches" in r.keys() else [],
             "activites": json.loads(r["activites"]), "texte_libre": r["texte_libre"]}
 
 
 def enregistrer_contenu(conn, classe_id: str, date_iso: str, creneau: str,
                         champs: dict) -> dict:
     c = lire_contenu(conn, classe_id, date_iso, creneau)
-    for k in ("notions", "methodes", "activites"):
+    for k in ("notions", "methodes", "fiches", "activites"):
         if k in champs:
             if not isinstance(champs[k], list):
                 raise SyntheseErreur(f"`{k}` doit être une liste.")
@@ -178,11 +240,12 @@ def enregistrer_contenu(conn, classe_id: str, date_iso: str, creneau: str,
         c["texte_libre"] = str(champs["texte_libre"] or "")
     conn.execute(
         "INSERT INTO seance_contenu (classe_id, date, creneau_code, notions, methodes, "
-        "activites, texte_libre) VALUES (?,?,?,?,?,?,?) ON CONFLICT(classe_id, date, "
-        "creneau_code) DO UPDATE SET notions=excluded.notions, methodes=excluded.methodes, "
-        "activites=excluded.activites, texte_libre=excluded.texte_libre",
+        "activites, texte_libre, fiches) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(classe_id, "
+        "date, creneau_code) DO UPDATE SET notions=excluded.notions, "
+        "methodes=excluded.methodes, activites=excluded.activites, "
+        "texte_libre=excluded.texte_libre, fiches=excluded.fiches",
         (classe_id, date_iso, creneau, json.dumps(c["notions"]), json.dumps(c["methodes"]),
-         json.dumps(c["activites"]), c["texte_libre"]))
+         json.dumps(c["activites"]), c["texte_libre"], json.dumps(c["fiches"])))
     return c
 
 
@@ -190,14 +253,19 @@ def deja_faits(conn, classe_id: str, date_iso: str, creneau: str,
                debut: str, fin: str) -> dict:
     """Notions / méthodes cochées aux séances PRÉCÉDENTES du même créneau de
     progression (dates [debut, séance[) pour la classe."""
-    n, m = set(), set()
+    n, m, f = set(), set(), set()
     for r in conn.execute(
             "SELECT * FROM seance_contenu WHERE classe_id=? AND date>=? AND date<=? "
             "AND (date<? OR (date=? AND creneau_code<?))",
             (classe_id, debut or "0000", fin or "9999", date_iso, date_iso, creneau)).fetchall():
         n.update(json.loads(r["notions"]))
         m.update(json.loads(r["methodes"]))
-    return {"notions": sorted(n), "methodes": sorted(m)}
+        if "fiches" in r.keys():
+            f.update(json.loads(r["fiches"]))
+    out = {"notions": sorted(n), "methodes": sorted(m)}
+    if f:                                   # v0.52.4 (M4) : modèle « Fiches »
+        out["fiches"] = sorted(f)
+    return out
 
 
 # ── Mise en route : partie de la progression de MER ──────────────────────────
@@ -262,6 +330,8 @@ def lire(conn, store, annee: str, classe_id: str, date_iso: str, creneau: str) -
         faits = deja_faits(conn, classe_id, date_iso, creneau,
                            crp["date_debut"], crp["date_fin"])
     choix = lire_contenu(conn, classe_id, date_iso, creneau)
+    if "fiches" in cand:
+        faits.setdefault("fiches", [])          # v0.52.4 (M4)
 
     lignes = []
     # 1. Mise en route
@@ -292,7 +362,14 @@ def lire(conn, store, annee: str, classe_id: str, date_iso: str, creneau: str) -
     noms_m = {x["id"]: x["titre"] for x in cand["methodes"]}
     sel_n = [noms_n[i] for i in choix["notions"] if i in noms_n]
     sel_m = [noms_m[i] for i in choix["methodes"] if i in noms_m]
-    if sel_n or sel_m:
+    if "fiches" in cand:
+        # M4 — modèle « Fiches de résumé par objectif ».
+        noms_f = {x["id"]: x["titre"] for x in cand["fiches"]}
+        sel_f = [noms_f[i] for i in choix.get("fiches", []) if i in noms_f]
+        if sel_f:
+            lignes.append(f"Cours : fiche{'s' if len(sel_f) > 1 else ''} de résumé "
+                          f"({_liste(sel_f)})")
+    elif sel_n or sel_m:
         parts = []
         if sel_n:
             parts.append(f"notion{'s' if len(sel_n) > 1 else ''} ({_liste(sel_n)})")
@@ -321,6 +398,6 @@ def lire(conn, store, annee: str, classe_id: str, date_iso: str, creneau: str) -
     return {
         "candidats": cand, "deja_faits": faits, "choix": choix,
         "activites": lister_activites(conn),
-        "externe": not (cand["notions"] or cand["methodes"]),
+        "externe": not (cand["notions"] or cand["methodes"] or cand.get("fiches")),
         "contenu": "\n".join(lignes), "travail": "\n".join(travail),
     }

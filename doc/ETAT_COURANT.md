@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.4** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -58,9 +58,20 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   de l'équipe (`services/plan_travail_6e.py`, type `plans_travail_6e`) ;
   lots S01–S03 complétés de leurs corrigés (`reference\lot6e`). Cycle 4
   inchangé au caractère près. Détails : `doc/redemarrage_v0_52_3.md`.
-- À venir : lots S04 à S10 ; mises en route M01 à M07 ; zones de liens
-  EV/TP/AC/AT dans l'assemblage. La mise en ligne (prévue en v0.52)
-  prendra le numéro suivant.
+- v0.52.4 livrée : le gabarit devient un **modèle de référentiel**,
+  indépendant du niveau — « Notions et méthodes » (`cycle4`) ou « Fiches de
+  résumé par objectif » (`sixieme`), choisi à la création avec sa
+  description ; atelier piloté par le modèle du référentiel interne
+  principal du niveau quel que soit son état (R1b), plus par « N09 » ;
+  série E facultative et fiche exigée au modèle « Fiches » ; synthèse
+  Pronote et format d'échange 1.2 (fiches de résumé de la partie) ; objectif
+  sans méthode, fiche de l'objectif et séries EV/TP/AC/AT dans
+  l'assemblage ; « Connaître le cours » ; module `seqenseigne-style6e` v0.5
+  (niveau paramétrable : `tex seqenseigne.ins` à relancer). Cycle 4
+  inchangé au caractère près. Détails : `doc/redemarrage_v0_52_4.md`.
+- À venir : lots S04 à S10 ; mises en route M01 à M07 ; outil d'import
+  paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
+  numéro suivant.
 
 ## Comment reprendre (pour l'assistant)
 
@@ -283,8 +294,16 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   Enregistrer un exercice sans changer sa série ne touche jamais à son code
   ni à son numéro (l'import 6e retrouve un exercice par niveau, séquence,
   code, numéro).
+- **Modèle de référentiel** (v0.52.4) : `cycle4` = « Notions et méthodes »,
+  `sixieme` = « Fiches de résumé par objectif » ; ne dépend PAS du niveau.
+  Ne jamais tester `N09` pour décider d'un rendu ou d'une interface : côté
+  serveur `gabarits_documents.gabarit_atelier_du_niveau` (règle R1b :
+  référentiel interne principal hors « annulé », le plus récent), côté
+  interface `atlModeleFiches(niveau)` (`static/gabarits_atelier.js`). Le
+  niveau imprimé vient de `\seqNiveauCourt` / `\seqNiveauExposant`
+  (`livret_sequence_6e.macros_niveau`).
 - **Rendu 6e** (v0.52.3) : tout rendu de l'atelier pour la 6e suit la règle
-  R1 (`gabarit_atelier_du_niveau`) : livret, évaluations, atomes, plan de
+  R1 (`gabarit_atelier_du_niveau`, R1b depuis v0.52.4) : livret, évaluations, atomes, plan de
   travail ; les numéros d'exercices et d'activités sont ceux du livret 6e
   (`livret_sequence_6e.numeros_livret`).
 - **Archives du cycle 3** (v0.52.0) : codes de séquence `Xnn` et thèmes

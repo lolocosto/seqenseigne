@@ -309,7 +309,9 @@ def _plan(app, **params):
 
 def test_plan_de_travail_6e_au_format_de_l_equipe_depuis_l_atelier(app_6e):
     tex = _plan(app_6e)
-    assert r"\color{seqSixVert}" in tex and "Livret de séquence 6e" in tex
+    # v0.52.4 (T1) : le niveau vient de \seqNiveauCourt (6e pour N09).
+    assert r"\color{seqSixVert}" in tex and r"Livret de séquence \seqNiveauCourt" in tex
+    assert r"\renewcommand{\seqNiveauCourt}{6e}" in tex
     assert "S01-02" in tex and "S01-03" in tex and "S01-01" not in tex       # L3 : pas de Cours
     assert r"exercices 1 - [ 2 ] - ( 3 ) - \{ 4 \}" in tex                    # P3
     assert "Activité 1 : Un sudoku" in tex and "Activité 2 : Les grands nombres" in tex
