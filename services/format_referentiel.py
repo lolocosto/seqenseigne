@@ -241,7 +241,7 @@ def _materiel(conn, niveau: str, seq: str, numero: int) -> list[dict]:
     """v0.52.7 (format 1.3) — Exercices marqués (ordinateur, calculatrice)
     de la partie : ceux reliés à ses objectifs (`objectif_exos`, toutes
     séries : F, A, E, activités, documents, évaluations) et ses exercices de
-    révision et d'approche. Une entrée : objectif ('' pour la partie),
+    révision et d'approche ; v0.52.8 (T1) : sans les travaux personnels (TP). Une entrée : objectif ('' pour la partie),
     série, code de l'exercice (« F03 »), séquence de l'exercice, titre, et
     les deux marqueurs. Vide pour une base sans marqueurs."""
     from services import marqueurs_exercices as mq
@@ -273,6 +273,10 @@ def _materiel(conn, niveau: str, seq: str, numero: int) -> list[dict]:
             if r["lien_serie"] in _ORDRE_SERIES else 99, r["lien_ordre"] or 0, r["num"] or 0)):
         cle = (r["lien_objectif"], r["id"])
         if cle in vus:
+            continue
+        # v0.52.8 (T1) — travail personnel : rien à réserver, hors du
+        # tableau de bord (son marqueur reste sur la fiche élève).
+        if mq.hors_materiel(r["lien_serie"]) or mq.hors_materiel(r["serie_code"]):
             continue
         vus.add(cle)
         try:

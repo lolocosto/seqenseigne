@@ -1,5 +1,5 @@
 {
- "source": "col6/ref6e_v2.md (sections S01 à S13 ; copie : outils/ref6e_v2.md), 19 octobre 2026 (découpage de la géométrie)",
+ "source": "col6/ref6e_v2.md (sections S01 à S13 ; copie : outils/ref6e_v2.md), 19 octobre 2026 (découpage de la géométrie), 20 octobre 2026 (critères de S05-12)",
  "niveau": "N09",
  "cycle": "C03",
  "themes": [
@@ -392,8 +392,8 @@
      {
       "code": "12",
       "nom": "Construire la médiatrice d'un segment",
-      "critere_F": "Construit la médiatrice à l'équerre.",
-      "critere_A": "Construit la médiatrice à la règle et au compas, puis rédige son programme de construction (livret, p. 28, 35).",
+      "critere_F": "Construit la médiatrice d'un segment, à la règle graduée et à l'équerre ou au compas.",
+      "critere_A": "Construit la médiatrice par les deux méthodes, puis rédige son programme de construction (livret, p. 28, 35).",
       "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
      },
      {

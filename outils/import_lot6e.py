@@ -60,6 +60,15 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      marqueurs n'entrent pas dans la comparaison de contenu qui choisit le
      numéro EV (R2).
 
+  7. **v0.52.8** — Calculatrice des évaluations (C1) : la clé `calculatrice`
+     de l'entrée d'évaluation est aussi écrite dans
+     `evaluations.calculatrice` (évaluation non validée ; clé absente = '' :
+     le sujet suit ses exercices). Critères F, A, E d'un objectif existant
+     mis à jour d'après `objectifs_6e.json` (déjà le cas), le détail est
+     signalé dans le rapport (O1) ; jamais sur une séquence validée (lot non
+     importé). Macros `\seq…Six` du lot absentes du module signalées comme
+     les `\seqLoc…` (I2) ; astuces `\seqAstuceSix` comptées par séquence.
+
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
 évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
@@ -116,6 +125,8 @@ DOCUMENTS_LOT = (("travaux_personnels", "TP", "travail personnel"),
                  ("seances_atelier", "AT", "séance d'atelier"))
 RE_GRAPHIQUE = re.compile(r"\\includegraphics\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}")
 RE_LOC = re.compile(r"\\(seqLoc[A-Za-z]+)")
+# v0.52.8 (I2) — macros du module de 6e appelées par le lot (\seqAstuceSix…).
+RE_SIX = re.compile(r"\\(seq[A-Za-z]*Six)(?![A-Za-z])")
 
 
 class ImportErreur(Exception):
@@ -545,8 +556,14 @@ def _partie(conn, sn_id: str, numero: int, seq: str, rapport: Rapport) -> str:
     return pid
 
 
-def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict) -> tuple[str, str]:
-    """(id, état) de l'objectif (niveau, séquence, code)."""
+def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict,
+              rapport: "Rapport | None" = None, etiquette: str = "") -> tuple[str, str]:
+    """(id, état) de l'objectif (niveau, séquence, code).
+
+    v0.52.8 (O1) — Un objectif existant (séquence non validée : une séquence
+    validée n'est pas importée) prend l'intitulé et les critères F, A, E du
+    référentiel ; ce qui change est détaillé dans les informations du
+    rapport, dès l'essai à blanc."""
     r = conn.execute(
         "SELECT o.* FROM objectifs o JOIN sequence_parties p ON p.id = o.partie_id "
         "WHERE p.sequence_par_niveau_id=? AND o.code=?", (sn_id, code)).fetchone()
@@ -561,6 +578,15 @@ def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict) -> tuple[str
             != (partie_id, *vals):
         conn.execute("UPDATE objectifs SET partie_id=?, nom=?, critere_F=?, critere_A=?, "
                      "critere_E=? WHERE id=?", (partie_id, *vals, r["id"]))
+        # v0.52.8 (O1) — détail signalé dès l'essai à blanc.
+        quoi = [lib for lib, a, b in (("partie", r["partie_id"], partie_id),
+                                      ("intitulé", r["nom"], d["nom"]),
+                                      ("critère F", r["critere_F"], d["critere_F"]),
+                                      ("critère A", r["critere_A"], d["critere_A"]),
+                                      ("critère E", r["critere_E"], d["critere_E"])) if a != b]
+        if rapport is not None:
+            rapport.infos.append(f"{etiquette or code} : objectif mis à jour d'après "
+                                 f"objectifs_6e.json ({', '.join(quoi)})")
         return r["id"], "mis à jour"
     return r["id"], "inchangé"
 
@@ -738,7 +764,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
         pid = _partie(conn, sn["id"], p["numero"], seq, rapport)
         parties[p["numero"]] = pid
         code_c = f"{p['numero'] - 1}1"
-        oid, etat = _objectif(conn, sn["id"], pid, code_c, cours)
+        oid, etat = _objectif(conn, sn["id"], pid, code_c, cours, rapport, f"{seq}-{code_c}")
         cours_ids[p["numero"]] = oid
         rapport.obj(seq, f"{seq}-{code_c}", "Cours — " + cours["nom"])["objectif"] = etat
 
@@ -758,7 +784,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
         if (o.get("intitule") or d["nom"]) != d["nom"]:
             rapport.infos.append(f"{code} : intitulé du lot différent du référentiel "
                                  "(référentiel retenu)")
-        oid, etat = _objectif(conn, sn["id"], parties[numero], d["code"], d)
+        oid, etat = _objectif(conn, sn["id"], parties[numero], d["code"], d, rapport, code)
         ro = rapport.obj(seq, code, d["nom"])
         ro["objectif"] = etat
         series: dict[str, list] = {"F": [], "A": [], "E": []}
@@ -883,6 +909,18 @@ def macros_locales(lots: list[dict]) -> dict:
         contenu = {k: v for k, v in lot.items() if k not in ("_dossier", "macros_locales")}
         brut = json.dumps(contenu, ensure_ascii=False).replace("\\\\", "\\")
         out[lot["sequence"]] = sorted(set(RE_LOC.findall(brut)))
+    return out
+
+
+def macros_module(lots: list[dict]) -> dict:
+    """v0.52.8 (I2) — {séquence: ([\\seq…Six appelées], nombre de
+    \\seqAstuceSix)} dans les contenus LaTeX des lots."""
+    out = {}
+    for lot in lots:
+        contenu = {k: v for k, v in lot.items() if k not in ("_dossier", "macros_locales")}
+        brut = json.dumps(contenu, ensure_ascii=False).replace("\\\\", "\\")
+        trouvees = RE_SIX.findall(brut)
+        out[lot["sequence"]] = (sorted(set(trouvees)), trouvees.count("seqAstuceSix"))
     return out
 
 
@@ -1052,6 +1090,22 @@ def _evaluation(conn, titre: str, rapport: Rapport, seq: str):
     return r["id"], "existante"
 
 
+def _poser_calculatrice(conn, ev_id: str, valeur: str) -> int:
+    """v0.52.8 (C1) — `evaluations.calculatrice` = clé `calculatrice` de
+    l'entrée d'évaluation du lot ('' si absente : le sujet suit ses
+    exercices). Évaluation non validée seulement (l'appelant l'a vérifié).
+    Retourne 1 si la valeur change."""
+    if not mq.colonne_evaluation_presente(conn):
+        mq.migrer_evaluations(conn)
+    avant = conn.execute("SELECT calculatrice FROM evaluations WHERE id = ?",
+                         (ev_id,)).fetchone()[0] or ""
+    if avant == (valeur or ""):
+        return 0
+    conn.execute("UPDATE evaluations SET calculatrice = ?, mtime = CURRENT_TIMESTAMP "
+                 "WHERE id = ?", (valeur or "", ev_id))
+    return 1
+
+
 def _poser_exercices_evaluation(conn, ev_id: str, voulus: list[tuple]) -> int:
     """Exercices importés (id, points) en tête, dans l'ordre du lot ; ceux
     que l'auteur a ajoutés passent après. Retourne le nombre de changements."""
@@ -1208,12 +1262,9 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
         if not any(entree.get(c) for c in mq.CHAMPS):
             entree = paire.get("B") or entree
         marques_ev = marqueurs_lot(entree, f"{seq} évaluation « {titre} »", rapport)
-        if marques_ev["calculatrice"] == "autorisee":
-            # L'option « Calculatrice » du document évaluation (catalogue 6e)
-            # vaut « interdite » par défaut et ne lit pas les marqueurs.
-            rapport.infos.append(f"{NIVEAU}/{seq} évaluation « {titre} » marquée calculatrice "
-                                 "autorisée : régler l'option « Calculatrice » du document "
-                                 "(défaut : interdite)")
+        # v0.52.8 (C1) — l'option « Calculatrice » du sujet suit le marquage :
+        # écrite plus bas dans `evaluations.calculatrice` (plus d'information
+        # « régler l'option du document »).
         for i, x in enumerate(exos):
             num += 1
             vals = _vals_ev(x)
@@ -1248,6 +1299,7 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
         n_obj = 0
         if etat_ev != "validée, non modifiée":
             change = _poser_exercices_evaluation(conn, ev_id, voulus)
+            change += _poser_calculatrice(conn, ev_id, marques_ev["calculatrice"])
             for oc in dict.fromkeys(x["objectif"] for x in exos if not x["bonus"]):
                 if conn.execute("SELECT 1 FROM evaluation_objectifs WHERE evaluation_id = ? AND "
                                 "objectif_id = ?", (ev_id, objectifs_ids[oc])).fetchone() is None:
@@ -1264,7 +1316,9 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             f"{seq} évaluation « {titre} » : {etat_ev} — {len(exos)} exercice(s) EV "
             f"({plage} : "
             + ", ".join(f"{e} {n}" for e, n in etats.items())
-            + f"), total {total:g}" + (f" + bonus {bonus:g}" if bonus else ""))
+            + f"), total {total:g}" + (f" + bonus {bonus:g}" if bonus else "")
+            + (f" — {mq.LIBELLES_CALCULATRICE[marques_ev['calculatrice']]}"
+               if marques_ev["calculatrice"] else ""))
     n = _lier_objectifs(conn, liens)
     if n:
         rapport.seq(seq)["lignes"].append(f"évaluations : {n} lien(s) exercice EV-objectif créé(s)")
@@ -1390,6 +1444,8 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         mq.migrer(conn)
         rapport.infos.append("Base complétée : colonnes ordinateur et calculatrice des "
                              "exercices (v0.52.7)")
+    if mq.migrer_evaluations(conn):                                  # v0.52.8 (C1)
+        rapport.infos.append("Base complétée : colonne calculatrice des évaluations (v0.52.8)")
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
     appliquer_cycle3(conn, ref, rapport)
@@ -1402,13 +1458,23 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     for seq, ms in macros_locales(lots).items():
         if ms:
             rapport.infos.append(f"{seq} : macros locales utilisées (fournies par "
-                                 f"seqenseigne-style6e v0.7) : {', '.join(ms)}")
+                                 f"seqenseigne-style6e v0.8) : {', '.join(ms)}")
         # v0.52.5 — Une macro \seqLoc… que le module ne fournit pas ferait
         # échouer la compilation de tous les documents de la séquence.
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
         if absentes:
             rapport.anomalie(f"{seq} : macros locales absentes du module seqenseigne-style6e "
                              f"(à verser dans le .dtx) : {', '.join(absentes)}")
+    # v0.52.8 (I2) — même contrôle pour les macros \seq…Six du module
+    # (\seqAstuceSix, v0.8) ; nombre d'astuces par séquence.
+    for seq, (ms, n_astuces) in macros_module(lots).items():
+        absentes = [m for m in ms if m not in MACROS_STYLE6E]
+        if absentes:
+            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e v0.8 "
+                             f"(compilation impossible) : {', '.join(absentes)}")
+        if n_astuces:
+            rapport.infos.append(f"{seq} : {n_astuces} astuce(s) \\seqAstuceSix (module "
+                                 "seqenseigne-style6e v0.8)")
 
 
 def resoudre_base(db: str | None, racine: Path = RACINE_APPLI) -> Path:

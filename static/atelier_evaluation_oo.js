@@ -449,6 +449,34 @@ class AtelierEvaluation extends AtelierAssemblage {
     }
     // v0.16.3 — Met à jour l'indicateur « désactivé » selon la valeur chargée.
     this.majLangueIndic();
+    // v0.52.8 (C1, C3) — Calculatrice du sujet 6e.
+    this._remplirCalculatrice(ev);
+  }
+
+  /**
+   * v0.52.8 (C1, C3) — Réglage « Calculatrice » de l'évaluation : '' suit
+   * les exercices EV (règle C1, rappelée à côté de la liste) ; un réglage
+   * contraire aux exercices marqués affiche l'avertissement du serveur
+   * (`calculatrice_avertissement`) sans rien changer. Masqué hors 6e.
+   */
+  _remplirCalculatrice(ev) {
+    const bloc = document.getElementById('atl-eval-calculatrice-bloc');
+    const sel = document.getElementById('atl-eval-calculatrice');
+    const indic = document.getElementById('atl-eval-calculatrice-indic');
+    const avert = document.getElementById('atl-eval-calculatrice-avert');
+    const est6e = this._estEval6e();
+    if (bloc) bloc.style.display = est6e ? 'flex' : 'none';
+    if (sel) sel.value = (ev && ev.calculatrice) || '';
+    if (indic) {
+      const lib = { autorisee: 'autorisée', interdite: 'interdite' };
+      const exo = ev && ev.calculatrice_exercices;
+      indic.textContent = exo ? `(exercices : ${lib[exo] || exo})` : '';
+    }
+    if (avert) {
+      const msg = est6e && ev ? (ev.calculatrice_avertissement || '') : '';
+      avert.textContent = msg;
+      avert.style.display = msg ? '' : 'none';
+    }
   }
 
 
@@ -959,6 +987,8 @@ class AtelierEvaluation extends AtelierAssemblage {
         );
       }
       this.itemActif = data.evaluation;
+      // v0.52.8 (C3) — avertissement recalculé par le serveur.
+      this._remplirCalculatrice(this.itemActif);
       const idx = this.liste.findIndex(e => e.id === this.itemActif.id);
       if (idx !== -1) this.liste[idx] = this.itemActif;
       this._rendreSidebar();
@@ -991,13 +1021,17 @@ class AtelierEvaluation extends AtelierAssemblage {
     const elL = document.getElementById('atl-eval-langue-points');
     if (!elT || !elM || !elA || !elL) return null;
     const lang = elL.value.trim();
-    return {
+    const champs = {
       titre: elT.value.trim(),
       mode_notation: elM.value,
       afficher_bareme_dans_exos: elA.checked ? 1 : 0,
       // Le backend attend un OBJET {points} ou '' (cf. fix v0.16.1).
       item_langue_francaise: lang === '' ? '' : { points: parseFloat(lang) },
     };
+    // v0.52.8 (C1, C3) — réglage « Calculatrice » ('' : selon les exercices).
+    const elK = document.getElementById('atl-eval-calculatrice');
+    if (elK) champs.calculatrice = elK.value;
+    return champs;
   }
 
   /**

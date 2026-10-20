@@ -171,12 +171,15 @@ Une entrée par séquence du découpage, dans le même ordre.
   tableau de bord de l'appli de classe (réserver la salle informatique, le
   chariot mobile…). Une entrée par exercice : `objectif` (code ; `''` pour
   un exercice de révision ou d'approche de la partie), `serie` (F, A, E, AE,
-  TP, AC, AT, EV ; R, EA pour la partie), `exercice` (code, ex. `F03`),
+  AC, AT, EV ; R, EA pour la partie), `exercice` (code, ex. `F03`),
   `sequence` (séquence de l'exercice), `titre`, `ordinateur` (`''`,
   `scratch`, `geogebra`, `tableur`, `autre`), `calculatrice` (`''`,
   `autorisee`, `interdite`). Interne seulement ; **absent** quand aucun
   exercice de la partie n'est marqué. Côté classe : table
   `referentiel_materiel_publie` (`import_publication.materiel_publie`).
+  v0.52.8 (décision T1) : les travaux personnels (série TP), faits sur le
+  temps personnel, n'y figurent plus (rien à réserver) ; une publication
+  de la v0.52.7 qui en contient est lue sans eux. Version inchangée (1.3).
 
 ## Documents
 

@@ -152,7 +152,8 @@ def test_module_style6e_v0_7_documente_les_marqueurs():
     from services import style6e
     dtx = (APPLI / "paquet" / "seqenseigne-style6e.dtx").read_text(encoding="utf-8")
     sty = (APPLI / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
-    assert "v0.7 seqenseigne" in dtx and "v0.7 seqenseigne" in sty
+    # v0.52.8 : le module est passé en v0.8 ; les marqueurs v0.7 restent.
+    assert "v0.8 seqenseigne" in dtx and "v0.8 seqenseigne" in sty
     for m in ("seqMaterielSix", "seqOrdinateurSix", "seqCalculatriceSix"):
         assert m in style6e.MACROS
         assert rf"\DescribeMacro{{\{m}}}" in dtx

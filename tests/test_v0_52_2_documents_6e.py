@@ -324,8 +324,9 @@ def test_module_evaluations_propose_les_ev_dont_le_bonus_sans_objectif(app_6e):
 
 def test_catalogue_sixieme_types_et_options_du_cadrage():
     t = gd.type_document("evaluation_6e")
+    # v0.52.8 (C2) : « selon l'évaluation » remplace « interdite » par défaut.
     assert t.options == {"actif": False, "sujet": "A", "version": "eleve",
-                         "calculatrice": "interdite"}
+                         "calculatrice": "selon_evaluation"}
     for cle in ("travaux_personnels_6e", "activites_complementaires_6e", "seances_atelier_6e"):
         assert gd.type_document(cle).options == {"actif": False, "version": "eleve"}
         assert gd.gabarit_du_type(cle) == "sixieme"

@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/10/20 v0.7 seqenseigne : style des documents de 6e]
+    [2026/10/20 v0.8 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,8 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.8}{2026/10/20}{Astuce dans un énoncé : \cs{seqAstuceSix} (ampoule,
+%   « Astuce » en gras, texte en petits caractères, sans cadre ; élève et corrigé)}
 % \changes{v0.7}{2026/10/20}{Marqueurs de l'exercice : \cs{seqMaterielSix},
 %   \cs{seqOrdinateurSix} et \cs{seqCalculatriceSix} (pictogramme et nom de
 %   l'outil, calculatrice autorisée ou interdite), dans l'en-tête de
@@ -200,6 +202,19 @@
 % \DescribeMacro{\seqPictoOrdinateurSix}\DescribeMacro{\seqPictoCalculatriceSix}
 % Les deux pictogrammes seuls ; la forme étoilée \cs{seqPictoCalculatriceSix*}
 % barre la calculatrice.
+%
+% \subsection{Astuce (v0.8)}
+% \DescribeMacro{\seqAstuceSix}
+% \cs{seqAstuceSix}\marg{texte} ajoute une astuce à la fin d'un énoncé, par exemple
+% « Pour mieux comprendre ce que fait le programme, tu peux le construire dans Scratch
+% et le tester. » Elle s'affiche dans un paragraphe à part : une ampoule, le mot
+% « Astuce » en gras, puis le texte en petits caractères, sans cadre. Les lignes
+% suivantes s'alignent sur le mot « Astuce ». L'astuce est visible dans la version
+% élève et dans la version corrigée. C'est une suggestion, pas une consigne :
+% un exercice qui porte une astuce n'est pas marqué « ordinateur ».
+%
+% \DescribeMacro{\seqPictoAstuceSix}
+% Le pictogramme seul : une ampoule au trait, lisible en noir et blanc.
 %
 % \subsection{Mises en route}
 % \DescribeEnv{seqCalculMental}
@@ -587,6 +602,32 @@
   \if\relax\detokenize{#1}\relax\else\if\relax\detokenize{#2}\relax\else
     \quad\fi\fi
   \if\relax\detokenize{#2}\relax\else\seqCalculatriceSix{#2}\fi}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Astuce (v0.8)}
+% \begin{macro}{\seqPictoAstuceSix}
+% \changes{v0.8}{2026/10/20}{\cs{seqPictoAstuceSix} : ampoule au trait}
+% Une ampoule au trait (globe, culot, deux bagues), à la hauteur des majuscules.
+%    \begin{macrocode}
+\newcommand{\seqPictoAstuceSix}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.5pt, line join=round, line cap=round]{%
+  \draw (0.36,0.22) -- (0.29,0.38) arc[start angle=235, end angle=-55,
+    radius=0.28] -- (0.54,0.22) -- cycle;
+  \draw (0.37,0.12) -- (0.53,0.12) (0.40,0.03) -- (0.50,0.03);
+  \draw (0.40,0.30) -- (0.42,0.46) -- (0.48,0.46) -- (0.50,0.30);}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\seqAstuceSix}
+% \changes{v0.8}{2026/10/20}{\cs{seqAstuceSix} : astuce à la fin d'un énoncé}
+% Paragraphe à part, en \cs{small}, avec un retrait suspendu de la largeur du
+% pictogramme ; rien ne dépend de la version (élève ou corrigée).
+%    \begin{macrocode}
+\newcommand{\seqAstuceSix}[1]{\par\smallskip
+  {\small\noindent\hangindent=1.3em\hangafter=1
+   \makebox[1.3em][l]{\seqPictoAstuceSix}\textbf{Astuce.}\ #1\par}%
+  \smallskip}
 %    \end{macrocode}
 % \end{macro}
 %

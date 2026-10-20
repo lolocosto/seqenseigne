@@ -21,6 +21,20 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.8 — 2026-10-20
+
+### Ajouté
+
+- `\seqAstuceSix{texte}` : astuce à la fin d'un énoncé (consigne habituelle de Laurent :
+  « Pour mieux comprendre ce que fait le programme, tu peux le construire dans Scratch et
+  le tester. ») ; paragraphe à part, ampoule au trait, « Astuce. » en gras, texte en
+  `\small`, retrait suspendu, sans cadre ; identique en version élève et corrigée.
+- `\seqPictoAstuceSix` : l'ampoule seule, lisible en noir et blanc.
+- Documentation et `\changes` dans le `.dtx` ; `.sty` régénéré par `tex seqenseigne.ins`
+  (seqenseigne v0.52.8).
+
+---
+
 ## seqenseigne-style6e v0.7 — 2026-10-20
 
 ### Ajouté

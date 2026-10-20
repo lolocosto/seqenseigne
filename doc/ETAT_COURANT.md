@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.7** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.8** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -107,6 +107,18 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   clés `ordinateur` / `calculatrice` des lots. Remédiation et sujet B
   suivent le marquage de l'exercice. Cycle 4 inchangé au caractère près sans
   marqueur. Détails : `doc/redemarrage_v0_52_7.md`.
+- v0.52.8 livrée (décisions de Laurent du 20 octobre) : la mention
+  « calculatrice » du sujet d'une évaluation 6e suit le marquage de ses
+  exercices EV (un « autorisée » suffit, sinon interdite) sauf réglage de
+  l'évaluation (`evaluations.calculatrice`, écrit par l'import, liste
+  « Calculatrice » du module Évaluations, avertissement si contraire aux
+  exercices) ; option du document « Évaluations » « selon l'évaluation » ;
+  travaux personnels hors « Matériel à prévoir » et hors données du tableau
+  de bord ; astuce `\seqAstuceSix` (module `seqenseigne-style6e` v0.8 :
+  `tex seqenseigne.ins` à relancer) ; critères de S05-12 (référentiel 6e
+  du 20 octobre), mise à jour des critères signalée par l'import ; lots
+  S01–S13 (astuces, bonus). Cycle 4 inchangé au caractère près. Détails :
+  `doc/redemarrage_v0_52_8.md`.
 - À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
   les progressions) ; mises en route M01 à M07 ; migration du référentiel de 5e
   (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import

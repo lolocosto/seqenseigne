@@ -384,9 +384,9 @@ Deux parties. La partie « Positions relatives de deux droites » est retirée (
 
 **S05-12 · Construire la médiatrice d'un segment**
 
-- F : « Construit la médiatrice à l'équerre. » · A : « Construit la médiatrice à la règle et au compas, puis rédige son programme de construction (livret, p. 28, 35). »
+- F : « Construit la médiatrice d'un segment, à la règle graduée et à l'équerre ou au compas. » · A : « Construit la médiatrice par les deux méthodes, puis rédige son programme de construction (livret, p. 28, 35). »
 - Notions à expliquer : « Médiatrice d'un segment » (nouvelle) ; « Milieu d'un segment » (nouvelle) ; « Droites perpendiculaires » (rappel).
-- Exercices : F : N09/S16/F03, F04 ; A et E : à créer, dont un exercice où l'on rédige le programme de construction de la médiatrice à l'équerre puis au compas (tâche, pas objectif).
+- Exercices : F : N09/S16/F03, F04 ; A et E : à créer, dont un exercice où l'on rédige le programme de construction de la médiatrice à l'équerre puis au compas (tâche, pas objectif). Décision du 20 octobre 2026 : les deux méthodes (équerre, compas) sont enseignées dès S05.
 
 **S05-13 · Utiliser la propriété caractéristique de la médiatrice**
 

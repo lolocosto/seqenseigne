@@ -348,8 +348,12 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
                         "seq_code, partie_numero, nature, atome_id, titre, ordre) "
                         "VALUES (?,?,?,?,?,?,?)",
                         (rid, s["code"], p["numero"], nature, a["id"], a["titre"], i))
-            # v0.52.7 (format 1.3) — exercices marqués de la partie.
-            for i, m in enumerate(p.get("materiel") or []):
+            # v0.52.7 (format 1.3) — exercices marqués de la partie ;
+            # v0.52.8 (T1) : un travail personnel (publication v0.52.7) n'est
+            # pas du matériel à réserver.
+            from services.marqueurs_exercices import hors_materiel
+            for i, m in enumerate(x for x in (p.get("materiel") or [])
+                                  if not hors_materiel(x.get("serie"), x.get("exercice"))):
                 conn.execute(
                     "INSERT OR IGNORE INTO referentiel_materiel_publie (referentiel_id, "
                     "seq_code, partie_numero, objectif_code, serie, exercice, exercice_seq, "
@@ -460,8 +464,11 @@ def materiel_publie(conn, referentiel_id: str, seq_code: str | None = None,
                     partie_numero: int | None = None) -> list[dict]:
     """v0.52.7 — Exercices marqués (ordinateur, calculatrice) d'un
     référentiel publié, pour le futur tableau de bord de la progression :
-    filtrables par séquence et partie, dans l'ordre de la publication."""
-    sql = "SELECT * FROM referentiel_materiel_publie WHERE referentiel_id=?"
+    filtrables par séquence et partie, dans l'ordre de la publication.
+    v0.52.8 (T1) : sans les travaux personnels (lignes TP déjà stockées par
+    la v0.52.7)."""
+    sql = ("SELECT * FROM referentiel_materiel_publie WHERE referentiel_id=? "
+           "AND serie <> 'TP' AND exercice NOT LIKE 'TP%'")
     args: list = [referentiel_id]
     if seq_code is not None:
         sql += " AND seq_code=?"

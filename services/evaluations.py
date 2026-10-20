@@ -91,6 +91,15 @@ class EtatCodeInvalide(EvaluationErreur):
         )
 
 
+class CalculatriceInvalide(EvaluationErreur):
+    """v0.52.8 — calculatrice hors {'', interdite, autorisee, non_precisee}."""
+    def __init__(self, valeur):
+        super().__init__(
+            f"Calculatrice invalide : {valeur!r}.",
+            "calculatrice_invalide", valeur=valeur,
+        )
+
+
 class ItemLangueFrancaiseInvalide(EvaluationErreur):
     """item_langue_francaise n'est pas un JSON {points: int} valide."""
     def __init__(self, raison="Format invalide"):
@@ -246,19 +255,40 @@ def _rowid() -> str:
     return uuid.uuid4().hex
 
 
+def _col_calculatrice(conn: sqlite3.Connection) -> str:
+    """v0.52.8 — Fragment SELECT de la colonne `calculatrice` (C1) ; chaîne
+    vide sur une base qui ne l'a pas encore (schéma minimal de test)."""
+    from services.marqueurs_exercices import colonne_evaluation_presente
+    return (", calculatrice" if colonne_evaluation_presente(conn)
+            else ", '' AS calculatrice")
+
+
 def _evaluation_par_id(conn: sqlite3.Connection,
                         evaluation_id: str) -> dict | None:
-    """Lookup simple. Retourne un dict ou None."""
+    """Lookup simple. Retourne un dict ou None.
+
+    v0.52.8 (C1, C3) — avec `calculatrice` (réglage, '' = selon les
+    exercices), `calculatrice_exercices` (règle C1) et
+    `calculatrice_avertissement` (réglage contraire aux exercices, '')."""
     row = conn.execute(
         "SELECT id, niveau, numero, ordre, titre, mode_notation, "
         "       afficher_bareme_dans_exos, item_langue_francaise, "
-        "       etat_code, mtime "
+        "       etat_code, mtime" + _col_calculatrice(conn) + " "
         "FROM evaluations WHERE id = ?",
         (evaluation_id,),
     ).fetchone()
     if row is None:
         return None
-    return _row_vers_dict_evaluation(row)
+    d = _row_vers_dict_evaluation(row)
+    try:
+        from services.marqueurs_exercices import calculatrice_evaluation
+        c = calculatrice_evaluation(conn, evaluation_id)
+        d["calculatrice_exercices"] = c["selon_exercices"]
+        d["calculatrice_avertissement"] = c["avertissement"]
+    except sqlite3.OperationalError:          # tables de liaison absentes
+        d["calculatrice_exercices"] = "interdite"
+        d["calculatrice_avertissement"] = ""
+    return d
 
 
 def _row_vers_dict_evaluation(row) -> dict:
@@ -283,6 +313,9 @@ def _row_vers_dict_evaluation(row) -> dict:
         "item_langue_francaise":       item_lf,
         "etat_code":                   row["etat_code"],
         "mtime":                       row["mtime"],
+        # v0.52.8 (C1) — '' : le sujet suit les exercices.
+        "calculatrice":                (row["calculatrice"] or "")
+                                       if "calculatrice" in row.keys() else "",
     }
 
 
@@ -432,7 +465,7 @@ def lister_evaluations(conn: sqlite3.Connection,
         rows = conn.execute(
             "SELECT id, niveau, numero, ordre, titre, mode_notation, "
             "       afficher_bareme_dans_exos, item_langue_francaise, "
-            "       etat_code, mtime "
+            "       etat_code, mtime" + _col_calculatrice(conn) + " "
             "FROM evaluations WHERE niveau = ? ORDER BY ordre",
             (niveau,),
         ).fetchall()
@@ -440,7 +473,7 @@ def lister_evaluations(conn: sqlite3.Connection,
         rows = conn.execute(
             "SELECT id, niveau, numero, ordre, titre, mode_notation, "
             "       afficher_bareme_dans_exos, item_langue_francaise, "
-            "       etat_code, mtime "
+            "       etat_code, mtime" + _col_calculatrice(conn) + " "
             "FROM evaluations ORDER BY niveau, ordre"
         ).fetchall()
     return [_row_vers_dict_evaluation(r) for r in rows]
@@ -455,6 +488,7 @@ def modifier_evaluation(
     afficher_bareme_dans_exos: bool | None = None,
     item_langue_francaise: dict | None | str = "__no_change__",
     etat_code: str | None = None,
+    calculatrice: str | None = None,
 ) -> dict:
     """Modification partielle d'une évaluation (PATCH-like).
 
@@ -491,6 +525,17 @@ def modifier_evaluation(
         _valider_etat_code(etat_code)
         sets.append("etat_code = ?")
         args.append(etat_code)
+    if calculatrice is not None:
+        # v0.52.8 (C1, C3) — réglage de l'enseignant ; '' = selon les
+        # exercices. Jamais réécrit par l'atelier (un réglage contraire aux
+        # exercices est seulement signalé).
+        from services import marqueurs_exercices as mq
+        if calculatrice not in mq.CALCULATRICE_EVALUATION:
+            raise CalculatriceInvalide(calculatrice)
+        if not mq.colonne_evaluation_presente(conn):
+            mq.migrer_evaluations(conn)
+        sets.append("calculatrice = ?")
+        args.append(calculatrice)
 
     if sets:
         # Toujours rafraîchir le mtime

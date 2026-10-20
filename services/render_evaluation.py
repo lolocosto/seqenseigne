@@ -507,13 +507,21 @@ def generer_tex_evaluation(
 #     (macros de réponse) ; un corrigé non vide est une explication
 #     (\seqLocExplication, visible en version corrigée seulement).
 #   - E2 Mention « calculatrice » : option (interdite par défaut, comme les
-#     sept évaluations des lots).
+#     sept évaluations des lots). v0.52.8 (C1, C2) : par défaut
+#     (`selon_evaluation`), le réglage de l'évaluation, sinon le marquage de
+#     ses exercices EV (un « autorisée » → autorisée ; sinon interdite) ;
+#     une valeur explicite de l'option (rendu de l'atelier, document du
+#     référentiel) s'impose.
 #   - Une seule géométrie, celle du module de 6e (livret_sequence_6e.document).
 
 from services.gabarits_documents import CALCULATRICE_6E, SUJETS_6E  # noqa: E402
 _MENTION_CALCULATRICE = {"interdite": "calculatrice interdite",
                          "autorisee": "calculatrice autorisée",
-                         "non_precisee": ""}
+                         "non_precisee": "",
+                         # v0.52.8 — résolu par generer_tex_evaluation_6e ;
+                         # appel direct de corps_evaluation_6e : règle C1
+                         # sans exercice marqué.
+                         "selon_evaluation": "calculatrice interdite"}
 MARQUE_TITRE_B = "% titre B :"
 
 
@@ -522,7 +530,7 @@ class Evaluation6eErreur(ValueError):
 
 
 def options_evaluation_6e(options: dict | None) -> dict:
-    o = {"sujet": "A", "version": "eleve", "calculatrice": "interdite"}
+    o = {"sujet": "A", "version": "eleve", "calculatrice": "selon_evaluation"}
     for cle in o:
         if (options or {}).get(cle) not in (None, ""):
             o[cle] = (options or {})[cle]
@@ -643,6 +651,9 @@ def generer_tex_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
     version eleve|corrigee, calculatrice)."""
     from services.livret_sequence_6e import document
     opts = options_evaluation_6e(options)
+    if opts["calculatrice"] == "selon_evaluation":                  # v0.52.8 (C1)
+        from services.marqueurs_exercices import calculatrice_evaluation
+        opts["calculatrice"] = calculatrice_evaluation(conn, evaluation_id)["valeur"]
     st = structure_evaluation_6e(conn, evaluation_id)
     titre = f"Évaluation 6e — {st['titre']} — sujet {opts['sujet']}"
     return document(conn, st["niveau"], titre, corps_evaluation_6e(conn, st, opts),

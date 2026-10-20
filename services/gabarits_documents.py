@@ -173,7 +173,10 @@ FICHES_PLAN_6E = ("texte_complet", "titre")             # v0.52.3
 REMEDIATIONS_6E = ("apres_exercice", "en_fin", "aucune")
 DECOUPAGES_6E = ("par_sequence", "annuel", "les_deux")
 SUJETS_6E = ("A", "B")                                   # v0.52.2
-CALCULATRICE_6E = ("interdite", "autorisee", "non_precisee")
+# v0.52.8 (C2) — « selon_evaluation » (nouveau défaut) : chaque évaluation
+# suit son réglage, sinon le marquage de ses exercices (règle C1) ; les autres
+# valeurs imposent la mention à toutes les évaluations du niveau.
+CALCULATRICE_6E = ("selon_evaluation", "interdite", "autorisee", "non_precisee")
 
 _CATALOGUE_SIXIEME = (
     TypeDocument(
@@ -227,15 +230,15 @@ _CATALOGUE_SIXIEME = (
         description=("Une par évaluation du niveau : barème par compétence, "
                      "sujet A ou B (le sujet B sert à la remédiation)."),
         options={"actif": False, "sujet": "A", "version": "eleve",
-                 "calculatrice": "interdite"},
+                 "calculatrice": "selon_evaluation"},
         valeurs={"sujet": SUJETS_6E, "version": VERSIONS_6E,
                  "calculatrice": CALCULATRICE_6E},
         generateur="services.render_evaluation.generer_tex_evaluation_6e",
         champs=(("sujet", "Sujet", (("A", "A"), ("B", "B"))),
                 ("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),
                 ("calculatrice", "Calculatrice",
-                 (("interdite", "interdite"), ("autorisee", "autorisée"),
-                  ("non_precisee", "non précisée")))),
+                 (("selon_evaluation", "selon l'évaluation"), ("interdite", "interdite"),
+                  ("autorisee", "autorisée"), ("non_precisee", "non précisée")))),
     ),
     TypeDocument(
         cle="travaux_personnels_6e",

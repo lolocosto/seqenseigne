@@ -23,6 +23,13 @@ Décisions (doc/redemarrage_v0_52_7.md) :
     signalée par l'import.
   - Le rendu n'émet rien pour un exercice non marqué : le cycle 4 sort
     exactement le même `.tex` tant qu'aucun exercice n'est marqué.
+
+v0.52.8 — Calculatrice des évaluations (décisions C1 à C3,
+doc/redemarrage_v0_52_8.md) : colonne `evaluations.calculatrice`
+('' = selon les exercices | interdite | autorisee | non_precisee), règle
+`calculatrice_selon_exercices`, réglage et avertissement
+`calculatrice_evaluation` ; travaux personnels hors « Matériel à prévoir »
+(décision T1, `hors_materiel`).
 """
 
 from __future__ import annotations
@@ -47,14 +54,58 @@ class MarqueurInvalide(ValueError):
 # ── Migration ────────────────────────────────────────────────────────────────
 
 def migrer(conn: sqlite3.Connection) -> None:
-    """Ajoute les deux colonnes à `exercices` si elles manquent (idempotent :
-    rien ne change au second passage)."""
+    """Ajoute les deux colonnes à `exercices` si elles manquent, et (v0.52.8)
+    la colonne `calculatrice` à `evaluations` (idempotent : rien ne change
+    au second passage)."""
     cols = {r[1] for r in conn.execute("PRAGMA table_info(exercices)")}
-    if not cols:
-        return
-    for nom in CHAMPS:
-        if nom not in cols:
-            conn.execute(f"ALTER TABLE exercices ADD COLUMN {nom} TEXT NOT NULL DEFAULT ''")
+    if cols:
+        for nom in CHAMPS:
+            if nom not in cols:
+                conn.execute(f"ALTER TABLE exercices ADD COLUMN {nom} TEXT NOT NULL DEFAULT ''")
+    migrer_evaluations(conn)
+
+
+def colonne_evaluation_presente(conn: sqlite3.Connection) -> bool:
+    return "calculatrice" in {r[1] for r in conn.execute("PRAGMA table_info(evaluations)")}
+
+
+def migrer_evaluations(conn: sqlite3.Connection) -> bool:
+    """v0.52.8 (C1) — Colonne `evaluations.calculatrice` (défaut '' : selon
+    les exercices). Décision C2 : au moment où la colonne est ajoutée — une
+    seule fois par base, donc jamais sur un choix fait ensuite par
+    l'enseignant —, l'option « Calculatrice » du document « Évaluations »
+    (catalogue 6e) restée à l'ancien défaut « interdite » passe au nouveau
+    défaut « selon l'évaluation », pour les référentiels en cours seulement
+    (un référentiel verrouillé ou utilisé garde ses documents). Retourne
+    True si la colonne vient d'être ajoutée."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(evaluations)")}
+    if not cols or "calculatrice" in cols:
+        return False
+    conn.execute("ALTER TABLE evaluations ADD COLUMN calculatrice TEXT NOT NULL DEFAULT ''")
+    _options_documents_selon_evaluation(conn)
+    return True
+
+
+def _options_documents_selon_evaluation(conn: sqlite3.Connection) -> int:
+    import json
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if not {"referentiel_documents", "referentiel_niveaux"} <= tables:
+        return 0
+    n = 0
+    for doc_id, opts in conn.execute(
+            "SELECT d.id, d.options FROM referentiel_documents d "
+            "JOIN referentiel_niveaux r ON r.id = d.referentiel_id "
+            "WHERE d.type_document = 'evaluation_6e' AND r.etat = 'en_cours'").fetchall():
+        try:
+            o = json.loads(opts) if opts else {}
+        except (TypeError, ValueError):
+            continue
+        if isinstance(o, dict) and o.get("calculatrice") == "interdite":
+            o["calculatrice"] = "selon_evaluation"
+            conn.execute("UPDATE referentiel_documents SET options = ? WHERE id = ?",
+                         (json.dumps(o, ensure_ascii=False), doc_id))
+            n += 1
+    return n
 
 
 def colonnes_presentes(conn: sqlite3.Connection) -> bool:
@@ -152,7 +203,72 @@ def nom_cycle4(nom: str, ex) -> str:
     return (nom or "") + r"\hfill{\small\upshape (" + mention + ")}"
 
 
+# ── Évaluations : mention « calculatrice » du sujet (v0.52.8) ────────────────
+
+# '' : le sujet suit les exercices (C1) ; sinon réglage de l'enseignant.
+CALCULATRICE_EVALUATION = ("", "interdite", "autorisee", "non_precisee")
+LIBELLES_CALCULATRICE_EVALUATION = {"": "selon les exercices", "interdite": "interdite",
+                                    "autorisee": "autorisée", "non_precisee": "non précisée"}
+
+
+def calculatrice_selon_exercices(marques: list) -> str:
+    """Décision C1 (Laurent, 20 octobre) — Une évaluation dont un exercice
+    EV est marqué « calculatrice autorisée » sort « calculatrice
+    autorisée » ; sinon (un exercice l'interdit, ou rien n'est marqué) :
+    « calculatrice interdite », comme avant la v0.52.8."""
+    return "autorisee" if any(lire(m)["calculatrice"] == "autorisee" for m in marques) \
+        else "interdite"
+
+
+def calculatrice_evaluation(conn: sqlite3.Connection, evaluation_id: str) -> dict:
+    """Mention « calculatrice » d'une évaluation :
+
+    - `reglage` : `evaluations.calculatrice` ('' = selon les exercices) ;
+    - `selon_exercices` : règle C1 sur ses exercices EV ;
+    - `valeur` : celle du sujet (le réglage s'il est posé, sinon C1) ;
+    - `avertissement` : décision C3 — réglage posé à la main en
+      contradiction avec des exercices marqués (texte, '' sinon). Le
+      réglage n'est jamais écrasé par l'atelier ; l'import le réécrit (le
+      lot fait foi) pour une évaluation non validée."""
+    reglage = ""
+    if colonne_evaluation_presente(conn):
+        r = conn.execute("SELECT calculatrice FROM evaluations WHERE id = ?",
+                         (evaluation_id,)).fetchone()
+        reglage = (r[0] if r else "") or ""
+    marques = [{"calculatrice": x[0] or ""} for x in conn.execute(
+        "SELECT e.calculatrice FROM evaluation_exercices ee JOIN exercices e "
+        "ON e.id = ee.exercice_id WHERE ee.evaluation_id = ? AND e.serie_code = 'EV'",
+        (evaluation_id,))] if colonnes_presentes(conn) else []
+    selon = calculatrice_selon_exercices(marques)
+    marque = any(m["calculatrice"] for m in marques)
+    avert = ""
+    if reglage and marque and reglage != selon:
+        avert = (f"Calculatrice réglée « {LIBELLES_CALCULATRICE_EVALUATION[reglage]} » à la "
+                 f"main, mais les exercices de l'évaluation la marquent "
+                 f"« {LIBELLES_CALCULATRICE_EVALUATION[selon]} » : le sujet suit le réglage.")
+    return {"reglage": reglage, "selon_exercices": selon, "exercices_marques": marque,
+            "valeur": reglage or selon, "avertissement": avert}
+
+
 # ── Plans de travail : encadré « Matériel à prévoir » ────────────────────────
+
+# v0.52.8 (décision T1, Laurent, 20 octobre) — « Les TP sont à faire sur le
+# temps personnel, donc l'enseignant n'a pas à réserver de matériel. » Les
+# travaux personnels (série TP) gardent leur marqueur (fiche élève, ligne du
+# plan de travail) mais n'entrent ni dans l'encadré « Matériel à prévoir » ni
+# dans les données du tableau de bord (`partie.materiel` du format
+# d'échange, `referentiel_materiel_publie`). Les autres séries (F, A, E, AE,
+# AC, AT, EV, R, EA) restent comptées.
+SERIES_HORS_MATERIEL = ("TP",)
+
+
+def hors_materiel(serie: str | None, code_exercice: str | None = None) -> bool:
+    """Vrai pour un travail personnel (série TP, ou code « TP03 ») : pas de
+    matériel à réserver (T1)."""
+    if (serie or "") in SERIES_HORS_MATERIEL:
+        return True
+    return any((code_exercice or "").startswith(s) for s in SERIES_HORS_MATERIEL)
+
 
 def combiner(marques: list) -> dict:
     """Marquage d'un ensemble d'exercices (une évaluation) : les outils

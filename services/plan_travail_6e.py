@@ -356,9 +356,13 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
         synthese.append("ramassage et correction des travaux personnels"
                         + (" " + " et ".join([", ".join(nums[:-1]), nums[-1]] if len(nums) > 1
                                              else nums) if nums else ""))
-    # v0.52.7 (M8) — Documents marqués (TP, AC, AT, évaluations) dans
-    # l'encadré « Matériel à prévoir », placé en tête du plan.
+    # v0.52.7 (M8) — Documents marqués (AC, AT, évaluations) dans
+    # l'encadré « Matériel à prévoir », placé en tête du plan. v0.52.8 (T1) :
+    # pas les travaux personnels, faits sur le temps personnel (leur mention
+    # reste dans leur ligne).
     for d in docs:
+        if _mq.hors_materiel(d["serie"]):
+            continue
         if _mq.mention_texte(d):
             materiel.noter(_titre_doc(d).split(" : ")[0].lower()
                            if d["num"] else _titre_doc(d), d)

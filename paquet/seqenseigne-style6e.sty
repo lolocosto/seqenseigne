@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/20 v0.7 seqenseigne : style des documents de 6e]
+    [2026/10/20 v0.8 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -156,6 +156,16 @@
   \if\relax\detokenize{#1}\relax\else\if\relax\detokenize{#2}\relax\else
     \quad\fi\fi
   \if\relax\detokenize{#2}\relax\else\seqCalculatriceSix{#2}\fi}}
+\newcommand{\seqPictoAstuceSix}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.5pt, line join=round, line cap=round]{%
+  \draw (0.36,0.22) -- (0.29,0.38) arc[start angle=235, end angle=-55,
+    radius=0.28] -- (0.54,0.22) -- cycle;
+  \draw (0.37,0.12) -- (0.53,0.12) (0.40,0.03) -- (0.50,0.03);
+  \draw (0.40,0.30) -- (0.42,0.46) -- (0.48,0.46) -- (0.50,0.30);}}
+\newcommand{\seqAstuceSix}[1]{\par\smallskip
+  {\small\noindent\hangindent=1.3em\hangafter=1
+   \makebox[1.3em][l]{\seqPictoAstuceSix}\textbf{Astuce.}\ #1\par}%
+  \smallskip}
 \newcounter{seqItemCM}
 \newcounter{seq@cm@col}
 \newcommand{\seqTitreCM}{CALCUL MENTAL}

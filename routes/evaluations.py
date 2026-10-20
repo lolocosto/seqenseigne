@@ -204,7 +204,8 @@ def api_modifier(eval_id):
     # Sélectionner uniquement les champs modifiables
     kwargs = {}
     for champ in ("titre", "mode_notation", "afficher_bareme_dans_exos",
-                  "item_langue_francaise", "etat_code"):
+                  "item_langue_francaise", "etat_code",
+                  "calculatrice"):                       # v0.52.8 (C1, C3)
         if champ in body:
             kwargs[champ] = body[champ]
 
