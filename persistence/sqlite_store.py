@@ -1569,6 +1569,15 @@ class SqliteStore:
         except Exception as _e:                       # pragma: no cover
             print(f"  [gabarits_documents] migration impossible : {_e}")
 
+        # ── v0.52.7 — Marqueurs des exercices : colonnes `ordinateur` et
+        #    `calculatrice` (défaut '' : non marqué) ──────────────────────────
+        try:
+            from services import marqueurs_exercices as _mq
+            _mq.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [marqueurs_exercices] migration impossible : {_e}")
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:
@@ -2589,6 +2598,12 @@ class SqliteStore:
         précédents).
         """
         with self._conn() as conn:
+            # v0.52.7 — colonnes des marqueurs (idempotent) : une base dont
+            # le schéma a été posé sans les migrations de démarrage les reçoit
+            # ici avant l'INSERT / UPDATE qui les nomme.
+            from services import marqueurs_exercices as _mq
+            if not _mq.colonnes_presentes(conn):
+                _mq.migrer(conn)
             ids_cibles = {e["id"] for e in liste if e.get("id")}
             rows_en_base = conn.execute("SELECT id FROM exercices").fetchall()
             ids_en_base = {r["id"] for r in rows_en_base}
@@ -2646,7 +2661,11 @@ class SqliteStore:
                         "  niveau=?, sequence=?, num=?, serie_code=?, fichier=?, "
                         "  remed_enonce=?, remed_corrige=?, "
                         "  cadre_reponse_lignes_principal=?, cadre_reponse_lignes_remed=?, "
-                        "  type_format=? "
+                        "  type_format=?, "
+                        # v0.52.7 — marqueurs : clé absente du dict (scanner,
+                        # appel partiel) → valeur en base gardée (COALESCE).
+                        "  ordinateur=COALESCE(?, ordinateur), "
+                        "  calculatrice=COALESCE(?, calculatrice) "
                         "WHERE id=?",
                         (
                             e.get("serie", ""), e.get("titre", ""),
@@ -2664,6 +2683,8 @@ class SqliteStore:
                             # fournit pas ; mais le scanner sait peupler `enonce`
                             # donc une seconde sauvegarde via l'UI rectifiera).
                             e.get("type_format") or "standard",
+                            (e.get("ordinateur") or "") if "ordinateur" in e else None,
+                            (e.get("calculatrice") or "") if "calculatrice" in e else None,
                             e["id"],
                         )
                     )
@@ -2681,8 +2702,8 @@ class SqliteStore:
                         " niveau, sequence, num, serie_code, fichier, etat_code, "
                         " remed_enonce, remed_corrige, "
                         " cadre_reponse_lignes_principal, cadre_reponse_lignes_remed, "
-                        " type_format) "
-                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        " type_format, ordinateur, calculatrice) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (
                             e["id"], e.get("serie", ""), e.get("titre", ""),
                             e.get("variables", ""), e.get("enonce", ""),
@@ -2699,6 +2720,8 @@ class SqliteStore:
                             # fournissent pas) — sera recalculé à la prochaine
                             # sauvegarde via l'UI.
                             e.get("type_format") or "standard",
+                            e.get("ordinateur") or "",      # v0.52.7
+                            e.get("calculatrice") or "",
                         )
                     )
 

@@ -40,8 +40,10 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.2"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+FORMAT_VERSION = "1.3"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
 #                          v0.52.4 : + partie.fiches (modèle « Fiches de résumé »)
+#                          v0.52.7 : + partie.materiel (exercices marqués)
+FORMAT_VERSION_FICHES = "1.2"
 # v0.52.4 (F2) — Un document ne déclare que la version dont il a besoin : un
 # référentiel « Notions et méthodes » (gabarit cycle4) n'a pas de `fiches` et
 # reste en 1.1, à l'identique (même empreinte) ; « Fiches de résumé par
@@ -230,6 +232,59 @@ def _notions_methodes(conn, niveau: str, seq: str, numero: int,
     notions = [{"id": n["id"], "titre": n["titre"]} for n in c.get("notions", [])]
     methodes = [{"id": m["id"], "titre": m["titre"]} for m in c.get("methodes", [])]
     return notions, methodes, []
+
+
+_ORDRE_SERIES = ("R", "EA", "AE", "F", "A", "E", "TP", "AC", "AT", "EV")
+
+
+def _materiel(conn, niveau: str, seq: str, numero: int) -> list[dict]:
+    """v0.52.7 (format 1.3) — Exercices marqués (ordinateur, calculatrice)
+    de la partie : ceux reliés à ses objectifs (`objectif_exos`, toutes
+    séries : F, A, E, activités, documents, évaluations) et ses exercices de
+    révision et d'approche. Une entrée : objectif ('' pour la partie),
+    série, code de l'exercice (« F03 »), séquence de l'exercice, titre, et
+    les deux marqueurs. Vide pour une base sans marqueurs."""
+    from services import marqueurs_exercices as mq
+    if not (_table_existe(conn, "objectifs") and _table_existe(conn, "sequence_parties")
+            and mq.colonnes_presentes(conn)):
+        return []
+    rows = conn.execute(
+        "SELECT o.code AS lien_objectif, oe.serie AS lien_serie, oe.ordre AS lien_ordre, e.* "
+        "FROM objectif_exos oe JOIN objectifs o ON o.id = oe.objectif_id "
+        "JOIN sequence_parties p ON p.id = o.partie_id "
+        "JOIN sequences_par_niveau s ON s.id = p.sequence_par_niveau_id "
+        "JOIN exercices e ON e.id = oe.exercice_id "
+        "WHERE s.niveau = ? AND s.sequence_code = ? AND p.numero = ? "
+        "AND (e.ordinateur <> '' OR e.calculatrice <> '')",
+        (niveau, seq, numero)).fetchall()
+    if _table_existe(conn, "partie_exos_revision_approche"):
+        rows += conn.execute(
+            "SELECT '' AS lien_objectif, r.type AS lien_serie, r.ordre AS lien_ordre, e.* "
+            "FROM partie_exos_revision_approche r "
+            "JOIN sequence_parties p ON p.id = r.partie_id "
+            "JOIN sequences_par_niveau s ON s.id = p.sequence_par_niveau_id "
+            "JOIN exercices e ON e.id = r.exercice_id "
+            "WHERE s.niveau = ? AND s.sequence_code = ? AND p.numero = ? "
+            "AND (e.ordinateur <> '' OR e.calculatrice <> '')",
+            (niveau, seq, numero)).fetchall()
+    out, vus = [], set()
+    for r in sorted(rows, key=lambda r: (
+            r["lien_objectif"], _ORDRE_SERIES.index(r["lien_serie"])
+            if r["lien_serie"] in _ORDRE_SERIES else 99, r["lien_ordre"] or 0, r["num"] or 0)):
+        cle = (r["lien_objectif"], r["id"])
+        if cle in vus:
+            continue
+        vus.add(cle)
+        try:
+            code_ex = f"{r['serie_code']}{int(r['num']):02d}"
+        except (TypeError, ValueError):
+            code_ex = r["serie_code"] or ""
+        out.append({"objectif": r["lien_objectif"], "serie": r["lien_serie"],
+                    "exercice": code_ex,
+                    "sequence": r["sequence"] or "", "titre": vers_texte(r["titre"] or ""),
+                    "ordinateur": r["ordinateur"] or "",
+                    "calculatrice": r["calculatrice"] or ""})
+    return out
 
 
 def _doc_fichier(f: dict, data_dir: Path | None) -> dict:
@@ -433,6 +488,13 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                 partie["fiches"] = fiches                 # v0.52.4 (format 1.2)
             partie["documents"] = [_doc_fichier(f, data_dir)
                                    for f in _fichiers(conn, rid, code, num)]
+            # v0.52.7 (format 1.3, M5) — exercices marqués de la partie, pour
+            # le tableau de bord de l'appli de classe ; absent s'il n'y en a
+            # pas (document et empreinte inchangés).
+            materiel = (_materiel(conn, ref["niveau"], code, num)
+                        if source == "interne" else [])
+            if materiel:
+                partie["materiel"] = materiel
             parties.append(partie)
         sequences.append({
             "code": code, "parties": parties,
@@ -443,8 +505,12 @@ def construire(conn, rid: str, data_dir: Path | None = None,
     for code, docs in compiles.items():          # séquence hors découpage
         if code and code not in {s["code"] for s in sequences}:
             annuels += docs
+    # Un document déclare la plus petite version qui décrit son contenu (F2).
+    avec_materiel = any("materiel" in p for s in sequences for p in s["parties"])
+    version = (FORMAT_VERSION if avec_materiel else
+               FORMAT_VERSION_FICHES if modele_fiches else FORMAT_VERSION_SANS_FICHES)
     doc = {"format": FORMAT,
-           "format_version": FORMAT_VERSION if modele_fiches else FORMAT_VERSION_SANS_FICHES,
+           "format_version": version,
            "exporte_le": datetime.now().astimezone().isoformat(timespec="seconds"),
            "exporte_par": f"seqenseigne {VERSION_APPLI}",
            "empreinte": "", "referentiel": entete, "structure": structure,

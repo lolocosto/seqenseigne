@@ -52,6 +52,7 @@ from __future__ import annotations
 import re
 import sqlite3
 
+from services import marqueurs_exercices as _mq
 from services.livret_sequence_6e import (
     Livret6eErreur, document, latex_fiche, lire_sequence_6e, normaliser_options,
     numeros_livret, options_livret,
@@ -134,16 +135,18 @@ def _objectifs_ids(conn, niveau: str, sequence: str) -> dict[str, str]:
 
 
 def _documents(conn, niveau: str, sequence: str) -> list[dict]:
-    """Atomes TP, AC, AT de la séquence avec les codes des objectifs reliés."""
+    """Atomes TP, AC, AT de la séquence avec les codes des objectifs reliés
+    (et leurs marqueurs, v0.52.7)."""
     docs = []
-    for r in conn.execute("SELECT id, serie_code, num, titre FROM exercices WHERE niveau = ? "
+    for r in conn.execute("SELECT id, serie_code, num, titre" + _mq.sql_colonnes(conn)
+                          + " FROM exercices WHERE niveau = ? "
                           "AND sequence = ? AND serie_code IN ('TP', 'AC', 'AT') "
                           "ORDER BY serie_code DESC, num, id", (niveau, sequence)):
         codes = [x[0] for x in conn.execute(
             "SELECT o.code FROM objectif_exos oe JOIN objectifs o ON o.id = oe.objectif_id "
             "WHERE oe.exercice_id = ?", (r[0],))]
         docs.append({"id": r[0], "serie": r[1], "num": r[2], "titre": r[3] or "",
-                     "objectifs": codes})
+                     "objectifs": codes, "ordinateur": r[4] or "", "calculatrice": r[5] or ""})
     return docs
 
 
@@ -160,6 +163,11 @@ def _evaluations(conn, niveau: str, sequence: str) -> list[dict]:
             st["sujet_b"] = any((x[0] or "").strip() for x in conn.execute(
                 "SELECT e.remed_enonce FROM evaluation_exercices ee JOIN exercices e "
                 "ON e.id = ee.exercice_id WHERE ee.evaluation_id = ?", (eid,)))
+            # v0.52.7 — marquage de l'évaluation : celui de ses exercices EV
+            # (l'import le pose sur chacun depuis l'entrée d'évaluation).
+            st["marqueurs"] = _mq.combiner([dict(x) for x in conn.execute(
+                "SELECT '' AS _" + _mq.sql_colonnes(conn, "e") + " FROM evaluation_exercices ee "
+                "JOIN exercices e ON e.id = ee.exercice_id WHERE ee.evaluation_id = ?", (eid,))])
             sortie.append(st)
     return sortie
 
@@ -183,11 +191,17 @@ def _fmt(x: float) -> str:
     return str(int(x)) if x == int(x) else f"{x:g}".replace(".", ",")
 
 
-def ligne_exercices(jetons: list[tuple[str, int]]) -> str:
+def ligne_exercices(jetons: list[tuple]) -> str:
     """[('O',1),('O',2),('A',3),('A',4),('R',5)] → '1 - 2 - ( 3 - 4 ) - [ 5 ]'
-    (P3 : marques regroupées par suites de même nature)."""
-    groupes: list[tuple[str, list[int]]] = []
-    for nature, n in jetons:
+    (P3 : marques regroupées par suites de même nature).
+
+    v0.52.7 — Un jeton peut porter une mention en 3e position
+    (« ordinateur~: Scratch ») : '1 - 2 {\\small (ordinateur~: Scratch)} - 3'."""
+    groupes: list[tuple[str, list]] = []
+    for jeton in jetons:
+        nature, n = jeton[0], jeton[1]
+        if len(jeton) > 2 and jeton[2]:
+            n = f"{n} {{\\small ({jeton[2]})}}"
         if nature == "O" or not groupes or groupes[-1][0] != nature:
             groupes.append((nature, [n]))
         else:
@@ -199,14 +213,21 @@ def ligne_exercices(jetons: list[tuple[str, int]]) -> str:
     return " - ".join(morceaux)
 
 
-def _jetons_objectif(o: dict, N) -> list[tuple[str, int]]:
+def _jetons_objectif(o: dict, N, materiel: "_mq.Materiel | None" = None,
+                     etiquette: str = "") -> list[tuple]:
+    """Jetons de la ligne « exercices » ; v0.52.7 : mention des marqueurs sur
+    l'exercice principal (pas sur sa remédiation, qui suit le même marquage,
+    M1), et l'exercice noté pour l'encadré « Matériel à prévoir »."""
     jetons = []
     for serie, nature in (("F", "O"), ("A", "A"), ("E", "E")):
         for ex in o["series"].get(serie) or []:
             n = N.exercices.get(ex["id"])
             if n is None:
                 continue                          # hors livret (série E exclue…)
-            jetons.append((nature, n))
+            mention = _mq.mention_texte(ex)
+            jetons.append((nature, n, mention) if mention else (nature, n))
+            if mention and materiel is not None:
+                materiel.noter(f"exercice {n}" + (f" ({etiquette})" if etiquette else ""), ex)
             r = N.remediations.get(ex["id"])
             if r is not None:
                 jetons.append(("R", r))
@@ -224,6 +245,20 @@ def _titre_doc(d: dict) -> str:
 
 def _puce(texte: str, retrait: bool = False) -> str:
     return ((r"\hspace*{2em}" if retrait else "") + r"\textgreater{} " + texte)
+
+
+def encadre_materiel(materiel: "_mq.Materiel") -> list[str]:
+    r"""v0.52.7 (M8) — Encadré « Matériel à prévoir » : une ligne par outil
+    (ordinateur --- Scratch…), puis la calculatrice autorisée, avec les
+    exercices concernés. Noir et gris : lisible photocopié."""
+    L = [r"\begin{tcolorbox}[enhanced, colback=white, colframe=black!60, boxrule=0.6pt,"
+         r" sharp corners, left=4pt, right=4pt, top=2pt, bottom=2pt,"
+         r" title={Matériel à prévoir}, coltitle=black, colbacktitle=black!10,"
+         r" fonttitle=\bfseries\small]", r"\small"]
+    for titre, libelles in materiel.lignes():
+        L.append(r"\textbf{" + titre + "} : " + " ; ".join(libelles) + r"\par")
+    L.append(r"\end{tcolorbox}")
+    return L
 
 
 def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
@@ -252,11 +287,16 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
             sans_objectif.append(d)
     n_retenir = 0
     fiches_cours = 0
+    materiel = _mq.Materiel()                     # v0.52.7 (M8)
 
     def activite(ex):
         n = N.activites.get(ex["id"])
         lib = f"Activité {n}" if n else "Activité"
+        mention = _mq.mention_texte(ex)
+        if mention:
+            materiel.noter(lib.lower() if n else f"activité {ex['code']}", ex)
         L.append(r"\noindent{\color{seqSixBleu}\bfseries " + _puce(lib + " : " + (ex.get("titre") or "")) + "}"
+                 + (r" {\small (" + mention + ")}" if mention else "")
                  + r"\hfill{\scriptsize\color{seqSixGrisTexte}" + ex["code"] + "}\\par")
 
     def fiche(f):
@@ -284,19 +324,22 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
                 activite(ex)
             for f in o["fiches"]:
                 fiche(f)
-            jetons = _jetons_objectif(o, N)
+            jetons = _jetons_objectif(o, N, materiel, f"{seq['code']}-{o['code']}")
             if jetons:
                 L.append(r"\noindent\hspace*{2em}exercices " + ligne_exercices(jetons) + r"\par")
             for d in apres.get(o["code"], []):
+                mention = _mq.mention_texte(d)
                 L.append(r"\noindent{\color{seqSixBleu}\bfseries " + _puce(_titre_doc(d)) + "}"
-                         + (r" {\small (à la maison)}" if d["serie"] == "TP" else "") + r"\par")
+                         + (r" {\small (à la maison)}" if d["serie"] == "TP" else "")
+                         + (r" {\small (" + mention + ")}" if mention else "") + r"\par")
     # Synthèse et évaluation
     synthese = []
     if fiches_cours:
         synthese.append(r"cours : fiches de cours «~" + seq["nom"] + r"~» (fiches de résumé "
                         r"en version complète)")
     for d in sans_objectif:
-        synthese.append(_titre_doc(d))
+        mention = _mq.mention_texte(d)
+        synthese.append(_titre_doc(d) + (r" {\small (" + mention + ")}" if mention else ""))
     for st in evals:
         colonnes = [f"{o['etiquette']} /{_fmt(o['points'])}" for o in st["objectifs"]]
         if st["bonus"]:
@@ -304,13 +347,27 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
         synthese.append(r"évaluation «~" + st["titre"].replace("---", ":") + r"~» : "
                         + ("sujets A et B" if st["sujet_b"] else "sujet A")
                         + (" --- " + ", ".join(colonnes) if colonnes else "")
-                        + f" --- total /{_fmt(st['total'])}")
+                        + f" --- total /{_fmt(st['total'])}"
+                        + (r" {\small (" + _mq.mention_texte(st["marqueurs"]) + ")}"
+                           if _mq.mention_texte(st.get("marqueurs") or {}) else ""))
     tps = [d for d in docs if d["serie"] == "TP"]
     if tps:
         nums = [f"n°{int(d['num'])}" for d in tps if d["num"]]
         synthese.append("ramassage et correction des travaux personnels"
                         + (" " + " et ".join([", ".join(nums[:-1]), nums[-1]] if len(nums) > 1
                                              else nums) if nums else ""))
+    # v0.52.7 (M8) — Documents marqués (TP, AC, AT, évaluations) dans
+    # l'encadré « Matériel à prévoir », placé en tête du plan.
+    for d in docs:
+        if _mq.mention_texte(d):
+            materiel.noter(_titre_doc(d).split(" : ")[0].lower()
+                           if d["num"] else _titre_doc(d), d)
+    for st in evals:
+        if _mq.mention_texte(st.get("marqueurs") or {}):
+            materiel.noter(r"évaluation «~" + st["titre"].replace("---", ":") + r"~»",
+                           st["marqueurs"])
+    if materiel:
+        L[4:4] = encadre_materiel(materiel)
     if synthese:
         L.append(r"\medskip\noindent{\bfseries\itshape "
                  + souligner(r"\textgreater{} Synthèse et évaluation") + r"}\par")

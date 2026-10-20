@@ -139,6 +139,11 @@ class Atome:
     # page (True = comportement historique). Les zones d'exemple par zone
     # de texte sont portées par sections[i]['exemple_lignes'].
     exemple_fin_page: bool = True
+    # v0.52.7 — Marqueurs de l'exercice (services/marqueurs_exercices.py) :
+    # '' = non marqué. Cycle 4 : mention ajoutée à `nom=` seulement si
+    # l'exercice est marqué (décision M4).
+    ordinateur: str = ''
+    calculatrice: str = ''
 
 
 def lire_codes_objectifs_de_exercice(conn: sqlite3.Connection,
@@ -193,11 +198,13 @@ def charger_atome(conn: sqlite3.Connection, type_atome: str, atome_id: str) -> A
         # (PUT /api/exercices/<id>) soit laissées à leurs valeurs par défaut
         # ('' / 0) pour les exos importés depuis le filesystem (le scanner
         # LaTeX n'a pas de notion de remédiation côté .tex source).
+        from services.marqueurs_exercices import sql_colonnes   # v0.52.7
         row = conn.execute(
             "SELECT id, niveau, sequence, fichier, titre, serie, num, "
             "       enonce, corrige, variables, "
             "       remed_enonce, remed_corrige, "
-            "       cadre_reponse_lignes_principal, cadre_reponse_lignes_remed "
+            "       cadre_reponse_lignes_principal, cadre_reponse_lignes_remed"
+            + sql_colonnes(conn) + " "
             "FROM exercices WHERE id = ?", (atome_id,)
         ).fetchone()
         if not row:
@@ -211,6 +218,8 @@ def charger_atome(conn: sqlite3.Connection, type_atome: str, atome_id: str) -> A
             remed_corrige=row[11] or '',
             cadre_reponse_lignes_principal=row[12] or 0,
             cadre_reponse_lignes_remed=row[13] or 0,
+            ordinateur=row[14] or '',
+            calculatrice=row[15] or '',
         )
 
     if type_atome == 'notion':
@@ -869,7 +878,10 @@ def generer_corps_exercice(atome: Atome, conn=None) -> str:
     # (\refstepcounter incrémente en entrée de seqExercice).
     parties.append(r'\setcounter{ExoNum}{' + str(max(0, num_exo - 1)) + '}')
 
-    nom_exo = atome.titre or ''
+    # v0.52.7 (M4) — mention « ordinateur / calculatrice » dans nom=,
+    # seulement si l'exercice est marqué.
+    from services.marqueurs_exercices import nom_cycle4
+    nom_exo = nom_cycle4(atome.titre or '', atome)
     opts = []
     if nom_exo:
         opts.append(f'nom={{{nom_exo}}}')

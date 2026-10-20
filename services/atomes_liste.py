@@ -139,6 +139,11 @@ def lister_atomes_sequence(
     table, col_num, ordre = _CONF[type_atome]
     # serie_code n'existe que pour les exercices.
     extra = ", serie_code" if type_atome == 'exercice' else ""
+    # v0.52.7 — Marqueurs ordinateur / calculatrice des exercices (indicateur
+    # de la liste de l'atelier).
+    if type_atome == 'exercice':
+        from services import marqueurs_exercices as _mq
+        extra += _mq.sql_colonnes(conn)
     where = "niveau = ?" + ("" if toutes_sequences else " AND sequence = ?")
     params = (niveau,) if toutes_sequences else (niveau, sequence)
     # En mode toutes séquences, trier d'abord par séquence pour un regroupement
@@ -169,6 +174,12 @@ def lister_atomes_sequence(
             'etat_code': r['etat_code'] or 'en_cours',
             'sequence':  r['sequence'] or '',
         })
+        # v0.52.7 (décision M3) — clé `marqueurs` seulement pour un exercice
+        # marqué : le contrat des autres atomes (et d'un exercice non marqué)
+        # reste celui des 7 clés.
+        if type_atome == 'exercice' and (r['ordinateur'] or r['calculatrice']):
+            atomes[-1]['marqueurs'] = {'ordinateur': r['ordinateur'] or '',
+                                       'calculatrice': r['calculatrice'] or ''}
 
     # ── Enrichissement liens (commun à tous les types) ──────────────────────
     # `enrichir_liste_atomes` mute la liste sur place pour ajouter

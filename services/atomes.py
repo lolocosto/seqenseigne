@@ -9,6 +9,7 @@ from __future__ import annotations
 from persistence.ids import (
     nouveau_id_notion, nouveau_id_methode, nouveau_id_exercice
 )
+from services import marqueurs_exercices as _mq
 
 # v0.52.2 — Séries « documents » de l'atelier d'exercices (gabarit 6e) :
 # un atome = un document entier (évaluation : un exercice, sujet A dans
@@ -276,6 +277,12 @@ def creer_exercice(liste: list, data: dict) -> tuple[list, dict, str | None]:
         "niveau":    niveau,
         "sequence":  sequence,
     }
+    # v0.52.7 — Marqueurs ordinateur / calculatrice (facultatifs, M2).
+    try:
+        for champ in _mq.CHAMPS:
+            exercice[champ] = _mq.valider(champ, data.get(champ))
+    except _mq.MarqueurInvalide as e:
+        return liste, {}, str(e)
     liste.append(exercice)
     return liste, exercice, None
 
@@ -326,6 +333,16 @@ def modifier_exercice(liste: list, exo_id: str,
                 liste[idx].get("sequence", "") or "",
                 nouvelle_serie_code,
             )
+    # v0.52.7 — Marqueurs ordinateur / calculatrice (services/
+    # marqueurs_exercices.py) : valeurs fermées, refusées sinon (M2) ; ils
+    # portent sur l'énoncé principal, la remédiation et le sujet B suivent
+    # (M1).
+    for champ in _mq.CHAMPS:
+        if champ in data:
+            try:
+                liste[idx][champ] = _mq.valider(champ, data[champ])
+            except _mq.MarqueurInvalide as e:
+                return liste, None, str(e)
     for champ_int in ("cadre_reponse_lignes_principal",
                       "cadre_reponse_lignes_remed"):
         if champ_int in data:

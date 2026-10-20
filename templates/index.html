@@ -936,6 +936,29 @@
             <input type="text" id="atl-exercice-titre" placeholder="ex : Calcul de proportions" style="width:100%">
           </div>
 
+          <!-- v0.52.7 — Marqueurs de l'énoncé principal (la remédiation et le
+               sujet B suivent) : affichés dans l'en-tête de l'exercice du
+               livret 6e, dans le plan de travail (« Matériel à prévoir »),
+               et publiés pour le tableau de bord de l'appli de classe. -->
+          <div class="atl-field" id="atl-exercice-field-marqueurs" style="display:flex;gap:16px;flex-wrap:wrap">
+            <label class="atl-label" style="display:flex;align-items:center;gap:6px;margin:0">Ordinateur
+              <select id="atl-exercice-ordinateur" title="L'exercice demande un ordinateur (salle informatique, chariot mobile…)">
+                <option value="">aucun</option>
+                <option value="scratch">Scratch</option>
+                <option value="geogebra">GeoGebra</option>
+                <option value="tableur">Tableur</option>
+                <option value="autre">Autre</option>
+              </select>
+            </label>
+            <label class="atl-label" style="display:flex;align-items:center;gap:6px;margin:0">Calculatrice
+              <select id="atl-exercice-calculatrice">
+                <option value="">non précisé</option>
+                <option value="autorisee">autorisée</option>
+                <option value="interdite">interdite</option>
+              </select>
+            </label>
+          </div>
+
           <!-- v0.10.7 — Zone "Objectifs associés" retirée. La liaison
                exercice ↔ objectif passe désormais exclusivement par le
                drop dans l'atelier d'assemblage de la séquence. -->

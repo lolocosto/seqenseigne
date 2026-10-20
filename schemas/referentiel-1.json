@@ -148,7 +148,23 @@
         "notions": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
         "methodes": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
         "fiches": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
-        "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } }
+        "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } },
+        "materiel": { "type": "array", "items": { "$ref": "#/$defs/materiel" } }
+      }
+    },
+    "materiel": {
+      "description": "1.3 (v0.52.7) : exercice marqué (ordinateur, calculatrice) de la partie.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectif", "serie", "exercice", "sequence", "titre", "ordinateur", "calculatrice"],
+      "properties": {
+        "objectif": { "type": "string" },
+        "serie": { "type": "string" },
+        "exercice": { "type": "string" },
+        "sequence": { "type": "string" },
+        "titre": { "type": "string" },
+        "ordinateur": { "enum": ["", "scratch", "geogebra", "tableur", "autre"] },
+        "calculatrice": { "enum": ["", "autorisee", "interdite"] }
       }
     },
     "objectif": {

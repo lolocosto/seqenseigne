@@ -231,7 +231,10 @@ def _generer_corps_exercice_continu(atome: Atome,
     a_remediation = inclure_remediation and (remed_enonce or remed_corrige)
 
     parties = []
-    nom_exo = atome.titre or ''
+    # v0.52.7 (M4) — mention « ordinateur / calculatrice » dans nom=,
+    # seulement si l'exercice est marqué.
+    from services.marqueurs_exercices import nom_cycle4
+    nom_exo = nom_cycle4(atome.titre or '', atome)
     opts = []
     if nom_exo:
         opts.append(f'nom={{{nom_exo}}}')

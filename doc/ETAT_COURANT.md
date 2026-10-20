@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.6** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.7** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -94,7 +94,21 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   de progression » de `outils/ref6e_v2.md` ; `doc/doublons_6e_5e.md`
   (exercices de 5e copiés en 6e, pour la migration du référentiel de 5e).
   Cycle 4 inchangé au caractère près. Détails : `doc/redemarrage_v0_52_6.md`.
-- À venir : mises en route M01 à M07 ; migration du référentiel de 5e
+- v0.52.7 livrée : marqueurs « ordinateur » (Scratch, GeoGebra, tableur,
+  autre) et « calculatrice » (autorisée, interdite) des exercices
+  (`exercices.ordinateur`, `exercices.calculatrice`,
+  `services/marqueurs_exercices.py`) : listes dans l'en-tête de l'atelier
+  d'exercices et indicateur dans la liste ; pictogrammes dans l'en-tête de
+  l'exercice du livret 6e (module `seqenseigne-style6e` v0.7 :
+  `tex seqenseigne.ins` à relancer) ; mention dans `nom=` au cycle 4 si
+  marqué ; plans de travail 6e et cycle 4 (mention + encadré « Matériel à
+  prévoir ») ; format d'échange 1.3 (`partie.materiel`) et table classe
+  `referentiel_materiel_publie` pour le futur tableau de bord ; import des
+  clés `ordinateur` / `calculatrice` des lots. Remédiation et sujet B
+  suivent le marquage de l'exercice. Cycle 4 inchangé au caractère près sans
+  marqueur. Détails : `doc/redemarrage_v0_52_7.md`.
+- À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
+  les progressions) ; mises en route M01 à M07 ; migration du référentiel de 5e
   (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import
   paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
   numéro suivant.

@@ -48,9 +48,10 @@ class RenduAtome6eErreur(ValueError):
 
 
 def _lire(conn, exercice_id: str) -> dict | None:
+    from services.marqueurs_exercices import sql_colonnes          # v0.52.7
     cur = conn.execute("SELECT id, titre, enonce, corrige, remed_enonce, remed_corrige, "
-                       "variables, niveau, sequence, serie_code, num FROM exercices "
-                       "WHERE id = ?", (exercice_id,))
+                       "variables, niveau, sequence, serie_code, num" + sql_colonnes(conn)
+                       + " FROM exercices WHERE id = ?", (exercice_id,))
     r = cur.fetchone()
     if r is None:
         return None

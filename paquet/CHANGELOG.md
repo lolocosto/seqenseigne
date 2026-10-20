@@ -21,6 +21,22 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.7 — 2026-10-20
+
+### Ajouté
+
+- Marqueurs de l'exercice, dans le titre de `seqExoSix` ou de `seqActiviteSix`, avant le code :
+  - `\seqMaterielSix{outil}{calculatrice}` : « Ordinateur --- outil » puis « calculatrice
+    autorisée » ou « calculatrice interdite » ; un argument vide n'affiche rien ; police droite
+    et normale, petits caractères gris foncé, lisible en noir et blanc ;
+  - `\seqOrdinateurSix{outil}` (écran sur son pied, « Ordinateur --- Scratch ») et
+    `\seqCalculatriceSix{autorisee|interdite}` (calculatrice, barrée si interdite) ;
+  - pictogrammes seuls : `\seqPictoOrdinateurSix`, `\seqPictoCalculatriceSix` (étoilée : barrée).
+- Documentation et `\changes` dans le `.dtx` ; `.sty` régénéré par `tex seqenseigne.ins`
+  (seqenseigne v0.52.7).
+
+---
+
 ## seqenseigne-style6e v0.6 — 2026-10-19
 
 ### Ajouté

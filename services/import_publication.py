@@ -70,6 +70,22 @@ CREATE TABLE IF NOT EXISTS referentiel_titres_publies (
     ordre          INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (referentiel_id, seq_code, partie_numero, nature, atome_id)
 );
+-- v0.52.7 (format 1.3) — exercices marqués (ordinateur, calculatrice) d'une
+-- partie, pour le futur tableau de bord (réserver salle info, chariot…).
+CREATE TABLE IF NOT EXISTS referentiel_materiel_publie (
+    referentiel_id TEXT NOT NULL,
+    seq_code       TEXT NOT NULL,
+    partie_numero  INTEGER NOT NULL,
+    objectif_code  TEXT NOT NULL DEFAULT '',   -- '' = exercice de la partie (R, EA)
+    serie          TEXT NOT NULL DEFAULT '',   -- F, A, E, AE, R, EA, TP, AC, AT, EV
+    exercice       TEXT NOT NULL,              -- code de l'exercice (« F03 »)
+    exercice_seq   TEXT NOT NULL DEFAULT '',   -- séquence de l'exercice
+    titre          TEXT NOT NULL DEFAULT '',
+    ordinateur     TEXT NOT NULL DEFAULT '',   -- '' | scratch | geogebra | tableur | autre
+    calculatrice   TEXT NOT NULL DEFAULT '',   -- '' | autorisee | interdite
+    ordre          INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (referentiel_id, seq_code, partie_numero, objectif_code, exercice_seq, exercice)
+);
 CREATE TABLE IF NOT EXISTS imports_publication (
     id             TEXT PRIMARY KEY,
     importe_le     TEXT NOT NULL,
@@ -279,7 +295,7 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
     # Structure figée : remplacée en entier pour ce référentiel.
     for t in ("referentiel_objectifs", "referentiel_parties", "referentiel_sequences",
               "referentiel_themes", "referentiel_fichiers", "referentiel_docs_publies",
-              "referentiel_titres_publies"):
+              "referentiel_titres_publies", "referentiel_materiel_publie"):
         conn.execute(f"DELETE FROM {t} WHERE referentiel_id=?", (rid,))
     existe = conn.execute("SELECT 1 FROM referentiel_niveaux WHERE id=?", (rid,)).fetchone()
     valeurs = (ref["niveau"], ref["version"], ref["description"], ref["etat"], ref["source"],
@@ -332,6 +348,14 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
                         "seq_code, partie_numero, nature, atome_id, titre, ordre) "
                         "VALUES (?,?,?,?,?,?,?)",
                         (rid, s["code"], p["numero"], nature, a["id"], a["titre"], i))
+            # v0.52.7 (format 1.3) — exercices marqués de la partie.
+            for i, m in enumerate(p.get("materiel") or []):
+                conn.execute(
+                    "INSERT OR IGNORE INTO referentiel_materiel_publie (referentiel_id, "
+                    "seq_code, partie_numero, objectif_code, serie, exercice, exercice_seq, "
+                    "titre, ordinateur, calculatrice, ordre) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (rid, s["code"], p["numero"], m["objectif"], m["serie"], m["exercice"],
+                     m["sequence"], m["titre"], m["ordinateur"], m["calculatrice"], i))
     for t in doc["types_documents"]:
         conn.execute("INSERT INTO types_documents (id, libelle, ordre, actif) VALUES "
                      "(?, ?, (SELECT COALESCE(MAX(ordre), 0) + 10 FROM types_documents), 1) "
@@ -430,3 +454,23 @@ def importes(conn) -> list[dict]:
              "empreinte": r["publication_empreinte"], "importe_le": r["publication_importe_le"]}
             for r in conn.execute("SELECT * FROM referentiel_niveaux WHERE origine='publication' "
                                   "ORDER BY niveau, annee, version").fetchall()]
+
+
+def materiel_publie(conn, referentiel_id: str, seq_code: str | None = None,
+                    partie_numero: int | None = None) -> list[dict]:
+    """v0.52.7 — Exercices marqués (ordinateur, calculatrice) d'un
+    référentiel publié, pour le futur tableau de bord de la progression :
+    filtrables par séquence et partie, dans l'ordre de la publication."""
+    sql = "SELECT * FROM referentiel_materiel_publie WHERE referentiel_id=?"
+    args: list = [referentiel_id]
+    if seq_code is not None:
+        sql += " AND seq_code=?"
+        args.append(seq_code)
+    if partie_numero is not None:
+        sql += " AND partie_numero=?"
+        args.append(int(partie_numero))
+    try:
+        rows = conn.execute(sql + " ORDER BY seq_code, partie_numero, ordre", args).fetchall()
+    except Exception:                    # table absente (base atelier non migrée)
+        return []
+    return [dict(r) for r in rows]

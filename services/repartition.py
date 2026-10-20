@@ -43,6 +43,7 @@ TABLES_CLASSE = (
     "retours", "echeances_individuelles",
     # Référentiels reçus, journal des imports
     "referentiel_docs_publies", "referentiel_titres_publies", "imports_publication",
+    "referentiel_materiel_publie",                                       # v0.52.7
 )
 
 TABLES_ATELIER = (

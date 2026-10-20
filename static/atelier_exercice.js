@@ -177,9 +177,21 @@ class AtelierExercice extends AtelierEditeur {
       ex.code || '',
     ].filter(Boolean).join('/');
 
-    const titre = ex.titre
+    let titre = ex.titre
       ? ex.titre
       : { html: '(sans titre)', derive: true };
+    // v0.52.7 — Indicateur discret des marqueurs (ordinateur / calculatrice),
+    // seulement pour un exercice marqué (clé `marqueurs` de la liste, M3).
+    const ind = AtelierExercice.indicateurMarqueurs(ex.marqueurs);
+    if (ind) {
+      const base = typeof titre === 'object' ? titre.html : Atelier.escHtml(titre);
+      titre = {
+        html: base + ` <span class="atl-item-marqueur" title="${Atelier.escAttr(ind.titre)}"`
+            + ` style="font-size:10px;color:var(--text-muted);white-space:nowrap">`
+            + `${Atelier.escHtml(ind.texte)}</span>`,
+        derive: typeof titre === 'object' && titre.derive,
+      };
+    }
 
     // Badge série coloré
     const badgeCls = badgeCode === 'Autres' ? 'M' : badgeCode;
@@ -237,6 +249,9 @@ class AtelierExercice extends AtelierEditeur {
     return {
       serie:     this.serieCourante,
       titre:     (this.$('titre') || {}).value || '',
+      // v0.52.7 — Marqueurs de l'énoncé principal.
+      ordinateur:   (this.$('ordinateur')   || {}).value || '',
+      calculatrice: (this.$('calculatrice') || {}).value || '',
       variables: (this.$('variables') || {}).value || '',
       enonce, corrige,
       remed_enonce:                   remedEnonce,
@@ -254,6 +269,11 @@ class AtelierExercice extends AtelierEditeur {
     this.$('variables').value = ex.variables || '';
     this.$('enonce').value    = ex.enonce    || '';
     this.$('corrige').value   = ex.corrige   || '';
+    // v0.52.7 — Marqueurs (valeur inconnue → « aucun » / « non précisé »).
+    const ordiEl = this.$('ordinateur');
+    if (ordiEl) ordiEl.value = AtelierExercice.ORDINATEUR[ex.ordinateur] ? ex.ordinateur : '';
+    const calcEl = this.$('calculatrice');
+    if (calcEl) calcEl.value = AtelierExercice.CALCULATRICE[ex.calculatrice] ? ex.calculatrice : '';
 
     const remedEnEl = this.$('remed-enonce');
     const remedCoEl = this.$('remed-corrige');
@@ -802,6 +822,33 @@ AtelierExercice.libellerCadreRemediation = function (estEval) {
   if (aide) aide.style.display = estEval ? 'none' : '';
   const aideEval = document.getElementById('atl-exercice-remed-aide-eval');
   if (aideEval) aideEval.style.display = estEval ? '' : 'none';
+};
+
+// v0.52.7 — Marqueurs ordinateur / calculatrice (services/marqueurs_exercices.py).
+AtelierExercice.ORDINATEUR = {
+  scratch: 'Scratch', geogebra: 'GeoGebra', tableur: 'Tableur', autre: 'Autre',
+};
+AtelierExercice.CALCULATRICE = {
+  autorisee: 'calculatrice autorisée', interdite: 'calculatrice interdite',
+};
+// Indicateur de la liste : {texte, titre} ou null si l'exercice n'est pas
+// marqué. Texte court (« ⌨ Scratch · calc. interdite »), détail en infobulle.
+AtelierExercice.indicateurMarqueurs = function (m) {
+  if (!m) return null;
+  const ordi = AtelierExercice.ORDINATEUR[m.ordinateur] || '';
+  const calc = AtelierExercice.CALCULATRICE[m.calculatrice] || '';
+  if (!ordi && !calc) return null;
+  const texte = [];
+  const titre = [];
+  if (ordi) {
+    texte.push('\u2328 ' + ordi);
+    titre.push('Ordinateur : ' + ordi);
+  }
+  if (calc) {
+    texte.push(m.calculatrice === 'interdite' ? 'calc. interdite' : 'calc. autorisée');
+    titre.push(calc.charAt(0).toUpperCase() + calc.slice(1));
+  }
+  return { texte: texte.join(' \u00b7 '), titre: titre.join(' ; ') };
 };
 
 // Mapping série longue → code court pour le bucketing.

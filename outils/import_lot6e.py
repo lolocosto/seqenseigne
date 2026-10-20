@@ -49,6 +49,17 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      R4, `doc/redemarrage_v0_52_6.md`). Le journal de --apply garde de quoi
      les restaurer.
 
+  6. **Marqueurs (v0.52.7)** — clés facultatives `ordinateur` (scratch,
+     geogebra, tableur, autre) et `calculatrice` (autorisee, interdite) de
+     chaque exercice F, A, E, activité AE, document TP, AC, AT ; pour une
+     évaluation, sur l'entrée d'évaluation (sujet A, sinon B), appliquées à
+     tous ses exercices EV. Écrites dans `exercices.ordinateur` et
+     `exercices.calculatrice` comme le reste du contenu : clé absente = non
+     marqué (le lot fait foi), mise à jour idempotente, exercice validé non
+     touché (signalé). Une valeur inconnue est signalée et ignorée. Les
+     marqueurs n'entrent pas dans la comparaison de contenu qui choisit le
+     numéro EV (R2).
+
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
 évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
@@ -87,6 +98,7 @@ if str(RACINE_APPLI) not in sys.path:          # lancement par chemin (Windows)
 
 from services import fiches_resume as svc_fiches          # noqa: E402
 from services.atomes import SERIES_DOCUMENTS, _deduire_type_format  # noqa: E402
+from services import marqueurs_exercices as mq                     # noqa: E402
 
 NIVEAU = "N09"
 CYCLE = "C03"
@@ -266,6 +278,9 @@ class Rapport:
                          + (f" | {det}" if det else ""))
             for x in s["ignores"]:
                 L.append(f"  ignoré : {x}")
+            if s.get("marqueurs"):                                   # v0.52.7
+                L.append("  marqueurs : " + ", ".join(f"{k} {n}" for k, n in
+                                                      s["marqueurs"].items()))
         L.append("")
         L.append("== Figures ==")
         L += [f"  {x}" for x in self.figures] or ["  aucune"]
@@ -553,13 +568,48 @@ def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict) -> tuple[str
 _CHAMPS_EXO = ("titre", "enonce", "corrige", "remed_enonce", "remed_corrige")
 
 
-def _exercice(conn, seq: str, serie_code: str, num: int, src: dict) -> tuple[str, str]:
-    """(id, état) de l'exercice (N09, séquence, série, num)."""
+def marqueurs_lot(src: dict, quoi: str, rapport: "Rapport | None" = None) -> dict:
+    """v0.52.7 — Clés facultatives `ordinateur` et `calculatrice` d'un
+    élément du lot ; absente = '' (non marqué) ; valeur inconnue : signalée
+    (anomalie) et ignorée."""
+    out = {}
+    for champ in mq.CHAMPS:
+        try:
+            out[champ] = mq.valider(champ, src.get(champ))
+        except mq.MarqueurInvalide:
+            out[champ] = ""
+            if rapport is not None:
+                rapport.anomalie(f"{quoi} : {champ} {src.get(champ)!r} inconnu "
+                                 f"(attendu {', '.join(v for v in mq.VALEURS[champ] if v)}), "
+                                 "ignoré")
+    return out
+
+
+def _compter_marqueurs(rapport: "Rapport", seq: str, marques: dict) -> None:
+    """Compteurs « marqueurs » de la séquence (aperçu de l'import)."""
+    c = rapport.seq(seq).setdefault("marqueurs", OrderedDict())
+    if marques.get("ordinateur"):
+        k = "ordinateur " + mq.libelle_ordinateur(marques["ordinateur"])
+        c[k] = c.get(k, 0) + 1
+    if marques.get("calculatrice"):
+        k = mq.LIBELLES_CALCULATRICE[marques["calculatrice"]]
+        c[k] = c.get(k, 0) + 1
+
+
+def _exercice(conn, seq: str, serie_code: str, num: int, src: dict,
+              marques: dict | None = None) -> tuple[str, str]:
+    """(id, état) de l'exercice (N09, séquence, série, num).
+
+    v0.52.7 — `marques` : marqueurs du lot (`marqueurs_lot`), comparés et
+    écrits avec le contenu quand la base a les colonnes ; None = non
+    marqué."""
     vals = {"titre": src.get("titre", "") or "",
             "enonce": src.get("enonce", src.get("latex", "")) or "",
             "corrige": src.get("corrige", "") or "",
             "remed_enonce": src.get("remed_enonce", "") or "",
             "remed_corrige": src.get("remed_corrige", "") or ""}
+    if mq.colonnes_presentes(conn):
+        vals.update({c: (marques or {}).get(c, "") or "" for c in mq.CHAMPS})
     rows = conn.execute("SELECT * FROM exercices WHERE niveau=? AND sequence=? AND "
                         "serie_code=? AND num=?", (NIVEAU, seq, serie_code, num)).fetchall()
     if len(rows) > 1:
@@ -723,7 +773,9 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
                                  "second ignoré")
                 continue
             vus[cle] = code
-            eid, etat_e = _exercice(conn, seq, sc, cle[1], e)
+            marques = marqueurs_lot(e, f"{seq} {sc}{cle[1]:02d}", rapport)
+            _compter_marqueurs(rapport, seq, marques)
+            eid, etat_e = _exercice(conn, seq, sc, cle[1], e, marques)
             series[sc].append(eid)
             Rapport.compter(ro, f"exercices {sc}", etat_e)
             if (e.get("remed_enonce") or "").strip():
@@ -747,7 +799,9 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
                 rapport.anomalie(f"{seq} AE{cle[1]:02d} en double, second ignoré")
                 continue
             vus[cle] = code
-            eid, etat_a = _exercice(conn, seq, "AE", cle[1], a)
+            marques = marqueurs_lot(a, f"{seq} AE{cle[1]:02d}", rapport)
+            _compter_marqueurs(rapport, seq, marques)
+            eid, etat_a = _exercice(conn, seq, "AE", cle[1], a, marques)
             approche[numero].append(eid)
             act_obj.append(eid)
             Rapport.compter(ro, "activités AE", etat_a)
@@ -853,10 +907,13 @@ def importer_documents(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -
     liens: "OrderedDict[tuple, list]" = OrderedDict()
     for cle_lot, serie, libelle in DOCUMENTS_LOT:
         for k, src in enumerate(lot.get(cle_lot, []) or [], start=1):
+            code = f"{serie}{k:02d}"
+            marques = marqueurs_lot(src, f"{seq} {code}", rapport)
+            _compter_marqueurs(rapport, seq, marques)
             eid, etat = _exercice(conn, seq, serie, k, {"titre": src.get("titre", ""),
                                                         "enonce": src.get("latex", ""),
-                                                        "corrige": src.get("corrige", "")})
-            code = f"{serie}{k:02d}"
+                                                        "corrige": src.get("corrige", "")},
+                                  marques)
             if etat == "validé, non modifié":
                 rapport.anomalie(f"{NIVEAU}/{seq}/{code} validé dans l'atelier : contenu du lot "
                                  "non appliqué")
@@ -1145,6 +1202,18 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             continue
         ev_avant = avant["id"] if avant is not None else None
         voulus, etats, nums = [], {}, []
+        # v0.52.7 — marqueurs de l'entrée d'évaluation (sujet A, sinon B),
+        # appliqués à tous ses exercices EV ; hors comparaison R2.
+        entree = paire.get("A") or paire.get("B") or {}
+        if not any(entree.get(c) for c in mq.CHAMPS):
+            entree = paire.get("B") or entree
+        marques_ev = marqueurs_lot(entree, f"{seq} évaluation « {titre} »", rapport)
+        if marques_ev["calculatrice"] == "autorisee":
+            # L'option « Calculatrice » du document évaluation (catalogue 6e)
+            # vaut « interdite » par défaut et ne lit pas les marqueurs.
+            rapport.infos.append(f"{NIVEAU}/{seq} évaluation « {titre} » marquée calculatrice "
+                                 "autorisée : régler l'option « Calculatrice » du document "
+                                 "(défaut : interdite)")
         for i, x in enumerate(exos):
             num += 1
             vals = _vals_ev(x)
@@ -1152,7 +1221,8 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             if motif and n != num:
                 rapport.infos.append(f"{NIVEAU}/{seq} évaluation « {titre} », exercice {i + 1} "
                                      f"« {x['titre']} » : {motif} → EV{n:02d}")
-            eid, etat = _exercice(conn, seq, "EV", n, vals)
+            eid, etat = _exercice(conn, seq, "EV", n, vals, marques_ev)
+            _compter_marqueurs(rapport, seq, marques_ev)
             pris.add(eid)
             nums_pris.add(n)
             nums.append(n)
@@ -1314,6 +1384,12 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
             f"redirigées vers objectifs ({', '.join(rep['tables'])})"
             + (f" ; liens orphelins retirés : {rep['orphelins']}" if rep["orphelins"] else ""))
     conn.execute("PRAGMA foreign_keys = ON")
+    # v0.52.7 — colonnes des marqueurs (migration idempotente de l'appli),
+    # pour un import lancé avant le premier démarrage de la nouvelle version.
+    if not mq.colonnes_presentes(conn):
+        mq.migrer(conn)
+        rapport.infos.append("Base complétée : colonnes ordinateur et calculatrice des "
+                             "exercices (v0.52.7)")
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
     appliquer_cycle3(conn, ref, rapport)
@@ -1326,7 +1402,7 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     for seq, ms in macros_locales(lots).items():
         if ms:
             rapport.infos.append(f"{seq} : macros locales utilisées (fournies par "
-                                 f"seqenseigne-style6e v0.6) : {', '.join(ms)}")
+                                 f"seqenseigne-style6e v0.7) : {', '.join(ms)}")
         # v0.52.5 — Une macro \seqLoc… que le module ne fournit pas ferait
         # échouer la compilation de tous les documents de la séquence.
         absentes = [m for m in ms if m not in MACROS_STYLE6E]

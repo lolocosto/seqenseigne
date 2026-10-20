@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/19 v0.6 seqenseigne : style des documents de 6e]
+    [2026/10/20 v0.7 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -130,6 +130,32 @@
   \noindent\seqNumSix{\theseqExoSix}{#1}%
   \IfValueT{#2}{\ \textit{#2}}\par\nopagebreak\vspace{2pt}%
   \begingroup\leftskip=1.9em\relax}{\par\endgroup}
+\newcommand{\seqPictoOrdinateurSix}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.5pt, line join=round]{%
+  \draw[rounded corners=0.6pt] (0,0.2) rectangle (0.95,0.8);
+  \draw (0.38,0.2) -- (0.33,0.04) (0.57,0.2) -- (0.62,0.04);
+  \draw (0.24,0.04) -- (0.71,0.04);}}
+\NewDocumentCommand{\seqPictoCalculatriceSix}{s}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.5pt]{%
+  \draw[rounded corners=0.8pt] (0,-0.05) rectangle (0.62,0.85);
+  \draw (0.1,0.56) rectangle (0.52,0.75);
+  \foreach \i in {0,1,2}{\foreach \j in {0,1}{%
+    \fill (0.1+\i*0.16,0.06+\j*0.18) rectangle ++(0.1,0.1);}}
+  \IfBooleanT{#1}{\draw[line width=1.1pt] (-0.12,-0.12) -- (0.74,0.92);}}}
+\newcommand{\seqOrdinateurSix}[1]{\mbox{\seqPictoOrdinateurSix\,Ordinateur%
+  \if\relax\detokenize{#1}\relax\else\ --- #1\fi}}
+\def\seq@calc@interdite{interdite}
+\newcommand{\seqCalculatriceSix}[1]{\begingroup\def\seq@calc@valeur{#1}%
+  \ifx\seq@calc@valeur\seq@calc@interdite
+    \mbox{\seqPictoCalculatriceSix*\,calculatrice interdite}%
+  \else
+    \mbox{\seqPictoCalculatriceSix\,calculatrice autorisée}%
+  \fi\endgroup}
+\newcommand{\seqMaterielSix}[2]{{\normalfont\footnotesize\color{black!80}%
+  \if\relax\detokenize{#1}\relax\else\seqOrdinateurSix{#1}\fi
+  \if\relax\detokenize{#1}\relax\else\if\relax\detokenize{#2}\relax\else
+    \quad\fi\fi
+  \if\relax\detokenize{#2}\relax\else\seqCalculatriceSix{#2}\fi}}
 \newcounter{seqItemCM}
 \newcounter{seq@cm@col}
 \newcommand{\seqTitreCM}{CALCUL MENTAL}

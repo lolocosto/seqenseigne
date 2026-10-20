@@ -501,7 +501,9 @@ def test_format_1_1_porte_le_gabarit_et_un_1_0_sans_champ_est_lu_cycle4(app_6e):
     from services import format_referentiel as fmt
     # v0.52.4 : format 1.2 (partie.fiches) ; un référentiel « Notions et
     # méthodes » reste déclaré 1.1 (FORMAT_VERSION_SANS_FICHES).
-    assert fmt.FORMAT_VERSION == "1.2" and fmt.FORMAT_VERSION_SANS_FICHES == "1.1"
+    # v0.52.7 : 1.3 (partie.materiel), déclaré seulement s'il y en a.
+    assert fmt.FORMAT_VERSION == "1.3" and fmt.FORMAT_VERSION_FICHES == "1.2"
+    assert fmt.FORMAT_VERSION_SANS_FICHES == "1.1"
     prop = fmt.schema()["properties"]["referentiel"]["properties"]["gabarit_documents"]
     assert prop == {"enum": ["cycle4", "sixieme"]}
     with app_6e.json_store._conn() as c:

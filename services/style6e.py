@@ -15,11 +15,12 @@ autres modules :
     tous définis chez lui, aucun nom commun avec les autres modules), donc
     le charger entier est sûr et ne change rien au rendu du cycle 4.
 
-La liste ci-dessous est celle de seqenseigne-style6e v0.6 (v0.52.4 :
+La liste ci-dessous est celle de seqenseigne-style6e v0.7 (v0.52.4 :
 \\seqNiveauCourt, \\seqNiveauExposant ; v0.52.5 : macros du lot S05
 \\seqLocCadreTrace, \\seqLocAngle, \\seqLocRapporteur ; du lot S04 \\seqLocBloc,
 \\seqLocAccolade, \\seqLocBalance, \\seqLocSac, \\seqLocMasse, \\seqLocObjet ; page de garde par
-partie : \\seqPartieCouvertureSix) ; un test la
+partie : \\seqPartieCouvertureSix ; v0.7, v0.52.7 : marqueurs de l'exercice
+\\seqMaterielSix, \\seqOrdinateurSix, \\seqCalculatriceSix et leurs pictogrammes) ; un test la
 compare au .dtx du dossier `paquet/` quand il est présent. Le dossier du
 paquet (`reference\\paquet` par défaut) est ajouté au TEXINPUTS par
 services/compilateur_pdf.py pour que pdflatex trouve le .sty.
@@ -45,6 +46,8 @@ MACROS = (
     "seqLocPotence", "seqLocPotenceVisible", "seqLocRapporteur", "seqLocSac", "seqLocSiCorrige", "seqLocSurligne",
     "seqLocTableauDecimal", "seqLocTableauNumeration", "seqLocTableauOG",
     "seqLocTrait", "seqMotCle", "seqNiveauCourt", "seqNiveauExposant", "seqNumSix", "seqPartieCouvertureSix", "seqPartieSix", "seqPointilles",
+    "seqMaterielSix", "seqOrdinateurSix", "seqCalculatriceSix",            # v0.7 (v0.52.7)
+    "seqPictoOrdinateurSix", "seqPictoCalculatriceSix",
     "seqReponse", "seqScore", "seqSectionFicheSix", "seqTitreCM",
     "seqTitreComplementSix", "seqTitreEvalSix", "seqTitreFicheSix",
     "seqTitreTravailSix", "seqTrous", "seqVersionACompleter",

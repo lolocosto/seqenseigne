@@ -182,13 +182,17 @@ def _lire_parties_de_sequence(conn: sqlite3.Connection,
                 ids_EA.append(rr['exercice_id'])
         exos_R = numerotation.numeros('R', ids_R)
         exos_EA = numerotation.numeros('R', ids_EA)
-        parties.append({
+        partie = {
             'partie_id': partie_id,
             'numero': r['numero'],
             'nb_seances_R_AE': r['nb_seances_R_AE'],
             'exos_R': exos_R,
             'exos_EA': exos_EA,
-        })
+        }
+        # v0.52.7 (M8) — marqueurs, seulement si un exercice est marqué.
+        _noter_marques(conn, partie, numerotation, (('R', 'R', ids_R, 'révision'),
+                                                    ('EA', 'R', ids_EA, 'découverte')))
+        parties.append(partie)
     return parties
 
 
@@ -249,7 +253,7 @@ def _lire_objectifs_de_partie(conn: sqlite3.Connection,
         exos_F = numerotation.numeros('F', ids['F'])
         exos_A = numerotation.numeros('A', ids['A'])
         exos_E = numerotation.numeros('E', ids['E'])
-        objectifs.append({
+        objectif = {
             'id': obj_id,
             'code': r['code'],
             'nom': r['nom'] or '',
@@ -258,7 +262,13 @@ def _lire_objectifs_de_partie(conn: sqlite3.Connection,
             'exos_F': exos_F,
             'exos_A': exos_A,
             'exos_E': exos_E,
-        })
+        }
+        # v0.52.7 (M8) — marqueurs, seulement si un exercice est marqué.
+        _noter_marques(conn, objectif, numerotation, (
+            ('F', 'F', ids['F'], f"objectif {r['code']}"),
+            ('A', 'A', ids['A'], f"objectif {r['code']}"),
+            ('E', 'E', ids['E'], f"objectif {r['code']}")))
+        objectifs.append(objectif)
     return objectifs
 
 
@@ -315,13 +325,50 @@ def _fmt_total_seances(total: float) -> str:
     return f"{total:.1f}".replace('.', ',')
 
 
-def _fmt_liste_exos(exos: list[int]) -> str:
+def _fmt_liste_exos(exos: list[int], marques: dict | None = None) -> str:
     """Formate une liste de numéros d'exos pour le tex.
     Liste vide → '-' (convention paquet seqenseigne).
+
+    v0.52.7 — `marques` {numéro: mention} : « 3 (ordinateur : Scratch) »
+    pour un exercice marqué ; sans marque, sortie inchangée.
     """
     if not exos:
         return '-'
-    return ','.join(str(n) for n in exos)
+    marques = marques or {}
+    return ','.join(str(n) + (rf' {{\small ({marques[n]})}}' if n in marques else '')
+                    for n in exos)
+
+
+def _noter_marques(conn: sqlite3.Connection, cible: dict, numerotation,
+                   groupes) -> None:
+    """v0.52.7 (M8) — Pose `cible['marques']` ({clé: {numéro: mention}}) et
+    `cible['materiel']` ([(libellé, marqueurs)]) pour les exercices marqués
+    des groupes (clé, série de numérotation, ids, contexte). Rien n'est posé
+    si aucun exercice n'est marqué : le plan reste identique."""
+    from services import marqueurs_exercices as mq
+    tous = [i for _, _, ids, _ in groupes for i in ids]
+    if not tous or not mq.colonnes_presentes(conn):
+        return
+    lignes = {r[0]: {'ordinateur': r[1] or '', 'calculatrice': r[2] or ''}
+              for r in conn.execute(
+                  "SELECT id, ordinateur, calculatrice FROM exercices WHERE id IN ({}) "
+                  "AND (ordinateur <> '' OR calculatrice <> '')".format(
+                      ",".join("?" * len(tous))), tous)}
+    if not lignes:
+        return
+    marques, materiel = {}, []
+    for cle, code, ids, contexte in groupes:
+        for i in ids:
+            if i not in lignes:
+                continue
+            nums = numerotation.numeros(code, [i])
+            if not nums:
+                continue
+            marques.setdefault(cle, {})[nums[0]] = mq.mention_texte(lignes[i])
+            materiel.append((f"exercice {nums[0]} ({contexte})", lignes[i]))
+    if marques:
+        cible['marques'] = marques
+        cible['materiel'] = materiel
 
 
 def _echapper_texte(s: str) -> str:
@@ -442,8 +489,9 @@ def _emettre_bloc_revisions(partie: dict) -> list[str]:
         r'\begin{boitePaleNoBreak}{{\textbf{Révisions et découverte}}}'
     )
     lignes.append(r'\begin{seqColItem}[nbCols=1,label=\ding{109}]')
-    liste_R = _fmt_liste_exos(partie['exos_R'])
-    liste_EA = _fmt_liste_exos(partie['exos_EA'])
+    m = partie.get('marques') or {}                       # v0.52.7
+    liste_R = _fmt_liste_exos(partie['exos_R'], m.get('R'))
+    liste_EA = _fmt_liste_exos(partie['exos_EA'], m.get('EA'))
     lignes.append(rf'\item Révisions: {liste_R}')
     lignes.append(rf'\item Découverte: {liste_EA}')
     lignes.append(r'\end{seqColItem}')
@@ -485,15 +533,36 @@ def _emettre_objectif_exo(o: dict) -> list[str]:
     lignes.append(rf'\item Notions: {notions_fmt}')
     lignes.append(r'\end{seqColItem}')
     # Listes F / A / E
-    exos_F = _fmt_liste_exos(o['exos_F'])
-    exos_A = _fmt_liste_exos(o['exos_A'])
-    exos_E = _fmt_liste_exos(o['exos_E'])
+    m = o.get('marques') or {}                            # v0.52.7
+    exos_F = _fmt_liste_exos(o['exos_F'], m.get('F'))
+    exos_A = _fmt_liste_exos(o['exos_A'], m.get('A'))
+    exos_E = _fmt_liste_exos(o['exos_E'], m.get('E'))
     lignes.append(r'\begin{itemize*}[label=\qquad\ding{109}]')
     lignes.append(rf'\item Série fondamentale: {exos_F} ')
     lignes.append(rf'\item Série avancée: {exos_A} ')
     lignes.append(rf'\item Série exploration: {exos_E}')
     lignes.append(r'\end{itemize*}')
     lignes.append(r'\end{boitePaleNoBreak}')
+    return lignes
+
+
+def _emettre_materiel(partie: dict, objectifs: list[dict]) -> list[str]:
+    """v0.52.7 (M8) — Encadré « Matériel à prévoir » d'une page de partie :
+    une ligne par outil, puis la calculatrice autorisée ; [] si rien n'est
+    marqué (page inchangée). Environnements déjà dans le préambule du plan."""
+    from services import marqueurs_exercices as mq
+    materiel = mq.Materiel()
+    for lib, marques in (partie.get('materiel') or []) + [
+            x for o in objectifs if not _est_objectif_cours(o['code'], partie['numero'])
+            for x in (o.get('materiel') or [])]:
+        materiel.noter(lib, marques)
+    if not materiel:
+        return []
+    lignes = [r'\begin{boitePaleNoBreak}{{\textbf{Matériel à prévoir}}}',
+              r'\begin{seqColItem}[nbCols=1,label=\ding{109}]']
+    for titre, libelles in materiel.lignes():
+        lignes.append(rf'\item \textbf{{{titre}}} : ' + ' ; '.join(libelles))
+    lignes += [r'\end{seqColItem}', r'\end{boitePaleNoBreak}']
     return lignes
 
 
@@ -556,6 +625,9 @@ def _emettre_page_partie(seq: dict,
     lignes.append(
         rf'\seqBoiteTitrePlan[titre={{{nom_seq}{suffixe}}}]'
     )
+    # v0.52.7 (M8) — Encadré « Matériel à prévoir » en tête de la page,
+    # seulement si un exercice de la partie est marqué.
+    lignes.extend(_emettre_materiel(partie, objectifs))
     # Bloc 2-colonnes Repères temporels / Niveaux atteints
     lignes.extend(
         _emettre_bloc_reperes(

@@ -114,9 +114,10 @@ def _est_objectif_cours(code: str, numero_partie: int) -> bool:
 
 
 def _exercice(conn, ex_id: str) -> dict | None:
+    from services.marqueurs_exercices import sql_colonnes
     r = conn.execute("SELECT id, titre, enonce, corrige, remed_enonce, remed_corrige, "
-                     "variables, serie_code, num FROM exercices WHERE id = ?",
-                     (ex_id,)).fetchone()
+                     "variables, serie_code, num" + sql_colonnes(conn)
+                     + " FROM exercices WHERE id = ?", (ex_id,)).fetchone()
     if r is None:
         return None
     d = {k: (r[k] if r[k] is not None else "") for k in r.keys()}
@@ -241,8 +242,15 @@ def sequences_du_niveau(conn, niveau: str) -> list[str]:
 # ── Rendu LaTeX ──────────────────────────────────────────────────────────────
 
 def _titre_exo(ex: dict, prefixe: str = "") -> str:
+    r"""Titre de l'exercice ou de l'activité, puis à droite les marqueurs
+    (v0.52.7, `\seqMaterielSix` du module v0.7 : « Ordinateur --- Scratch »,
+    calculatrice autorisée ou interdite) et le code. Exercice non marqué :
+    titre inchangé. La remédiation suit le marquage de l'exercice (M1)."""
+    from services.marqueurs_exercices import latex_6e
+    marques = latex_6e(ex)
     return (prefixe + (ex.get("titre") or "")
-            + r"\hfill{\footnotesize\color{seqSixGrisTexte}" + ex["code"] + "}")
+            + r"\hfill" + (marques + r"\quad" if marques else "")
+            + r"{\footnotesize\color{seqSixGrisTexte}" + ex["code"] + "}")
 
 
 def latex_fiche(fiche: dict) -> str:

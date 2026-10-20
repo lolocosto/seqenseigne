@@ -1,7 +1,9 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.2** (seqenseigne v0.52.4 : champ facultatif
-> `partie.fiches`, modèle « Fiches de résumé par objectif »). Version 1.1 :
+> Version du format : **1.3** (seqenseigne v0.52.7 : champ facultatif
+> `partie.materiel`, exercices marqués ordinateur / calculatrice). Version
+> 1.2 : seqenseigne v0.52.4, champ facultatif
+> `partie.fiches`, modèle « Fiches de résumé par objectif ». Version 1.1 :
 > seqenseigne v0.52.1, champ facultatif `referentiel.gabarit_documents`.
 > Version 1.0 : seqenseigne v0.51.1 ;
 > précisions v0.51.2 : durée d'une partie, documents sans PDF, type des
@@ -164,6 +166,17 @@ Une entrée par séquence du découpage, dans le même ordre.
   objectif, puis celles rattachées à l'objectif « Cours »), qui forment la
   partie « cours » de la synthèse Pronote (« Cours : fiches de résumé (…) ») ;
   `notions` et `methodes` y sont vides. Absent pour « Notions et méthodes ».
+- `materiel` (facultatif, 1.3, seqenseigne v0.52.7) : exercices **marqués**
+  de la partie (champs `ordinateur` et `calculatrice` de l'atelier), pour le
+  tableau de bord de l'appli de classe (réserver la salle informatique, le
+  chariot mobile…). Une entrée par exercice : `objectif` (code ; `''` pour
+  un exercice de révision ou d'approche de la partie), `serie` (F, A, E, AE,
+  TP, AC, AT, EV ; R, EA pour la partie), `exercice` (code, ex. `F03`),
+  `sequence` (séquence de l'exercice), `titre`, `ordinateur` (`''`,
+  `scratch`, `geogebra`, `tableur`, `autre`), `calculatrice` (`''`,
+  `autorisee`, `interdite`). Interne seulement ; **absent** quand aucun
+  exercice de la partie n'est marqué. Côté classe : table
+  `referentiel_materiel_publie` (`import_publication.materiel_publie`).
 
 ## Documents
 
@@ -238,12 +251,15 @@ externe est toujours exporté à partir de son état du moment.
 ## Versions
 
 - Historique : 1.0 (v0.51.1) ; 1.1 (v0.52.1) ajoute
-  `referentiel.gabarit_documents` ; 1.2 (v0.52.4) ajoute `partie.fiches`.
+  `referentiel.gabarit_documents` ; 1.2 (v0.52.4) ajoute `partie.fiches` ;
+  1.3 (v0.52.7) ajoute `partie.materiel`.
   Une publication figée produite en 1.0 est resservie telle quelle (sans le
   champ, donc lue `cycle4`).
 - Un document déclare la plus petite version qui décrit son contenu : un
   référentiel « Notions et méthodes » reste en **1.1** (rien ne change pour
-  lui, empreinte comprise) ; « Fiches de résumé par objectif » est en 1.2.
+  lui, empreinte comprise) ; « Fiches de résumé par objectif » est en 1.2 ;
+  un référentiel dont au moins un exercice est marqué est en 1.3 (sans
+  marqueur, document et empreinte sont ceux de la v0.52.6).
 - `format_version` = `majeure.mineure`. Ajout d'un champ **facultatif** :
   version mineure (1.1, 1.2…) ; changement incompatible : version majeure
   (2.0).

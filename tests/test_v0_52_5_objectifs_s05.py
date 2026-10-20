@@ -266,7 +266,8 @@ def _code(src: str) -> str:
 @pytest.mark.skipif(not DTX.is_file(), reason="module 6e absent du dossier paquet/")
 def test_macros_du_lot_s05_dans_le_module_v0_6_car_les_enonces_du_lot_les_appellent():
     dtx, sty = DTX.read_text(encoding="utf-8"), STY.read_text(encoding="utf-8")
-    assert "v0.6 seqenseigne" in dtx and "v0.6 seqenseigne" in sty
+    # v0.52.7 : le module est passé en v0.7 ; les macros v0.6 restent.
+    assert "v0.7 seqenseigne" in dtx and "v0.7 seqenseigne" in sty
     for m in MACROS_S05:
         assert m in style6e.MACROS
         assert style6e.correspondances()["\\" + m] == "seqenseigne-style6e"

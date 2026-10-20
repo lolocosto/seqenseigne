@@ -190,8 +190,9 @@ def _trace_exos_de_objectif(conn: sqlite3.Connection,
     pour CET objectif (un même exo peut potentiellement servir dans
     plusieurs séries pour différents objectifs).
     """
+    from services.marqueurs_exercices import sql_colonnes, lire as _marques
     rows = conn.execute("""
-        SELECT e.num, oe.serie AS oe_serie, e.titre
+        SELECT e.num, oe.serie AS oe_serie, e.titre""" + sql_colonnes(conn, "e") + """
           FROM objectif_exos oe
           JOIN exercices e ON e.id = oe.exercice_id
          WHERE oe.objectif_id = ?
@@ -210,6 +211,9 @@ def _trace_exos_de_objectif(conn: sqlite3.Connection,
             'serie': _serie_label(r['oe_serie']),
             'titre': r['titre'] or '',
         })
+        # v0.52.7 (M6) — marqueurs ordinateur / calculatrice, seulement
+        # s'ils sont posés (trace inchangée pour un exercice non marqué).
+        out[-1].update({k: v for k, v in _marques(r).items() if v})
     return out
 
 
@@ -248,19 +252,23 @@ def _trace_exos_partie_par_type(conn: sqlite3.Connection,
         # Tenter d'enrichir avec le titre de l'exercice s'il existe
         # encore dans la BDD active. Pas bloquant si absent.
         titre = ''
+        marques = {}
         if r['exercice_id']:
+            from services.marqueurs_exercices import sql_colonnes, lire as _marques
             t = conn.execute(
-                "SELECT titre FROM exercices WHERE id = ?",
+                "SELECT titre" + sql_colonnes(conn) + " FROM exercices WHERE id = ?",
                 (r['exercice_id'],)
             ).fetchone()
             if t:
                 titre = t['titre'] or ''
+                marques = {k: v for k, v in _marques(t).items() if v}   # v0.52.7 (M6)
         out.append({
             'niveau':   r['origin_niveau'],
             'sequence': r['origin_seq'],
             'num':      r['origin_num'],
             'serie':    _serie_label(r['origin_serie']),
             'titre':    titre,
+            **marques,
         })
     return out
 
