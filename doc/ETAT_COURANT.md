@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.5** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.6** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -83,7 +83,19 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   absente du module ; page de garde du livret 6e par partie (titre « Partie
   n — libellé », trait de la couleur du thème). Cycle 4 inchangé au
   caractère près. Détails : `doc/redemarrage_v0_52_5.md`.
-- À venir : lots S10 à S13 ; mises en route M01 à M07 ; outil d'import
+- v0.52.6 livrée : référentiel principal de 6e complet — lots S01 à S13
+  dans `reference\lot6e` (S01 à S03 recomposés : une évaluation sur 20 par
+  séquence, tests courts réservés aux mises en route) ; l'import retire les
+  évaluations listées dans `evaluations_retirees` (si non validées) et les
+  exercices EV devenus orphelins, avec sauvegarde et journal de restauration
+  (décisions R1 à R4 : retirer avant d'importer, numéro EV occupé jamais
+  réattribué, liens EV périmés retirés, évaluation validée intouchée) ;
+  dépendances entre objectifs des lots S04 à S13 ajoutées aux « Contraintes
+  de progression » de `outils/ref6e_v2.md` ; `doc/doublons_6e_5e.md`
+  (exercices de 5e copiés en 6e, pour la migration du référentiel de 5e).
+  Cycle 4 inchangé au caractère près. Détails : `doc/redemarrage_v0_52_6.md`.
+- À venir : mises en route M01 à M07 ; migration du référentiel de 5e
+  (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import
   paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
   numéro suivant.
 

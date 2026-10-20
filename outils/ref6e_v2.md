@@ -128,8 +128,45 @@ Ces contraintes portent sur l'ordre de la progression, pas sur le référentiel 
 - S11 (probabilités) : à traiter pendant le premier semestre, après M02-02 (livret, p. 3).
 - S13 (pensée informatique) : à traiter pendant le premier semestre (livret, p. 3).
 - S08 (triangles) : après S05, S06 et S07 (découpage du 19 octobre 2026). S08-12 (cercle circonscrit) s'appuie sur la médiatrice (S05-12, S05-13), sur le cercle (S06-02) et sur la construction d'un triangle (S06-03) ; S08-02 (calculer un angle d'un triangle) s'appuie sur la mesure des angles (S07-03).
-- S06-03 (construire un triangle), critère A : construire un triangle connaissant deux côtés et un angle, ou un côté et deux angles, demande de construire un angle de mesure donnée (S07-04). Le critère F (trois côtés, au compas) se travaille en S06 ; la série A de S06-03 se traite après S07.
+- S06-03 (construire un triangle), critère A : construire un triangle connaissant deux côtés et un angle, ou un côté et deux angles, demande de construire un angle de mesure donnée (S07-04). Le critère F (trois côtés, au compas) se travaille en S06 ; la série A de S06-03 se traite après S07, de même que l'exercice 7 de l'évaluation « Cercles et triangles » (décision du 19 octobre 2026 : tout reste en place, la dépendance est documentée et sera portée par les dépendances entre objectifs quand elles existeront dans l'appli).
 - S09 (symétrie axiale) : après S05, partie 2. S09-02 définit le symétrique d'un point à l'aide de la médiatrice (S05-12).
+
+Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (ajoutées le 20 octobre 2026), une ligne par dépendance, sous la forme « objectif → objectif dont il dépend : raison (lot d'origine) ». Un code de séquence seul (S03, M04…) renvoie à la séquence ou à la mise en route entière ; « AC » et « TP » désignent une activité complémentaire ou un travail personnel du lot. Les rapports S04, S05, S07, S08 et S09 n'en ajoutent pas d'autres que celles notées ci-dessus.
+
+- S06 AC « Le triangle de Sierpinski » → S05-04 : les milieux de segments sont réinvestis (lot S06).
+- S10-02 → M06-01 : compter des votes dans un tableau, F02 (lot S10).
+- S10-02 → M02-01 : soustraire des nombres décimaux, E03 (lot S10).
+- S10-02 → M02-03 : calculer 38 % de 1 500, E04 (lot S10).
+- S10-02 → S01-03 : lire de grands nombres, E05 (lot S10).
+- S10-02 → S02-12 : comparer des nombres, E05 (lot S10).
+- S10-05 → M03-01 : convertir des longueurs, activité, F10, E08 et TP 2 (lot S10).
+- S10-05 → M02-01 : calculer avec des nombres décimaux, E08 (lot S10).
+- S10-05 → S04-03 : prolonger une régularité, E09 (lot S10).
+- S10-04 → M03-04 : calculer une durée de sommeil, F08, en prolongement seulement (lot S10).
+- S10 AC 1 → S07-04 : construire un angle (lot S10).
+- S10 AC 1 → S12 : utiliser la proportionnalité (lot S10).
+- S11-02 → S01-12 : la fraction comme quotient, A02 et A03 (lot S11).
+- S11-02 → S01-13 : les fractions égales, A02 et A03 (lot S11).
+- S11-02 → S01-14 : 1/3 n'est pas décimal, A03 (lot S11).
+- S11-02 → S02-03 : placer 1/4 et 3/4 sur l'échelle des probabilités, A01 (lot S11).
+- S11-03 → S01-13 : comparer 2/5 et 3/10, E04 (lot S11).
+- S11-03 → M02-02 : 75 % = 3/4, E03 (lot S11).
+- S11-04 → M01-04 : arrondir une fréquence au centième, activité et E05 (lot S11).
+- S11-04 → S03 : division décimale à la calculatrice (lot S11).
+- S11-04 → S10-02 : lire un graphique, E05 (lot S11).
+- S11 TP → S03 : 3/8 = 0,375, calculatrice autorisée (lot S11).
+- S11 TP → M01-04 : 1/3 ≈ 0,33, arrondi (lot S11).
+- S12-02 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
+- S12-03 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
+- S12-04 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
+- S12-02 → M04 : 1 min = 60 s, exercice du cœur (lot S12).
+- S12-02 → M03 : 1 kg = 1 000 g (lot S12).
+- S12-04 → M04 : aire du rectangle, boulodrome (lot S12).
+- S12-04 → S03 : multiplier des nombres décimaux (lot S12).
+- S12-05 → M06 : lire un graphique, robinet (lot S12).
+- S12 AC 2 → M04 : périmètre et aire du carré (lot S12).
+- S13-03 → S07-02 : angles de 90°, 120°, 60° et demi-tour (lot S13).
+- S13-03 → S03 : division 360 ÷ 5 = 72, E « polygone à la demande » et AC 1 (lot S13).
 
 ## S01 — Nombres entiers et décimaux, fractions
 

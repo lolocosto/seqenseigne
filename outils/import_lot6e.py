@@ -42,6 +42,13 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      est signalée en anomalie et n'est pas importée. Plus aucun `.tex` n'est
      écrit (les `.tex` de la v0.52.0 restent où ils sont).
 
+  5. **Retrait d'évaluations (v0.52.6)** — un lot peut lister, dans
+     `evaluations_retirees`, des titres d'évaluations à retirer (une
+     évaluation sur 20 par séquence, décision du 19 octobre) : retirées si
+     non validées, puis leurs exercices EV devenus orphelins (décisions R1 à
+     R4, `doc/redemarrage_v0_52_6.md`). Le journal de --apply garde de quoi
+     les restaurer.
+
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
 évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
@@ -1014,15 +1021,77 @@ def _poser_exercices_evaluation(conn, ev_id: str, voulus: list[tuple]) -> int:
     return 1
 
 
-def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -> None:
-    """Évaluations et tests courts : atomes EV (sujet A → enonce, sujet B →
-    remed_enonce, corrigés vides : la version corrigée vient des macros de
-    réponse) numérotés EV01… dans l'ordre du lot, reliés à leur objectif
-    (série EV ; le bonus n'en a pas) ; évaluation « note et critères » du
-    module Évaluations avec barème par exercice et objectifs évalués."""
+def _vals_ev(x: dict) -> dict:
+    """Contenu d'un atome EV tel que l'import l'écrit (cf. `_exercice`)."""
+    return {"titre": x["titre"], "enonce": x["corps"], "corrige": "",
+            "remed_enonce": _sujet_b(x), "remed_corrige": ""}
+
+
+def _meme_contenu(row, vals: dict) -> bool:
+    return all((row[k] or "") == v for k, v in vals.items())
+
+
+def _evaluations_de(conn, exo_id: str) -> list:
+    """Évaluations (id, titre, état) qui utilisent cet exercice."""
+    return conn.execute("SELECT e.id, e.titre, e.etat_code FROM evaluation_exercices ee JOIN "
+                        "evaluations e ON e.id = ee.evaluation_id WHERE ee.exercice_id = ? "
+                        "ORDER BY e.numero", (exo_id,)).fetchall()
+
+
+def _choisir_numero_ev(conn, seq: str, num_nat: int, vals: dict, ev_id: str | None,
+                       position: int, pris: set, nums_pris: set) -> tuple[int, str]:
+    r"""v0.52.6 — Décision R2 : un numéro EV occupé n'est jamais réattribué.
+
+    La numérotation naturelle reste celle de la v0.52.2 (EV01… dans l'ordre
+    du lot, en continu sur toutes les évaluations de la séquence). Un atome
+    existant n'est réutilisé (et au besoin réécrit) que s'il est « libre ou à
+    nous » : utilisé par aucune autre évaluation que celle-ci, et pas validé
+    avec un autre contenu. Sinon le numéro est **occupé** : l'exercice prend
+    le premier numéro après le plus grand de la séquence (« numéro de
+    queue »), signalé dans le rapport. Ordre des candidats :
+      1. l'atome EV de la séquence à la même position dans l'évaluation déjà
+         en base (idempotence d'un exercice placé en queue) ;
+      2. le numéro naturel ;
+      3. le numéro de queue.
+    Retourne (numéro, motif) ; motif vide si le numéro naturel est retenu."""
+    def libre(row) -> bool:
+        if row["id"] in pris:
+            return False
+        if row["etat_code"] == "valide" and not _meme_contenu(row, vals):
+            return False
+        return all(u["id"] == ev_id for u in _evaluations_de(conn, row["id"]))
+
+    if ev_id is not None:
+        comp = conn.execute(
+            "SELECT x.* FROM evaluation_exercices ee JOIN exercices x ON x.id = ee.exercice_id "
+            "WHERE ee.evaluation_id = ? AND x.niveau = ? AND x.sequence = ? AND "
+            "x.serie_code = 'EV' ORDER BY ee.ordre", (ev_id, NIVEAU, seq)).fetchall()
+        if position < len(comp) and libre(comp[position]):
+            n = comp[position]["num"]
+            return n, ("" if n == num_nat else f"place gardée en EV{n:02d}")
+    row = conn.execute("SELECT * FROM exercices WHERE niveau = ? AND sequence = ? AND "
+                       "serie_code = 'EV' AND num = ?", (NIVEAU, seq, num_nat)).fetchone()
+    if num_nat not in nums_pris and (row is None or libre(row)):
+        return num_nat, ""
+    if row is None:
+        motif = f"EV{num_nat:02d} déjà pris dans cet import"
+    elif row["id"] in pris:
+        motif = f"EV{num_nat:02d} déjà pris dans cet import"
+    else:
+        autres = [u["titre"] for u in _evaluations_de(conn, row["id"]) if u["id"] != ev_id]
+        motif = (f"EV{num_nat:02d} utilisé par « {autres[0]} »" if autres
+                 else f"EV{num_nat:02d} validé avec un autre contenu")
+    m = conn.execute("SELECT MAX(num) FROM exercices WHERE niveau = ? AND sequence = ? AND "
+                     "serie_code = 'EV'", (NIVEAU, seq)).fetchone()[0] or 0
+    return max([m, num_nat, *nums_pris]) + 1, motif
+
+
+def _plan_evaluations(lot: dict, objectifs_ids: dict, rapport: Rapport | None
+                      ) -> "list[tuple[str, dict, list]]":
+    """[(titre, paire, exercices préparés)] des évaluations importables du
+    lot, dans l'ordre ; les autres sont signalées (si `rapport`)."""
     seq = lot["sequence"]
-    num = 0
-    liens: "OrderedDict[tuple, list]" = OrderedDict()
+    plan = []
     for titre, paire in paires_evaluations(lot).items():
         try:
             exos = preparer_evaluation(titre, paire)
@@ -1031,24 +1100,78 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             if inconnus:
                 raise ImportErreur(f"objectif(s) inconnu(s) : {', '.join(inconnus)}")
         except ImportErreur as e:
-            rapport.anomalie(f"{seq} évaluation « {titre} » non importée : découpage impossible "
-                             f"({e})")
+            if rapport is not None:
+                rapport.anomalie(f"{seq} évaluation « {titre} » non importée : découpage "
+                                 f"impossible ({e})")
             continue
-        voulus, etats = [], {}
+        plan.append((titre, paire, exos))
+    return plan
+
+
+def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -> None:
+    """Évaluations et tests courts : atomes EV (sujet A → enonce, sujet B →
+    remed_enonce, corrigés vides : la version corrigée vient des macros de
+    réponse) numérotés EV01… dans l'ordre du lot, reliés à leur objectif
+    (série EV ; le bonus n'en a pas) ; évaluation « note et critères » du
+    module Évaluations avec barème par exercice et objectifs évalués.
+
+    v0.52.6 — Avant l'import, retrait des évaluations listées dans
+    `evaluations_retirees` et des exercices EV devenus orphelins (décision
+    R1, `retirer_evaluations`) ; numéros EV occupés jamais réattribués (R2,
+    `_choisir_numero_ev`) ; liens EV d'un atome réécrit remis à son objectif
+    (R3) ; évaluation validée : ses exercices ne sont pas touchés (R4)."""
+    seq = lot["sequence"]
+    plan = _plan_evaluations(lot, objectifs_ids, rapport)
+    voulu_par_num: dict = {}
+    k = 0
+    for _, _, exos in plan:
         for x in exos:
+            k += 1
+            voulu_par_num[k] = _vals_ev(x)
+    retirer_evaluations(conn, lot, voulu_par_num, rapport)
+    num = 0
+    pris: set = set()
+    nums_pris: set = set()
+    liens: "OrderedDict[tuple, list]" = OrderedDict()
+    for titre, paire, exos in plan:
+        avant = conn.execute("SELECT id, etat_code FROM evaluations WHERE niveau = ? AND "
+                             "titre = ? ORDER BY numero LIMIT 1", (NIVEAU, titre)).fetchone()
+        if avant is not None and avant["etat_code"] == "valide":
+            # R4 — rien n'est touché : ni l'évaluation, ni ses exercices EV.
+            _evaluation(conn, titre, rapport, seq)
+            num += len(exos)
+            rapport.documents.append(f"{seq} évaluation « {titre} » : validée, non modifiée — "
+                                     "exercices EV non touchés")
+            continue
+        ev_avant = avant["id"] if avant is not None else None
+        voulus, etats, nums = [], {}, []
+        for i, x in enumerate(exos):
             num += 1
-            eid, etat = _exercice(conn, seq, "EV", num, {
-                "titre": x["titre"], "enonce": x["corps"], "corrige": "",
-                "remed_enonce": _sujet_b(x), "remed_corrige": ""})
+            vals = _vals_ev(x)
+            n, motif = _choisir_numero_ev(conn, seq, num, vals, ev_avant, i, pris, nums_pris)
+            if motif and n != num:
+                rapport.infos.append(f"{NIVEAU}/{seq} évaluation « {titre} », exercice {i + 1} "
+                                     f"« {x['titre']} » : {motif} → EV{n:02d}")
+            eid, etat = _exercice(conn, seq, "EV", n, vals)
+            pris.add(eid)
+            nums_pris.add(n)
+            nums.append(n)
             etats[etat] = etats.get(etat, 0) + 1
             if etat == "validé, non modifié":
-                rapport.anomalie(f"{NIVEAU}/{seq}/EV{num:02d} validé dans l'atelier : contenu du "
+                rapport.anomalie(f"{NIVEAU}/{seq}/EV{n:02d} validé dans l'atelier : contenu du "
                                  "lot non appliqué")
-            if not x["bonus"]:
-                liens.setdefault((objectifs_ids[x["objectif"]], "EV"), []).append(eid)
+            voulu_obj = None if x["bonus"] else objectifs_ids[x["objectif"]]
+            if etat == "mis à jour":
+                # R3 — l'atome a changé de contenu (numéro réutilisé par la
+                # recomposition) : ses liens EV vers un autre objectif sont
+                # périmés.
+                conn.execute("DELETE FROM objectif_exos WHERE exercice_id = ? AND serie = 'EV' "
+                             "AND objectif_id IS NOT ?", (eid, voulu_obj))
+            if voulu_obj is not None:
+                liens.setdefault((voulu_obj, "EV"), []).append(eid)
             voulus.append((eid, x["points"]))
             rapport.journal["import"].append({
-                "cle": f"{NIVEAU}/{seq}/EV{num:02d}", "id": eid, "evaluation": titre,
+                "cle": f"{NIVEAU}/{seq}/EV{n:02d}", "id": eid, "evaluation": titre,
                 "objectif": None if x["bonus"] else x["objectif"],
                 "origine": paire["A"].get("origine", "")})
         ev_id, etat_ev = _evaluation(conn, titre, rapport, seq)
@@ -1065,14 +1188,108 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
                 etat_ev = "mise à jour" if (change or n_obj) else "inchangée"
         bonus = sum(x["points"] for x in exos if x["bonus"])
         total = sum(x["points"] for x in exos if not x["bonus"])
+        plage = (f"EV{nums[0]:02d}–EV{nums[-1]:02d}" if nums == list(range(nums[0], nums[-1] + 1))
+                 else ", ".join(f"EV{n:02d}" for n in nums))
         rapport.documents.append(
             f"{seq} évaluation « {titre} » : {etat_ev} — {len(exos)} exercice(s) EV "
-            f"(EV{num - len(exos) + 1:02d}–EV{num:02d} : "
+            f"({plage} : "
             + ", ".join(f"{e} {n}" for e, n in etats.items())
             + f"), total {total:g}" + (f" + bonus {bonus:g}" if bonus else ""))
     n = _lier_objectifs(conn, liens)
     if n:
         rapport.seq(seq)["lignes"].append(f"évaluations : {n} lien(s) exercice EV-objectif créé(s)")
+
+
+# ── 5. Retrait d'évaluations (v0.52.6) ──────────────────────────────────────
+
+def _lignes(conn, sql: str, args: tuple) -> list[dict]:
+    return [dict(r) for r in conn.execute(sql, args)]
+
+
+def retirer_evaluations(conn, lot: dict, voulu_par_num: dict, rapport: Rapport) -> None:
+    """v0.52.6 — Décision R1 « retirer avant d'importer » (décision de
+    Laurent du 19 octobre : une évaluation sur 20 par séquence, tests courts
+    réservés aux mises en route).
+
+    Pour chaque titre de `evaluations_retirees` du lot :
+      - évaluation N09 absente → rien (idempotence) ;
+      - validée → gardée telle quelle, anomalie ;
+      - sinon → retirée : `evaluation_objectifs`, `evaluation_exercices`,
+        puis la ligne `evaluations`.
+    Puis les exercices EV de la séquence devenus orphelins : ceux qui étaient
+    dans une évaluation retirée, qui ne sont plus utilisés par aucune
+    évaluation et qui ne sont plus dans le lot (le lot ne pose pas, à leur
+    numéro, un exercice de même contenu). Non validés → retirés avec leurs
+    liens (`objectif_exos`, `partie_exos_revision_approche`) ; validés →
+    gardés, anomalie (leur numéro reste occupé : R2).
+
+    Tout ce qui est retiré est copié, ligne par ligne, dans
+    `rapport.journal["retraits"]` (journal JSON de --apply) : de quoi le
+    restaurer par de simples INSERT."""
+    seq = lot["sequence"]
+    titres = [t for t in (lot.get("evaluations_retirees") or []) if t]
+    if not titres:
+        return
+    gardes = {t for t, _ in paires_evaluations(lot).items()}
+    liberes: list[str] = []
+    for titre in titres:
+        if titre in gardes:
+            rapport.anomalie(f"{seq} évaluation « {titre} » à la fois retirée et présente dans "
+                             "le lot : non retirée")
+            continue
+        evs = conn.execute("SELECT * FROM evaluations WHERE niveau = ? AND titre = ? "
+                           "ORDER BY numero", (NIVEAU, titre)).fetchall()
+        if not evs:
+            rapport.documents.append(f"{seq} évaluation « {titre} » à retirer : absente "
+                                     "(déjà retirée)")
+            continue
+        for ev in evs:
+            if ev["etat_code"] == "valide":
+                rapport.anomalie(f"{seq} évaluation « {titre} » à retirer, mais validée dans le "
+                                 "module Évaluations : gardée")
+                rapport.documents.append(f"{seq} évaluation « {titre} » : validée, gardée")
+                continue
+            exos = _lignes(conn, "SELECT * FROM evaluation_exercices WHERE evaluation_id = ? "
+                                 "ORDER BY ordre", (ev["id"],))
+            objs = _lignes(conn, "SELECT * FROM evaluation_objectifs WHERE evaluation_id = ?",
+                           (ev["id"],))
+            rapport.journal.setdefault("retraits", []).append({
+                "quoi": "evaluation", "sequence": seq, "titre": titre,
+                "evaluations": dict(ev), "evaluation_exercices": exos,
+                "evaluation_objectifs": objs})
+            conn.execute("DELETE FROM evaluation_objectifs WHERE evaluation_id = ?", (ev["id"],))
+            conn.execute("DELETE FROM evaluation_exercices WHERE evaluation_id = ?", (ev["id"],))
+            conn.execute("DELETE FROM evaluations WHERE id = ?", (ev["id"],))
+            liberes += [e["exercice_id"] for e in exos]
+            rapport.documents.append(f"{seq} évaluation « {titre} » (n° {ev['numero']}) : "
+                                     f"retirée ({len(exos)} exercice(s), {len(objs)} objectif(s) "
+                                     "évalué(s))")
+    for eid in dict.fromkeys(liberes):
+        x = conn.execute("SELECT * FROM exercices WHERE id = ?", (eid,)).fetchone()
+        if x is None or (x["niveau"], x["sequence"], x["serie_code"]) != (NIVEAU, seq, "EV"):
+            continue                    # exercice d'ailleurs ajouté par l'auteur : intouché
+        cle = f"{NIVEAU}/{seq}/EV{x['num']:02d}"
+        if conn.execute("SELECT 1 FROM evaluation_exercices WHERE exercice_id = ?",
+                        (eid,)).fetchone() is not None:
+            continue                    # encore utilisé par une autre évaluation
+        voulu = voulu_par_num.get(x["num"])
+        if voulu is not None and _meme_contenu(x, voulu):
+            continue                    # toujours dans le lot, à ce numéro : réutilisé
+        if "etat_code" in x.keys() and x["etat_code"] == "valide":
+            rapport.anomalie(f"{cle} « {x['titre']} » orphelin mais validé dans l'atelier : "
+                             "gardé (numéro occupé)")
+            continue
+        liens = _lignes(conn, "SELECT * FROM objectif_exos WHERE exercice_id = ?", (eid,))
+        parts = _lignes(conn, "SELECT * FROM partie_exos_revision_approche WHERE "
+                              "exercice_id = ?", (eid,))
+        rapport.journal.setdefault("retraits", []).append({
+            "quoi": "exercice", "cle": cle, "exercices": dict(x), "objectif_exos": liens,
+            "partie_exos_revision_approche": parts})
+        conn.execute("DELETE FROM objectif_exos WHERE exercice_id = ?", (eid,))
+        conn.execute("DELETE FROM partie_exos_revision_approche WHERE exercice_id = ?", (eid,))
+        conn.execute("DELETE FROM exercices WHERE id = ?", (eid,))
+        rapport.documents.append(f"{cle} « {x['titre']} » : orphelin, retiré "
+                                 f"({len(liens)} lien(s) objectif)")
 
 
 # ── Orchestration ────────────────────────────────────────────────────────────
@@ -1127,10 +1344,21 @@ def resoudre_base(db: str | None, racine: Path = RACINE_APPLI) -> Path:
     return dossier_par_defaut(racine, "atelier") / NOM_DB
 
 
+def _nom_libre(p: Path) -> Path:
+    """v0.52.6 — Deux exécutions dans la même seconde ne s'écrasent pas : la
+    sauvegarde et le journal du premier --apply (retraits compris) restent."""
+    k = 1
+    q = p
+    while q.exists():
+        k += 1
+        q = p.with_name(f"{p.stem}_{k}{p.suffix}")
+    return q
+
+
 def sauvegarder(db: Path) -> Path:
     d = db.parent / "sauvegardes"
     d.mkdir(parents=True, exist_ok=True)
-    cible = d / f"avant_import_lot6e_{datetime.now():%Y-%m-%d_%H%M%S}.db"
+    cible = _nom_libre(d / f"avant_import_lot6e_{datetime.now():%Y-%m-%d_%H%M%S}.db")
     src = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     dst = sqlite3.connect(cible)
     try:
@@ -1224,7 +1452,8 @@ def main(argv=None) -> int:
         conn.close()
     copier_figures(lots, {l["sequence"]: _figures_du_journal(l) for l in lots}, images,
                    Rapport(), ecrire=True)
-    journal = db.parent / "sauvegardes" / f"journal_import_lot6e_{datetime.now():%Y-%m-%d_%H%M%S}.json"
+    journal = _nom_libre(db.parent / "sauvegardes" /
+                         f"journal_import_lot6e_{datetime.now():%Y-%m-%d_%H%M%S}.json")
     journal.write_text(json.dumps({"base": str(db), "sauvegarde": str(sauvegarde),
                                    **rapport.journal}, ensure_ascii=False, indent=1),
                        encoding="utf-8")
