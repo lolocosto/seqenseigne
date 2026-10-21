@@ -922,6 +922,8 @@
               <button class="serie-btn" id="atl-serie-TP" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie('travail personnel')">Travail personnel</button>
               <button class="serie-btn" id="atl-serie-AC" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie('activité complémentaire')">Activité complémentaire</button>
               <button class="serie-btn" id="atl-serie-AT" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie(&quot;séance d'atelier&quot;)">Séance d'atelier</button>
+              <!-- v0.53.0 (MR2) — exercice de séance d'une mise en route (Mnn). -->
+              <button class="serie-btn" id="atl-serie-MR" data-serie-document style="display:none" onclick="ATELIER_EXERCICE.changerSerie('mise en route')">Mise en route</button>
               <!-- v0.11.2 — Série « Révision » supprimée (cf. sidebar plus haut). -->
             </div>
           </div>
@@ -4000,6 +4002,11 @@
         <button class="serie-btn active-document" data-serie-document-creation style="display:none"
                 onclick="ATELIER_EXERCICE._validerChoixSerie(&quot;séance d'atelier&quot;)">
           AT — Séance d'atelier
+        </button>
+        <!-- v0.53.0 (MR2) — exercice de séance d'une mise en route (Mnn). -->
+        <button class="serie-btn active-document" data-serie-document-creation style="display:none"
+                onclick="ATELIER_EXERCICE._validerChoixSerie('mise en route')">
+          MR — Mise en route (exercice de séance)
         </button>
       </div>
     </div>

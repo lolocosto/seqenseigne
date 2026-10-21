@@ -142,6 +142,16 @@ class ImportErreur(Exception):
     pass
 
 
+def _module_mer():
+    """v0.53.0 — outils/import_lot6e_mer.py (lots de mise en route), que
+    l'outil soit lancé par chemin ou importé comme `outils.import_lot6e`."""
+    try:
+        from outils import import_lot6e_mer as m
+    except ImportError:
+        import import_lot6e_mer as m
+    return m
+
+
 # ── Petits outils ────────────────────────────────────────────────────────────
 
 def code_archive(code: str) -> str:
@@ -225,10 +235,13 @@ def charger_referentiel(chemin: Path = REFERENTIEL) -> dict:
 
 
 def charger_lots(dossier: Path) -> list[dict]:
-    """Lots S01/S01.json, S02/S02.json… triés par code de séquence."""
+    """Lots S01/S01.json, S02/S02.json… triés par code de séquence, puis
+    (v0.53.0) les lots de mise en route M01/M01.json… (outils/import_lot6e_mer.py)."""
     dossier = Path(dossier)
     lots = []
-    for d in sorted(p for p in dossier.iterdir() if p.is_dir() and re.fullmatch(r"S\d\d", p.name)):
+    for d in sorted((p for p in dossier.iterdir()
+                     if p.is_dir() and re.fullmatch(r"[SM]\d\d", p.name)),
+                    key=lambda p: (p.name[0] != "S", p.name)):
         f = d / f"{d.name}.json"
         if f.is_file():
             lot = json.loads(f.read_text(encoding="utf-8"))
@@ -987,7 +1000,8 @@ def importer_documents(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -
 
 # Évaluations : `\seqExoEval{titre}{N pts --- Snn-nn}` ouvre chaque exercice.
 MARQUE_EXO_EVAL = "\\seqExoEval"
-RE_ETIQUETTE_EVAL = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*pts?\s*---\s*(S\d\d-\d\d)\s*$")
+# v0.53.0 — aussi `Mnn-nn` (tests courts des mises en route).
+RE_ETIQUETTE_EVAL = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*pts?\s*---\s*([SM]\d\d-\d\d)\s*$")
 
 
 def decouper_evaluation(latex: str) -> list[dict]:
@@ -1543,17 +1557,24 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.infos.append("Base complétée : colonne duree_partie1 des évaluations (v0.52.9)")
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
-    appliquer_cycle3(conn, ref, rapport)
+    themes = appliquer_cycle3(conn, ref, rapport)
     figures = {}
+    mer_imp = _module_mer()                                           # v0.53.0
+    ref_mer = mer_imp.referentiel_mer()
+    imp = sys.modules[__name__]
     for lot in lots:
-        figures[lot["sequence"]] = importer_lot(conn, lot, ref, rapport)
+        if mer_imp.est_lot_mer(lot):
+            figures[lot["sequence"]] = mer_imp.importer_lot_mer(conn, imp, lot, themes,
+                                                                ref_mer, rapport)
+        else:
+            figures[lot["sequence"]] = importer_lot(conn, lot, ref, rapport)
     copier_figures(lots, figures, images, rapport, ecrire_fichiers)
     signaler_cycle4(conn, rapport)
     from services.style6e import MACROS as MACROS_STYLE6E
     for seq, ms in macros_locales(lots).items():
         if ms:
             rapport.infos.append(f"{seq} : macros locales utilisées (fournies par "
-                                 f"seqenseigne-style6e v0.8) : {', '.join(ms)}")
+                                 f"seqenseigne-style6e v0.9) : {', '.join(ms)}")
         # v0.52.5 — Une macro \seqLoc… que le module ne fournit pas ferait
         # échouer la compilation de tous les documents de la séquence.
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
@@ -1565,11 +1586,11 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     for seq, (ms, n_astuces) in macros_module(lots).items():
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
         if absentes:
-            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e v0.8 "
+            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e v0.9 "
                              f"(compilation impossible) : {', '.join(absentes)}")
         if n_astuces:
             rapport.infos.append(f"{seq} : {n_astuces} astuce(s) \\seqAstuceSix (module "
-                                 "seqenseigne-style6e v0.8)")
+                                 "seqenseigne-style6e v0.9)")
 
 
 def resoudre_base(db: str | None, racine: Path = RACINE_APPLI) -> Path:
@@ -1644,7 +1665,7 @@ def main(argv=None) -> int:
     ref = charger_referentiel()
     lots = charger_lots(lots_dir)
     if not lots:
-        print(f"Aucun lot (S01\\S01.json…) dans {lots_dir}")
+        print(f"Aucun lot (S01\\S01.json…, M01\\M01.json…) dans {lots_dir}")
         return 2
     db = resoudre_base(args.db)
     if not db.is_file():
@@ -1703,7 +1724,11 @@ def main(argv=None) -> int:
 
 def _figures_du_journal(lot: dict) -> set:
     """Figures utilisées par les éléments importés en base d'un lot
-    (v0.52.2 : documents TP, AC, AT et évaluations compris)."""
+    (v0.52.2 : documents TP, AC, AT et évaluations compris ; v0.53.0 : lots
+    de mise en route)."""
+    mer_imp = _module_mer()
+    if mer_imp.est_lot_mer(lot):
+        return mer_imp.figures_du_lot(sys.modules[__name__], lot)
     noms: set = set()
     for o in lot.get("objectifs", []):
         for e in o.get("exercices", []) + o.get("activites", []):

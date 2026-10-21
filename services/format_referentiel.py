@@ -450,7 +450,10 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                 # objectif d'une partie sans Cours n'est pas une connaissance).
                 # Externe : type saisi.
                 if interne:
-                    type_obj = ("connaissance" if str(o["code"]).strip() == f"{num - 1}1"
+                    # v0.53.0 (MR1b) — pas d'objectif Cours dans une mise en route.
+                    from services.mises_en_route_6e import est_objectif_cours
+                    type_obj = ("connaissance"
+                                if est_objectif_cours(str(o["code"]), num, code)
                                 else "capacite")
                 else:
                     type_obj = (o.get("type_obj") if "type_obj" in cols_obj else None) \

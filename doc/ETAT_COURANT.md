@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.9** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.53.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -131,8 +131,25 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   (astuces Scratch avec lien, S03 « Ordre de grandeur et multiplication »
   coupée). Sujet d'un seul tenant et cycle 4 inchangés au caractère près ;
   module LaTeX inchangé. Détails : `doc/redemarrage_v0_52_9.md`.
+- v0.53.0 livrée (21 octobre) : rendu par lot en 6e (« niveau invalide :
+  'N09' » : niveaux N09 à N12 et de `param_niveaux`, séquences Snn, Mnn, Xnn ;
+  fiche de résumé au modèle « Fiches » rendue au format de l'équipe, B2) ;
+  mises en route de 6e au modèle « Fiches » (MR1 à MR7) : séquences `Mnn` de
+  l'atelier N09 (C03 Mnn n° 200 + n, une partie, objectifs 01… sans objectif
+  Cours), série `MR` (exercice de séance, numéro = séance), fiche de cours de
+  séquence (fiche sans objectif), tests courts sur 10 (module Évaluations),
+  documents par séquence Mnn dans l'onglet « Rendu PDF » de l'assemblage
+  (fiche de cours, exercices de séance 2/3/4 par A4, test court, plan de
+  séquence ; `services/mises_en_route_6e.py`), validation MR6, hors du
+  principal (MR7) ; import des lots `Mnn` par `import_lot6e.py`
+  (`outils/import_lot6e_mer.py`, ref6e_v2 « Mises en route » fait foi) ;
+  module `seqenseigne-style6e` v0.9 (`\seqLocItemCM`, `tex seqenseigne.ins`
+  à relancer) ; lot M01 « Calcul mental » dans `reference\lot6e`. Leitner,
+  cartes et cycle 4 inchangés au caractère près. Détails :
+  `doc/redemarrage_v0_53_0.md`.
 - À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
-  les progressions) ; mises en route M01 à M07 ; migration du référentiel de 5e
+  les progressions) ; mises en route M02 à M07 et publication d'une mise en
+  route comme référentiel « mer » (côté classe) ; migration du référentiel de 5e
   (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import
   paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
   numéro suivant.
@@ -373,6 +390,13 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - **Archives du cycle 3** (v0.52.0) : codes de séquence `Xnn` et thèmes
   `XA`… = ancien découpage archivé ; ne pas les réutiliser pour du neuf ;
   exclus du modèle « programme du cycle ».
+- **Mises en route de 6e** (v0.53.0) : séquences `Mnn` de l'atelier du
+  niveau, hors du référentiel principal : tout ce qui énumère les séquences
+  du principal passe par `mises_en_route_6e.hors_principal` (Xnn ou Mnn) ;
+  pas d'objectif « Cours » dans une Mnn (`est_objectif_cours`) ; série `MR`
+  (série « documents », dans aucun livret), numéro = séance ; fiche de cours
+  = fiche sans objectif de la séquence. Leitner et cartes du cycle 4 : ne pas
+  les mêler aux Mnn.
 
 ## Dettes restantes (mineures)
 

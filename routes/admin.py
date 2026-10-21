@@ -229,18 +229,29 @@ def api_admin_images_apply():
 # se termine quand le client ferme la connexion (ou que le run se finit).
 
 def _filtre_depuis_query():
-    """Construit un Filtre depuis les paramètres GET, en validant les valeurs."""
-    from services.compilation_batch import Filtre, TYPES_VALIDES
+    """Construit un Filtre depuis les paramètres GET, en validant les valeurs.
+
+    v0.53.0 (B1) — Anomalie du 21 octobre : « niveau invalide : 'N09' ».
+    Les niveaux acceptés sont ceux de `compilation_batch.niveaux_valides`
+    (N09 à N12 et ceux de param_niveaux), et les séquences `Snn`, `Mnn`
+    (mises en route) et `Xnn` (archives du cycle 3)."""
+    from services.compilation_batch import (
+        Filtre, TYPES_VALIDES, niveaux_valides, sequence_valide)
     type_ = (request.args.get('type') or '').strip().lower()
     niveau = (request.args.get('niveau') or '').strip().upper()
     sequence = (request.args.get('sequence') or '').strip().upper()
     if type_ and type_ not in TYPES_VALIDES:
         return None, f"type invalide : {type_!r}"
-    if niveau and niveau not in ('N10', 'N11', 'N12'):
-        return None, f"niveau invalide : {niveau!r}"
-    if sequence and not (
-        len(sequence) == 3 and sequence[0] == 'S' and sequence[1:].isdigit()
-    ):
+    if niveau:
+        js, _, _ = _stores()
+        try:
+            with js._conn() as conn:
+                connus = niveaux_valides(conn)
+        except Exception:
+            connus = niveaux_valides(None)
+        if niveau not in connus:
+            return None, f"niveau invalide : {niveau!r}"
+    if sequence and not sequence_valide(sequence):
         return None, f"séquence invalide : {sequence!r}"
     return Filtre(type=type_, niveau=niveau, sequence=sequence), None
 

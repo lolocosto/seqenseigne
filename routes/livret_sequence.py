@@ -72,10 +72,13 @@ def _valider_niveau_sequence(niveau: str, sequence: str):
         }), 400
     # Format S01..S14 : on accepte un peu plus large pour ne pas avoir
     # à mettre à jour ici à chaque ajout de séquence en BDD.
-    if not (sequence.startswith('S') and sequence[1:].isdigit() and len(sequence) <= 4):
+    # v0.53.0 (MR5) — et M01…M07 : documents d'une séquence de mise en route.
+    from services.mises_en_route_6e import est_sequence_mer
+    if not ((sequence.startswith('S') and sequence[1:].isdigit() and len(sequence) <= 4)
+            or est_sequence_mer(sequence)):
         return jsonify({
             'error': f"sequence invalide : {sequence!r}",
-            'format_attendu': "S<numero> (ex. S01, S14)",
+            'format_attendu': "S<numero> (ex. S01, S14) ou M<numero> (mise en route)",
         }), 400
     return None
 
@@ -125,9 +128,35 @@ def _options_6e_depuis_request() -> dict:
     return opts
 
 
+def _options_mer_depuis_request() -> dict:
+    """v0.53.0 (MR5) — options d'un document de mise en route : `options.mer`
+    du body (document, version, par_page, exemplaires, sujet, test), les
+    mêmes clés acceptées en query string (?document=planche&par_page=2)."""
+    payload = request.get_json(silent=True) if request.is_json else None
+    opts = {}
+    if isinstance(payload, dict):
+        o = payload.get('options') or {}
+        if isinstance(o, dict) and isinstance(o.get('mer'), dict):
+            opts.update(o['mer'])
+    for k in ('document', 'version', 'par_page', 'exemplaires', 'sujet', 'test'):
+        if request.args.get(k):
+            opts[k] = request.args.get(k)
+    return opts
+
+
 def _generer_tex(conn, niveau: str, sequence: str, config) -> str:
     """.tex du livret selon le gabarit (R1). Lève ValueError si options
-    ou gabarit invalides."""
+    ou gabarit invalides.
+
+    v0.53.0 (MR5) — Séquence de mise en route (Mnn) : le document demandé
+    (fiche de cours, exercices de séance, test court, plan de séquence),
+    au modèle « Fiches » (services/mises_en_route_6e.py)."""
+    from services.mises_en_route_6e import est_sequence_mer, generer_document_mer
+    if est_sequence_mer(sequence):
+        return generer_document_mer(
+            conn, niveau, sequence, options=_options_mer_depuis_request(),
+            tikz_libraries=config.tikz_libraries(),
+            tblr_libraries=config.tblr_libraries())
     from services.gabarits_documents import GabaritErreur
     try:
         gabarit = _gabarit_demande(conn, niveau)

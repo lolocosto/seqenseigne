@@ -112,7 +112,7 @@ class AtelierExercice extends AtelierEditeur {
     // section chacune, affichée seulement si elle contient des atomes (rien
     // ne change pour le cycle 4).
     const buckets = { F: [], A: [], E: [], AE: [], EV: [], TP: [], AC: [], AT: [],
-                      Autres: [] };
+                      MR: [], Autres: [] };
     for (const ex of items) {
       const code = ex.serie_code
                  || AtelierExercice.SERIE_EN_CODE[ex.serie]
@@ -754,7 +754,8 @@ AtelierExercice.prefixeSerie = function (code) {
   // enregistrée avant v0.52.3 (atomes._SERIE_VERS_CODE) ; elle reste rangée
   // en Approche (et non en Exploration) en attendant la réparation des
   // données (outils/reparer_series_approche.py).
-  const m = code.match(/^(AE|EA|EV|TP|AC|AT|[FAER])/);
+  // v0.53.0 — MR (exercice de séance d'une mise en route).
+  const m = code.match(/^(AE|EA|EV|TP|AC|AT|MR|[FAER])/);
   if (!m) return '';
   return m[1] === 'EA' ? 'AE' : m[1];
 };
@@ -769,6 +770,7 @@ AtelierExercice.SERIE_BUCKETS = {
   TP:     { label: 'Travaux personnels (TP)',       defautReplie: true },
   AC:     { label: 'Activités complémentaires (AC)', defautReplie: true },
   AT:     { label: "Séances d'atelier (AT)",        defautReplie: true },
+  MR:     { label: 'Exercices de séance (MR)',      defautReplie: true },   // v0.53.0
   Autres: { label: 'Autres',        defautReplie: true  },
 };
 
@@ -778,6 +780,7 @@ AtelierExercice.SERIE_DOCUMENT = {
   TP: 'travail personnel',
   AC: 'activité complémentaire',
   AT: "séance d'atelier",
+  MR: 'mise en route',   // v0.53.0 (MR2)
 };
 AtelierExercice.SERIES_DOCUMENTS = Object.keys(AtelierExercice.SERIE_DOCUMENT);
 
@@ -862,6 +865,7 @@ AtelierExercice.SERIE_EN_CODE = {
   'travail personnel':       'TP',
   'activité complémentaire': 'AC',
   "séance d'atelier":        'AT',
+  'mise en route':           'MR',   // v0.53.0
 };
 
 // ── Instance singleton et exposition globale ──────────────────────────────

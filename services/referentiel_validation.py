@@ -94,7 +94,10 @@ def _compter_atomes_non_valides(conn: sqlite3.Connection,
             continue
         try:
             cols = {r[1] for r in conn.execute(f"PRAGMA table_info({t})")}
+            # v0.53.0 (MR7) — ni les mises en route Mnn (référentiel de mise
+            # en route à part).
             hors_archives = (" AND COALESCE(sequence, '') NOT LIKE 'X%'"
+                             " AND COALESCE(sequence, '') NOT GLOB 'M[0-9][0-9]'"
                              if "sequence" in cols else "")
             row = conn.execute(
                 f"SELECT COUNT(*) FROM {t} "

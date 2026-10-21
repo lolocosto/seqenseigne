@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/10/20 v0.8 seqenseigne : style des documents de 6e]
+    [2026/10/21 v0.9 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,8 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.9}{2026/10/21}{Mises en route : \cs{seqLocItemCM}, item de calcul
+%   mental sans « = \dots » final (calcul à trou, arrondi), lot M01}
 % \changes{v0.8}{2026/10/20}{Astuce dans un énoncé : \cs{seqAstuceSix} (ampoule,
 %   « Astuce » en gras, texte en petits caractères, sans cadre ; élève et corrigé)}
 % \changes{v0.7}{2026/10/20}{Marqueurs de l'exercice : \cs{seqMaterielSix},
@@ -225,6 +227,12 @@
 % \DescribeMacro{\seqItemCM}
 % \cs{seqItemCM}\marg{calcul}\oarg{résultat} donne un item. Le résultat ne s'affiche que
 % dans la version corrigée.
+%
+% \DescribeMacro{\seqLocItemCM}
+% \cs{seqLocItemCM}\marg{contenu} (v0.9, lot M01) donne un item sans « = \dots » final,
+% pour les calculs à trou ($68 + \dots = 100$, $\dots \times 7 = 56$) et les arrondis
+% ($3{,}581 \approx \dots$) : même numérotation, mêmes colonnes et même ligne de recherche
+% que \cs{seqItemCM} ; la réponse s'écrit dans le contenu (\cs{seqACompleter}).
 %
 % \DescribeMacro{\seqScore}
 % \cs{seqScore}\marg{n} affiche le bloc d'autoévaluation « SCORE : \dots\ / $n$ ».
@@ -657,6 +665,18 @@
   \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em}
     \theseqItemCM.\ \ $#1 =$ {\color{seqSixRouge}%
       \IfValueTF{#2}{\seqACompleter[1.4cm]{$#2$}}{\seqTrous[1.4cm]}}\par
+    {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
+  \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
+    \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\seqLocItemCM}
+% \changes{v0.9}{2026/10/21}{\cs{seqLocItemCM} : item sans « = \dots » final}
+%    \begin{macrocode}
+\NewDocumentCommand{\seqLocItemCM}{m}{%
+  \stepcounter{seqItemCM}\stepcounter{seq@cm@col}%
+  \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em\relax}
+    \theseqItemCM.\ \ #1\par
     {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
   \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
     \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}

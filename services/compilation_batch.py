@@ -37,6 +37,7 @@ réinitialise le compteur.
 
 from __future__ import annotations
 import json
+import re
 import sqlite3
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -55,6 +56,33 @@ from services.cartes_automatisme import lister_cartes
 # ── Constantes ────────────────────────────────────────────────────────────────
 
 TYPES_VALIDES = ('notion', 'methode', 'exercice', 'fiche', 'carte')
+
+# v0.53.0 (B1) — Niveaux et séquences acceptés par le filtre. Avant :
+# ('N10', 'N11', 'N12') et `S` + deux chiffres, d'où l'erreur « niveau
+# invalide : 'N09' » du rendu par lot en 6e (21 octobre 2026). Le niveau
+# n'est jamais un critère de rendu : chaque atome suit le modèle de son
+# niveau (règle R1b, `latex_rendu_atome.generer_tex_par_type`).
+NIVEAUX_DEFAUT = ('N09', 'N10', 'N11', 'N12')
+_RE_SEQUENCE = re.compile(r'[SMX]\d{2}')
+
+
+def niveaux_valides(conn) -> tuple:
+    """N09 à N12, plus les niveaux de `param_niveaux` (si la table existe)."""
+    connus = list(NIVEAUX_DEFAUT)
+    if conn is not None:
+        try:
+            for (code,) in conn.execute("SELECT code FROM param_niveaux ORDER BY ordre"):
+                if code and code not in connus:
+                    connus.append(code)
+        except sqlite3.Error:
+            pass
+    return tuple(connus)
+
+
+def sequence_valide(code: str) -> bool:
+    """`Snn` (séquences), `Mnn` (mises en route, v0.53.0), `Xnn` (archives
+    du cycle 3, v0.52.0)."""
+    return bool(_RE_SEQUENCE.fullmatch(code or ''))
 
 # Ordre de traitement à l'intérieur d'une (niveau, séquence)
 # v0.18.0 — fiche et carte ajoutées (même mécanisme : generer_tex_par_type +

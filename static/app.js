@@ -5076,6 +5076,11 @@ async function compilBatchInit() {
       const code = 'S' + String(i).padStart(2, '0');
       opts.push(`<option value="${code}">${code}</option>`);
     }
+    // v0.53.0 (B1) — mises en route de 6e (M01 à M07), au modèle « Fiches ».
+    for (let i = 1; i <= 7; i++) {
+      const code = 'M' + String(i).padStart(2, '0');
+      opts.push(`<option value="${code}">${code} (mise en route)</option>`);
+    }
     sel.insertAdjacentHTML('beforeend', opts.join(''));
   }
   // v0.18.4 — Les paramètres de compilation vivent dans l'onglet Préférences

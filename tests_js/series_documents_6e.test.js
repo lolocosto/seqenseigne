@@ -76,7 +76,9 @@ describe('I1 / I2 : séries documents proposées au modèle « Fiches » du nive
   });
   it('les boutons sont masqués par défaut dans le formulaire et la modale', () => {
     const boutons = HTML.match(/data-serie-document(-creation)?\s+style="display:none"/g) || [];
-    expect(boutons.length).toBe(8);
+    // v0.53.0 (MR2) : 4 séries (EV, TP, AC, AT) + MR (mise en route), dans
+    // le formulaire et dans la modale : 10 boutons, tous masqués par défaut.
+    expect(boutons.length).toBe(10);
   });
 });
 

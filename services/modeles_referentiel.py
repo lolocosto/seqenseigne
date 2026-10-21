@@ -180,6 +180,7 @@ def _cycle(conn, data_dir: Path | None, niveau: str) -> dict | None:
     # cycle 3 remplacé par l'import des séquences de 6e) ne sont pas proposées.
     sequences_cycle = [dict(r) for r in conn.execute(
         "SELECT * FROM sequences_du_cycle WHERE cycle_code=? AND code NOT LIKE 'X%' "
+        "AND code NOT GLOB 'M[0-9][0-9]' "                     # v0.53.0 (MR7)
         "ORDER BY numero", (cycle,)).fetchall()]
     noms_csv = {s["code"]: s["nom"] for s in _cycle_csv(data_dir, cycle)[1]}
     if not sequences_cycle:

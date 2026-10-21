@@ -15,13 +15,14 @@ autres modules :
     tous définis chez lui, aucun nom commun avec les autres modules), donc
     le charger entier est sûr et ne change rien au rendu du cycle 4.
 
-La liste ci-dessous est celle de seqenseigne-style6e v0.8 (v0.52.4 :
+La liste ci-dessous est celle de seqenseigne-style6e v0.9 (v0.52.4 :
 \\seqNiveauCourt, \\seqNiveauExposant ; v0.52.5 : macros du lot S05
 \\seqLocCadreTrace, \\seqLocAngle, \\seqLocRapporteur ; du lot S04 \\seqLocBloc,
 \\seqLocAccolade, \\seqLocBalance, \\seqLocSac, \\seqLocMasse, \\seqLocObjet ; page de garde par
 partie : \\seqPartieCouvertureSix ; v0.7, v0.52.7 : marqueurs de l'exercice
 \\seqMaterielSix, \\seqOrdinateurSix, \\seqCalculatriceSix et leurs pictogrammes ; v0.8,
-v0.52.8 : astuce \\seqAstuceSix et son pictogramme \\seqPictoAstuceSix) ; un test la
+v0.52.8 : astuce \\seqAstuceSix et son pictogramme \\seqPictoAstuceSix ; v0.9, v0.53.0 :
+item de calcul mental \\seqLocItemCM du lot M01) ; un test la
 compare au .dtx du dossier `paquet/` quand il est présent. Le dossier du
 paquet (`reference\\paquet` par défaut) est ajouté au TEXINPUTS par
 services/compilateur_pdf.py pour que pdflatex trouve le .sty.
@@ -50,6 +51,7 @@ MACROS = (
     "seqMaterielSix", "seqOrdinateurSix", "seqCalculatriceSix",            # v0.7 (v0.52.7)
     "seqPictoOrdinateurSix", "seqPictoCalculatriceSix",
     "seqAstuceSix", "seqPictoAstuceSix",                                   # v0.8 (v0.52.8)
+    "seqLocItemCM",                                                        # v0.9 (v0.53.0)
     "seqReponse", "seqScore", "seqSectionFicheSix", "seqTitreCM",
     "seqTitreComplementSix", "seqTitreEvalSix", "seqTitreFicheSix",
     "seqTitreTravailSix", "seqTrous", "seqVersionACompleter",

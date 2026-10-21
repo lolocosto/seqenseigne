@@ -21,6 +21,18 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.9 — 2026-10-21
+
+### Ajouté
+
+- `\seqLocItemCM{contenu}` : item de calcul mental sans « = … » final (calcul à trou
+  `68 + … = 100`, `… × 7 = 56`, arrondi `3,581 ≈ …`), même numérotation, mêmes colonnes et
+  même ligne de recherche que `\seqItemCM` ; macro locale du lot M01 « Calcul mental »
+  versée dans le module (les `macros_locales` d'un lot ne sont pas importées par l'appli).
+- `.sty` régénéré par `tex seqenseigne.ins` (seqenseigne v0.53.0).
+
+---
+
 ## seqenseigne-style6e v0.8 — 2026-10-20
 
 ### Ajouté

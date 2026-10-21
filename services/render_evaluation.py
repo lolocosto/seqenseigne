@@ -711,8 +711,13 @@ def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict,
     corrigee = opts["version"] == "corrigee"
     # v0.52.9 (D2) — en deux parties, les mentions de calculatrice sont
     # celles des bandeaux de partie : le sous-titre ne porte plus la mention C1.
+    # v0.53.0 (MR5) — test court d'une mise en route : « Mise en route n »
+    # (le numéro de la séquence du cycle, 200 + n, n'a pas de sens affiché).
+    from services.mises_en_route_6e import est_sequence_mer, libelle_mer
+    sequence_affichee = (libelle_mer(st["sequence"]) if est_sequence_mer(st["sequence"])
+                         else f"Séquence {numero}" if numero else "")
     sous_titre = " --- ".join(x for x in (
-        f"Séquence {numero}" if numero else "", f"Sujet {opts['sujet']}",
+        sequence_affichee, f"Sujet {opts['sujet']}",
         _MENTION_CALCULATRICE[opts["calculatrice"]] if decoupage is None else "") if x)
     colonnes = [f"{o['etiquette']}/{{{_points(o['points'])}}}" for o in st["objectifs"]]
     if st["bonus"]:

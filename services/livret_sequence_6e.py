@@ -233,10 +233,12 @@ def _nom_sequence(conn, niveau: str, sequence_code: str) -> tuple[str, int | Non
 
 
 def sequences_du_niveau(conn, niveau: str) -> list[str]:
-    """Séquences du niveau (L7 : sans les archives Xnn)."""
+    """Séquences du niveau (L7 : sans les archives Xnn ; v0.53.0, MR7 : sans
+    les mises en route Mnn, qui ne font pas partie du principal)."""
+    from services.mises_en_route_6e import hors_principal
     return [r[0] for r in conn.execute(
         "SELECT sequence_code FROM sequences_par_niveau WHERE niveau = ? "
-        "ORDER BY sequence_code", (niveau,)).fetchall() if not r[0].startswith("X")]
+        "ORDER BY sequence_code", (niveau,)).fetchall() if not hors_principal(r[0])]
 
 
 # ── Rendu LaTeX ──────────────────────────────────────────────────────────────

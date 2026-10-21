@@ -623,7 +623,10 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
                 # `est_cours=True` que le frontend utilise pour ne pas
                 # afficher les lignes vides (Méthode (manquante), Fiche
                 # (manquante), Série F/A/E (aucun)).
-                est_cours = _est_objectif_cours(o["code"], p["numero"])
+                # v0.53.0 (MR1b) — pas d'objectif Cours dans une mise en route.
+                from services.mises_en_route_6e import est_sequence_mer
+                est_cours = (_est_objectif_cours(o["code"], p["numero"])
+                             and not est_sequence_mer(seq_code))
                 if est_cours:
                     objectifs.append({
                         "id":        obj_id,

@@ -192,6 +192,7 @@
       const c = document.getElementById('asm-tab-rendu');
       if (!c) return;
       if (c.dataset.initialise === '1') {
+        this._majBlocMer();
         return;
       }
       c.innerHTML = `
@@ -210,6 +211,31 @@
             LaTeX généré
           </button>
         </div>
+        <div class="livret-seq-actions" id="livret-seq-mer" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
+          <label>Document
+            <select id="livret-seq-mer-document">
+              <option value="fiche_cours">Fiche de cours</option>
+              <option value="planche" selected>Exercices de séance</option>
+              <option value="test_court">Test court</option>
+              <option value="plan">Plan de séquence (enseignant)</option>
+            </select></label>
+          <label>Version
+            <select id="livret-seq-mer-version">
+              <option value="eleve">élève</option><option value="corrigee">corrigée</option>
+            </select></label>
+          <label title="Exercices de séance : fiches par A4, à découper au massicot">Par A4
+            <select id="livret-seq-mer-par-page">
+              <option value="2">2</option><option value="3">3</option><option value="4" selected>4</option>
+            </select></label>
+          <label title="Fiche de cours et test court : 2 = deux exemplaires A5 par A4">Exemplaires
+            <select id="livret-seq-mer-exemplaires">
+              <option value="1">1 par A4</option><option value="2">2 par A4 (A5)</option>
+            </select></label>
+          <label>Test n°
+            <input id="livret-seq-mer-test" type="number" min="1" value="1" style="width:4em"></label>
+          <label>Sujet
+            <select id="livret-seq-mer-sujet"><option value="A">A</option><option value="B">B</option></select></label>
+        </div>
         <div class="livret-seq-rendu" id="livret-seq-rendu">
           <div class="livret-seq-empty" id="livret-seq-empty">
             Cliquez sur <strong>Compiler le livret</strong> pour générer le PDF.
@@ -227,9 +253,11 @@
           <div class="livret-seq-pdf-wrapper" id="livret-seq-pdf-wrapper" style="display:none">
             <iframe class="livret-seq-pdf-iframe" id="livret-seq-pdf-iframe"></iframe>
           </div>
+          <!-- v0.53.0 (MR5) — documents d'une mise en route (Mnn) : bloc ci-dessus. -->
         </div>
       `;
       c.dataset.initialise = '1';
+      this._majBlocMer();                                    // v0.53.0
     }
 
     // Réinitialise l'onglet Rendu PDF (vide son contenu, libère le blob).
@@ -573,6 +601,16 @@
 
     // ── Rendu d'une partie (carte) ───────────────────────────────────────────
 
+    // v0.53.0 (MR1b) — Code de l'objectif « Connaître le cours » de la
+    // partie n : (n-1)1, sauf dans une séquence de mise en route (Mnn), qui
+    // n'a pas d'objectif Cours (sa fiche de cours est rattachée à la
+    // séquence) : M01-01 est un objectif comme les autres.
+    _codeConnaitre(numero) {
+      const sn = (typeof this._sn === 'function') ? this._sn() : null;
+      if (sn && /^M\d\d$/.test(sn.sequence_code || '')) return '';
+      return `${numero - 1}1`;
+    }
+
     _rendrePartie(p) {
       const ra = p.exos_revision_approche || {R: [], EA: []};
       const objs = (p.objectifs || []);
@@ -582,7 +620,7 @@
       // après ajout d'une précédence sur N09 → N10.
       const precedences = (this.data && this.data.precedences) || [];
       const revisionDisponible = precedences.length > 0;
-      const codeConnaitre = `${p.numero - 1}1`;
+      const codeConnaitre = this._codeConnaitre(p.numero);
       const aDejaConnaitre = objs.some(o => o.code === codeConnaitre);
 
       // v0.12.1 — Total en lecture seule des séances prévues pour cette
@@ -822,7 +860,7 @@
     }
 
     _rendreObjFerme(p, o) {
-      const codeConnaitre = `${p.numero - 1}1`;
+      const codeConnaitre = this._codeConnaitre(p.numero);
       const estConnaitre = (o.code === codeConnaitre);
       const codeClass = estConnaitre ? 'asm-obj-code asm-obj-code--connaitre' : 'asm-obj-code';
       const nbExos = ['R','EA','F','A','E'].reduce((acc, s) => {
@@ -894,7 +932,7 @@
     }
 
     _rendreObjOuvert(p, o) {
-      const codeConnaitre = `${p.numero - 1}1`;
+      const codeConnaitre = this._codeConnaitre(p.numero);
       const estConnaitre = (o.code === codeConnaitre);
       const codeClass = estConnaitre ? 'asm-obj-code asm-obj-code--connaitre' : 'asm-obj-code';
       const nbExos = ['R','EA','F','A','E'].reduce((acc, s) => {
@@ -1239,7 +1277,7 @@
         return;
       }
       const partie = this._trouverPartiePourObj(this.objOuvert);
-      const codeConnaitre = partie ? `${partie.numero - 1}1` : '';
+      const codeConnaitre = partie ? this._codeConnaitre(partie.numero) : '';
       const estConnaitre = obj.code === codeConnaitre;
       if (estConnaitre) {
         this._rendreSidebarObjConnaitreOuvert();
@@ -2804,6 +2842,36 @@
     // Le blob PDF est mémorisé dans this._livretBlobUrl (libéré entre deux
     // compils pour ne pas accumuler de mémoire).
 
+    // v0.53.0 (MR5) — Séquence de mise en route (Mnn) : le bouton compile le
+    // document choisi (fiche de cours, exercices de séance 2/3/4 par A4,
+    // test court, plan de séquence) au lieu du livret.
+    _estMer() {
+      const sn = this._sn();
+      return !!(sn && /^M\d\d$/.test(sn.sequence_code || ''));
+    }
+
+    _majBlocMer() {
+      const bloc = document.getElementById('livret-seq-mer');
+      if (bloc) bloc.style.display = this._estMer() ? 'flex' : 'none';
+      const btn = document.getElementById('livret-seq-btn-pdf');
+      if (btn) btn.textContent = this._estMer() ? '🔧 Compiler le document'
+                                                : '🔧 Compiler le livret';
+      const plan = document.getElementById('livret-seq-btn-plan');
+      if (plan) plan.style.display = this._estMer() ? 'none' : '';
+    }
+
+    _livretSeqOptionsMer() {
+      const v = (id, d) => { const e = document.getElementById(id); return e ? e.value : d; };
+      return {
+        document: v('livret-seq-mer-document', 'planche'),
+        version: v('livret-seq-mer-version', 'eleve'),
+        par_page: v('livret-seq-mer-par-page', '4'),
+        exemplaires: v('livret-seq-mer-exemplaires', '1'),
+        test: v('livret-seq-mer-test', '1'),
+        sujet: v('livret-seq-mer-sujet', 'A'),
+      };
+    }
+
     _livretSeqOptions() {
       // Lit l'état des toggles et construit le dict d'options pour l'API.
       // Cf. services.livret_sequence.normaliser_options pour la structure.
@@ -2811,6 +2879,7 @@
         const e = document.getElementById(id);
         return e ? !!e.checked : true;
       }
+      if (this._estMer()) return { mer: this._livretSeqOptionsMer() };   // v0.53.0
       return {
         cours: {
           inclure: getCheck('livret-seq-cours'),

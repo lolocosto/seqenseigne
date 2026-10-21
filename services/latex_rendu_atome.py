@@ -1499,6 +1499,16 @@ def generer_tex_par_type(conn: sqlite3.Connection,
             tikz_libraries=tikz_libraries, tblr_libraries=tblr_libraries)
         if tex6 is not None:
             return tex6
+    # v0.53.0 (B2) — Fiche de résumé (ou fiche de cours de mise en route) au
+    # modèle « Fiches » : rendu de l'équipe de 6e (seqFicheResumeSix), comme
+    # les fiches de cours du catalogue. Cycle 4 : None, même .tex qu'avant.
+    if type_atome == 'fiche':
+        from services.rendu_atome_6e import generer_tex_fiche_6e_si_gabarit
+        tex6 = generer_tex_fiche_6e_si_gabarit(
+            conn, atome_id, options=options,
+            tikz_libraries=tikz_libraries, tblr_libraries=tblr_libraries)
+        if tex6 is not None:
+            return tex6
 
     # 4 types classiques : délégation à generer_tex_atome.
     return generer_tex_atome(

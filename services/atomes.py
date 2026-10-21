@@ -22,6 +22,9 @@ SERIES_DOCUMENTS = {
     "TP": "travail personnel",
     "AC": "activité complémentaire",
     "AT": "séance d'atelier",
+    # v0.53.0 (MR2) — exercice de séance d'une mise en route de 6e (un par
+    # séance, numéroté dans l'ordre des séances), dans aucun livret.
+    "MR": "mise en route",
 }
 SERIES_HORS_LIVRET = frozenset(SERIES_DOCUMENTS)
 LIBELLES_SERIES_DOCUMENTS = {
@@ -29,6 +32,7 @@ LIBELLES_SERIES_DOCUMENTS = {
     "TP": "Travaux personnels",
     "AC": "Activités complémentaires",
     "AT": "Séances d'atelier",
+    "MR": "Exercices de séance (mise en route)",
 }
 
 SERIES_VALIDES = frozenset(

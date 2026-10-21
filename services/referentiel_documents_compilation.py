@@ -345,7 +345,9 @@ def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,
             SELECT DISTINCT sequence_code AS seq FROM sequences_par_niveau
              WHERE niveau = ? ORDER BY sequence_code
         """, (niveau,)).fetchall()
-    sequences = [x['seq'] for x in rows if x['seq'] and not x['seq'].startswith('X')]
+    # v0.53.0 (MR7) — ni archives Xnn ni mises en route Mnn (hors principal).
+    from services.mises_en_route_6e import hors_principal
+    sequences = [x['seq'] for x in rows if x['seq'] and not hors_principal(x['seq'])]
     libelles = {'livret_sequence_6e': 'Livret 6e', 'fiches_cours_6e': 'Fiches de cours 6e',
                 'plans_travail_6e': 'Plan de travail 6e',
                 'corriges_6e': 'Corrigés 6e'}
@@ -384,7 +386,10 @@ def _cibles_evaluations_6e(conn: sqlite3.Connection, niveau: str) -> list[dict]:
             "ON e.id = ee.exercice_id WHERE ee.evaluation_id = ? AND e.sequence <> ''",
             (r['id'],)))
         seq = seqs.most_common(1)[0][0] if seqs else ''
-        if seq.startswith('X'):
+        # v0.53.0 (MR7) — tests courts des mises en route : documents de la
+        # mise en route, pas des évaluations du principal.
+        from services.mises_en_route_6e import hors_principal
+        if hors_principal(seq):
             continue
         code = f"EV{int(r['numero']):02d}"
         titre = r['titre'] or '(sans titre)'

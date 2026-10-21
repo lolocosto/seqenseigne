@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/20 v0.8 seqenseigne : style des documents de 6e]
+    [2026/10/21 v0.9 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -182,6 +182,13 @@
   \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em}
     \theseqItemCM.\ \ $#1 =$ {\color{seqSixRouge}%
       \IfValueTF{#2}{\seqACompleter[1.4cm]{$#2$}}{\seqTrous[1.4cm]}}\par
+    {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
+  \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
+    \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
+\NewDocumentCommand{\seqLocItemCM}{m}{%
+  \stepcounter{seqItemCM}\stepcounter{seq@cm@col}%
+  \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em\relax}
+    \theseqItemCM.\ \ #1\par
     {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
   \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
     \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}

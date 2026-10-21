@@ -40,7 +40,9 @@ from services.gabarits_documents import SUJETS_6E, VERSIONS_6E
 
 SERIES_LIVRET = ("F", "A", "E", "AE")
 SERIES_DOCUMENTS = ("TP", "AC", "AT")
-SERIES_6E = SERIES_LIVRET + SERIES_DOCUMENTS + ("EV",)
+# v0.53.0 (MR2) — exercice de séance d'une mise en route : une fiche à la
+# taille réelle (quart de A4, `seqPlancheFiches{4}`).
+SERIES_6E = SERIES_LIVRET + SERIES_DOCUMENTS + ("EV", "MR")
 
 
 class RenduAtome6eErreur(ValueError):
@@ -165,6 +167,23 @@ def _corps_evaluation(conn, ex: dict, opts: dict) -> tuple[list[str], str]:
     return L, nom
 
 
+def _corps_mise_en_route(conn, ex: dict, opts: dict) -> list[str]:
+    """v0.53.0 (MR2) — l'exercice de séance seul, sur une planche à 4 par A4
+    (taille réelle de la fiche découpée) ; sa séquence de mise en route
+    donne la ligne de référence (séance, objectif)."""
+    from services import mises_en_route_6e as mer
+    try:
+        s = mer.lire_sequence_mer(conn, ex["niveau"], ex["sequence"])
+        e = next((x for x in s["exercices"] if x["id"] == ex["id"]), None)
+    except mer.MiseEnRouteErreur:
+        s, e = None, None
+    if s is None:
+        s = {"code": ex["sequence"], "nom": ex["sequence"], "exercices": []}
+    if e is None:
+        e = dict(_exercice_livret(ex), seance=ex.get("num"), objectif="")
+    return mer.corps_planche(s, 4, opts["version"], [e])
+
+
 def generer_tex_atome_6e(conn: sqlite3.Connection, exercice_id: str,
                          options: dict | None = None, tikz_libraries=None,
                          tblr_libraries=None) -> str:
@@ -186,6 +205,9 @@ def generer_tex_atome_6e(conn: sqlite3.Connection, exercice_id: str,
     if code == "EV":
         corps, _ = _corps_evaluation(conn, ex, opts)
         titre = f"Exercice d'évaluation 6e — {ex['sequence']} {etiquette} — sujet {opts['sujet']}"
+    elif code == "MR":
+        corps = _corps_mise_en_route(conn, ex, opts)
+        titre = f"Exercice de séance 6e — {ex['sequence']} {etiquette}"
     elif code in SERIES_LIVRET:
         corps = _corps_livret(conn, ex)
         titre = f"Exercice 6e — {ex['sequence']} {etiquette}"
@@ -205,3 +227,41 @@ def generer_tex_atome_6e_si_gabarit(conn: sqlite3.Connection, exercice_id: str,
     if not est_au_gabarit_6e(conn, ex):
         return None
     return generer_tex_atome_6e(conn, exercice_id, options, tikz_libraries, tblr_libraries)
+
+
+# ── v0.53.0 (B2) — Fiche de résumé au modèle « Fiches » ─────────────────────
+
+def generer_tex_fiche_6e_si_gabarit(conn: sqlite3.Connection, fiche_id: str,
+                                    options: dict | None = None, tikz_libraries=None,
+                                    tblr_libraries=None) -> str | None:
+    r"""Rendu d'une fiche de résumé (ou d'une fiche de cours de mise en route)
+    au modèle « Fiches » : `seqFicheResumeSix`, comme les fiches de cours du
+    catalogue. Version complète par défaut (`\seqVersionComplete`) ;
+    `version=eleve` : à compléter. None (rendu du cycle 4, inchangé) si le
+    niveau n'est pas au modèle « Fiches », pour une archive `Xnn` ou une
+    fiche sans niveau."""
+    from services.fiches_resume import FicheIntrouvable, lire_fiche
+    from services.gabarits_documents import gabarit_atelier_du_niveau
+    try:
+        fiche = lire_fiche(conn, fiche_id)
+    except FicheIntrouvable:
+        return None
+    niveau, sequence = fiche.get("niveau") or "", fiche.get("sequence") or ""
+    if not niveau or sequence.startswith("X"):
+        return None
+    if gabarit_atelier_du_niveau(conn, niveau) != "sixieme":
+        return None
+    version = (options or {}).get("version") or "corrigee"
+    if version not in VERSIONS_6E:
+        raise RenduAtome6eErreur(f"version invalide : {version!r}")
+    from services import livret_sequence_6e as l6
+    from services.mises_en_route_6e import est_sequence_mer, libelle_mer
+    nom, _ = l6._nom_sequence(conn, niveau, sequence)
+    if est_sequence_mer(sequence):
+        nom = f"{libelle_mer(sequence)} --- {nom or sequence}"
+    corps = [l6.entete({"nom": nom or sequence or fiche.get("titre") or "Fiche"}, False)]
+    if version == "corrigee":
+        corps.append(r"\seqVersionComplete")
+    l6._emettre_fiche(corps, fiche)
+    titre = f"Fiche de résumé 6e — {sequence} — {fiche.get('titre') or ''}"
+    return l6.document(conn, niveau, titre, corps, False, tikz_libraries, tblr_libraries)
