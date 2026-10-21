@@ -68,6 +68,15 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      signalé dans le rapport (O1) ; jamais sur une séquence validée (lot non
      importé). Macros `\seq…Six` du lot absentes du module signalées comme
      les `\seqLoc…` (I2) ; astuces `\seqAstuceSix` comptées par séquence.
+  8. **v0.52.9** — Sujet en deux parties (D1 à D5) : clé facultative
+     `calculatrice_exercices` de l'entrée d'évaluation,
+     `{"<position 1-based>": "interdite" | "autorisee"}` ; les positions non
+     listées héritent de `calculatrice` ; même table pour A et B (sujet A,
+     sinon B ; tables différentes signalées). Le marquage est écrit sur chaque
+     exercice EV (idempotent, jamais sur validé). Décision I3 : une évaluation
+     que D1 coupe en deux reçoit `evaluations.calculatrice = ''` (les deux
+     mentions sont imposées par D2). L'essai à blanc montre la répartition et
+     la durée de la partie 1 (D4).
 
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
@@ -1106,6 +1115,78 @@ def _poser_calculatrice(conn, ev_id: str, valeur: str) -> int:
     return 1
 
 
+def calculatrice_exercices_lot(paire: dict, n: int, quoi: str,
+                               rapport: "Rapport | None" = None) -> dict:
+    """v0.52.9 — Clé facultative `calculatrice_exercices` de l'entrée
+    d'évaluation : {position 1-based: 'interdite' | 'autorisee'} (sujet A,
+    sinon B ; même table pour les deux sujets, paires par position). Entrée
+    invalide (position hors 1..n, valeur inconnue) : signalée et ignorée
+    (la position hérite alors de `calculatrice`)."""
+    tables = {s: e.get("calculatrice_exercices") for s, e in paire.items()
+              if e.get("calculatrice_exercices") not in (None, {}, "")}
+    if not tables:
+        return {}
+    brute = tables.get("A", tables.get("B"))
+    if rapport is not None and len(tables) == 2 and tables["A"] != tables["B"]:
+        rapport.anomalie(f"{quoi} : calculatrice_exercices différente aux sujets A et B "
+                         "(celle du sujet A est retenue)")
+    if not isinstance(brute, dict):
+        if rapport is not None:
+            rapport.anomalie(f"{quoi} : calculatrice_exercices {brute!r} n'est pas une table "
+                             "{position: valeur}, ignorée")
+        return {}
+    out = {}
+    for k, v in brute.items():
+        try:
+            pos = int(str(k).strip())
+        except ValueError:
+            pos = 0
+        if not 1 <= pos <= n:
+            if rapport is not None:
+                rapport.anomalie(f"{quoi} : calculatrice_exercices, position {k!r} hors du "
+                                 f"sujet (1 à {n}), ignorée")
+            continue
+        if v not in ("interdite", "autorisee"):
+            if rapport is not None:
+                rapport.anomalie(f"{quoi} : calculatrice_exercices[{k}] = {v!r} inconnue "
+                                 "(attendu interdite, autorisee), ignorée")
+            continue
+        out[pos] = v
+    return out
+
+
+def _resume_deux_parties(conn, ev_id: str | None, exos: list[dict],
+                         marques: list[dict]) -> str:
+    """v0.52.9 — « en deux parties : partie 1 sans calculatrice ex. 1 et 2
+    (8 pts, 20 min), partie 2 ex. 3 à 5 (12 pts) » pour le rapport."""
+    parties: list[list[int]] = [[], []]
+    points = [0.0, 0.0]
+    bonus = [False, False]
+    for k, (x, m) in enumerate(zip(exos, marques), start=1):
+        i = mq.partie_de(m) - 1
+        parties[i].append(k)
+        if x["bonus"]:
+            bonus[i] = True
+        else:
+            points[i] += x["points"]
+    total = points[0] + points[1]
+    duree = mq.duree_partie1_auto(points[0], total)
+    reglee = None
+    if ev_id is not None and mq.colonne_duree_presente(conn):
+        r = conn.execute("SELECT duree_partie1 FROM evaluations WHERE id = ?",
+                         (ev_id,)).fetchone()
+        reglee = r[0] if r else None
+    def ex(nums):
+        return "ex. " + (" et ".join([", ".join(map(str, nums[:-1])), str(nums[-1])])
+                         if len(nums) > 1 else str(nums[0]))
+    def pts(i):
+        return f"{points[i]:g} pts" + (" + bonus" if bonus[i] else "")
+    d = (f"{reglee} min réglée(s) dans l'atelier, calcul {duree} min" if reglee is not None
+         else f"{duree} min")
+    return (f"en deux parties : partie 1 sans calculatrice {ex(parties[0])} ({pts(0)}, {d}), "
+            f"partie 2 calculatrice autorisée {ex(parties[1])} ({pts(1)})")
+
+
 def _poser_exercices_evaluation(conn, ev_id: str, voulus: list[tuple]) -> int:
     """Exercices importés (id, points) en tête, dans l'ordre du lot ; ceux
     que l'auteur a ajoutés passent après. Retourne le nombre de changements."""
@@ -1265,6 +1346,14 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
         # v0.52.8 (C1) — l'option « Calculatrice » du sujet suit le marquage :
         # écrite plus bas dans `evaluations.calculatrice` (plus d'information
         # « régler l'option du document »).
+        # v0.52.9 — marquage par exercice (`calculatrice_exercices`, positions
+        # non listées : `calculatrice` de l'entrée).
+        par_position = calculatrice_exercices_lot(paire, len(exos),
+                                                  f"{seq} évaluation « {titre} »", rapport)
+        marques_exos = [{**marques_ev, "calculatrice": par_position.get(i + 1,
+                                                                       marques_ev["calculatrice"])}
+                        for i in range(len(exos))]
+        coupe = mq.deux_parties(marques_exos)                        # D1
         for i, x in enumerate(exos):
             num += 1
             vals = _vals_ev(x)
@@ -1272,8 +1361,8 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             if motif and n != num:
                 rapport.infos.append(f"{NIVEAU}/{seq} évaluation « {titre} », exercice {i + 1} "
                                      f"« {x['titre']} » : {motif} → EV{n:02d}")
-            eid, etat = _exercice(conn, seq, "EV", n, vals, marques_ev)
-            _compter_marqueurs(rapport, seq, marques_ev)
+            eid, etat = _exercice(conn, seq, "EV", n, vals, marques_exos[i])
+            _compter_marqueurs(rapport, seq, marques_exos[i])
             pris.add(eid)
             nums_pris.add(n)
             nums.append(n)
@@ -1299,7 +1388,10 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
         n_obj = 0
         if etat_ev != "validée, non modifiée":
             change = _poser_exercices_evaluation(conn, ev_id, voulus)
-            change += _poser_calculatrice(conn, ev_id, marques_ev["calculatrice"])
+            # v0.52.9 (I3) — sujet coupé en deux (D1) : réglage '' (les deux
+            # mentions sont imposées par D2, aucun avertissement C3).
+            change += _poser_calculatrice(conn, ev_id,
+                                          "" if coupe else marques_ev["calculatrice"])
             for oc in dict.fromkeys(x["objectif"] for x in exos if not x["bonus"]):
                 if conn.execute("SELECT 1 FROM evaluation_objectifs WHERE evaluation_id = ? AND "
                                 "objectif_id = ?", (ev_id, objectifs_ids[oc])).fetchone() is None:
@@ -1317,7 +1409,8 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             f"({plage} : "
             + ", ".join(f"{e} {n}" for e, n in etats.items())
             + f"), total {total:g}" + (f" + bonus {bonus:g}" if bonus else "")
-            + (f" — {mq.LIBELLES_CALCULATRICE[marques_ev['calculatrice']]}"
+            + (f" — {_resume_deux_parties(conn, ev_id, exos, marques_exos)}" if coupe
+               else f" — {mq.LIBELLES_CALCULATRICE[marques_ev['calculatrice']]}"
                if marques_ev["calculatrice"] else ""))
     n = _lier_objectifs(conn, liens)
     if n:
@@ -1446,6 +1539,8 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
                              "exercices (v0.52.7)")
     if mq.migrer_evaluations(conn):                                  # v0.52.8 (C1)
         rapport.infos.append("Base complétée : colonne calculatrice des évaluations (v0.52.8)")
+    if mq.migrer_duree_partie1(conn):                                # v0.52.9 (D4)
+        rapport.infos.append("Base complétée : colonne duree_partie1 des évaluations (v0.52.9)")
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
     appliquer_cycle3(conn, ref, rapport)

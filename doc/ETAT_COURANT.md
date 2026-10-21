@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.52.8** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.52.9** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -119,6 +119,18 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   du 20 octobre), mise à jour des critères signalée par l'import ; lots
   S01–S13 (astuces, bonus). Cycle 4 inchangé au caractère près. Détails :
   `doc/redemarrage_v0_52_8.md`.
+- v0.52.9 livrée (besoin de Laurent du 20 octobre) : évaluation 6e en deux
+  parties, façon DNB, quand des exercices EV interdisent la calculatrice et
+  d'autres l'autorisent (D1) : partie 1 « sans calculatrice » ramassée au
+  bout de N min (55 × points partie 1 / total hors bonus, arrondi aux 5 min,
+  au moins 10 ; réglable, `evaluations.duree_partie1`), partie 2
+  « calculatrice autorisée » sur une nouvelle feuille (page impaire),
+  numérotation continue, barème unique en tête de la partie 1 ; sujets A/B,
+  élève/corrigé ; indication et durée dans le module Évaluations ; clé de
+  lot `calculatrice_exercices` (marquage par exercice) ; lots S01–S13
+  (astuces Scratch avec lien, S03 « Ordre de grandeur et multiplication »
+  coupée). Sujet d'un seul tenant et cycle 4 inchangés au caractère près ;
+  module LaTeX inchangé. Détails : `doc/redemarrage_v0_52_9.md`.
 - À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
   les progressions) ; mises en route M01 à M07 ; migration du référentiel de 5e
   (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import

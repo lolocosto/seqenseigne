@@ -1,0 +1,96 @@
+\documentclass[a4paper,11pt]{article}
+%% ── Paquets externes (noyau pour atome) ───────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{etoolbox}
+\usepackage{xkeyval}
+\usepackage{xifthen}
+\usepackage{environ}
+\usepackage{forloop}
+\usepackage{xcolor}
+\usepackage{ninecolors}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{tabularray}
+\usepackage{multicol}
+\usepackage[inline]{enumitem}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage[theorems,breakable,skins]{tcolorbox}
+\usepackage{pifont}
+
+%% ── Marges (alignées sur les livrets) ───────────────
+\newgeometry{left=35pt,right=35pt,top=65pt,bottom=70pt}
+
+%% ── Paquets externes additionnels (selon l'atome) ─────
+\usepackage{seqenseigne-style6e}
+
+%% ── Définitions du paquet seqenseigne (inlinées) ─────
+%%    Fermeture transitive des macros effectivement utilisées
+%%    par l'atome — au lieu de \usepackage{seqenseigne}
+%%    qui chargerait ~110 paquets.
+\makeatletter
+\makeatother
+
+%% ── Macros transverses ───────────────────────────────
+\providecommand{\acompleter}[1]{\;\underline{\phantom{#1}}\;}
+
+\begin{document}
+
+\seqInitCorrigesEval
+\seqTitreEval[
+    titre={Évaluation --- Nombres},
+    etab={\ldots},
+    classe={\dots}
+]
+
+
+%% Barème global
+\begin{seqEvalBareme}
+    Exercice I & 5 points \\
+    Exercice II & 3 points \\
+    Exercice III & 2 points \\
+\end{seqEvalBareme}
+
+
+%% Tableau des objectifs et niveaux de maîtrise
+\begin{seqEvalObjectifs}
+    S01.Obj. 02 & Utiliser la valeur des chiffres
+        & \ding{113} & \ding{113} & \ding{113} & \ding{113} \\
+    S01.Obj. 03 & Écrire un grand nombre
+        & \ding{113} & \ding{113} & \ding{113} & \ding{113} \\
+\end{seqEvalObjectifs}
+
+
+\begin{seqEvalExercice}[titre={Valeur des chiffres}, bareme={5 points}]
+Sujet A1 \seqACompleter{3}.
+\seqEvalCorrigeExo{%
+\emph{Corrigé non rédigé.}
+}
+\end{seqEvalExercice}
+
+
+\begin{seqEvalExercice}[titre={Grands nombres}, bareme={3 points}]
+Sujet A2.
+\seqEvalCorrigeExo{%
+Explication A2.
+}
+\end{seqEvalExercice}
+
+
+\begin{seqEvalExercice}[titre={Bonus : Qui suis-je ?}, bareme={2 points}]
+Bonus A.
+\seqEvalCorrigeExo{%
+\emph{Corrigé non rédigé.}
+}
+\end{seqEvalExercice}
+
+
+\seqEvalAfficheCorriges
+\end{document}

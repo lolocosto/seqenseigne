@@ -513,6 +513,13 @@ def generer_tex_evaluation(
 #     une valeur explicite de l'option (rendu de l'atelier, document du
 #     référentiel) s'impose.
 #   - Une seule géométrie, celle du module de 6e (livret_sequence_6e.document).
+#   - v0.52.9 — Sujet en deux parties, façon DNB (D1 à D5,
+#     doc/redemarrage_v0_52_9.md, `parties_evaluation_6e`) : quand des
+#     exercices EV interdisent la calculatrice et d'autres l'autorisent, la
+#     partie 1 « sans calculatrice » (exercices `interdite`) est ramassée au
+#     bout de N min et la partie 2 « calculatrice autorisée » (les autres)
+#     commence sur une nouvelle feuille. Sinon : .tex de la v0.52.8, au
+#     caractère près.
 
 from services.gabarits_documents import CALCULATRICE_6E, SUJETS_6E  # noqa: E402
 _MENTION_CALCULATRICE = {"interdite": "calculatrice interdite",
@@ -562,7 +569,13 @@ def _sujet_b(remed_enonce: str, titre_a: str) -> tuple[str, str]:
 def structure_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str) -> dict:
     """Lecture : {titre, sequence, objectifs: [{id, etiquette, points}],
     exercices: [{…, objectif (étiquette ou None), points}], bonus, total}."""
-    ev = svc_eval.lire_evaluation(conn, evaluation_id)
+    # v0.52.9 — lecture directe (titre, niveau) : `lire_evaluation` calcule
+    # le découpage en deux parties, qui relit cette structure.
+    r = conn.execute("SELECT titre, niveau FROM evaluations WHERE id = ?",
+                     (evaluation_id,)).fetchone()
+    if r is None:
+        raise svc_eval.EvaluationIntrouvable(evaluation_id)
+    ev = {"titre": r[0], "niveau": r[1]}
     exos = svc_eval.lister_exos_evaluation(conn, evaluation_id)
     objectifs = svc_eval.lister_objectifs_evaluation(conn, evaluation_id)
     etiquette = {o["id"]: f"{o['sequence_code']}-{o['code']}" for o in objectifs}
@@ -592,54 +605,168 @@ def structure_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str) -> dic
             "total": sum(points_obj.values())}
 
 
-def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict) -> list[str]:
+def _liste_nums(nums: list[str]) -> str:
+    """['1'] → '1' ; ['1', '3', '4'] → '1, 3 et 4'."""
+    return " et ".join([", ".join(nums[:-1]), nums[-1]]) if len(nums) > 1 else nums[0]
+
+
+def parties_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
+                          st: dict | None = None) -> dict | None:
+    """v0.52.9 — Découpage du sujet en deux parties (décisions D1 à D5).
+
+    None si D1 ne s'applique pas (sujet d'un seul tenant, v0.52.8). Sinon :
+    `parties` = [[exercices de la partie 1], [partie 2]] (dicts de
+    `structure_evaluation_6e`, dans leur ordre — D2), `numeros`
+    {exercice_id: numéro affiché} (numérotation continue, N1), `points`
+    [partie 1, partie 2] hors bonus, `bonus` [partie 1, partie 2],
+    `duree_auto` (D4), `duree_reglee` (`evaluations.duree_partie1`, None =
+    automatique) et `duree` (celle du sujet)."""
+    from services import marqueurs_exercices as mq
+    marques = {}
+    if mq.colonnes_presentes(conn):
+        marques = {r[0]: {"calculatrice": r[1] or "", "serie": r[2]} for r in conn.execute(
+            "SELECT e.id, e.calculatrice, e.serie_code FROM evaluation_exercices ee "
+            "JOIN exercices e ON e.id = ee.exercice_id WHERE ee.evaluation_id = ?",
+            (evaluation_id,))}
+    if not mq.deux_parties([m for m in marques.values() if m["serie"] == "EV"]):
+        return None
+    if st is None:
+        st = structure_evaluation_6e(conn, evaluation_id)
+    parties: list[list[dict]] = [[], []]
+    for e in st["exercices"]:
+        parties[mq.partie_de(marques.get(e["exercice_id"], {})) - 1].append(e)
+    numeros = {e["exercice_id"]: k for k, e in enumerate(parties[0] + parties[1], start=1)}
+    points = [sum(e["points"] for e in p if e["objectif"]) for p in parties]
+    bonus = [sum(e["points"] for e in p if not e["objectif"]) for p in parties]
+    reglee = None
+    if mq.colonne_duree_presente(conn):
+        r = conn.execute("SELECT duree_partie1 FROM evaluations WHERE id = ?",
+                         (evaluation_id,)).fetchone()
+        reglee = r[0] if r and r[0] not in (None, "") else None
+    auto = mq.duree_partie1_auto(points[0], st["total"])
+    return {"parties": parties, "numeros": numeros, "points": points, "bonus": bonus,
+            "duree_auto": auto, "duree_reglee": reglee,
+            "duree": int(reglee) if reglee is not None else auto}
+
+
+def exercices_affiches_6e(st: dict, decoupage: dict | None) -> list[tuple[int, dict]]:
+    """[(numéro affiché, exercice)] dans l'ordre du sujet : celui de
+    l'évaluation (v0.52.8), ou partie 1 puis partie 2 (D2, numérotation
+    continue N1)."""
+    if decoupage is None:
+        return list(enumerate(st["exercices"], start=1))
+    return list(enumerate(decoupage["parties"][0] + decoupage["parties"][1], start=1))
+
+
+# v0.52.9 (D3, F1) — Nouvelle feuille pour la partie 2 : le sujet est
+# photocopié recto-verso (documents 6e en `article` recto simple : rien ne le
+# sait) ; on saute donc à une page impaire, en laissant au besoin le verso de
+# la dernière page de la partie 1 blanc (mention discrète), et la partie 2
+# repart à la page 1 (en-tête « … --- partie 2 -- page 1 »).
+SAUT_FEUILLE_PARTIE2 = (
+    r"\clearpage\ifodd\value{page}\else\null\thispagestyle{empty}\vfill"
+    r"\begin{center}\small\itshape\color{seqSixGrisTexte}Page laissée blanche : "
+    r"la partie 2 est sur une autre feuille.\end{center}\vfill\clearpage\fi"
+    r"\setcounter{page}{1}")
+
+
+def bandeau_partie_6e(partie: int, duree: int | None = None) -> str:
+    """D3 — « Partie 1 --- sans calculatrice --- à rendre au bout de N min »
+    / « Partie 2 --- calculatrice autorisée », encadré sous le titre (LaTeX
+    de base : aucune macro nouvelle, le module 6e ne change pas)."""
+    texte = (f"Partie 1 --- sans calculatrice --- à rendre au bout de {duree} min"
+             if partie == 1 else "Partie 2 --- calculatrice autorisée")
+    return (r"\begin{center}\fbox{\bfseries " + texte + r"}\end{center}")
+
+
+def _lignes_exercice_6e(conn, e: dict, opts: dict) -> list[str]:
+    """Lignes d'un exercice du sujet (A ou B), comme en v0.52.8."""
+    L: list[str] = []
+    atome = charger_atome(conn, "exercice", e["exercice_id"])
+    if opts["sujet"] == "B":
+        titre, enonce = _sujet_b(getattr(atome, "remed_enonce", "") or "", e["titre"])
+        corrige = getattr(atome, "remed_corrige", "") or ""
+        if not enonce.strip():
+            enonce = r"\emph{Sujet B non rédigé.}"
+    else:
+        titre, enonce, corrige = e["titre"], atome.corps or "", atome.corrige or ""
+    if (atome.variables or "").strip():
+        L.append(atome.variables.rstrip())
+    tag = f"{_points(e['points'])} pts --- {e['objectif'] or 'bonus'}"
+    L.append("")
+    L.append(r"\seqExoEval{" + titre + "}{" + tag + "}")
+    L.append(enonce.strip())
+    if corrige.strip():
+        L.append(r"\seqLocExplication{" + corrige.strip() + "}")
+    return L
+
+
+def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict,
+                        decoupage: dict | None = None) -> list[str]:
+    """Lignes du sujet. `decoupage` (v0.52.9, `parties_evaluation_6e`) :
+    None = sujet d'un seul tenant, exactement comme en v0.52.8."""
     from services.livret_sequence_6e import _nom_sequence, entete
     nom, numero = _nom_sequence(conn, st["niveau"], st["sequence"]) if st["sequence"] \
         else ("", None)
+    corrigee = opts["version"] == "corrigee"
+    # v0.52.9 (D2) — en deux parties, les mentions de calculatrice sont
+    # celles des bandeaux de partie : le sous-titre ne porte plus la mention C1.
     sous_titre = " --- ".join(x for x in (
         f"Séquence {numero}" if numero else "", f"Sujet {opts['sujet']}",
-        _MENTION_CALCULATRICE[opts["calculatrice"]]) if x)
+        _MENTION_CALCULATRICE[opts["calculatrice"]] if decoupage is None else "") if x)
     colonnes = [f"{o['etiquette']}/{{{_points(o['points'])}}}" for o in st["objectifs"]]
     if st["bonus"]:
         colonnes.append(f"Bonus/{{{_points(st['bonus'])}}}")
-    L = [entete({"nom": nom or st["titre"]}, opts["version"] == "corrigee"),
+    nom_doc = nom or st["titre"]
+    L = [entete({"nom": nom_doc if decoupage is None else nom_doc + " --- partie 1"},
+                corrigee),
          r"\setcounter{seqExoEval}{0}",
          r"\seqIdentEleve",
-         r"\seqTitreEvalSix{" + st["titre"] + "}{" + sous_titre + "}",
-         r"\seqBaremeCompetences{" + ",".join(colonnes) + "}{" + _points(st["total"]) + "}"]
+         r"\seqTitreEvalSix{" + st["titre"] + "}{" + sous_titre + "}"]
+    if decoupage is not None:
+        L.append(bandeau_partie_6e(1, decoupage["duree"]))
+    # D5 — un seul tableau de barème, en tête de la partie 1.
+    L.append(r"\seqBaremeCompetences{" + ",".join(colonnes) + "}{" + _points(st["total"]) + "}")
+    affiches = exercices_affiches_6e(st, decoupage)
     if st["bonus"]:
         # Légende (comme les évaluations de l'équipe qui ont un bonus) :
         # exercices de chaque compétence, et la règle du bonus.
         par_obj: dict = {}
-        for k, e in enumerate(st["exercices"], start=1):
+        for k, e in affiches:
             if e["objectif"]:
                 par_obj.setdefault(e["objectif"], []).append(str(k))
         morceaux = []
         for o in st["objectifs"]:
             nums = par_obj.get(o["etiquette"])
             if nums:
-                morceaux.append(f"{o['etiquette']} : ex. "
-                                + (" et ".join([", ".join(nums[:-1]), nums[-1]])
-                                   if len(nums) > 1 else nums[0]))
+                morceaux.append(f"{o['etiquette']} : ex. " + _liste_nums(nums))
         L.append(r"{\scriptsize\color{seqSixGrisTexte}" + " ; ".join(morceaux)
                  + f". Le bonus s'ajoute dans la limite de {_points(st['total'])}.}}")
-    for e in st["exercices"]:
-        atome = charger_atome(conn, "exercice", e["exercice_id"])
-        if opts["sujet"] == "B":
-            titre, enonce = _sujet_b(getattr(atome, "remed_enonce", "") or "", e["titre"])
-            corrige = getattr(atome, "remed_corrige", "") or ""
-            if not enonce.strip():
-                enonce = r"\emph{Sujet B non rédigé.}"
-        else:
-            titre, enonce, corrige = e["titre"], atome.corps or "", atome.corrige or ""
-        if (atome.variables or "").strip():
-            L.append(atome.variables.rstrip())
-        tag = f"{_points(e['points'])} pts --- {e['objectif'] or 'bonus'}"
-        L.append("")
-        L.append(r"\seqExoEval{" + titre + "}{" + tag + "}")
-        L.append(enonce.strip())
-        if corrige.strip():
-            L.append(r"\seqLocExplication{" + corrige.strip() + "}")
+    if decoupage is not None:
+        # D5 — rappel des exercices de chaque partie sous le barème unique
+        # (un objectif évalué dans les deux parties reste une seule colonne).
+        morceaux = []
+        for i, p in enumerate(decoupage["parties"]):
+            nums = [str(decoupage["numeros"][e["exercice_id"]]) for e in p]
+            pts = _points(decoupage["points"][i]) + " pts" \
+                + (" + bonus" if decoupage["bonus"][i] else "")
+            morceaux.append(f"artie {i + 1} : ex. {_liste_nums(nums)} ({pts})")
+        L.append(r"\par{\scriptsize\color{seqSixGrisTexte}P" + " ; p".join(morceaux) + ".}")
+    if decoupage is None:
+        for e in st["exercices"]:
+            L += _lignes_exercice_6e(conn, e, opts)
+        return L
+    for e in decoupage["parties"][0]:
+        L += _lignes_exercice_6e(conn, e, opts)
+    # D3 — partie 2 sur une nouvelle feuille, avec son propre en-tête
+    # d'identification et le rappel de la partie ; numérotation continue (N1).
+    L += ["", SAUT_FEUILLE_PARTIE2,
+          entete({"nom": nom_doc + " --- partie 2"}, corrigee),
+          r"\seqIdentEleve",
+          r"\seqTitreEvalSix{" + st["titre"] + "}{" + sous_titre + "}",
+          bandeau_partie_6e(2)]
+    for e in decoupage["parties"][1]:
+        L += _lignes_exercice_6e(conn, e, opts)
     return L
 
 
@@ -656,5 +783,9 @@ def generer_tex_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
         opts["calculatrice"] = calculatrice_evaluation(conn, evaluation_id)["valeur"]
     st = structure_evaluation_6e(conn, evaluation_id)
     titre = f"Évaluation 6e — {st['titre']} — sujet {opts['sujet']}"
-    return document(conn, st["niveau"], titre, corps_evaluation_6e(conn, st, opts),
+    # v0.52.9 (D1) — le découpage ne dépend que du marquage des exercices :
+    # ni l'option du rendu ni le réglage de l'évaluation ne l'empêchent (ils
+    # ne règlent que la mention d'un sujet d'un seul tenant).
+    decoupage = parties_evaluation_6e(conn, evaluation_id, st)
+    return document(conn, st["niveau"], titre, corps_evaluation_6e(conn, st, opts, decoupage),
                     opts["version"] == "corrigee", tikz_libraries, tblr_libraries)

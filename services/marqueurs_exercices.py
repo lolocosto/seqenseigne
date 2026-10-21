@@ -30,6 +30,11 @@ doc/redemarrage_v0_52_8.md) : colonne `evaluations.calculatrice`
 `calculatrice_selon_exercices`, réglage et avertissement
 `calculatrice_evaluation` ; travaux personnels hors « Matériel à prévoir »
 (décision T1, `hors_materiel`).
+
+v0.52.9 — Sujet en deux parties, façon DNB (décisions D1 à D5,
+doc/redemarrage_v0_52_9.md) : règle de déclenchement `deux_parties` (D1),
+répartition `partie_de` (D2), durée de la partie 1 `duree_partie1_auto` et
+colonne `evaluations.duree_partie1` (D4, NULL = calcul automatique).
 """
 
 from __future__ import annotations
@@ -63,6 +68,22 @@ def migrer(conn: sqlite3.Connection) -> None:
             if nom not in cols:
                 conn.execute(f"ALTER TABLE exercices ADD COLUMN {nom} TEXT NOT NULL DEFAULT ''")
     migrer_evaluations(conn)
+    migrer_duree_partie1(conn)
+
+
+def colonne_duree_presente(conn: sqlite3.Connection) -> bool:
+    return "duree_partie1" in {r[1] for r in conn.execute("PRAGMA table_info(evaluations)")}
+
+
+def migrer_duree_partie1(conn: sqlite3.Connection) -> bool:
+    """v0.52.9 (D4) — Colonne `evaluations.duree_partie1` (minutes ; NULL =
+    calcul automatique). Idempotent ; retourne True si elle vient d'être
+    ajoutée."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(evaluations)")}
+    if not cols or "duree_partie1" in cols:
+        return False
+    conn.execute("ALTER TABLE evaluations ADD COLUMN duree_partie1 INTEGER")
+    return True
 
 
 def colonne_evaluation_presente(conn: sqlite3.Connection) -> bool:
@@ -241,13 +262,74 @@ def calculatrice_evaluation(conn: sqlite3.Connection, evaluation_id: str) -> dic
         (evaluation_id,))] if colonnes_presentes(conn) else []
     selon = calculatrice_selon_exercices(marques)
     marque = any(m["calculatrice"] for m in marques)
+    coupe = deux_parties(marques)                                 # v0.52.9 (D1)
     avert = ""
-    if reglage and marque and reglage != selon:
+    # v0.52.9 (D1) — sujet en deux parties : les deux mentions sont imposées
+    # (D2) et le réglage ne s'applique pas ; rien n'est « contraire ».
+    if reglage and marque and reglage != selon and not coupe:
         avert = (f"Calculatrice réglée « {LIBELLES_CALCULATRICE_EVALUATION[reglage]} » à la "
                  f"main, mais les exercices de l'évaluation la marquent "
                  f"« {LIBELLES_CALCULATRICE_EVALUATION[selon]} » : le sujet suit le réglage.")
     return {"reglage": reglage, "selon_exercices": selon, "exercices_marques": marque,
-            "valeur": reglage or selon, "avertissement": avert}
+            "valeur": reglage or selon, "avertissement": avert, "deux_parties": coupe}
+
+
+# ── Évaluations : sujet en deux parties, façon DNB (v0.52.9) ─────────────────
+#
+# Besoin de Laurent (20 octobre) : « Si certains exercices interdisent
+# explicitement la calculatrice et d'autres non, il faut faire comme pour le
+# DNB : 2 sous-sujets. Le premier sans calculatrice, à ramasser après une
+# durée en fonction du nombre d'exercices à faire, et le second sur une autre
+# feuille qui est donnée en échange de la première. »
+
+DUREE_SEANCE = 55            # minutes (D4)
+DUREE_PARTIE1_MINIMUM = 10   # minutes (D4)
+DUREE_PARTIE1_MAXIMUM = 240  # garde-fou de la saisie (D4)
+
+
+def deux_parties(marques_ev: list) -> bool:
+    """Décision D1 — Le sujet est coupé en deux **seulement** si l'évaluation
+    contient au moins un exercice EV marqué `interdite` **et** au moins un
+    marqué `autorisee` (mêmes exercices que la règle C1). Sinon : sujet d'un
+    seul tenant, comportement v0.52.8 inchangé (mention C1 comprise)."""
+    vals = {lire(m)["calculatrice"] for m in marques_ev}
+    return {"interdite", "autorisee"} <= vals
+
+
+def partie_de(ex) -> int:
+    """Décision D2 — Partie 1 « Sans calculatrice » : les exercices marqués
+    `interdite` ; partie 2 « Calculatrice autorisée » : tous les autres
+    (autorisés et non marqués). Le bonus suit son propre marquage (non marqué
+    → partie 2)."""
+    return 1 if lire(ex)["calculatrice"] == "interdite" else 2
+
+
+def duree_partie1_auto(points_partie1: float, total: float) -> int:
+    """Décision D4 — N = durée de la séance (55 min) × points de la partie 1
+    / total du barème (hors bonus, comme la colonne « Total »), arrondie aux
+    5 min (la moitié vers le haut), au moins 10 min, au plus la séance."""
+    if not total or total <= 0:
+        return DUREE_PARTIE1_MINIMUM
+    n = DUREE_SEANCE * float(points_partie1) / float(total)
+    n = int(n / 5 + 0.5) * 5
+    return max(DUREE_PARTIE1_MINIMUM, min(DUREE_SEANCE, n))
+
+
+def valider_duree_partie1(valeur):
+    """D4 — Saisie de la durée : None / '' = calcul automatique ; sinon un
+    nombre entier de minutes entre 1 et 240. MarqueurInvalide sinon."""
+    if valeur is None or (isinstance(valeur, str) and not valeur.strip()):
+        return None
+    if isinstance(valeur, bool):
+        raise MarqueurInvalide(f"durée de la partie 1 invalide : {valeur!r}")
+    try:
+        f = float(str(valeur).strip().replace(",", "."))
+    except ValueError:
+        raise MarqueurInvalide(f"durée de la partie 1 invalide : {valeur!r}") from None
+    if f != int(f) or not 1 <= f <= DUREE_PARTIE1_MAXIMUM:
+        raise MarqueurInvalide(f"durée de la partie 1 invalide : {valeur!r} "
+                               f"(minutes entières, 1 à {DUREE_PARTIE1_MAXIMUM})")
+    return int(f)
 
 
 # ── Plans de travail : encadré « Matériel à prévoir » ────────────────────────

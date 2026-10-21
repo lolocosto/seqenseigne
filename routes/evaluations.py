@@ -157,6 +157,7 @@ def api_lire(eval_id):
     with store._conn() as conn:
         try:
             ev = svc.lire_evaluation(conn, eval_id)
+            ev = svc.avec_deux_parties(conn, ev)          # v0.52.9 (D1, D4)
         except EvaluationErreur as e:
             return _erreur_metier(e)
     return jsonify({"evaluation": ev})
@@ -194,7 +195,8 @@ def api_creer():
 def api_modifier(eval_id):
     """Modifie une évaluation. Body JSON : champs à modifier
     (titre, mode_notation, afficher_bareme_dans_exos,
-     item_langue_francaise, etat_code).
+     item_langue_francaise, etat_code ; v0.52.8 calculatrice ; v0.52.9
+     duree_partie1 : minutes, null ou '' = calcul automatique D4).
 
     Note : `etat_code` peut être modifié librement ici (héritage
     compatibilité). Les transitions contrôlées passent par les endpoints
@@ -205,7 +207,8 @@ def api_modifier(eval_id):
     kwargs = {}
     for champ in ("titre", "mode_notation", "afficher_bareme_dans_exos",
                   "item_langue_francaise", "etat_code",
-                  "calculatrice"):                       # v0.52.8 (C1, C3)
+                  "calculatrice",                        # v0.52.8 (C1, C3)
+                  "duree_partie1"):                      # v0.52.9 (D4)
         if champ in body:
             kwargs[champ] = body[champ]
 

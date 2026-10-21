@@ -477,6 +477,25 @@ class AtelierEvaluation extends AtelierAssemblage {
       avert.textContent = msg;
       avert.style.display = msg ? '' : 'none';
     }
+    // v0.52.9 (D1, D4) — sujet en deux parties : indication et durée de la
+    // partie 1 (vide = calcul automatique, rappelé en indication du champ).
+    const deux = document.getElementById('atl-eval-deux-parties');
+    const detail = document.getElementById('atl-eval-deux-parties-detail');
+    const duree = document.getElementById('atl-eval-duree-partie1');
+    const coupe = !!(est6e && ev && ev.deux_parties);
+    if (deux) deux.style.display = coupe ? '' : 'none';
+    if (detail) {
+      const auto = ev && ev.duree_partie1_auto;
+      detail.textContent = coupe
+        ? ` : la partie 1 (sans calculatrice) est ramassée, puis la partie 2 est donnée sur une autre feuille`
+          + (auto ? ` (durée calculée : ${auto} min).` : '.')
+        : '';
+    }
+    if (duree) {
+      const v = ev && ev.duree_partie1;
+      duree.value = (v === null || v === undefined) ? '' : String(v);
+      duree.placeholder = (ev && ev.duree_partie1_auto) ? String(ev.duree_partie1_auto) : '';
+    }
   }
 
 
@@ -1031,6 +1050,9 @@ class AtelierEvaluation extends AtelierAssemblage {
     // v0.52.8 (C1, C3) — réglage « Calculatrice » ('' : selon les exercices).
     const elK = document.getElementById('atl-eval-calculatrice');
     if (elK) champs.calculatrice = elK.value;
+    // v0.52.9 (D4) — durée de la partie 1 ('' : calcul automatique).
+    const elD = document.getElementById('atl-eval-duree-partie1');
+    if (elD) champs.duree_partie1 = elD.value.trim();
     return champs;
   }
 

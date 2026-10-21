@@ -168,6 +168,10 @@ def _evaluations(conn, niveau: str, sequence: str) -> list[dict]:
             st["marqueurs"] = _mq.combiner([dict(x) for x in conn.execute(
                 "SELECT '' AS _" + _mq.sql_colonnes(conn, "e") + " FROM evaluation_exercices ee "
                 "JOIN exercices e ON e.id = ee.exercice_id WHERE ee.evaluation_id = ?", (eid,))])
+            # v0.52.9 (D1, D4) — sujet en deux parties : durée de la partie 1.
+            from services.render_evaluation import parties_evaluation_6e
+            dec = parties_evaluation_6e(conn, eid, st)
+            st["duree_partie1"] = dec["duree"] if dec is not None else None
             sortie.append(st)
     return sortie
 
@@ -348,7 +352,13 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
                         + ("sujets A et B" if st["sujet_b"] else "sujet A")
                         + (" --- " + ", ".join(colonnes) if colonnes else "")
                         + f" --- total /{_fmt(st['total'])}"
-                        + (r" {\small (" + _mq.mention_texte(st["marqueurs"]) + ")}"
+                        + (r" {\small (" + "".join(
+                               x + " ; " for x in [_mq.mention_texte(
+                                   {**(st.get("marqueurs") or {}), "calculatrice": ""})] if x)
+                           + r"en deux parties~: sans calculatrice, ramassée au bout de "
+                           + str(st["duree_partie1"]) + r"~min, puis calculatrice autorisée)}"
+                           if st.get("duree_partie1") is not None
+                           else r" {\small (" + _mq.mention_texte(st["marqueurs"]) + ")}"
                            if _mq.mention_texte(st.get("marqueurs") or {}) else ""))
     tps = [d for d in docs if d["serie"] == "TP"]
     if tps:

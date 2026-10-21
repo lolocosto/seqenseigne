@@ -130,7 +130,9 @@ def _corps_evaluation(conn, ex: dict, opts: dict) -> tuple[list[str], str]:
     if ev is not None:
         st = rev.structure_evaluation_6e(conn, ev[0])
         nom = st["titre"]
-        for k, e in enumerate(st["exercices"], start=1):
+        # v0.52.9 (D2, N1) — numéro affiché dans le sujet (partie 1 puis
+        # partie 2 quand le sujet est coupé en deux ; sinon ordre de l'évaluation).
+        for k, e in rev.exercices_affiches_6e(st, rev.parties_evaluation_6e(conn, ev[0], st)):
             if e["exercice_id"] == ex["id"]:
                 rang = k
                 tag = f"{rev._points(e['points'])} pts --- {e['objectif'] or 'bonus'}"

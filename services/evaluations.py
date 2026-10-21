@@ -100,6 +100,16 @@ class CalculatriceInvalide(EvaluationErreur):
         )
 
 
+class DureePartie1Invalide(EvaluationErreur):
+    """v0.52.9 (D4) — durée de la partie 1 hors {vide, 1 à 240 min entières}."""
+    def __init__(self, valeur):
+        super().__init__(
+            f"Durée de la partie 1 invalide : {valeur!r} (minutes entières, 1 à 240 ; "
+            "vide = calcul automatique).",
+            "duree_partie1_invalide", valeur=valeur,
+        )
+
+
 class ItemLangueFrancaiseInvalide(EvaluationErreur):
     """item_langue_francaise n'est pas un JSON {points: int} valide."""
     def __init__(self, raison="Format invalide"):
@@ -258,9 +268,13 @@ def _rowid() -> str:
 def _col_calculatrice(conn: sqlite3.Connection) -> str:
     """v0.52.8 — Fragment SELECT de la colonne `calculatrice` (C1) ; chaîne
     vide sur une base qui ne l'a pas encore (schéma minimal de test)."""
-    from services.marqueurs_exercices import colonne_evaluation_presente
-    return (", calculatrice" if colonne_evaluation_presente(conn)
-            else ", '' AS calculatrice")
+    from services.marqueurs_exercices import (colonne_duree_presente,
+                                              colonne_evaluation_presente)
+    return ((", calculatrice" if colonne_evaluation_presente(conn)
+             else ", '' AS calculatrice")
+            # v0.52.9 (D4) — durée de la partie 1 (NULL = automatique).
+            + (", duree_partie1" if colonne_duree_presente(conn)
+               else ", NULL AS duree_partie1"))
 
 
 def _evaluation_par_id(conn: sqlite3.Connection,
@@ -291,6 +305,28 @@ def _evaluation_par_id(conn: sqlite3.Connection,
     return d
 
 
+def avec_deux_parties(conn: sqlite3.Connection, d: dict | None) -> dict | None:
+    """v0.52.9 (D1, D4) — Sujet en deux parties : indication du module
+    Évaluations (`deux_parties`, `parties_exercices`) et durée calculée de la
+    partie 1 (`duree_partie1_auto`). Ajouté par `modifier_evaluation` et par
+    la route GET /api/evaluations/<id> — pas par `lire_evaluation` ni
+    `_evaluation_par_id`, que la structure du sujet appelle elle-même."""
+    if d is None:
+        return d
+    d["deux_parties"] = False
+    d["duree_partie1_auto"] = None
+    try:
+        from services.render_evaluation import parties_evaluation_6e
+        dec = parties_evaluation_6e(conn, d["id"])
+        if dec is not None:
+            d["deux_parties"] = True
+            d["duree_partie1_auto"] = dec["duree_auto"]
+            d["parties_exercices"] = [[e["exercice_id"] for e in p] for p in dec["parties"]]
+    except (sqlite3.OperationalError, EvaluationErreur, KeyError):
+        pass
+    return d
+
+
 def _row_vers_dict_evaluation(row) -> dict:
     """Convertit une row en dict, avec parsing du JSON
     item_langue_francaise."""
@@ -316,6 +352,9 @@ def _row_vers_dict_evaluation(row) -> dict:
         # v0.52.8 (C1) — '' : le sujet suit les exercices.
         "calculatrice":                (row["calculatrice"] or "")
                                        if "calculatrice" in row.keys() else "",
+        # v0.52.9 (D4) — None : calcul automatique.
+        "duree_partie1":               (row["duree_partie1"]
+                                        if "duree_partie1" in row.keys() else None),
     }
 
 
@@ -489,6 +528,7 @@ def modifier_evaluation(
     item_langue_francaise: dict | None | str = "__no_change__",
     etat_code: str | None = None,
     calculatrice: str | None = None,
+    duree_partie1: Any = "__no_change__",
 ) -> dict:
     """Modification partielle d'une évaluation (PATCH-like).
 
@@ -536,6 +576,18 @@ def modifier_evaluation(
             mq.migrer_evaluations(conn)
         sets.append("calculatrice = ?")
         args.append(calculatrice)
+    if duree_partie1 != "__no_change__":
+        # v0.52.9 (D4) — durée de la partie 1 d'un sujet en deux parties,
+        # en minutes ; None / '' = calcul automatique.
+        from services import marqueurs_exercices as mq
+        try:
+            duree = mq.valider_duree_partie1(duree_partie1)
+        except mq.MarqueurInvalide:
+            raise DureePartie1Invalide(duree_partie1) from None
+        if not mq.colonne_duree_presente(conn):
+            mq.migrer_duree_partie1(conn)
+        sets.append("duree_partie1 = ?")
+        args.append(duree)
 
     if sets:
         # Toujours rafraîchir le mtime
@@ -546,7 +598,7 @@ def modifier_evaluation(
             args,
         )
 
-    return _evaluation_par_id(conn, evaluation_id)
+    return avec_deux_parties(conn, _evaluation_par_id(conn, evaluation_id))  # v0.52.9
 
 
 def supprimer_evaluation(conn: sqlite3.Connection,
