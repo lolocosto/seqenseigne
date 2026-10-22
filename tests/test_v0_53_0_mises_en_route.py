@@ -9,6 +9,12 @@
 
 Base de test reconstruite à chaque test (jamais de base réelle) ; lot M01
 de test : tests/donnees_v0_53_0/lot6e/M01/M01.json (8 séances).
+
+v0.53.1 (changement voulu, décisions du 22 octobre 2026) : le format des lots
+de mise en route passe en version 2 (une partie par objectif, codes M01-02,
+M01-12…, une fiche de cours et un test court par partie) ; ces tests lisent le
+même jeu de test, au format v2 : tests/donnees_v0_53_1/lot6e/M01/M01.json.
+Nouvelles décisions : tests/test_v0_53_1_mer_parties.py.
 """
 
 from __future__ import annotations
@@ -29,7 +35,7 @@ from services.cycle_import import importer_cycle
 
 APPLI = Path(__file__).resolve().parent.parent
 DATA = APPLI / "data"
-LOT_M01 = Path(__file__).resolve().parent / "donnees_v0_53_0" / "lot6e" / "M01" / "M01.json"
+LOT_M01 = Path(__file__).resolve().parent / "donnees_v0_53_1" / "lot6e" / "M01" / "M01.json"
 
 
 # ── Base et lot ──────────────────────────────────────────────────────────────
@@ -204,12 +210,17 @@ def test_import_mer_cree_une_sequence_Mnn_sans_objectif_cours_car_la_fiche_est_d
                      "JOIN sequence_parties p ON p.id=o.partie_id JOIN sequences_par_niveau s "
                      "ON s.id=p.sequence_par_niveau_id WHERE s.niveau='N09' AND "
                      "s.sequence_code='M01' ORDER BY o.code").fetchall()
-    assert [o["code"] for o in objs] == ["01", "02", "03", "04"]
-    assert all(o["numero"] == 1 and o["nb_seances"] == 6 for o in objs)
+    assert [o["code"] for o in objs] == ["02", "12", "22", "32"]          # v0.53.1
+    assert [o["numero"] for o in objs] == [1, 2, 3, 4]
+    assert all(o["nb_seances"] == 6 for o in objs)
     assert objs[0]["nom"] == "Utiliser les tables de multiplication jusqu'à la table de 12"
     assert objs[0]["critere_F"].startswith("Donne 4 produits")
-    fiches = c.execute("SELECT objectif_id, titre FROM fiches_resume WHERE sequence='M01'").fetchall()
-    assert [(f[0], f[1]) for f in fiches] == [(None, "Calcul mental")]
+    fiches = c.execute("SELECT objectif_id, titre FROM fiches_resume WHERE sequence='M01' "
+                       "ORDER BY num_fiche").fetchall()
+    assert [(f[0], f[1]) for f in fiches] == [(None, "Tables de multiplication"),
+                                              (None, "Compléments entiers"),
+                                              (None, "Complément décimal à 1"),
+                                              (None, "Arrondis")]                # v0.53.1
 
 
 def test_import_mer_exercices_de_seance_serie_MR_numerotes_par_seance_et_relies_a_l_objectif(base,
@@ -222,14 +233,14 @@ def test_import_mer_exercices_de_seance_serie_MR_numerotes_par_seance_et_relies_
                      "ORDER BY e.num").fetchall()
     assert [r[0] for r in rows] == list(range(1, 9))
     assert {r[1] for r in rows} == {"mise en route"} and {r[2] for r in rows} == {"interdite"}
-    assert [r[3] for r in rows] == ["01", "02", "03", "04"] * 2
+    assert [r[3] for r in rows] == ["02", "02", "12", "12", "22", "22", "32", "32"]
 
 
 def test_import_mer_test_court_dans_le_module_evaluations_avec_sujets_A_et_B(base, lots):
     _appliquer(base, lots)
     c = _conn(base)
     ev = c.execute("SELECT id, titre, calculatrice FROM evaluations WHERE niveau='N09'").fetchall()
-    assert len(ev) == 1 and ev[0]["titre"] == "Test court --- Tables et compléments"
+    assert len(ev) == 4 and ev[0]["titre"] == "Test court --- Tables de multiplication"
     exos = c.execute("SELECT e.serie_code, e.sequence, e.remed_enonce <> '' FROM "
                      "evaluation_exercices ee JOIN exercices e ON e.id=ee.exercice_id "
                      "WHERE ee.evaluation_id=?", (ev[0]["id"],)).fetchall()
@@ -254,29 +265,29 @@ def test_import_mer_ne_reecrit_jamais_un_exercice_valide(base, lots, tmp_path):
 def test_import_mer_seance_qui_change_d_objectif_perd_son_ancien_lien(base, lots, tmp_path):
     _appliquer(base, lots)
     lot = _lot()
-    lot["exercices_seance"][0]["objectif"] = "M01-02"
+    lot["exercices_seance"][0]["objectif"] = "M01-12"
     _appliquer(base, _ecrire_lot(tmp_path / "l2", lot))
     c = _conn(base)
     codes = [r[0] for r in c.execute(
         "SELECT o.code FROM objectif_exos oe JOIN objectifs o ON o.id=oe.objectif_id JOIN "
         "exercices e ON e.id=oe.exercice_id WHERE e.sequence='M01' AND e.num=1 AND "
         "e.serie_code='MR' AND oe.serie='MR'")]
-    assert codes == ["02"]
+    assert codes == ["12"]
 
 
 def test_import_mer_version_complete_redigee_a_part_puis_retiree_si_le_lot_n_en_a_plus(base, lots,
                                                                                        tmp_path):
     lot = _lot()
-    lot["fiche_cours"]["latex_corrige"] = lot["fiche_cours"]["latex"].replace(
-        r"\seqACompleter{56}", "56")
+    fc = lot["parties"][0]["fiche_cours"]
+    fc["latex_corrige"] = fc["latex"].replace(r"\seqACompleter{56}", "56")
     _appliquer(base, _ecrire_lot(tmp_path / "l2", lot))
     c = _conn(base)
     s = mer.lire_sequence_mer(c, "N09", "M01")
-    assert s["fiche"]["titre"] == "Calcul mental"
-    assert s["fiche_complete"]["titre"] == "Calcul mental" + mer.SUFFIXE_COMPLETE
+    assert s["fiche"]["titre"] == "Tables de multiplication"
+    assert s["fiche_complete"]["titre"] == "Tables de multiplication" + mer.SUFFIXE_COMPLETE
     tex = mer.generer_document_mer(c, "N09", "M01", {"document": "fiche_cours",
-                                                      "version": "corrigee"})
-    assert r"\seqACompleter{56}" not in tex and "{Calcul mental}" in tex
+                                                      "version": "corrigee", "partie": 1})
+    assert r"\seqACompleter{56}" not in tex and "{Tables de multiplication}" in tex
     c.close()
     _appliquer(base, lots)
     c = _conn(base)
@@ -286,7 +297,7 @@ def test_import_mer_version_complete_redigee_a_part_puis_retiree_si_le_lot_n_en_
 def test_import_mer_note_de_corrige_dans_la_fiche_visible_en_version_complete_seulement(base,
                                                                                         tmp_path):
     lot = _lot()
-    lot["fiche_cours"]["latex_corrige"] = "Mots à compléter : 56 ; 63 ; 4."
+    lot["parties"][0]["fiche_cours"]["latex_corrige"] = "Mots à compléter : 56 ; 63 ; 4."
     _appliquer(base, _ecrire_lot(tmp_path / "l2", lot))
     c = _conn(base)
     s = mer.lire_sequence_mer(c, "N09", "M01")
@@ -294,7 +305,7 @@ def test_import_mer_note_de_corrige_dans_la_fiche_visible_en_version_complete_se
     assert s["fiche"]["sections"][-1] == {
         **s["fiche"]["sections"][-1], "titre": "",
         "items": [r"\seqLocExplication{Mots à compléter : 56 ; 63 ; 4.}"]}
-    tex = mer.generer_document_mer(c, "N09", "M01", {"document": "fiche_cours"})
+    tex = mer.generer_document_mer(c, "N09", "M01", {"document": "fiche_cours", "partie": 1})
     assert r"\seqLocExplication{Mots à compléter" in tex and r"\seqVersionComplete" not in tex
 
 
@@ -339,14 +350,14 @@ def test_validation_mer_exige_la_fiche_et_un_exercice_par_objectif(base, lots):
     c = _conn(base)
     c.execute("DELETE FROM fiches_resume WHERE sequence='M01'")
     oe = c.execute("SELECT oe.exercice_id FROM objectif_exos oe JOIN objectifs o ON "
-                   "o.id=oe.objectif_id WHERE o.code='04' AND oe.serie='MR'").fetchall()
+                   "o.id=oe.objectif_id WHERE o.code='32' AND oe.serie='MR'").fetchall()
     for (eid,) in oe:
         c.execute("DELETE FROM objectif_exos WHERE exercice_id=?", (eid,))
     v = mer.valider_sequence_mer(c, "N09", "M01")
     assert not v["valide"]
-    assert "pas de fiche de cours de séquence" in v["erreurs"]
-    assert "M01-04 sans exercice de séance" in v["erreurs"]
-    assert "MR04 relié à aucun objectif de la séquence" in v["erreurs"]
+    assert "partie 1 : pas de fiche de cours" in v["erreurs"]          # v0.53.1 : par partie
+    assert "M01-32 sans exercice de séance" in v["erreurs"]
+    assert "MR07 relié à aucun objectif de la séquence" in v["erreurs"]
 
 
 # ── 4. Documents (MR5) ──────────────────────────────────────────────────────
@@ -397,8 +408,9 @@ def test_fiche_de_cours_eleve_a_completer_et_complete_en_version_corrigee(conn_m
     k = mer.generer_document_mer(conn_m01, "N09", "M01", {"document": "fiche_cours",
                                                           "version": "corrigee"})
     assert r"\seqVersionComplete" not in e and r"\seqVersionComplete" in k
-    assert r"\seqTitreFicheSix{Mise en route 1 --- Calcul mental}" in e
-    assert r"\begin{seqFicheResumeSix}{Calcul mental}" in e
+    assert r"\seqTitreFicheSix{Mise en route 1 --- Calcul mental --- partie 1}" in e
+    assert r"\begin{seqFicheResumeSix}{Tables de multiplication}" in e
+    assert e.count(r"\begin{seqFicheResumeSix}") == 4       # v0.53.1 : toute la séquence
     x2 = mer.generer_document_mer(conn_m01, "N09", "M01", {"document": "fiche_cours",
                                                            "exemplaires": 2})
     assert r"\begin{seqCopies}{2}" in x2
@@ -406,9 +418,9 @@ def test_fiche_de_cours_eleve_a_completer_et_complete_en_version_corrigee(conn_m
 
 def test_test_court_au_rendu_6e_avec_la_mention_mise_en_route_et_non_sequence_201(conn_m01):
     tex = mer.generer_document_mer(conn_m01, "N09", "M01", {"document": "test_court"})
-    assert "Mise en route 1 --- Sujet A --- calculatrice interdite" in tex
+    assert "Mise en route 1, partie 1 --- Sujet A --- calculatrice interdite" in tex
     assert "Séquence 201" not in tex
-    assert r"\seqBaremeCompetences{M01-01/{5},M01-02/{5}}{10}" in tex
+    assert r"\seqBaremeCompetences{M01-02/{10},Bonus/{1}}" in tex
     b = mer.generer_document_mer(conn_m01, "N09", "M01", {"document": "test_court",
                                                           "sujet": "B", "exemplaires": 2})
     assert r"\begin{seqCopies}{2}" in b and r"$5\times4" in b
@@ -417,14 +429,15 @@ def test_test_court_au_rendu_6e_avec_la_mention_mise_en_route_et_non_sequence_20
 def test_plan_de_sequence_liste_les_seances_les_tests_et_le_controle(conn_m01):
     tex = mer.generer_document_mer(conn_m01, "N09", "M01", {"document": "plan"})
     assert r"\begin{longtable}" in tex and r"\usepackage{longtable}" in tex
-    assert "8 & M01-04 & Arrondir au dixième & MR08" in tex
-    assert "Test court --- Tables et compléments" in tex
+    assert "8 & M01-32 & Arrondir au dixième & MR08" in tex
+    assert "Test court --- Tables de multiplication" in tex
     assert "Attention : 8 exercice(s) de séance pour 24 séance(s) prévue(s)" in tex
 
 
 @pytest.mark.parametrize("options", [{"document": "livret"}, {"par_page": 5},
-                                     {"exemplaires": 3}, {"version": "x"}, {"test": 2,
-                                                                           "document": "test_court"}])
+                                     {"exemplaires": 3}, {"version": "x"}, {"test": 5,
+                                                                           "document": "test_court"},
+                                     {"partie": 9}, {"partie": "x"}])
 def test_options_mer_invalides_refusees(conn_m01, options):
     with pytest.raises(mer.MiseEnRouteErreur):
         mer.generer_document_mer(conn_m01, "N09", "M01", options)
@@ -448,7 +461,7 @@ def test_atome_MR_rendu_seul_a_sa_taille_reelle_de_quart_de_page(conn_m01):
                            "AND num=3").fetchone()[0]
     tex = generer_tex_par_type(conn_m01, "exercice", eid)
     assert r"\begin{seqPlancheFiches}{4}" in tex and tex.count(r"\begin{seqBande}") == 1
-    assert "séance 3 --- M01-03" in tex
+    assert "séance 3 --- M01-12" in tex
 
 
 # ── 5. Exclusivité avec le principal (MR7) et objectif Cours (MR1b) ─────────
@@ -481,7 +494,8 @@ def test_objectif_01_d_une_mise_en_route_n_est_pas_le_cours(conn_m01):
     a = arbre_du_niveau(conn_m01, "N09")
     m01 = next(s for s in a["sequences"] if s["code"] == "M01")
     o1 = m01["parties"][0]["objectifs"][0]
-    assert o1["code"] == "01" and not o1.get("est_cours")
+    assert o1["code"] == "02" and not o1.get("est_cours")      # v0.53.1 : codes du principal
+    assert not mer.est_objectif_cours("11", 2, "M01")
 
 
 def test_serie_MR_est_une_serie_documents_hors_livret_creee_depuis_l_atelier():
@@ -496,7 +510,7 @@ def test_module_v0_9_fournit_seqLocItemCM_du_lot_M01_car_les_macros_locales_ne_s
     from services import style6e
     dtx = (APPLI / "paquet" / "seqenseigne-style6e.dtx").read_text(encoding="utf-8")
     sty = (APPLI / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
-    assert "v0.9 seqenseigne" in dtx and "v0.9 seqenseigne" in sty
+    assert "v0.10 seqenseigne" in dtx and "v0.10 seqenseigne" in sty   # v0.53.1 : v0.10
     assert "seqLocItemCM" in style6e.MACROS
     assert r"\DescribeMacro{\seqLocItemCM}" in dtx
     assert re.search(r"\\changes\{v0\.9\}\{[^}]*\}\{\\cs\{seqLocItemCM\}", dtx)

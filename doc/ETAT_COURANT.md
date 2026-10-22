@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.53.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.53.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -147,9 +147,22 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   à relancer) ; lot M01 « Calcul mental » dans `reference\lot6e`. Leitner,
   cartes et cycle 4 inchangés au caractère près. Détails :
   `doc/redemarrage_v0_53_0.md`.
+- v0.53.1 livrée (22 octobre) : mises en route **en parties** (décision de
+  Laurent : chaque objectif à un moment différent de l'année) — une partie par
+  objectif (paires liées en M02, M03, M05), codes de la règle du principal
+  (M01-02, M01-12…), libellé de partie (`sequence_parties.libelle`), une
+  fiche de cours et un test court par partie (fiche attachée aux objectifs de
+  sa partie), documents par partie dans l'onglet « Rendu PDF » et contrôle
+  MR6 par partie affiché dans l'atelier (route `…/mer`) ; restructuration à
+  l'import des Mnn importées en une partie (I-MR7 : mêmes objectifs, rien de
+  supprimé) ; arbre du niveau : code Mnn/Xnn au lieu de « S201 » ; lots
+  M01 à M07 au format v2 ; module `seqenseigne-style6e` v0.10. Cycle 4 et
+  principal 6e inchangés au caractère près. Détails :
+  `doc/redemarrage_v0_53_1.md`.
 - À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
-  les progressions) ; mises en route M02 à M07 et publication d'une mise en
-  route comme référentiel « mer » (côté classe) ; migration du référentiel de 5e
+  les progressions) ; publication d'une mise en
+  route comme référentiel « mer » (côté classe, une partie Mnn = un bloc de
+  séances placé librement) ; migration du référentiel de 5e
   (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import
   paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
   numéro suivant.
@@ -396,7 +409,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   pas d'objectif « Cours » dans une Mnn (`est_objectif_cours`) ; série `MR`
   (série « documents », dans aucun livret), numéro = séance ; fiche de cours
   = fiche sans objectif de la séquence. Leitner et cartes du cycle 4 : ne pas
-  les mêler aux Mnn.
+  les mêler aux Mnn. v0.53.1 : une partie par objectif (ref6e\_v2 « — partie
+  n »), codes (p − 1) × 10 + 2… ; fiche de cours **par partie** = fiche sans
+  objectif attachée (`objectif_fiches`) aux objectifs de sa partie ; partie
+  d'un test court = celle de ses objectifs évalués ; ne jamais recréer une
+  Mnn pour la restructurer (I-MR7 garde les identifiants).
 
 ## Dettes restantes (mineures)
 

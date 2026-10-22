@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/10/21 v0.9 seqenseigne : style des documents de 6e]
+    [2026/10/22 v0.10 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,8 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.10}{2026/10/22}{Mises en route en parties : \cs{seqDefinirTitreCM}
+%   (titre du bandeau, « MISE EN ROUTE » hors M01) ; \cs{seqLocItemGeo} (lot M05)}
 % \changes{v0.9}{2026/10/21}{Mises en route : \cs{seqLocItemCM}, item de calcul
 %   mental sans « = \dots » final (calcul à trou, arrondi), lot M01}
 % \changes{v0.8}{2026/10/20}{Astuce dans un énoncé : \cs{seqAstuceSix} (ampoule,
@@ -227,6 +229,18 @@
 % \DescribeMacro{\seqItemCM}
 % \cs{seqItemCM}\marg{calcul}\oarg{résultat} donne un item. Le résultat ne s'affiche que
 % dans la version corrigée.
+%
+% \DescribeMacro{\seqDefinirTitreCM}
+% \cs{seqDefinirTitreCM}\marg{titre} (v0.10) règle le titre du bandeau des fiches suivantes
+% (\cs{seqTitreCM}, « CALCUL MENTAL » par défaut) : l'appli émet
+% \cs{seqDefinirTitreCM}|{MISE EN ROUTE}| en tête des planches des mises en route autres que
+% M01. Dans un groupe, il ne vaut que pour ce groupe (titre propre à une fiche).
+%
+% \DescribeMacro{\seqLocItemGeo}
+% \cs{seqLocItemGeo}\marg{contenu} (v0.10, lot M05 « Géométrie ») donne un item numéroté sans
+% ligne de recherche (figure, tracé, mot à compléter) : même compteur et mêmes colonnes que
+% \cs{seqItemCM} dans |seqCalculMental|. Le contenu peut avoir plusieurs paragraphes
+% (argument long, comme le \cs{providecommand} du lot).
 %
 % \DescribeMacro{\seqLocItemCM}
 % \cs{seqLocItemCM}\marg{contenu} (v0.9, lot M01) donne un item sans « = \dots » final,
@@ -670,6 +684,12 @@
     \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
 %    \end{macrocode}
 % \end{macro}
+% \begin{macro}{\seqDefinirTitreCM}
+% \changes{v0.10}{2026/10/22}{\cs{seqDefinirTitreCM} : titre du bandeau des fiches}
+%    \begin{macrocode}
+\NewDocumentCommand{\seqDefinirTitreCM}{m}{\renewcommand{\seqTitreCM}{#1}}
+%    \end{macrocode}
+% \end{macro}
 % \begin{macro}{\seqLocItemCM}
 % \changes{v0.9}{2026/10/21}{\cs{seqLocItemCM} : item sans « = \dots » final}
 %    \begin{macrocode}
@@ -678,6 +698,17 @@
   \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em\relax}
     \theseqItemCM.\ \ #1\par
     {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
+  \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
+    \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\seqLocItemGeo}
+% \changes{v0.10}{2026/10/22}{\cs{seqLocItemGeo} : item sans ligne de recherche (lot M05)}
+%    \begin{macrocode}
+\NewDocumentCommand{\seqLocItemGeo}{+m}{%
+  \stepcounter{seqItemCM}\stepcounter{seq@cm@col}%
+  \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em\relax}
+    \theseqItemCM.\ #1\end{minipage}\hfill
   \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
     \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
 %    \end{macrocode}

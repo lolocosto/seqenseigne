@@ -713,8 +713,12 @@ def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict,
     # celles des bandeaux de partie : le sous-titre ne porte plus la mention C1.
     # v0.53.0 (MR5) — test court d'une mise en route : « Mise en route n »
     # (le numéro de la séquence du cycle, 200 + n, n'a pas de sens affiché).
-    from services.mises_en_route_6e import est_sequence_mer, libelle_mer
-    sequence_affichee = (libelle_mer(st["sequence"]) if est_sequence_mer(st["sequence"])
+    # v0.53.1 — « Mise en route n, partie p » quand la séquence a plusieurs
+    # parties (un test court par partie).
+    from services.mises_en_route_6e import est_sequence_mer, sous_titre_test
+    sequence_affichee = (sous_titre_test(conn, st["niveau"], st["sequence"],
+                                         [o["id"] for o in st["objectifs"]])
+                         if est_sequence_mer(st["sequence"])
                          else f"Séquence {numero}" if numero else "")
     sous_titre = " --- ".join(x for x in (
         sequence_affichee, f"Sujet {opts['sujet']}",

@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/21 v0.9 seqenseigne : style des documents de 6e]
+    [2026/10/22 v0.10 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -185,11 +185,18 @@
     {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
   \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
     \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
+\NewDocumentCommand{\seqDefinirTitreCM}{m}{\renewcommand{\seqTitreCM}{#1}}
 \NewDocumentCommand{\seqLocItemCM}{m}{%
   \stepcounter{seqItemCM}\stepcounter{seq@cm@col}%
   \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em\relax}
     \theseqItemCM.\ \ #1\par
     {\color{seqSixRouge}\seqTrous[\linewidth]}\end{minipage}\hfill
+  \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
+    \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
+\NewDocumentCommand{\seqLocItemGeo}{+m}{%
+  \stepcounter{seqItemCM}\stepcounter{seq@cm@col}%
+  \begin{minipage}[t]{\dimexpr\linewidth/\seq@cm@cols-0.5em\relax}
+    \theseqItemCM.\ #1\end{minipage}\hfill
   \ifnum\value{seq@cm@col}=\seq@cm@cols\relax
     \setcounter{seq@cm@col}{0}\par\medskip\noindent\fi}
 \newcommand{\seqScore}[1]{%

@@ -579,7 +579,8 @@ def _partie(conn, sn_id: str, numero: int, seq: str, rapport: Rapport) -> str:
 
 
 def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict,
-              rapport: "Rapport | None" = None, etiquette: str = "") -> tuple[str, str]:
+              rapport: "Rapport | None" = None, etiquette: str = "",
+              source: str = "objectifs_6e.json") -> tuple[str, str]:
     """(id, état) de l'objectif (niveau, séquence, code).
 
     v0.52.8 (O1) — Un objectif existant (séquence non validée : une séquence
@@ -608,7 +609,7 @@ def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict,
                                       ("critère E", r["critere_E"], d["critere_E"])) if a != b]
         if rapport is not None:
             rapport.infos.append(f"{etiquette or code} : objectif mis à jour d'après "
-                                 f"objectifs_6e.json ({', '.join(quoi)})")
+                                 f"{source} ({', '.join(quoi)})")
         return r["id"], "mis à jour"
     return r["id"], "inchangé"
 
@@ -1555,6 +1556,10 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.infos.append("Base complétée : colonne calculatrice des évaluations (v0.52.8)")
     if mq.migrer_duree_partie1(conn):                                # v0.52.9 (D4)
         rapport.infos.append("Base complétée : colonne duree_partie1 des évaluations (v0.52.9)")
+    from services import mises_en_route_6e as mer                      # v0.53.1 (P1)
+    if mer.migrer(conn):
+        rapport.infos.append("Base complétée : colonne libelle des parties de séquence "
+                             "(v0.53.1)")
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
     themes = appliquer_cycle3(conn, ref, rapport)
@@ -1562,6 +1567,8 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     mer_imp = _module_mer()                                           # v0.53.0
     ref_mer = mer_imp.referentiel_mer()
     imp = sys.modules[__name__]
+    # v0.53.1 (I-MR7) — mises en route importées avec l'ancienne structure.
+    mer_imp.restructurer_anciennes_mer(conn, imp, ref_mer, rapport)
     for lot in lots:
         if mer_imp.est_lot_mer(lot):
             figures[lot["sequence"]] = mer_imp.importer_lot_mer(conn, imp, lot, themes,
@@ -1574,7 +1581,7 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     for seq, ms in macros_locales(lots).items():
         if ms:
             rapport.infos.append(f"{seq} : macros locales utilisées (fournies par "
-                                 f"seqenseigne-style6e v0.9) : {', '.join(ms)}")
+                                 f"seqenseigne-style6e v0.10) : {', '.join(ms)}")
         # v0.52.5 — Une macro \seqLoc… que le module ne fournit pas ferait
         # échouer la compilation de tous les documents de la séquence.
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
@@ -1586,11 +1593,11 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     for seq, (ms, n_astuces) in macros_module(lots).items():
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
         if absentes:
-            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e v0.9 "
+            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e v0.10 "
                              f"(compilation impossible) : {', '.join(absentes)}")
         if n_astuces:
             rapport.infos.append(f"{seq} : {n_astuces} astuce(s) \\seqAstuceSix (module "
-                                 "seqenseigne-style6e v0.9)")
+                                 "seqenseigne-style6e v0.10)")
 
 
 def resoudre_base(db: str | None, racine: Path = RACINE_APPLI) -> Path:

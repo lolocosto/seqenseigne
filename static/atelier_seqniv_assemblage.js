@@ -212,6 +212,8 @@
           </button>
         </div>
         <div class="livret-seq-actions" id="livret-seq-mer" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
+          <label title="v0.53.1 — chaque partie peut être placée à un autre moment de l'année">Partie
+            <select id="livret-seq-mer-partie"><option value="">toute la séquence</option></select></label>
           <label>Document
             <select id="livret-seq-mer-document">
               <option value="fiche_cours">Fiche de cours</option>
@@ -223,7 +225,7 @@
             <select id="livret-seq-mer-version">
               <option value="eleve">élève</option><option value="corrigee">corrigée</option>
             </select></label>
-          <label title="Exercices de séance : fiches par A4, à découper au massicot">Par A4
+          <label title="Exercices de séance : fiches en quart d'A4 par feuille, à découper au massicot ; les exercices en demi-A4 (à figure) sont toujours à 2 par A4, sur leurs propres feuilles (v0.53.1)">Par A4
             <select id="livret-seq-mer-par-page">
               <option value="2">2</option><option value="3">3</option><option value="4" selected>4</option>
             </select></label>
@@ -236,6 +238,8 @@
           <label>Sujet
             <select id="livret-seq-mer-sujet"><option value="A">A</option><option value="B">B</option></select></label>
         </div>
+        <!-- v0.53.1 (MR6 révisé) — contrôle de la séquence de mise en route, par partie. -->
+        <div id="livret-seq-mer-controle" style="display:none;font-size:12px;margin:4px 0 8px"></div>
         <div class="livret-seq-rendu" id="livret-seq-rendu">
           <div class="livret-seq-empty" id="livret-seq-empty">
             Cliquez sur <strong>Compiler le livret</strong> pour générer le PDF.
@@ -2858,6 +2862,76 @@
                                                 : '🔧 Compiler le livret';
       const plan = document.getElementById('livret-seq-btn-plan');
       if (plan) plan.style.display = this._estMer() ? 'none' : '';
+      const ctl = document.getElementById('livret-seq-mer-controle');
+      if (ctl && !this._estMer()) ctl.style.display = 'none';
+      if (this._estMer()) this._chargerResumeMer();          // v0.53.1
+    }
+
+    // v0.53.1 (MR5, MR6 révisés) — Parties de la séquence de mise en route
+    // (choix de la partie du document) et contrôle MR6 par partie, lus sur
+    // GET /api/v2/livret-sequence/<niveau>/<séquence>/mer.
+    async _chargerResumeMer() {
+      const sn = this._sn();
+      if (!sn) return;
+      let rep;
+      try {
+        rep = await apiJson('GET', `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}`
+                                 + `/${encodeURIComponent(sn.sequence_code)}/mer`);
+      } catch (_) { return; }
+      if (!rep || !rep.ok || !rep.data) return;
+      this._resumeMer = rep.data;
+      this._remplirPartiesMer(rep.data);
+      const ctl = document.getElementById('livret-seq-mer-controle');
+      if (ctl) {
+        ctl.innerHTML = this._htmlControleMer(rep.data);
+        ctl.style.display = '';
+      }
+    }
+
+    _remplirPartiesMer(resume) {
+      const sel = document.getElementById('livret-seq-mer-partie');
+      if (!sel) return;
+      const avant = sel.value;
+      const parties = (resume && resume.parties) || [];
+      sel.innerHTML = `<option value="">toute la séquence</option>`
+        + parties.map(p => `<option value="${p.numero}">${this._esc(
+            String(p.titre || ('Partie ' + p.numero)).replace(/ --- /g, ' — '))}</option>`).join('');
+      // Une seule partie : elle est la séquence ; sinon la partie 1 par défaut.
+      if (avant && parties.some(p => String(p.numero) === avant)) sel.value = avant;
+      else if (parties.length > 1) sel.value = String(parties[0].numero);
+    }
+
+    _htmlControleMer(resume) {
+      const v = (resume && resume.validation) || {erreurs: [], avertissements: [], parties: {}};
+      const parties = (resume && resume.parties) || [];
+      const lignes = [];
+      const etat = v.valide ? '<span style="color:#2e7d32">complète</span>'
+                            : '<span style="color:#c62828">à compléter</span>';
+      lignes.push(`<strong>Contrôle de la mise en route</strong> : ${etat}`
+                  + ` — ${parties.length} partie(s)`);
+      const deja = new Set();
+      for (const p of parties) {
+        const vp = (v.parties || {})[p.numero] || (v.parties || {})[String(p.numero)]
+                   || {erreurs: [], avertissements: []};
+        const items = [
+          ...vp.erreurs.map(e => `<li style="color:#c62828">À compléter : ${this._esc(e)}</li>`),
+          ...vp.avertissements.map(a => `<li>Attention : ${this._esc(a)}</li>`)];
+        vp.erreurs.concat(vp.avertissements).forEach(x => deja.add(x));
+        const tests = (p.tests || []).length;
+        lignes.push(`<div><strong>${this._esc(String(p.titre).replace(/ --- /g, ' — '))}</strong>`
+                    + ` : ${this._esc((p.objectifs || []).join(', '))} — ${p.exercices} exercice(s)`
+                    + ` pour ${p.seances} séance(s), fiche ${p.fiche ? '✔' : '✘'},`
+                    + ` ${tests} test(s) court(s)`
+                    + (items.length ? `<ul style="margin:2px 0 2px 18px">${items.join('')}</ul>` : '')
+                    + `</div>`);
+      }
+      const reste = [
+        ...(v.erreurs || []).filter(e => !deja.has(e))
+          .map(e => `<li style="color:#c62828">À compléter : ${this._esc(e)}</li>`),
+        ...(v.avertissements || []).filter(a => !deja.has(a))
+          .map(a => `<li>Attention : ${this._esc(a)}</li>`)];
+      if (reste.length) lignes.push(`<ul style="margin:2px 0 2px 18px">${reste.join('')}</ul>`);
+      return lignes.join('');
     }
 
     _livretSeqOptionsMer() {
@@ -2869,6 +2943,7 @@
         exemplaires: v('livret-seq-mer-exemplaires', '1'),
         test: v('livret-seq-mer-test', '1'),
         sujet: v('livret-seq-mer-sujet', 'A'),
+        partie: v('livret-seq-mer-partie', ''),              // v0.53.1
       };
     }
 

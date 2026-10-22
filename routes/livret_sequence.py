@@ -8,6 +8,9 @@ Expose :
     niveau, sinon celui du niveau (N09 → livret 6e) ; voir _gabarit_demande.
     → renvoie le source .tex (utile pour debug/inspection)
 
+  GET  /api/v2/livret-sequence/<niveau>/<sequence>/mer  (v0.53.1)
+    → parties et contrôle MR6 d'une séquence de mise en route (Mnn)
+
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-pdf
     body JSON optionnel : {"options": {...}}
     → compile et renvoie le PDF en application/pdf
@@ -138,7 +141,8 @@ def _options_mer_depuis_request() -> dict:
         o = payload.get('options') or {}
         if isinstance(o, dict) and isinstance(o.get('mer'), dict):
             opts.update(o['mer'])
-    for k in ('document', 'version', 'par_page', 'exemplaires', 'sujet', 'test'):
+    # v0.53.1 (MR5 révisé) — `partie` (absente ou 0 : toute la séquence).
+    for k in ('document', 'version', 'par_page', 'exemplaires', 'sujet', 'test', 'partie'):
         if request.args.get(k):
             opts[k] = request.args.get(k)
     return opts
@@ -213,6 +217,32 @@ def api_livret_sequence_tex(niveau: str, sequence: str):
         }), 500
 
     return Response(tex, mimetype='text/plain; charset=utf-8')
+
+
+# ── v0.53.1 — Route : résumé d'une séquence de mise en route ────────────────
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/mer', methods=['GET'])
+def api_livret_sequence_mer(niveau: str, sequence: str):
+    """v0.53.1 (MR5, MR6 révisés) — Pour l'onglet « Rendu PDF » d'une
+    séquence de mise en route : ses parties (choix de la partie du document)
+    et son contrôle MR6 par partie (affiché dans l'atelier). Catégorie
+    « atelier » (blueprint livret_sequence, services/profils.py).
+
+    Réponses : 200 JSON (services.mises_en_route_6e.resume_mer) ; 400 si la
+    séquence n'est pas une mise en route ; 404 si elle est absente de
+    l'atelier."""
+    from services.mises_en_route_6e import MiseEnRouteErreur, est_sequence_mer, resume_mer
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    if not est_sequence_mer(sequence):
+        return jsonify({'error': 'pas_une_mise_en_route',
+                        'message': f"{sequence} n'est pas une séquence de mise en route"}), 400
+    try:
+        with current_app.json_store._conn() as conn:
+            return jsonify(resume_mer(conn, niveau, sequence))
+    except MiseEnRouteErreur as e:
+        return jsonify({'error': 'mise_en_route_absente', 'message': str(e)}), 404
 
 
 # ── Route : compilation PDF ──────────────────────────────────────────────────

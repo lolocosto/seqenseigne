@@ -21,6 +21,21 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.10 — 2026-10-22
+
+### Ajouté
+
+- `\seqDefinirTitreCM{titre}` : titre du bandeau des fiches `seqCalculMental` suivantes
+  (`\seqTitreCM`, « CALCUL MENTAL » par défaut) ; l'appli émet `\seqDefinirTitreCM{MISE EN
+  ROUTE}` en tête des planches des mises en route autres que M01 (seqenseigne v0.53.1).
+- `\seqLocItemGeo{contenu}` : item numéroté sans ligne de recherche (figure, tracé, mot à
+  compléter), même compteur et mêmes colonnes que `\seqItemCM` ; macro locale du lot M05
+  « Géométrie » versée dans le module. Les lots M01 à M04, M06 et M07 n'ont pas de macro
+  locale nouvelle.
+- `.sty` régénéré par `tex seqenseigne.ins` (seqenseigne v0.53.1).
+
+---
+
 ## seqenseigne-style6e v0.9 — 2026-10-21
 
 ### Ajouté

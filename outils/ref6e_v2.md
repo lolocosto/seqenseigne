@@ -123,9 +123,9 @@ Les mentions « ancien Sxx-yy » renvoient à des objectifs retirés, dans l'anc
 
 Ces contraintes portent sur l'ordre de la progression, pas sur le référentiel : elles ne dépendent pas de l'ordre des séquences dans ce document (décision du 18 octobre 2026).
 
-- S11-02 (situer une probabilité entre 0 et 1 et l'écrire en fraction, décimal ou pourcentage) dépend de M02-02 (exprimer une proportion sous forme de pourcentage) : les pourcentages doivent être travaillés avant les probabilités (livret, p. 6).
+- S11-02 (situer une probabilité entre 0 et 1 et l'écrire en fraction, décimal ou pourcentage) dépend de M02-12 (exprimer une proportion sous forme de pourcentage) : les pourcentages doivent être travaillés avant les probabilités (livret, p. 6).
 - S04 (pré-algèbre, pensée algébrique) : à traiter pendant le premier semestre (livret, p. 3).
-- S11 (probabilités) : à traiter pendant le premier semestre, après M02-02 (livret, p. 3).
+- S11 (probabilités) : à traiter pendant le premier semestre, après M02-12 (livret, p. 3).
 - S13 (pensée informatique) : à traiter pendant le premier semestre (livret, p. 3).
 - S08 (triangles) : après S05, S06 et S07 (découpage du 19 octobre 2026). S08-12 (cercle circonscrit) s'appuie sur la médiatrice (S05-12, S05-13), sur le cercle (S06-02) et sur la construction d'un triangle (S06-03) ; S08-02 (calculer un angle d'un triangle) s'appuie sur la mesure des angles (S07-03).
 - S06-03 (construire un triangle), critère A : construire un triangle connaissant deux côtés et un angle, ou un côté et deux angles, demande de construire un angle de mesure donnée (S07-04). Le critère F (trois côtés, au compas) se travaille en S06 ; la série A de S06-03 se traite après S07, de même que l'exercice 7 de l'évaluation « Cercles et triangles » (décision du 19 octobre 2026 : tout reste en place, la dépendance est documentée et sera portée par les dépendances entre objectifs quand elles existeront dans l'appli).
@@ -134,15 +134,15 @@ Ces contraintes portent sur l'ordre de la progression, pas sur le référentiel 
 Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (ajoutées le 20 octobre 2026), une ligne par dépendance, sous la forme « objectif → objectif dont il dépend : raison (lot d'origine) ». Un code de séquence seul (S03, M04…) renvoie à la séquence ou à la mise en route entière ; « AC » et « TP » désignent une activité complémentaire ou un travail personnel du lot. Les rapports S04, S05, S07, S08 et S09 n'en ajoutent pas d'autres que celles notées ci-dessus.
 
 - S06 AC « Le triangle de Sierpinski » → S05-04 : les milieux de segments sont réinvestis (lot S06).
-- S10-02 → M06-01 : compter des votes dans un tableau, F02 (lot S10).
-- S10-02 → M02-01 : soustraire des nombres décimaux, E03 (lot S10).
-- S10-02 → M02-03 : calculer 38 % de 1 500, E04 (lot S10).
+- S10-02 → M06-02 : compter des votes dans un tableau, F02 (lot S10).
+- S10-02 → M02-02 : soustraire des nombres décimaux, E03 (lot S10).
+- S10-02 → M02-13 : calculer 38 % de 1 500, E04 (lot S10).
 - S10-02 → S01-03 : lire de grands nombres, E05 (lot S10).
 - S10-02 → S02-12 : comparer des nombres, E05 (lot S10).
-- S10-05 → M03-01 : convertir des longueurs, activité, F10, E08 et TP 2 (lot S10).
-- S10-05 → M02-01 : calculer avec des nombres décimaux, E08 (lot S10).
+- S10-05 → M03-02 : convertir des longueurs, activité, F10, E08 et TP 2 (lot S10).
+- S10-05 → M02-02 : calculer avec des nombres décimaux, E08 (lot S10).
 - S10-05 → S04-03 : prolonger une régularité, E09 (lot S10).
-- S10-04 → M03-04 : calculer une durée de sommeil, F08, en prolongement seulement (lot S10).
+- S10-04 → M03-23 : calculer une durée de sommeil, F08, en prolongement seulement (lot S10).
 - S10 AC 1 → S07-04 : construire un angle (lot S10).
 - S10 AC 1 → S12 : utiliser la proportionnalité (lot S10).
 - S11-02 → S01-12 : la fraction comme quotient, A02 et A03 (lot S11).
@@ -150,12 +150,12 @@ Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (aj
 - S11-02 → S01-14 : 1/3 n'est pas décimal, A03 (lot S11).
 - S11-02 → S02-03 : placer 1/4 et 3/4 sur l'échelle des probabilités, A01 (lot S11).
 - S11-03 → S01-13 : comparer 2/5 et 3/10, E04 (lot S11).
-- S11-03 → M02-02 : 75 % = 3/4, E03 (lot S11).
-- S11-04 → M01-04 : arrondir une fréquence au centième, activité et E05 (lot S11).
+- S11-03 → M02-12 : 75 % = 3/4, E03 (lot S11).
+- S11-04 → M01-32 : arrondir une fréquence au centième, activité et E05 (lot S11).
 - S11-04 → S03 : division décimale à la calculatrice (lot S11).
 - S11-04 → S10-02 : lire un graphique, E05 (lot S11).
 - S11 TP → S03 : 3/8 = 0,375, calculatrice autorisée (lot S11).
-- S11 TP → M01-04 : 1/3 ≈ 0,33, arrondi (lot S11).
+- S11 TP → M01-32 : 1/3 ≈ 0,33, arrondi (lot S11).
 - S12-02 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
 - S12-03 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
 - S12-04 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
@@ -192,7 +192,7 @@ Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (aj
 - Notions à expliquer : « Fraction décimale » (nouvelle) ; « Nombre décimal » (N10/S01/C04, sans les relatifs) ; « Nombre mixte » (nouvelle) ; « Pourcentage » (N10/S01/C02, fiche M02).
 - Exercices : F : N09/S03/F05 ; A : N09/S03/A02, A03 ; E : N09/S03/E02 (Stevin).
 
-L'objectif « arrondir » (ancien S02-06) est retiré : l'arrondi est travaillé dans la mise en route M01-04.
+L'objectif « arrondir » (ancien S02-06) est retiré : l'arrondi est travaillé dans la mise en route M01-32.
 
 ### Partie 2 — Fractions
 
@@ -508,7 +508,7 @@ Deux parties. Les « droites remarquables » de 6e se limitent à la médiatrice
 - Notions à expliquer : « Tableau à double entrée » (nouvelle, expliquée en S10-02) ; « Enquête statistique : population, caractère, données » (nouvelle).
 - Exercices : F, A et E à créer.
 
-L'ancien S05-03 (organiser des données) est retiré : il passe en mise en route, en M06-01 pour le tableau (décision du 18 octobre 2026) ; la construction du diagramme en barres est retirée, car elle relève du cours moyen. S10-02 est recentré sur l'objectif officiel « Faire un choix en filtrant les données d'un tableau selon un critère » : la lecture d'un tableau ou d'un diagramme, automatisme de 6e, devient son critère F, et ses exercices restent valables. La séquence S10 compte trois objectifs : S10-02, S10-04 et S10-05.
+L'ancien S05-03 (organiser des données) est retiré : il passe en mise en route, en M06-02 pour le tableau (décision du 18 octobre 2026) ; la construction du diagramme en barres est retirée, car elle relève du cours moyen. S10-02 est recentré sur l'objectif officiel « Faire un choix en filtrant les données d'un tableau selon un critère » : la lecture d'un tableau ou d'un diagramme, automatisme de 6e, devient son critère F, et ses exercices restent valables. La séquence S10 compte trois objectifs : S10-02, S10-04 et S10-05.
 
 Le programme de 6e fixe quatre objectifs de gestion de données : planifier une enquête et recueillir des données, réaliser des mesures et les consigner dans un tableau, construire un tableau simple, filtrer les données d'un tableau. L'étude de l'évolution d'une grandeur en fonction d'une autre, proposée par la progression de Bordeaux, n'est pas retenue.
 
@@ -592,14 +592,16 @@ Décision du 17 octobre 2026 : en 6e, les débuts de séance suivent la progress
 
 Les objectifs reprennent ceux de M2026\_N09, réécrits avec un seul verbe ; aucun n'a encore de critère ni d'exercice rattaché. Le nombre d'exercices prévus est le nombre de séances de M2026\_N09, un par séance. Dans les lignes de notions, « expliquée en Sxx-xx » ou « expliquée dans la fiche Mxx » renvoie à l'endroit où la notion est expliquée ; dans la progression principale, « fiche Mxx » signale une notion expliquée par une fiche de mise en route.
 
+Décision du 22 octobre 2026 : une séquence de mise en route a **une partie par objectif**, pour que chaque objectif puisse être placé à un moment différent de l'année ; deux objectifs ne partagent une partie que si l'un prépare directement l'autre (M02 : proportion puis application d'un pourcentage ; M03 : durées puis horaires ; M05 : solides puis perspective et patron). Les codes suivent la règle du principal : objectifs de la partie p numérotés à partir de (p − 1) × 10 + 2 (le chiffre 1 reste réservé à l'objectif « Cours »). **Un test court sur 10 par partie.** Anciens codes : M01-01 → M01-02, M01-02 → M01-12, M01-03 → M01-22, M01-04 → M01-32 ; M02-01 → 02, 02 → 12, 03 → 13, 04 → 22, 05 → 32 ; M03-01 → 02, 02 → 12, 03 → 22, 04 → 23 ; M04 et M07 : 01 → 02, 02 → 12, 03 → 22, 04 → 32 ; M05-01 → 02, 02 → 12, 03 → 22, 04 → 23 ; M06-01 → M06-02.
+
 ### M01 — Calcul mental (24 exercices, un par séance)
 
 *Thème A — Nombres, calcul et résolution de problèmes*
 
-- M01-01 · Utiliser les tables de multiplication jusqu'à la table de 12 (6 séances)
-- M01-02 · Calculer un complément entier à 100, à 1 000 ou à 10 000 (6 séances)
-- M01-03 · Calculer un complément décimal à 1 (6 séances)
-- M01-04 · Arrondir un nombre décimal à l'unité, au dixième ou au centième (6 séances)
+- M01-02 · Utiliser les tables de multiplication jusqu'à la table de 12 (6 séances) — partie 1
+- M01-12 · Calculer un complément entier à 100, à 1 000 ou à 10 000 (6 séances) — partie 2
+- M01-22 · Calculer un complément décimal à 1 (6 séances) — partie 3
+- M01-32 · Arrondir un nombre décimal à l'unité, au dixième ou au centième (6 séances) — partie 4
 - Fiche de cours de début de séquence. Notions à expliquer : « Tables de multiplication » (rappel) ; « Complément à 1, à 100, à 1 000, à 10 000 » (nouvelle) ; « Arrondi et valeur approchée » (nouvelle) ; « Unités de numération : dixième, centième, millième » (nouvelle, expliquée en S01-02).
 - Reprend les objectifs retirés du principal : ancien S02-06.
 
@@ -607,69 +609,69 @@ Les objectifs reprennent ceux de M2026\_N09, réécrits avec un seul verbe ; auc
 
 *Thème A — Nombres, calcul et résolution de problèmes*
 
-- M02-01 · Calculer une somme ou une différence de nombres décimaux (10 séances)
-- M02-02 · Exprimer une proportion sous forme de pourcentage (2 séances)
-- M02-03 · Appliquer un pourcentage à une quantité (3 séances)
-- M02-04 · Calculer une somme ou une différence de fractions (7 séances)
-- M02-05 · Multiplier une fraction par un nombre entier (6 séances)
+- M02-02 · Calculer une somme ou une différence de nombres décimaux (10 séances) — partie 1
+- M02-12 · Exprimer une proportion sous forme de pourcentage (2 séances) — partie 2
+- M02-13 · Appliquer un pourcentage à une quantité (3 séances) — partie 2
+- M02-22 · Calculer une somme ou une différence de fractions (7 séances) — partie 3
+- M02-32 · Multiplier une fraction par un nombre entier (6 séances) — partie 4
 - Fiche de cours de début de séquence. Notions à expliquer : « Addition et soustraction posées de nombres décimaux » (nouvelle) ; « Proportion » (N10/S01/C01) ; « Pourcentage » (N10/S01/C02) ; « Fraction d'une quantité » (nouvelle) ; « Addition et soustraction de fractions » (nouvelle) ; « Produit d'une fraction par un entier » (nouvelle) ; « Fractions égales » (nouvelle, expliquée en S01-13).
 - Reprend les objectifs retirés du principal : ancien S09-02, ancien S04-12, ancien S04-13, ancien S09-32 et ancien S09-33.
-- Changements par rapport à M2026\_N09 : « Vocabulaire des opérations » est retiré le 18 octobre 2026 (objectif de 5e, pas de 6e) ; ses 7 séances vont aux calculs : 2 à M02-01, 3 à M02-04 et 2 à M02-05, et les codes sont renumérotés. Les notions d'opérations de 5e (N10/S03/C01 à C03) ne sont plus dans la fiche M02 : elles sont expliquées dans le principal (S03). M02-02 est ajouté (ancien S04-12 du principal, décision du 17 octobre 2026) et placé avant l'application d'un pourcentage ; les 5 séances de la partie « Pourcentages » sont partagées en 2 et 3. « Calculer des pourcentages » est précisé en « Appliquer un pourcentage à une quantité » (M02-03). Coquille corrigée dans M02-04 (« Addtionner »), réécrit avec un seul verbe.
+- Changements par rapport à M2026\_N09 : « Vocabulaire des opérations » est retiré le 18 octobre 2026 (objectif de 5e, pas de 6e) ; ses 7 séances vont aux calculs : 2 à M02-02, 3 à M02-22 et 2 à M02-32, et les codes sont renumérotés. Les notions d'opérations de 5e (N10/S03/C01 à C03) ne sont plus dans la fiche M02 : elles sont expliquées dans le principal (S03). M02-12 est ajouté (ancien S04-12 du principal, décision du 17 octobre 2026) et placé avant l'application d'un pourcentage ; les 5 séances de la partie « Pourcentages » sont partagées en 2 et 3. « Calculer des pourcentages » est précisé en « Appliquer un pourcentage à une quantité » (M02-13). Coquille corrigée dans M02-22 (« Addtionner »), réécrit avec un seul verbe.
 
 ### M03 — Conversion de grandeurs (16 exercices, un par séance)
 
 *Thème B — Grandeurs et mesures*
 
-- M03-01 · Convertir des longueurs (4 séances)
-- M03-02 · Convertir des aires (5 séances)
-- M03-03 · Convertir des durées (4 séances)
-- M03-04 · Calculer un horaire ou une durée (3 séances)
+- M03-02 · Convertir des longueurs (4 séances) — partie 1
+- M03-12 · Convertir des aires (5 séances) — partie 2
+- M03-22 · Convertir des durées (4 séances) — partie 3
+- M03-23 · Calculer un horaire ou une durée (3 séances) — partie 3
 - Fiche de cours de début de séquence. Notions à expliquer : « Tableaux de conversion (longueur et aire) » (N10/S10/C03) ; « Aire et unité d'aire » (nouvelle) ; « Horaire initial, horaire final, durée » (N10/S10/C04).
 - Reprend les objectifs retirés du principal : ancien S07-14, ancien S07-32 et ancien S07-33.
-- Changements par rapport à M2026\_N09 : « Conversion et calcul de durées » est dédoublé en M03-03 et M03-04 (6 séances partagées en 3 et 3). Masses et contenances sont retirées de M03-01 le 18 octobre 2026 (CM1, pas au programme de 6e) : leurs exercices de M2026\_N09 passent en révisions, et 2 des 6 séances vont à M03-02 et M03-03 (une chacune). Les conversions de longueurs restent, car ce sont des automatismes de 6e.
+- Changements par rapport à M2026\_N09 : « Conversion et calcul de durées » est dédoublé en M03-22 et M03-23 (6 séances partagées en 3 et 3). Masses et contenances sont retirées de M03-02 le 18 octobre 2026 (CM1, pas au programme de 6e) : leurs exercices de M2026\_N09 passent en révisions, et 2 des 6 séances vont à M03-12 et M03-22 (une chacune). Les conversions de longueurs restent, car ce sont des automatismes de 6e.
 
 ### M04 — Calcul de grandeurs (24 exercices, un par séance)
 
 *Thème B — Grandeurs et mesures*
 
-- M04-01 · Calculer le périmètre d'un carré, d'un rectangle ou d'une figure composée (6 séances)
-- M04-02 · Déterminer une aire par comptage ou avec une formule (7 séances)
-- M04-03 · Calculer le périmètre d'un cercle (5 séances)
-- M04-04 · Déterminer le volume d'un pavé droit en dénombrant des cubes (6 séances)
+- M04-02 · Calculer le périmètre d'un carré, d'un rectangle ou d'une figure composée (6 séances) — partie 1
+- M04-12 · Déterminer une aire par comptage ou avec une formule (7 séances) — partie 2
+- M04-22 · Calculer le périmètre d'un cercle (5 séances) — partie 3
+- M04-32 · Déterminer le volume d'un pavé droit en dénombrant des cubes (6 séances) — partie 4
 - Fiche de cours de début de séquence. Notions à expliquer : « Périmètre d'un polygone, d'un cercle » (N10/S10/C01) ; « Nombre π » (nouvelle) ; « Cercle et disque : centre, rayon, diamètre, corde » (nouvelle, expliquée en S06-02) ; « Aire du carré et du rectangle » (nouvelle) ; « Aire et unité d'aire » (nouvelle, expliquée dans la fiche M03) ; « Volume et unité de volume : le centimètre cube » (nouvelle).
 - Reprend les objectifs retirés du principal : ancien S07-02, ancien S07-03, ancien S07-12, ancien S07-13 et ancien S07-22.
-- Changements par rapport à M2026\_N09 : M04-02 est réécrit avec un seul verbe ; l'aire du disque est retirée de M04-03 et la formule du volume de M04-04 (hors programme de 6e).
+- Changements par rapport à M2026\_N09 : M04-12 est réécrit avec un seul verbe ; l'aire du disque est retirée de M04-22 et la formule du volume de M04-32 (hors programme de 6e).
 
 ### M05 — Géométrie (24 exercices, un par séance)
 
 *Thème C — Espace et géométrie*
 
-- M05-01 · Tracer à main levée une figure codée avec les premiers éléments de géométrie (6 séances) ; la géométrie mentale y est travaillée : figure dictée à tracer à main levée ou figure codée projetée dont on donne la nature (livret, p. 27, 32). Il n'y a pas d'ardoises au collège : réponse sur le cahier ou à l'oral
-- M05-02 · Reconnaître un polygone ou un quadrilatère usuel (8 séances)
-- M05-03 · Reconnaître un solide usuel (5 séances)
-- M05-04 · Associer une perspective cavalière ou un patron à un solide (5 séances)
+- M05-02 · Tracer à main levée une figure codée avec les premiers éléments de géométrie (6 séances) ; la géométrie mentale y est travaillée : figure dictée à tracer à main levée ou figure codée projetée dont on donne la nature (livret, p. 27, 32). Il n'y a pas d'ardoises au collège : réponse sur le cahier ou à l'oral — partie 1
+- M05-12 · Reconnaître un polygone ou un quadrilatère usuel (8 séances) — partie 2
+- M05-22 · Reconnaître un solide usuel (5 séances) — partie 3
+- M05-23 · Associer une perspective cavalière ou un patron à un solide (5 séances) — partie 3
 - Fiche de cours de début de séquence. Notions à expliquer : « Point, droite, segment, demi-droite » (rappel, expliquée en S05-02) ; « Codage d'une figure » (N10/S12/C01, expliquée en S05-03) ; « Polygones et quadrilatères usuels » (rappel) ; « Solides usuels » (rappel) ; « Perspective cavalière » (N10/S13/C01) ; « Patron d'un pavé droit, d'un cylindre, d'un prisme droit » (N10/S13/C02, cube et pavé seulement).
-- Changements par rapport à M2026\_N09 : M05-01 « Tracer et coder » est réécrit avec un seul verbe ; le codage reste dans l'objectif.
+- Changements par rapport à M2026\_N09 : M05-02 « Tracer et coder » est réécrit avec un seul verbe ; le codage reste dans l'objectif.
 
 ### M06 — Gestion de données (3 exercices, un par séance)
 
 *Thème D — Organisation et gestion de données, probabilités*
 
-- M06-01 · Organiser des données dans un tableau (3 séances) ; lire un tableau ou un diagramme en barres y est travaillé comme automatisme, en critère F et en exercices
+- M06-02 · Organiser des données dans un tableau (3 séances) ; lire un tableau ou un diagramme en barres y est travaillé comme automatisme, en critère F et en exercices — partie 1
 - Fiche de cours de début de séquence. Notions à expliquer : « Tableau à double entrée » (nouvelle, expliquée en S10-02) ; « Série statistique et valeurs » (N10/S06/C01) ; « Effectif, fréquence d'une valeur » (N10/S06/C03, effectif seulement) ; « Diagramme en barres, diagramme circulaire, graphique » (nouvelle).
 - Reprend le tableau de l'objectif retiré du principal ancien S05-03.
-- Changements par rapport à M2026\_N09 : aucun objectif ajouté. La construction d'un diagramme en barres (ancien M06-02, ajouté le 18 octobre 2026) est retirée le même jour : elle relève du cours moyen. Sa séance revient à M06-01, qui garde ses 3 séances.
+- Changements par rapport à M2026\_N09 : aucun objectif ajouté. La construction d'un diagramme en barres (ancien M06-02, ajouté le 18 octobre 2026) est retirée le même jour : elle relève du cours moyen. Sa séance revient à M06-02, qui garde ses 3 séances.
 
 ### M07 — Proportionnalité (12 exercices, un par séance)
 
 *Thème E — Proportionnalité*
 
-- M07-01 · Utiliser des relations multiplicatives simples entre des nombres (3 séances)
-- M07-02 · Résoudre un problème de proportionnalité (3 séances)
-- M07-03 · Utiliser une échelle simple (6 séances)
+- M07-02 · Utiliser des relations multiplicatives simples entre des nombres (3 séances) — partie 1
+- M07-12 · Résoudre un problème de proportionnalité (3 séances) — partie 2
+- M07-22 · Utiliser une échelle simple (6 séances) — partie 3
 - Fiche de cours de début de séquence. Notions à expliquer : « Linéarité de la proportionnalité » (N10/S08/C03) ; « Échelle d'une carte, d'un plan » (N10/S08/C05). Elle rappelle, sans les réexpliquer : « Définition de la proportionnalité entre deux grandeurs » (expliquée en S12-02), « Retour à l'unité » (expliquée en S12-04) et « Représentations d'une situation de proportionnalité » (expliquée en S12-05). Elle donne les procédures : linéarité multiplicative, linéarité additive, retour à l'unité, sans produit en croix.
 - Répartition avec S12 (18 octobre 2026) : la compréhension (définition, reconnaissance, retour à l'unité, représentation) est dans S12 ; M07 garde l'entraînement : rituels de relations multiplicatives (livret, p. 18), résolution de problèmes en choisissant une procédure, échelles.
-- Changements par rapport à M2026\_N09 : M07-01 « Reconnaître et représenter » devient « Utiliser des relations multiplicatives simples entre des nombres » (double, quadruple, moitié, tiers, quart ; « 4 fois plus, 4 fois moins »), automatisme officiel de 6e ; reconnaître et représenter passent dans S12-03 et S12-05. M07-02 est renommé « Résoudre un problème de proportionnalité ».
+- Changements par rapport à M2026\_N09 : M07-02 « Reconnaître et représenter » devient « Utiliser des relations multiplicatives simples entre des nombres » (double, quadruple, moitié, tiers, quart ; « 4 fois plus, 4 fois moins »), automatisme officiel de 6e ; reconnaître et représenter passent dans S12-03 et S12-05. M07-12 est renommé « Résoudre un problème de proportionnalité ».
 
 Total : 7 séquences, 25 objectifs, 7 fiches de cours et 131 exercices (un par séance).
 
@@ -685,16 +687,16 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 | Connaître les liens entre les unités de numération unité, dizaine, centaine, millier, dixième, centième, millième | S01-02 (critère A) |
 | Connaître des grands nombres entiers | S01-03 |
 | Reconnaître un nombre décimal | S01-04 (notion) |
-| Connaître la définition d'un pourcentage | M02-02 (fiche M02) |
+| Connaître la définition d'un pourcentage | M02-12 (fiche M02) |
 | Associer et utiliser différentes écritures d'un nombre décimal : écriture à virgule, fraction, nombre mixte, pourcentage | S01-04 |
 | Placer sur une demi-droite graduée un point dont l'abscisse est un nombre décimal | S02-02 |
 | Repérer un nombre décimal sur une demi-droite graduée | S02-02 (critère F) |
 | Comparer deux nombres décimaux | S02-12 |
 | Ordonner une liste de nombres décimaux | S02-12 |
-| Donner la valeur arrondie à l'unité, au dixième ou au centième, d'un nombre décimal | M01-04 |
-| Déterminer ou connaître la valeur arrondie de certains nombres non décimaux | M01-04 (critère A) |
+| Donner la valeur arrondie à l'unité, au dixième ou au centième, d'un nombre décimal | M01-32 |
+| Déterminer ou connaître la valeur arrondie de certains nombres non décimaux | M01-32 (critère A) |
 | Encadrer un nombre décimal par deux nombres décimaux, intercaler un nombre décimal entre deux nombres décimaux | S02-13 (intercaler : critère A) |
-| Additionner et soustraire des nombres décimaux | M02-01 |
+| Additionner et soustraire des nombres décimaux | M02-02 |
 | Multiplier un nombre entier ou un nombre décimal par 0,1, par 0,01, et par 0,001 | S03-12 |
 | Connaître le lien avec la division par 10, 100 et par 1 000 | S03-12 (critère A) |
 | Comprendre le sens de la multiplication de deux nombres décimaux | S03-13 (notion) |
@@ -716,17 +718,17 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 | Placer une fraction sur une demi-droite graduée dans des cas simples | S02-03 |
 | Graduer un segment de longueur donnée | S02-03 (critère A) |
 | Savoir que la fraction a/b peut représenter un nombre entier, un nombre décimal non entier ou un nombre non décimal | S01-14 |
-| Utiliser une multiplication pour appliquer une fraction à un nombre entier | M02-05 |
+| Utiliser une multiplication pour appliquer une fraction à un nombre entier | M02-32 |
 | Établir des égalités de fractions | S01-13 |
 | Comparer et encadrer des fractions | S02-14, S02-15 |
 | Ordonner une liste de nombres écrits sous forme de fractions ou de nombres mixtes | S02-14 |
-| Additionner et soustraire des fractions | M02-04 |
-| Multiplier une fraction par un nombre entier | M02-05 |
+| Additionner et soustraire des fractions | M02-22 |
+| Multiplier une fraction par un nombre entier | M02-32 |
 | Résoudre des problèmes mettant en jeu des fractions | S03-34 |
 | Inventer des problèmes mettant en jeu des fractions | S03-35 |
-| Comprendre le sens d'un pourcentage | M02-02 (fiche M02) |
-| Calculer une proportion (rapport entre une partie et le tout) et l'exprimer sous forme de pourcentage dans des cas simples | M02-02 |
-| Appliquer un pourcentage à une grandeur ou à un nombre | M02-03 |
+| Comprendre le sens d'un pourcentage | M02-12 (fiche M02) |
+| Calculer une proportion (rapport entre une partie et le tout) et l'exprimer sous forme de pourcentage dans des cas simples | M02-12 |
+| Appliquer un pourcentage à une grandeur ou à un nombre | M02-13 |
 
 **Algèbre**
 
@@ -739,20 +741,20 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 
 | Ligne officielle | Couverture |
 | --- | --- |
-| Savoir que le périmètre du disque est proportionnel à son diamètre | M04-03 (critère A) |
-| Connaître la formule du périmètre d'un disque | M04-03 (fiche M04) |
-| Calculer le périmètre d'un disque | M04-03 |
-| Calculer des périmètres de figures composées | M04-01 |
-| Résoudre des problèmes impliquant des longueurs | M04-01 (critère A) |
-| Effectuer des conversions d'aire | M03-02 |
-| Connaître la formule de l'aire d'un carré ou d'un rectangle | M04-02 (fiche M04) |
-| Calculer l'aire d'un carré ou d'un rectangle | M04-02 |
-| Connaître l'unité centimètre cube | M04-04 (fiche M04) |
-| Comparer des volumes | M04-04 (critère A) |
-| Déterminer un volume | M04-04 |
-| Effectuer des calculs sur des horaires et des durées | M03-04 |
-| Résoudre des problèmes impliquant des horaires et des durées | M03-04 (critère A) |
-| Convertir des durées | M03-03 |
+| Savoir que le périmètre du disque est proportionnel à son diamètre | M04-22 (critère A) |
+| Connaître la formule du périmètre d'un disque | M04-22 (fiche M04) |
+| Calculer le périmètre d'un disque | M04-22 |
+| Calculer des périmètres de figures composées | M04-02 |
+| Résoudre des problèmes impliquant des longueurs | M04-02 (critère A) |
+| Effectuer des conversions d'aire | M03-12 |
+| Connaître la formule de l'aire d'un carré ou d'un rectangle | M04-12 (fiche M04) |
+| Calculer l'aire d'un carré ou d'un rectangle | M04-12 |
+| Connaître l'unité centimètre cube | M04-32 (fiche M04) |
+| Comparer des volumes | M04-32 (critère A) |
+| Déterminer un volume | M04-32 |
+| Effectuer des calculs sur des horaires et des durées | M03-23 |
+| Résoudre des problèmes impliquant des horaires et des durées | M03-23 (critère A) |
+| Convertir des durées | M03-22 |
 
 **Espace et géométrie**
 
@@ -779,7 +781,7 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 | Connaître et construire le cercle circonscrit à un triangle | S08-12 |
 | Connaître la définition du symétrique d'un point par rapport à une droite | S09-02 |
 | Connaître et utiliser les propriétés de la symétrie axiale pour effectuer des constructions | S09-03, S09-04 |
-| Voir dans l'espace des assemblages de cubes | M05-04 (représentations planes) et M04-04 (dénombrement) : critères à orienter vers les assemblages de cubes |
+| Voir dans l'espace des assemblages de cubes | M05-23 (représentations planes) et M04-32 (dénombrement) : critères à orienter vers les assemblages de cubes |
 
 **Organisation et gestion de données, probabilités**
 
@@ -787,7 +789,7 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 | --- | --- |
 | Planifier une enquête et recueillir des données | S10-04 (ajouté ; recueillir : critère A) |
 | Réaliser des mesures et les consigner dans un tableau | S10-05 (ajouté) |
-| Construire un tableau simple pour présenter des données (observations, caractères) | M06-01 |
+| Construire un tableau simple pour présenter des données (observations, caractères) | M06-02 |
 | Faire un choix en filtrant les données d'un tableau selon un critère | S10-02 (titre recentré) |
 | Savoir que la probabilité d'un évènement est un nombre compris entre 0 et 1 | S11-02 |
 | Calculer des probabilités dans des situations simples d'équiprobabilité | S11-03 |
@@ -799,9 +801,9 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 | --- | --- |
 | Connaître la définition de la proportionnalité entre deux grandeurs et la mettre en lien avec des expressions de la vie courante | S12-02 (fiche S12 ; rappel dans la fiche M07) |
 | Identifier si une situation relève du « modèle » de la proportionnalité | S12-03 |
-| Résoudre un problème de proportionnalité en choisissant une procédure adaptée : propriété de linéarité pour la multiplication ou l'addition, retour à l'unité | S12-04 (retour à l'unité) ; M07-02 (entraînement, choix de la procédure ; sans produit en croix, que le programme exclut) |
+| Résoudre un problème de proportionnalité en choisissant une procédure adaptée : propriété de linéarité pour la multiplication ou l'addition, retour à l'unité | S12-04 (retour à l'unité) ; M07-12 (entraînement, choix de la procédure ; sans produit en croix, que le programme exclut) |
 | Représenter une situation de proportionnalité à l'aide d'un tableau ou de notations symboliques | S12-05 |
-| S'initier à la résolution de problèmes d'échelles | M07-03 |
+| S'initier à la résolution de problèmes d'échelles | M07-22 |
 
 **Initiation à la pensée informatique**
 
@@ -815,17 +817,17 @@ Contrôle refait le 18 octobre 2026, ligne par ligne, sur le texte complet du pr
 **Automatismes officiels de 6e** (cartes et rituels, sans objectif propre) :
 
 - Nombres : relations entre unités de numération, passage fraction décimale ↔ écriture décimale, multiplication et division par 10, 100, 1 000 → critère F de S01-02, S01-04 et S03-12 (signalés : aucune mise en route dédiée).
-- Fractions : représentations, égalités à trous (1/4, 1/2, 3/4), 1/4 = 0,25…, « 2/3 de 12 œufs » → critère F de M02-04 et M02-05, et S01-04.
-- Longueurs, aires, durées : préfixes et conversions de longueurs, périmètre du carré et du rectangle, aires sans mesure et sur quadrillage, relations m², dm², cm², lecture de l'heure et unités de durée → M03-01, M03-02, M03-03, M04-01, M04-02. Le compas comme outil de report de longueurs → critère F de S06-02 et S06-03.
-- Géométrie : lexique et codage, reconnaître carré, rectangle, triangle, axes de symétrie d'une figure → S05-03, M05-01, M05-02, critère F de S09-03. Identifier pyramides, boules, cubes, cylindres, pavés, cônes, prismes droits → M05-03.
-- Données : lire un tableau, un diagramme en barres, un diagramme circulaire ou une courbe → critère F de S10-02 et automatisme de M06 (critère F et exercices de M06-01).
-- Proportionnalité : double, quadruple, moitié, tiers, quart ; « 4 fois plus, 4 fois moins » → M07-01.
+- Fractions : représentations, égalités à trous (1/4, 1/2, 3/4), 1/4 = 0,25…, « 2/3 de 12 œufs » → critère F de M02-22 et M02-32, et S01-04.
+- Longueurs, aires, durées : préfixes et conversions de longueurs, périmètre du carré et du rectangle, aires sans mesure et sur quadrillage, relations m², dm², cm², lecture de l'heure et unités de durée → M03-02, M03-12, M03-22, M04-02, M04-12. Le compas comme outil de report de longueurs → critère F de S06-02 et S06-03.
+- Géométrie : lexique et codage, reconnaître carré, rectangle, triangle, axes de symétrie d'une figure → S05-03, M05-02, M05-12, critère F de S09-03. Identifier pyramides, boules, cubes, cylindres, pavés, cônes, prismes droits → M05-22.
+- Données : lire un tableau, un diagramme en barres, un diagramme circulaire ou une courbe → critère F de S10-02 et automatisme de M06 (critère F et exercices de M06-02).
+- Proportionnalité : double, quadruple, moitié, tiers, quart ; « 4 fois plus, 4 fois moins » → M07-02.
 
-**Retirés le 18 octobre 2026, hors programme de 6e** (décision de Laurent) : ancien S01-05 et ancien S01-06, programme de construction (CM2) ; masses et contenances dans M03-01 (CM1) ; ancien M02-01, vocabulaire des opérations (objectif de 5e) ; ancien M06-02, construction d'un diagramme en barres (cours moyen). Il ne reste aucun point à confirmer au titre de la couverture.
+**Retirés le 18 octobre 2026, hors programme de 6e** (décision de Laurent) : ancien S01-05 et ancien S01-06, programme de construction (CM2) ; masses et contenances dans M03-02 (CM1) ; ancien M02-01, vocabulaire des opérations (objectif de 5e) ; ancien M06-02, construction d'un diagramme en barres (cours moyen). Il ne reste aucun point à confirmer au titre de la couverture.
 
 **Écartés** : l'étude de l'évolution d'une grandeur en fonction d'une autre (progression de Bordeaux, absente du texte) ; l'aire du disque et la formule du volume du pavé, retirées de M04 ; l'inégalité triangulaire comme propriété (seul le constat au compas est au programme).
 
-**Exception justifiée** : S05-02 et S05-03 (tracés aux instruments, notations) et M05-01 (tracés à main levée) partagent le vocabulaire mais pas le savoir-faire.
+**Exception justifiée** : S05-02 et S05-03 (tracés aux instruments, notations) et M05-02 (tracés à main levée) partagent le vocabulaire mais pas le savoir-faire.
 
 **Outils** : GeoGebra n'est plus exigé des élèves ; le tableur peut servir pour les motifs évolutifs, sans objectif dédié.
 
@@ -835,7 +837,7 @@ Le livret d'accompagnement de 6e (2026) a été lu en entier. Il rappelle l'espr
 
 **Corrections appliquées** (vocabulaire et formulation de critères) :
 
-- M07-02 devient « Résoudre un problème de proportionnalité » au lieu de « Calculer une quatrième proportionnelle » : le livret parle de choisir une procédure adaptée (linéarité, retour à l'unité) et n'emploie pas « quatrième proportionnelle » (p. 15 et 19).
+- M07-12 devient « Résoudre un problème de proportionnalité » au lieu de « Calculer une quatrième proportionnelle » : le livret parle de choisir une procédure adaptée (linéarité, retour à l'unité) et n'emploie pas « quatrième proportionnelle » (p. 15 et 19).
 - Fiches S12 et M07 : la notion « Situation de proportionnalité » devient « Définition de la proportionnalité entre deux grandeurs », avec la définition du livret (p. 21) ; « Passage à l'unité » devient « Retour à l'unité » (p. 15, 20) ; le coefficient n'est pas défini et le tableau reste un outil de réécriture, avec le nom et l'unité de chaque grandeur (p. 16, 18).
 - S11-03, critère F : passer de « a chances sur b » à l'écriture a/b, objectif majeur de la 6e selon le livret (p. 6, 10).
 - S05-13, critère A : justifier à l'oral ou par écrit, sans rédaction imposée ; la formalisation n'est pas un enjeu de 6e (p. 26, 29).
@@ -843,10 +845,10 @@ Le livret d'accompagnement de 6e (2026) a été lu en entier. Il rappelle l'espr
 **Écarts tranchés par Laurent le 18 octobre 2026** :
 
 - Proportionnalité tout en mise en route (livret, p. 15, 19). **Tranché** : S12 est recréée dans le principal, courte (4 séances), centrée sur la compréhension : définition, reconnaissance, retour à l'unité, représentation (S12-02 à S12-05). M07 garde l'entraînement : relations multiplicatives, résolution de problèmes, échelles.
-- Pourcentages avant probabilités (livret, p. 6). **Tranché** : contrainte de progression, notée dans « Contraintes de progression » : S11-02 dépend de M02-02. L'ordre des séquences ne change pas.
+- Pourcentages avant probabilités (livret, p. 6). **Tranché** : contrainte de progression, notée dans « Contraintes de progression » : S11-02 dépend de M02-12. L'ordre des séquences ne change pas.
 - Algèbre, probabilités et pensée informatique tôt dans l'année (livret, p. 3). **Tranché** : contrainte de progression, S04, S11 et S13 à traiter pendant le premier semestre.
 - Programme de construction (livret, p. 28, 35). **Tranché** : tâche dans S05-12 (critère A et un exercice à créer), pas d'objectif.
-- Géométrie mentale (livret, p. 27, 32). **Tranché** : ajoutée en M05-01 ; pas d'ardoises au collège, réponse sur le cahier ou à l'oral.
+- Géométrie mentale (livret, p. 27, 32). **Tranché** : ajoutée en M05-02 ; pas d'ardoises au collège, réponse sur le cahier ou à l'oral.
 - Codage pour raisonner (livret, p. 25). **Tranché** : ajouté au critère A de S05-03.
 - Approche fréquentiste (livret, p. 10, 11). **Tranché** : simulation avec cumul des résultats de la classe ajoutée en S11-04 (critère F et exercice E).
 
@@ -854,7 +856,7 @@ Le livret d'accompagnement de 6e (2026) a été lu en entier. Il rappelle l'espr
 
 ## Récapitulatif : ce qui est à créer
 
-La structure proposée compte, dans la progression principale, 13 séquences, 20 parties et 52 objectifs hors « Cours » (découpage de la géométrie du 19 octobre 2026 : mêmes objectifs, en quatre séquences), dont S10-04 et S10-05 ajoutés au contrôle du 18 octobre 2026 sur le texte complet du programme, et S12-02 à S12-05 (S12, recréée le même jour). Aucun point n'est à confirmer au titre de la couverture : les anciens S01-05 et S01-06, l'ancien M02-01, la construction du diagramme en barres (ancien M06-02) et les masses et contenances de M03-01 ont été retirés le 18 octobre 2026. Les écarts avec le livret d'accompagnement sont tous tranchés (section qui précède) ; les contraintes d'ordre sont dans « Contraintes de progression ». Les mises en route comptent 7 séquences et 25 objectifs. Chaque objectif a un seul verbe d'action. Dix-huit objectifs du principal sont passés dans les mises en route les 17 et 18 octobre 2026 (4 objectifs aujourd'hui dans le référentiel principal X2026\_N09).
+La structure proposée compte, dans la progression principale, 13 séquences, 20 parties et 52 objectifs hors « Cours » (découpage de la géométrie du 19 octobre 2026 : mêmes objectifs, en quatre séquences), dont S10-04 et S10-05 ajoutés au contrôle du 18 octobre 2026 sur le texte complet du programme, et S12-02 à S12-05 (S12, recréée le même jour). Aucun point n'est à confirmer au titre de la couverture : les anciens S01-05 et S01-06, l'ancien M02-01, la construction du diagramme en barres (ancien M06-02) et les masses et contenances de M03-02 ont été retirés le 18 octobre 2026. Les écarts avec le livret d'accompagnement sont tous tranchés (section qui précède) ; les contraintes d'ordre sont dans « Contraintes de progression ». Les mises en route comptent 7 séquences et 25 objectifs. Chaque objectif a un seul verbe d'action. Dix-huit objectifs du principal sont passés dans les mises en route les 17 et 18 octobre 2026 (4 objectifs aujourd'hui dans le référentiel principal X2026\_N09).
 
 - **Cours du principal** : une méthode par objectif (certaines peuvent être partagées entre objectifs voisins) et une fiche de résumé par objectif, soit 52 fiches.
 - **Fiches de cours des mises en route** : 7, une par séquence, à coller dans le cahier en début de séquence.
@@ -867,7 +869,7 @@ La structure proposée compte, dans la progression principale, 13 séquences, 20
 - **Séries à créer en priorité dans le principal** (aucun exercice existant) : S04-03 (motifs évolutifs), S11-02 à S11-04 (probabilités, avec des exercices de 5e à copier), S01-14, S03-34, S03-35, S03-24 (division décimale), S07-05 (bissectrice, A et E), S10-04 et S10-05 (enquête, mesures), les séries F et E de S12-02 à S12-05 (proportionnalité), et les séries F de S05-02, S05-04.
 - **Exercices à compléter** : N09/S04/A06, N09/S04/E05, N09/S09/F06 (« A rédiger »).
 - **À copier depuis la 5e** : N10/S07/F01, F02, F04, F05, A04 (probabilités).
-- **Mises en route M2026\_N09** : écrire les 7 fiches de cours, saisir les critères, rattacher les exercices et appliquer les objectifs réécrits (un seul verbe, M03-03 dédoublé, aire du disque et formule du volume retirées de M04).
+- **Mises en route M2026\_N09** : écrire les 7 fiches de cours, saisir les critères, rattacher les exercices et appliquer les objectifs réécrits (un seul verbe, M03-22 dédoublé, aire du disque et formule du volume retirées de M04).
 - **Exercices à sortir du principal** (révisions ou exploration) : positions relatives de droites (N09/S15), aires du triangle et du disque, formules et conversions de volume, priorités et distributivité, divisibilité par 3, agrandissement, quadrilatères particuliers.
 
 **Sources** : [programme du cycle 3 (annexe 2)](https://www.education.gouv.fr/sites/default/files/ensel620_annexe2-v2.pdf) ; [ce qui change en 6e (académie de Bordeaux)](https://ent2d.ac-bordeaux.fr/disciplines/mathematiques/le-nouveau-programme-de-mathematiques-en-sixieme-ce-qui-disparait-et-ce-qui-apparait/) ; [progression détaillée de 6e (académie de Bordeaux)](https://ent2d.ac-bordeaux.fr/disciplines/mathematiques/wp-content/uploads/sites/3/2025/07/Progression_6eme_2025_2.pdf).

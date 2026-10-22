@@ -407,6 +407,16 @@ async function atelRefRendreArbre() {
   cont.innerHTML = htmlEvals + cadreSeqs;
 }
 
+// v0.53.1 — Code affiché d'une séquence : « S » + numéro dans le cycle,
+// sauf pour une mise en route (Mnn, numéro 200 + n) ou une archive (Xnn,
+// numéro 100 + n), dont le numéro n'a pas de sens pour l'utilisateur
+// (« S201 ») : leur code. Rien ne change pour les séquences Snn.
+function atelRefCodeSequence(s) {
+  const code = (s && (s.code || s.sequence_code)) || '';
+  if (/^[MX]\d\d$/.test(code)) return code;
+  return 'S' + String((s && s.numero) ?? '?').padStart(2, '0');
+}
+
 function atelRefSequenceHtml(s) {
   const couleurStyle = s.theme_couleur
     ? `border-left:4px solid var(--theme-${s.theme_couleur}, #888)`
@@ -418,7 +428,7 @@ function atelRefSequenceHtml(s) {
       <div class="atl-cadre-titre" style="cursor:pointer"
            onclick="atelRefBasculerSection('${seqId}')">
         <span style="font-size:11px;color:var(--text-muted);font-weight:normal">
-          S${String(s.numero).padStart(2,'0')}
+          ${atelRefCodeSequence(s)}
         </span>
         ${atelRefEscape(s.nom)}
       </div>
@@ -1102,9 +1112,8 @@ function atelRefRenduTraceComplete(trace) {
 
 function atelRefRenduSequence(s) {
   const h = [];
-  const numero = String(s.numero ?? '?').padStart(2, '0');
   h.push(`<details style="margin-left:1em;margin-bottom:4px">`);
-  h.push(`<summary><strong>S${numero}</strong> — ${escHtml(s.nom)} `
+  h.push(`<summary><strong>${atelRefCodeSequence(s)}</strong> — ${escHtml(s.nom)} `
        + `<span style="color:#888">[thème ${escHtml(s.theme_code)}]</span>`
        + `</summary>`);
 

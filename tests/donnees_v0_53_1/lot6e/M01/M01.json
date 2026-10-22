@@ -1,0 +1,358 @@
+{
+ "sequence": "M01",
+ "titre": "Calcul mental",
+ "theme": "A",
+ "type": "mise_en_route",
+ "macros_locales": "",
+ "parties": [
+  {
+   "numero": 1,
+   "titre": "Tables de multiplication",
+   "fiche_cours": {
+    "titre": "Tables de multiplication",
+    "latex": "\\seqSectionFicheSix{Tables de multiplication}\n$7\\times8=\\seqACompleter{56}$ : on retient les tables jusqu'à 12.",
+    "latex_corrige": ""
+   }
+  },
+  {
+   "numero": 2,
+   "titre": "Compléments entiers",
+   "fiche_cours": {
+    "titre": "Compléments entiers",
+    "latex": "\\seqSectionFicheSix{Compléments}\nLe \\seqMotCle{complément} de 37 à 100 est \\seqACompleter{63}, car $37+63=100$.",
+    "latex_corrige": ""
+   }
+  },
+  {
+   "numero": 3,
+   "titre": "Complément décimal à 1",
+   "fiche_cours": {
+    "titre": "Complément décimal à 1",
+    "latex": "\\seqSectionFicheSix{Complément à 1}\nLe complément de 0,35 à 1 est \\seqACompleter{0,65}.",
+    "latex_corrige": ""
+   }
+  },
+  {
+   "numero": 4,
+   "titre": "Arrondis",
+   "fiche_cours": {
+    "titre": "Arrondis",
+    "latex": "\\seqSectionFicheSix{Arrondi}\nL'\\seqMotCle{arrondi} de 3,7 à l'unité est \\seqACompleter{4}.",
+    "latex_corrige": ""
+   }
+  }
+ ],
+ "objectifs": [
+  {
+   "code": "M01-02",
+   "partie": 1,
+   "intitule": "Utiliser les tables de multiplication jusqu'à la table de 12",
+   "criteres": {
+    "F": "Donne 4 produits sur 5 justes en 2 min.",
+    "A": "Donne 5 produits sur 5 justes en 1 min."
+   },
+   "seances": 6
+  },
+  {
+   "code": "M01-12",
+   "partie": 2,
+   "intitule": "Calculer un complément entier à 100, à 1 000 ou à 10 000",
+   "criteres": {
+    "F": "Trouve 4 compléments sur 5.",
+    "A": "Trouve 5 compléments sur 5, y compris à 10 000."
+   },
+   "seances": 6
+  },
+  {
+   "code": "M01-22",
+   "partie": 3,
+   "intitule": "Calculer un complément décimal à 1",
+   "criteres": {
+    "F": "Trouve 4 compléments sur 5.",
+    "A": "Trouve 5 compléments sur 5 au centième."
+   },
+   "seances": 6
+  },
+  {
+   "code": "M01-32",
+   "partie": 4,
+   "intitule": "Arrondir un nombre décimal à l'unité, au dixième ou au centième",
+   "criteres": {
+    "F": "Arrondit 4 nombres sur 5.",
+    "A": "Arrondit 5 nombres sur 5 et justifie."
+   },
+   "seances": 6
+  }
+ ],
+ "exercices_seance": [
+  {
+   "seance": 1,
+   "objectif": "M01-02",
+   "titre": "Tables de 2 à 5",
+   "enonce": "\\begin{seqCalculMental}{1}{Tables de 2 à 5}{5}[3]\n\\seqItemCM{3\\times4}[12]\n\\seqItemCM{5\\times7}[35]\n\\seqItemCM{2\\times9}[18]\n\\seqItemCM{4\\times6}[24]\n\\seqItemCM{3\\times8}[24]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : tables de 2 à 5.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 2,
+   "objectif": "M01-02",
+   "titre": "Tables de 6 à 9",
+   "enonce": "\\begin{seqCalculMental}{5}{Tables de 6 à 9}{5}[3]\n\\seqItemCM{6\\times7}[42]\n\\seqItemCM{8\\times9}[72]\n\\seqItemCM{7\\times7}[49]\n\\seqItemCM{9\\times6}[54]\n\\seqItemCM{8\\times8}[64]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : tables de 6 à 9.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 3,
+   "objectif": "M01-12",
+   "titre": "Compléments à 100",
+   "enonce": "\\begin{seqCalculMental}{2}{Compléments à 100}{5}[3]\n\\seqItemCM{37+\\ldots}[100-37=63]\n\\seqItemCM{82+\\ldots}[18]\n\\seqItemCM{45+\\ldots}[55]\n\\seqItemCM{9+\\ldots}[91]\n\\seqItemCM{61+\\ldots}[39]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : compléments à 100.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 4,
+   "objectif": "M01-12",
+   "titre": "Compléments à 1\\,000",
+   "enonce": "\\begin{seqCalculMental}{6}{Compléments à 1\\,000}{5}[3]\n\\seqItemCM{350+\\ldots}[650]\n\\seqItemCM{720+\\ldots}[280]\n\\seqItemCM{999+\\ldots}[1]\n\\seqItemCM{125+\\ldots}[875]\n\\seqItemCM{40+\\ldots}[960]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : compléments à 1\\,000.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 5,
+   "objectif": "M01-22",
+   "titre": "Compléments à 1",
+   "enonce": "\\begin{seqCalculMental}{3}{Compléments à 1}{5}[3]\n\\seqItemCM{0{,}3+\\ldots}[0{,}7]\n\\seqItemCM{0{,}45+\\ldots}[0{,}55]\n\\seqItemCM{0{,}9+\\ldots}[0{,}1]\n\\seqItemCM{0{,}12+\\ldots}[0{,}88]\n\\seqItemCM{0{,}6+\\ldots}[0{,}4]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : compléments à 1.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 6,
+   "objectif": "M01-22",
+   "titre": "Compléments à 1 (suite)",
+   "enonce": "\\begin{seqCalculMental}{7}{Compléments à 1 (suite)}{5}[3]\n\\seqItemCM{0{,}25+\\ldots}[0{,}75]\n\\seqItemCM{0{,}05+\\ldots}[0{,}95]\n\\seqItemCM{0{,}8+\\ldots}[0{,}2]\n\\seqItemCM{0{,}33+\\ldots}[0{,}67]\n\\seqItemCM{0{,}71+\\ldots}[0{,}29]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : compléments à 1 (suite).",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 7,
+   "objectif": "M01-32",
+   "titre": "Arrondir à l'unité",
+   "enonce": "\\begin{seqCalculMental}{4}{Arrondir à l'unité}{5}[3]\n\\seqItemCM{\\text{arrondi de }3{,}7}[4]\n\\seqItemCM{\\text{arrondi de }12{,}2}[12]\n\\seqItemCM{\\text{arrondi de }0{,}5}[1]\n\\seqItemCM{\\text{arrondi de }8{,}49}[8]\n\\seqItemCM{\\text{arrondi de }19{,}6}[20]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : arrondir à l'unité.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  },
+  {
+   "seance": 8,
+   "objectif": "M01-32",
+   "titre": "Arrondir au dixième",
+   "enonce": "\\begin{seqCalculMental}{8}{Arrondir au dixième}{5}[3]\n\\seqItemCM{\\text{arrondi de }3{,}74}[3{,}7]\n\\seqItemCM{\\text{arrondi de }1{,}26}[1{,}3]\n\\seqItemCM{\\text{arrondi de }0{,}95}[1{,}0]\n\\seqItemCM{\\text{arrondi de }8{,}01}[8{,}0]\n\\seqItemCM{\\text{arrondi de }4{,}55}[4{,}6]\n\\end{seqCalculMental}",
+   "corrige": "On utilise la fiche de cours : arrondir au dixième.",
+   "remed_enonce": "",
+   "remed_corrige": "",
+   "calculatrice": "interdite",
+   "ordinateur": "",
+   "origine": "créé (jeu de test v0.53.1, d'après v0.53.0)",
+   "notes": ""
+  }
+ ],
+ "evaluations": [
+  {
+   "titre": "Test court --- Tables de multiplication",
+   "partie": 1,
+   "sujet": "A",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-02",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Tables}{10 pts --- M01-02}\nCalculer : $3\\times4=\\seqACompleter{12}$ ; $6\\times7=\\seqACompleter{42}$.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-02}\nCalculer $12\\times12=\\seqACompleter{144}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Tables de multiplication",
+   "partie": 1,
+   "sujet": "B",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-02",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Tables}{10 pts --- M01-02}\nCalculer : $5\\times4=\\seqACompleter{20}$ ; $8\\times7=\\seqACompleter{56}$.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-02}\nCalculer $11\\times12=\\seqACompleter{132}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Compléments entiers",
+   "partie": 2,
+   "sujet": "A",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-12",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Compléments}{10 pts --- M01-12}\nCompléter : $37+\\seqACompleter{63}=100$.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-12}\nCalculer $12\\times12=\\seqACompleter{144}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Compléments entiers",
+   "partie": 2,
+   "sujet": "B",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-12",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Compléments}{10 pts --- M01-12}\nCompléter : $41+\\seqACompleter{59}=100$.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-12}\nCalculer $11\\times12=\\seqACompleter{132}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Complément décimal à 1",
+   "partie": 3,
+   "sujet": "A",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-22",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Complément à 1}{10 pts --- M01-22}\nCompléter : $0{,}35+\\seqACompleter{0{,}65}=1$.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-22}\nCalculer $12\\times12=\\seqACompleter{144}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Complément décimal à 1",
+   "partie": 3,
+   "sujet": "B",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-22",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Complément à 1}{10 pts --- M01-22}\nCompléter : $0{,}45+\\seqACompleter{0{,}55}=1$.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-22}\nCalculer $11\\times12=\\seqACompleter{132}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Arrondis",
+   "partie": 4,
+   "sujet": "A",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-32",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Arrondis}{10 pts --- M01-32}\nArrondir 3,7 à l'unité : \\seqACompleter{4}.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-32}\nCalculer $12\\times12=\\seqACompleter{144}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  },
+  {
+   "titre": "Test court --- Arrondis",
+   "partie": 4,
+   "sujet": "B",
+   "calculatrice": "interdite",
+   "bareme": [
+    [
+     "M01-32",
+     10
+    ],
+    [
+     "Bonus",
+     1
+    ]
+   ],
+   "total": 10,
+   "latex": "\\seqExoEval{Arrondis}{10 pts --- M01-32}\nArrondir 5,2 à l'unité : \\seqACompleter{5}.\n\\seqExoEval{Bonus (compté seulement si toutes les autres questions sont traitées)}{1 pt --- M01-32}\nCalculer $11\\times12=\\seqACompleter{132}$.",
+   "bareme_detail": "",
+   "origine": "créé (jeu de test v0.53.1)"
+  }
+ ],
+ "evaluations_retirees": [
+  "Test court --- Tables et compléments"
+ ]
+}

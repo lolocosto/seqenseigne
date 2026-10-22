@@ -1578,6 +1578,16 @@ class SqliteStore:
         except Exception as _e:                       # pragma: no cover
             print(f"  [marqueurs_exercices] migration impossible : {_e}")
 
+        # ── v0.53.1 (P1) — Libellé des parties de séquence-niveau : colonne
+        #    `sequence_parties.libelle` (défaut '' : rien ne change pour les
+        #    séquences existantes ; remplie par l'import des mises en route) ─
+        try:
+            from services import mises_en_route_6e as _mer
+            _mer.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [mises_en_route_6e] migration impossible : {_e}")
+
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
     def _peupler_param_niveaux_si_vide(self, conn) -> None:
