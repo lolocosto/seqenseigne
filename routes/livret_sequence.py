@@ -333,3 +333,94 @@ def api_livret_sequence_pdf(niveau: str, sequence: str):
         'log_complet': resultat.log_complet,
         'duree_ms': resultat.duree_ms,
     }), code_http
+
+
+# ── v0.53.3 (D-TOUT) — « Tout compiler » d'une séquence de mise en route ─────
+#
+# GET /api/v2/livret-sequence/<niveau>/<Mnn>/mer/tout-compiler?partie=n
+#     → text/event-stream (EventSource) : debut, un événement par document,
+#       puis fin (archive ZIP) ou abandon ; la fermeture de la connexion par
+#       le navigateur annule (comme le rendu par lot, routes/admin.py).
+# GET /api/v2/livret-sequence/mer/archive/<nom>.zip → l'archive des PDF.
+# GET /api/v2/livret-sequence/mer/echec/<nom>.log|.tex → log d'un échec.
+# Catégorie « atelier » (blueprint livret_sequence, services/profils.py).
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/mer/tout-compiler', methods=['GET'])
+def api_livret_sequence_mer_tout_compiler(niveau: str, sequence: str):
+    from services.mer_tout_compiler import iter_tout_compiler
+    from services.mises_en_route_6e import (MiseEnRouteErreur, _partie_option,
+                                            est_sequence_mer, lire_sequence_mer, partie_de)
+    from services.compilation_batch import evenement_vers_sse
+    from flask import stream_with_context
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    if not est_sequence_mer(sequence):
+        return jsonify({'error': 'pas_une_mise_en_route',
+                        'message': f"{sequence} n'est pas une séquence de mise en route"}), 400
+    js = current_app.json_store
+    try:
+        partie = _partie_option(request.args.get('partie'))
+        with js._conn() as conn:
+            s = lire_sequence_mer(conn, niveau, sequence)
+            if partie is not None:
+                partie_de(s, partie)
+    except MiseEnRouteErreur as e:
+        return jsonify({'error': 'options_invalides', 'message': str(e)}), 400
+    config = _configuration()
+    dossier_images = Path(js.data_dir) / 'images'
+    racine_sources = config.chemin_sources_livrets()
+    pdflatex = config.chemin_pdflatex()
+    timeout = config.timeout_compilation_long()
+    cache_dir = _cache_dir()
+    racine_appli = _racine_appli()
+
+    def compiler(tex):
+        return compiler_atome(tex_source=tex, racine_sources=racine_sources,
+                              cache_dir=cache_dir, pdflatex=pdflatex,
+                              racine_appli=racine_appli, timeout=timeout,
+                              dossier_images=dossier_images if dossier_images.is_dir() else None)
+
+    def generateur():
+        try:
+            for ev in iter_tout_compiler(
+                    js._conn, niveau, sequence, partie, compiler=compiler,
+                    tikz_libraries=config.tikz_libraries(),
+                    tblr_libraries=config.tblr_libraries(),
+                    dossier_echecs=cache_dir / 'echecs_mer',
+                    dossier_archives=Path(js.data_dir) / 'rapports',
+                    max_erreurs_consecutives=config.compilation_batch_max_erreurs_consecutives()):
+                yield evenement_vers_sse(ev)
+        except GeneratorExit:                       # annulation depuis l'interface
+            raise
+        except Exception as e:
+            yield evenement_vers_sse({'kind': 'erreur_serveur',
+                                      'message': f"{type(e).__name__}: {e}"})
+
+    return Response(stream_with_context(generateur()), mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+
+
+@bp.route('/api/v2/livret-sequence/mer/archive/<nom>', methods=['GET'])
+def api_livret_sequence_mer_archive(nom: str):
+    from flask import send_file
+    from services.mer_tout_compiler import nom_sur
+    if not nom_sur(nom, ('.zip',)):
+        return jsonify({'error': 'Nom d\'archive invalide.'}), 400
+    chemin = Path(current_app.json_store.data_dir) / 'rapports' / nom
+    if not chemin.is_file():
+        return jsonify({'error': 'Archive introuvable.'}), 404
+    return send_file(chemin, mimetype='application/zip', as_attachment=True, download_name=nom)
+
+
+@bp.route('/api/v2/livret-sequence/mer/echec/<nom>', methods=['GET'])
+def api_livret_sequence_mer_echec(nom: str):
+    from flask import send_file
+    from services.mer_tout_compiler import nom_sur
+    if not nom_sur(nom, ('.log', '.tex')):
+        return jsonify({'error': 'Nom de fichier invalide.'}), 400
+    chemin = _cache_dir() / 'echecs_mer' / nom
+    if not chemin.is_file():
+        return jsonify({'error': 'Fichier introuvable.'}), 404
+    return send_file(chemin, mimetype='text/plain; charset=utf-8', as_attachment=False,
+                     download_name=nom)

@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/22 v0.10 seqenseigne : style des documents de 6e]
+    [2026/10/25 v0.11 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -554,6 +554,307 @@
   font=\scriptsize\bfseries](m){#1};}
 \NewDocumentCommand{\seqLocObjet}{O{seqSixRouge} m}{\tikz[baseline=(o.base)]\node[draw=#1!80!black,
   fill=#1!25, circle, minimum size=0.62cm, inner sep=0.5pt, font=\scriptsize\bfseries](o){#2};}
+\RequirePackage{colortbl}
+\ExplSyntaxOn
+\seq_new:N \l__seqsix_conv_symboles_seq
+\seq_new:N \l__seqsix_conv_prefixes_seq
+\seq_new:N \l__seqsix_conv_valeurs_seq
+\seq_new:N \l__seqsix_conv_noms_seq
+\tl_new:N \l__seqsix_conv_principale_tl
+\tl_new:N \l__seqsix_conv_exposant_tl
+\int_new:N \l__seqsix_conv_rang_int
+\int_new:N \l__seqsix_conv_hectares_int
+\bool_new:N \l__seqsix_conv_prefixes_bool
+\bool_new:N \l__seqsix_conv_valeurs_bool
+\bool_new:N \l__seqsix_conv_note_bool
+\bool_new:N \l__seqsix_conv_etiquettes_bool
+\dim_new:N \l__seqsix_conv_colonne_dim
+\dim_new:N \l__seqsix_conv_largeur_dim
+\dim_new:N \l__seqsix_conv_p_dim
+\int_new:N \l__seqsix_conv_cols_int
+\int_new:N \l__seqsix_conv_unite_int
+\int_new:N \l__seqsix_conv_pos_int
+\tl_new:N \l__seqsix_conv_tl
+\tl_new:N \l__seqsix_conv_case_tl
+\tl_new:N \l__seqsix_conv_nombre_tl
+\str_new:N \l__seqsix_conv_nombre_str
+\str_new:N \l__seqsix_conv_ent_str
+\str_new:N \l__seqsix_conv_dec_str
+\str_new:N \l__seqsix_conv_unite_str
+\bool_new:N \l__seqsix_conv_dec_bool
+\bool_new:N \l__seqsix_conv_reponse_bool
+\bool_new:N \l__seqsix_conv_compact_bool
+\cs_new_protected:Npn \__seqsix_conv_grandeur:nnn #1#2#3
+  {
+    \int_set:Nn \l__seqsix_conv_rang_int {#1}
+    \tl_set:Nn \l__seqsix_conv_principale_tl {#2}
+    \tl_set:Nn \l__seqsix_conv_exposant_tl {#3}
+  }
+\keys_define:nn { seqsix / conversion }
+  {
+    grandeur .choice: ,
+    grandeur / longueur .code:n = \__seqsix_conv_grandeur:nnn { 1 } { m } { } ,
+    grandeur / masse .code:n = \__seqsix_conv_grandeur:nnn { 1 } { g } { } ,
+    grandeur / contenance .code:n = \__seqsix_conv_grandeur:nnn { 1 } { L } { } ,
+    grandeur / aire .code:n = \__seqsix_conv_grandeur:nnn { 2 } { m } { $^2$ } ,
+    grandeur .initial:n = longueur ,
+    hectares .choice: ,
+    hectares / non .code:n = \int_set:Nn \l__seqsix_conv_hectares_int { 0 } ,
+    hectares / ha .code:n = \int_set:Nn \l__seqsix_conv_hectares_int { 1 } ,
+    hectares / ha-a-ca .code:n = \int_set:Nn \l__seqsix_conv_hectares_int { 3 } ,
+    hectares .default:n = ha ,
+    hectares .initial:n = non ,
+    prefixes .bool_set:N = \l__seqsix_conv_prefixes_bool ,
+    prefixes .default:n = true ,
+    valeurs .bool_set:N = \l__seqsix_conv_valeurs_bool ,
+    valeurs .default:n = true ,
+    note .bool_set:N = \l__seqsix_conv_note_bool ,
+    note .default:n = true ,
+    colonne .dim_set:N = \l__seqsix_conv_colonne_dim ,
+    colonne .initial:n = 0.8cm ,
+    largeur .dim_set:N = \l__seqsix_conv_largeur_dim ,
+    largeur .initial:n = 0pt ,
+    compact .bool_set:N = \l__seqsix_conv_compact_bool ,
+    compact .default:n = true ,
+  }
+\seq_set_split:Nnn \l__seqsix_conv_symboles_seq { , } { k , h , da , , d , c , m }
+\seq_set_split:Nnn \l__seqsix_conv_prefixes_seq { / }
+  { kilo / hecto / déca / / déci / centi / milli }
+\seq_set_split:Nnn \l__seqsix_conv_valeurs_seq { / }
+  { 1\,000 / 100 / 10 / 1 / 0{,}1 / 0{,}01 / 0{,}001 }
+\cs_new_protected:Npn \__seqsix_conv_preparer:
+  {
+    \seq_clear:N \l__seqsix_conv_noms_seq
+    \seq_map_inline:Nn \l__seqsix_conv_symboles_seq
+      { \seq_put_right:Nx \l__seqsix_conv_noms_seq { ##1 \l__seqsix_conv_principale_tl } }
+    \int_set:Nn \l__seqsix_conv_cols_int
+      { \seq_count:N \l__seqsix_conv_noms_seq * \l__seqsix_conv_rang_int }
+    \dim_compare:nNnT { \l__seqsix_conv_largeur_dim } > { 0pt }
+      {
+        \dim_set:Nn \l__seqsix_conv_colonne_dim
+          { \l__seqsix_conv_largeur_dim / \seq_count:N \l__seqsix_conv_noms_seq }
+      }
+    \dim_set:Nn \l__seqsix_conv_p_dim
+      { \l__seqsix_conv_colonne_dim / \l__seqsix_conv_rang_int - 2 \tabcolsep }
+    \bool_set_false:N \l__seqsix_conv_etiquettes_bool
+    \int_compare:nNnT { \l__seqsix_conv_rang_int } = { 1 }
+      {
+        \bool_lazy_or:nnT { \l__seqsix_conv_prefixes_bool } { \l__seqsix_conv_valeurs_bool }
+          { \bool_set_true:N \l__seqsix_conv_etiquettes_bool }
+      }
+  }
+\cs_new:Npn \__seqsix_conv_colonne:
+  { > { \exp_not:N \centering \exp_not:N \arraybackslash }
+    p { \dim_use:N \l__seqsix_conv_p_dim } }
+\cs_new_protected:Npn \__seqsix_conv_entete:
+  {
+    \tl_set:Nx \l__seqsix_conv_case_tl
+      {
+        \bool_if:NT \l__seqsix_conv_etiquettes_bool { | l }
+        \prg_replicate:nn { \seq_count:N \l__seqsix_conv_noms_seq }
+          {
+            | \__seqsix_conv_colonne:
+            \int_compare:nNnT { \l__seqsix_conv_rang_int } = { 2 }
+              {
+                ! { \exp_not:N \color { seqSixGrisTexte!45 } \exp_not:N \vrule }
+                \__seqsix_conv_colonne:
+              }
+          }
+        | \bool_if:NT \l__seqsix_conv_note_bool { l | }
+      }
+    \tl_set:Nx \l__seqsix_conv_tl
+      { \exp_not:N \begin { tabular } { \exp_not:V \l__seqsix_conv_case_tl } \exp_not:N \hline }
+    \bool_if:NT \l__seqsix_conv_etiquettes_bool
+      { \tl_put_right:Nn \l__seqsix_conv_tl { \cellcolor { seqSixEnteteTab } Unité & } }
+    \seq_map_indexed_inline:Nn \l__seqsix_conv_noms_seq
+      {
+        \int_compare:nNnT { ##1 } > { 1 } { \tl_put_right:Nn \l__seqsix_conv_tl { & } }
+        \int_compare:nNnTF { \l__seqsix_conv_rang_int } = { 2 }
+          {
+            \tl_put_right:Nx \l__seqsix_conv_tl
+              {
+                \exp_not:N \multicolumn { 2 }
+                  { \int_compare:nNnT { ##1 } = { 1 } { | } c | }
+                  { \exp_not:N \cellcolor { seqSixEnteteTab }
+                    \exp_not:N \textbf { ##2 \exp_not:V \l__seqsix_conv_exposant_tl } }
+              }
+          }
+          {
+            \tl_put_right:Nn \l__seqsix_conv_tl
+              { \cellcolor { seqSixEnteteTab } \textbf { ##2 } }
+          }
+      }
+    \__seqsix_conv_fin_ligne:n { }
+    \bool_lazy_and:nnT
+      { \int_compare_p:nNn { \l__seqsix_conv_rang_int } = { 2 } }
+      { \int_compare_p:nNn { \l__seqsix_conv_hectares_int } > { 0 } }
+      {
+        \seq_map_indexed_inline:Nn \l__seqsix_conv_noms_seq
+          {
+            \int_compare:nNnT { ##1 } > { 1 } { \tl_put_right:Nn \l__seqsix_conv_tl { & } }
+            \tl_put_right:Nx \l__seqsix_conv_tl
+              {
+                \exp_not:N \multicolumn { 2 }
+                  { \int_compare:nNnT { ##1 } = { 1 } { | } c | }
+                  {
+                    \exp_not:N \footnotesize
+                    \int_case:nn { ##1 }
+                      {
+                        { 2 } { ha }
+                        { 3 } { \int_compare:nNnT { \l__seqsix_conv_hectares_int } = { 3 } { a } }
+                        { 4 } { \int_compare:nNnT { \l__seqsix_conv_hectares_int } = { 3 } { ca } }
+                      }
+                  }
+              }
+          }
+        \__seqsix_conv_fin_ligne:n { }
+      }
+    \bool_if:NT \l__seqsix_conv_etiquettes_bool
+      {
+        \bool_if:NT \l__seqsix_conv_prefixes_bool
+          {
+            \tl_put_right:Nn \l__seqsix_conv_tl { \cellcolor { seqSixEnteteTab } Préfixe }
+            \seq_map_inline:Nn \l__seqsix_conv_prefixes_seq
+              { \tl_put_right:Nn \l__seqsix_conv_tl { & ##1 } }
+            \__seqsix_conv_fin_ligne:n { }
+          }
+        \bool_if:NT \l__seqsix_conv_valeurs_bool
+          {
+            \tl_put_right:Nn \l__seqsix_conv_tl { \cellcolor { seqSixEnteteTab } Valeur }
+            \seq_map_inline:Nn \l__seqsix_conv_valeurs_seq
+              {
+                \tl_put_right:Nn \l__seqsix_conv_tl { & \footnotesize $##1$ \nobreakspace }
+                \tl_put_right:NV \l__seqsix_conv_tl \l__seqsix_conv_principale_tl
+              }
+            \__seqsix_conv_fin_ligne:n { }
+          }
+      }
+  }
+\cs_new_protected:Npn \__seqsix_conv_fin_ligne:n #1
+  {
+    \bool_if:NT \l__seqsix_conv_note_bool
+      { \tl_put_right:Nn \l__seqsix_conv_tl { & \footnotesize #1 } }
+    \tl_put_right:Nn \l__seqsix_conv_tl { \tabularnewline \hline }
+  }
+\NewDocumentCommand{\seqTableauConversionSix}{ O{} +m }
+  {
+    \group_begin:
+      \keys_set:nn { seqsix / conversion } {#1}
+      \bool_if:NTF \l__seqsix_conv_compact_bool
+        { \footnotesize \renewcommand { \arraystretch } { 1.05 } }
+        { \small \renewcommand { \arraystretch } { 1.15 } }
+      \setlength { \tabcolsep } { 1.5pt }
+      \__seqsix_conv_preparer:
+      \__seqsix_conv_entete:
+      \tl_use:N \l__seqsix_conv_tl
+      #2
+      \end { tabular }
+    \group_end:
+  }
+\NewDocumentCommand{\seqLigneConversionSix}{ s o m m }
+  {
+    \bool_set:Nn \l__seqsix_conv_reponse_bool {#1}
+    \tl_set:Nn \l__seqsix_conv_nombre_tl {#3}
+    \tl_remove_all:Nn \l__seqsix_conv_nombre_tl { \, }
+    \str_set:Nx \l__seqsix_conv_nombre_str { \tl_to_str:N \l__seqsix_conv_nombre_tl }
+    \str_remove_all:Nn \l__seqsix_conv_nombre_str { ~ }
+    \str_clear:N \l__seqsix_conv_ent_str
+    \str_clear:N \l__seqsix_conv_dec_str
+    \bool_set_false:N \l__seqsix_conv_dec_bool
+    \str_map_inline:Nn \l__seqsix_conv_nombre_str
+      {
+        \str_if_in:nnTF { ,. } {##1}
+          { \bool_set_true:N \l__seqsix_conv_dec_bool }
+          {
+            \str_if_in:nnT { 0123456789 } {##1}
+              {
+                \bool_if:NTF \l__seqsix_conv_dec_bool
+                  { \str_put_right:Nn \l__seqsix_conv_dec_str {##1} }
+                  { \str_put_right:Nn \l__seqsix_conv_ent_str {##1} }
+              }
+          }
+      }
+    \int_zero:N \l__seqsix_conv_unite_int
+    \str_set:Nx \l__seqsix_conv_unite_str { \tl_to_str:n {#4} }
+    \int_compare:nNnT { \l__seqsix_conv_rang_int } = { 2 }
+      {
+        \str_case:VnT \l__seqsix_conv_unite_str
+          { { ha } { } { a } { } { ca } { } }
+          {
+            \str_set:Nx \l__seqsix_conv_unite_str
+              { \str_case:Vn \l__seqsix_conv_unite_str { { ha } { hm } { a } { dam } { ca } { m } } }
+          }
+      }
+    \seq_map_indexed_inline:Nn \l__seqsix_conv_noms_seq
+      {
+        \str_if_eq:VnT \l__seqsix_conv_unite_str {##2}
+          { \int_set:Nn \l__seqsix_conv_unite_int {##1} }
+      }
+    \bool_lazy_and:nnT
+      { ! \str_if_empty_p:N \l__seqsix_conv_ent_str }
+      { \int_compare_p:nNn { \l__seqsix_conv_unite_int } = { 0 } }
+      {
+        \exp_args:Nnno \msg_error:nnn { seqenseigne-style6e } { unite-inconnue } { \tl_to_str:n {#4} }
+        \str_clear:N \l__seqsix_conv_ent_str
+        \str_clear:N \l__seqsix_conv_dec_str
+      }
+    \int_set:Nn \l__seqsix_conv_unite_int
+      { \l__seqsix_conv_unite_int * \l__seqsix_conv_rang_int }
+    \bool_lazy_or:nnT
+      { \int_compare_p:nNn
+          { \l__seqsix_conv_unite_int - \str_count:N \l__seqsix_conv_ent_str } < { 0 } }
+      { \int_compare_p:nNn
+          { \l__seqsix_conv_unite_int + \str_count:N \l__seqsix_conv_dec_str }
+          > { \l__seqsix_conv_cols_int } }
+      { \exp_args:Nnno \msg_warning:nnn { seqenseigne-style6e } { hors-tableau } { \tl_to_str:n {#3} } }
+    \tl_clear:N \l__seqsix_conv_tl
+    \bool_if:NT \l__seqsix_conv_etiquettes_bool
+      { \tl_put_right:Nn \l__seqsix_conv_tl { & } }
+    \int_step_inline:nn { \l__seqsix_conv_cols_int }
+      {
+        \int_compare:nNnT { ##1 } > { 1 } { \tl_put_right:Nn \l__seqsix_conv_tl { & } }
+        \tl_clear:N \l__seqsix_conv_case_tl
+        \int_set:Nn \l__seqsix_conv_pos_int
+          { ##1 - \l__seqsix_conv_unite_int + \str_count:N \l__seqsix_conv_ent_str }
+        \bool_lazy_and:nnTF
+          { \int_compare_p:nNn { \l__seqsix_conv_pos_int } > { 0 } }
+          { \int_compare_p:nNn { ##1 } < { \l__seqsix_conv_unite_int + 1 } }
+          {
+            \tl_set:Nx \l__seqsix_conv_case_tl
+              { \str_item:Nn \l__seqsix_conv_ent_str { \l__seqsix_conv_pos_int } }
+            \bool_lazy_and:nnT
+              { \int_compare_p:nNn { ##1 } = { \l__seqsix_conv_unite_int } }
+              { \bool_lazy_and_p:nn { \l__seqsix_conv_dec_bool }
+                  { ! \str_if_empty_p:N \l__seqsix_conv_dec_str } }
+              { \tl_put_right:Nn \l__seqsix_conv_case_tl { \rlap { , } } }
+          }
+          {
+            \int_set:Nn \l__seqsix_conv_pos_int { ##1 - \l__seqsix_conv_unite_int }
+            \bool_lazy_and:nnT
+              { \int_compare_p:nNn { \l__seqsix_conv_pos_int } > { 0 } }
+              { \int_compare_p:nNn { \l__seqsix_conv_pos_int }
+                  < { \str_count:N \l__seqsix_conv_dec_str + 1 } }
+              {
+                \tl_set:Nx \l__seqsix_conv_case_tl
+                  { \str_item:Nn \l__seqsix_conv_dec_str { \l__seqsix_conv_pos_int } }
+              }
+          }
+        \tl_if_empty:NF \l__seqsix_conv_case_tl
+          {
+            \bool_if:NTF \l__seqsix_conv_reponse_bool
+              { \tl_put_right:Nx \l__seqsix_conv_tl
+                  { \exp_not:N \seqLocCellule { \exp_not:V \l__seqsix_conv_case_tl } } }
+              { \tl_put_right:NV \l__seqsix_conv_tl \l__seqsix_conv_case_tl }
+          }
+      }
+    \__seqsix_conv_fin_ligne:n { \IfValueT {#2} {#2} }
+    \tl_use:N \l__seqsix_conv_tl
+  }
+\msg_new:nnn { seqenseigne-style6e } { unite-inconnue }
+  { \token_to_str:N \seqLigneConversionSix :~unite~'#1'~absente~du~tableau. }
+\msg_new:nnn { seqenseigne-style6e } { hors-tableau }
+  { \token_to_str:N \seqLigneConversionSix :~des~chiffres~de~'#1'~sortent~du~tableau. }
+\ExplSyntaxOff
 \endinput
 %%
 %% End of file `seqenseigne-style6e.sty'.

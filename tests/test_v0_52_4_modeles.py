@@ -425,7 +425,7 @@ def test_t1_module_style6e_v0_5_sans_6e_en_dur_dans_les_en_tetes():
     # v0.52.5 : module en v0.6 (macros du lot S05) ; v0.52.7 : v0.7 ; v0.52.8 : v0.8
     # (marqueurs de l'exercice) ; T1 reste en place.
     # v0.53.0 : module v0.9 (\seqLocItemCM, lot M01), qui garde tout ce qui précède.
-    assert "v0.10 seqenseigne" in dtx and "v0.10 seqenseigne" in sty   # v0.53.1 : v0.10
+    assert "v0.11 seqenseigne" in dtx and "v0.11 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11
     assert r"\changes{v0.5}" in dtx
     for src in (dtx, sty):
         assert r"\newcommand{\seqNiveauCourt}{6e}" in src

@@ -328,7 +328,7 @@ def test_a1_module_v0_8_documente_l_astuce():
     dtx = (APPLI / "paquet" / "seqenseigne-style6e.dtx").read_text(encoding="utf-8")
     sty = (APPLI / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
     # v0.53.0 : module v0.9 (\seqLocItemCM, lot M01), qui garde tout ce qui précède.
-    assert "v0.10 seqenseigne" in dtx and "v0.10 seqenseigne" in sty   # v0.53.1 : v0.10
+    assert "v0.11 seqenseigne" in dtx and "v0.11 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11
     for m in ("seqAstuceSix", "seqPictoAstuceSix"):
         assert m in style6e.MACROS
         assert rf"\DescribeMacro{{\{m}}}" in dtx

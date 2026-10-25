@@ -270,7 +270,7 @@ def test_macros_du_lot_s05_dans_le_module_v0_6_car_les_enonces_du_lot_les_appell
     dtx, sty = DTX.read_text(encoding="utf-8"), STY.read_text(encoding="utf-8")
     # v0.52.7 : le module est passé en v0.7 ; v0.52.8 : v0.8 ; les macros v0.6 restent.
     # v0.53.0 : module v0.9 (\seqLocItemCM, lot M01), qui garde tout ce qui précède.
-    assert "v0.10 seqenseigne" in dtx and "v0.10 seqenseigne" in sty   # v0.53.1 : v0.10
+    assert "v0.11 seqenseigne" in dtx and "v0.11 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11
     for m in MACROS_S05:
         assert m in style6e.MACROS
         assert style6e.correspondances()["\\" + m] == "seqenseigne-style6e"

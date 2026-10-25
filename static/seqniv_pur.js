@@ -182,6 +182,57 @@
     return map[code] || '#475569';
   }
 
+  // ── v0.53.3 — Onglet « Rendu PDF » d'une mise en route (Mnn) ───────────────
+  //
+  // D-SEL : sélecteurs de droite qui ont un sens pour chaque document (les
+  // autres sont masqués). Même table côté serveur :
+  // services/mises_en_route_6e.SELECTEURS_DOCUMENT_MER (un test pytest les
+  // compare). Plan et dossier enseignant : une seule version, aucun sélecteur.
+  const SELECTEURS_MER = ['version', 'par_page', 'exemplaires', 'test', 'sujet'];
+  const SELECTEURS_DOCUMENT_MER = {
+    fiche_cours: ['version', 'exemplaires'],
+    planche:     ['version', 'par_page'],
+    test_court:  ['version', 'exemplaires', 'test', 'sujet'],
+    plan:        [],
+    dossier:     [],
+    activite:    ['version'],
+  };
+
+  /** {version: bool, par_page: bool, …} : sélecteur visible pour ce document. */
+  function selecteursVisiblesMer(documentMer) {
+    const ok = SELECTEURS_DOCUMENT_MER[documentMer] || [];
+    const out = {};
+    for (const k of SELECTEURS_MER) out[k] = ok.includes(k);
+    return out;
+  }
+
+  /** Nombre de tests courts de la partie (numéro, ou '' = toute la séquence). */
+  function nbTestsMer(resume, partie) {
+    const parties = (resume && resume.parties) || [];
+    const choisies = (partie === '' || partie === null || partie === undefined)
+      ? parties : parties.filter(p => String(p.numero) === String(partie));
+    return choisies.reduce((n, p) => n + ((p.tests || []).length), 0);
+  }
+
+  /** Test n° ramené dans les bornes : de 1 au nombre de tests (au moins 1). */
+  function bornerTestMer(valeur, nbTests) {
+    const max = Math.max(1, parseInt(nbTests, 10) || 0);
+    let n = parseInt(valeur, 10);
+    if (!Number.isFinite(n) || n < 1) n = 1;
+    return Math.min(n, max);
+  }
+
+  /** D-TOUT — une ligne de la liste des statuts de « Tout compiler ». */
+  function htmlStatutToutCompiler(ev) {
+    if (!ev || ev.kind !== 'document') return '';
+    const etat = ev.statut === 'echec'
+      ? `<span style="color:#c62828">échec</span> — ${esc(ev.message || '')}`
+        + (ev.log ? ` <a href="/api/v2/livret-sequence/mer/echec/${encodeURIComponent(ev.log)}"`
+                    + ` target="_blank" rel="noopener">log</a>` : '')
+      : `<span style="color:#2e7d32">${ev.statut === 'cache' ? 'succès (cache)' : 'succès'}</span>`;
+    return `<li>${esc(ev.index)}/${esc(ev.total)} ${esc(ev.nom)} : ${etat}</li>`;
+  }
+
   // ── Exposition ───────────────────────────────────────────────────────────────
 
   const SeqnivPur = {
@@ -190,6 +241,8 @@
     calculerTotalSeancesPartie, indexObjDansPartie,
     trouverObj, trouverPartie, trouverPartiePourObj, trouverPartieDeObj,
     fmtSeances, fmtSeancesAffichage, couleurTheme,
+    SELECTEURS_MER, SELECTEURS_DOCUMENT_MER, selecteursVisiblesMer,       // v0.53.3
+    nbTestsMer, bornerTestMer, htmlStatutToutCompiler,
   };
 
   // Navigateur : window.SeqnivPur. (Pas d'export ES : le projet charge tout en

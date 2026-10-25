@@ -1608,11 +1608,11 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
             figures[lot["sequence"]] = importer_lot(conn, lot, ref, rapport)
     copier_figures(lots, figures, images, rapport, ecrire_fichiers)
     signaler_cycle4(conn, rapport)
-    from services.style6e import MACROS as MACROS_STYLE6E
+    from services.style6e import MACROS as MACROS_STYLE6E, VERSION as VERSION_STYLE6E
     for seq, ms in macros_locales(lots).items():
         if ms:
             rapport.infos.append(f"{seq} : macros locales utilisées (fournies par "
-                                 f"seqenseigne-style6e v0.10) : {', '.join(ms)}")
+                                 f"seqenseigne-style6e {VERSION_STYLE6E}) : {', '.join(ms)}")
         # v0.52.5 — Une macro \seqLoc… que le module ne fournit pas ferait
         # échouer la compilation de tous les documents de la séquence.
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
@@ -1628,11 +1628,11 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     for seq, (ms, n_astuces) in macros_module(lots).items():
         absentes = [m for m in ms if m not in MACROS_STYLE6E]
         if absentes:
-            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e v0.10 "
+            rapport.anomalie(f"{seq} : macros absentes du module seqenseigne-style6e {VERSION_STYLE6E} "
                              f"(compilation impossible) : {', '.join(absentes)}")
         if n_astuces:
             rapport.infos.append(f"{seq} : {n_astuces} astuce(s) \\seqAstuceSix (module "
-                                 "seqenseigne-style6e v0.10)")
+                                 f"seqenseigne-style6e {VERSION_STYLE6E})")
 
 
 def resoudre_base(db: str | None, racine: Path = RACINE_APPLI) -> Path:

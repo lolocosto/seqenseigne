@@ -114,6 +114,21 @@ NUMERO_CYCLE_BASE = 200           # sequences_du_cycle.numero = 200 + n (UNIQUE 
 PAR_PAGE = (2, 3, 4)
 EXEMPLAIRES = (1, 2)
 DOCUMENTS_MER = ("fiche_cours", "planche", "test_court", "plan", "dossier", "activite")
+# v0.53.3 (D-SEL) — Sélecteurs de l'onglet « Rendu PDF » qui ont un sens pour
+# chaque document (les autres sont masqués dans l'atelier ; même table dans
+# static/seqniv_pur.js, SELECTEURS_DOCUMENT_MER, comparée par un test) : la
+# fiche de cours a une version et 1 ou 2 exemplaires par A4 ; la planche, une
+# version et 2, 3 ou 4 fiches par A4 ; le test court, version, exemplaires,
+# numéro et sujet ; le plan et le dossier enseignant n'ont qu'une version ; les
+# activités complémentaires, élève ou corrigé.
+SELECTEURS_DOCUMENT_MER = {
+    "fiche_cours": ("version", "exemplaires"),
+    "planche": ("version", "par_page"),
+    "test_court": ("version", "exemplaires", "test", "sujet"),
+    "plan": (),
+    "dossier": (),
+    "activite": ("version",),
+}
 LIBELLES_DOCUMENTS_MER = {"fiche_cours": "Fiche de cours",
                           "planche": "Exercices de séance",
                           "test_court": "Test court",
@@ -571,8 +586,8 @@ def options_mer(options: dict | None) -> dict:
         raise MiseEnRouteErreur(f"exemplaires invalide : {o['exemplaires']!r} (1 ou 2)")
     if o["sujet"] not in SUJETS_6E:
         raise MiseEnRouteErreur(f"sujet invalide : {o['sujet']!r}")
-    if o["test"] < 1:
-        raise MiseEnRouteErreur(f"test invalide : {o['test']!r}")
+    if o["test"] < 1:                                   # v0.53.3 : bornes dites
+        raise MiseEnRouteErreur(f"test n° {o['test']} invalide : le premier test court est le n° 1.")
     return o
 
 
@@ -839,10 +854,10 @@ def choisir_test(s: dict, partie: int | None, rang: int) -> dict:
     if not tests:
         raise MiseEnRouteErreur(f"{s['code']}" + (f" partie {partie}" if partie else "")
                                 + " : aucun test court.")
-    if rang > len(tests):
-        raise MiseEnRouteErreur(f"{s['code']} : test {rang} demandé, "
-                                f"{len(tests)} test(s) court(s)"
-                                + (f" dans la partie {partie}." if partie else "."))
+    if rang > len(tests):                               # v0.53.3 : bornes dites
+        raise MiseEnRouteErreur(f"{s['code']} : test n° {rang} hors bornes, de 1 à {len(tests)} "
+                                f"({len(tests)} test(s) court(s)"
+                                + (f" dans la partie {partie})." if partie else " dans la séquence)."))
     return tests[rang - 1]
 
 

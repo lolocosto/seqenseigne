@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.53.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.53.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -171,6 +171,19 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   référentiel du 25 octobre (S10-02 F, dépendances M03-12 → M04-12,
   M05-12 → S06-03). Module LaTeX inchangé. Cycle 4 et principal 6e inchangés
   au caractère près. Détails : `doc/redemarrage_v0_53_2.md`.
+- v0.53.3 livrée (25 octobre) : **tableau de conversion commun** — module
+  `seqenseigne-style6e` v0.11, `\seqTableauConversionSix[options]{lignes}` et
+  `\seqLigneConversionSix[note]{nombre}{unité}` (étoile : réponse, vide en version
+  élève, rouge au corrigé ; longueurs, masses, contenances, aires avec ha/a/ca,
+  préfixes, valeurs, note) ; tous les tableaux de conversion des lots (M03 :
+  fiches des parties 1 et 2) passent par la macro, et les séances 3 et 7 de M03
+  ont un tableau à remplir ; fiche de M04 partie 3 : touche π (TI : touche
+  directe à gauche de sin ; Casio : SECONDE puis 7) ; M02 séance 4 entièrement
+  au critère F (90,4 − 52,3). Appli : `services/style6e.py` (macros, `VERSION`),
+  messages de l'import ; onglet « Rendu PDF » d'une Mnn : sélecteurs affichés selon le
+  document (D-SEL), « Test n° » borné (serveur : 400), bouton **Tout compiler** (D-TOUT : flux
+  SSE comme le rendu par lot, statuts, log des échecs, archive ZIP des PDF). Cycle 4 et principal 6e inchangés au caractère près.
+  Détails : `doc/redemarrage_v0_53_3.md`.
 - À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
   les progressions) ; publication d'une mise en
   route comme référentiel « mer » (côté classe, une partie Mnn = un bloc de
@@ -433,6 +446,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   `unicode_latex` quand le LaTeX volontaire doit passer) ; jamais de
   `\newunicodechar` dans le préambule commun (le `.tex` du cycle 4 et du
   principal changerait).
+
+- **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
+  module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice
+  à remplir est étoilée (réponse). Les durées n'ont pas de tableau (on compte par 60).
 
 ## Dettes restantes (mineures)
 

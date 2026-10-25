@@ -21,6 +21,24 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.11 — 2026-10-25
+
+### Ajouté
+
+- `\seqTableauConversionSix[options]{lignes}` et `\seqLigneConversionSix[note]{nombre}{unité}`
+  (forme étoilée : réponse) : tableau de conversion commun, pour une mise en forme homogène
+  de tous les tableaux de conversion (décision de Laurent du 25 octobre 2026). Grandeurs
+  `longueur` (par défaut), `masse`, `contenance`, `aire` (deux colonnes par unité, filet gris
+  entre elles ; ligne ha, a, ca avec `hectares` ou `hectares=ha-a-ca`) ; lignes `prefixes` et
+  `valeurs` ; colonne de commentaire `note` ; `compact` (exercice au quart d'A4) ; largeur `colonne` (0,8 cm par défaut, tient dans
+  un exercice au quart d'A4) ou `largeur`. Le nombre est placé un chiffre par colonne, le
+  chiffre des unités dans la colonne de l'unité donnée ; chiffres donnés (noirs, dans les
+  deux versions) ou réponse (cases vides en version élève, rouge gras en version corrigée,
+  comme `\seqLocCellule`). Pas de tableau de durées (aucun lot n'en a besoin).
+- `.sty` régénéré par `tex seqenseigne.ins` (seqenseigne v0.53.3).
+
+---
+
 ## seqenseigne-style6e v0.10 — 2026-10-22
 
 ### Ajouté

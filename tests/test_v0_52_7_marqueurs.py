@@ -154,7 +154,7 @@ def test_module_style6e_v0_7_documente_les_marqueurs():
     sty = (APPLI / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
     # v0.52.8 : le module est passé en v0.8 ; les marqueurs v0.7 restent.
     # v0.53.0 : module v0.9 (\seqLocItemCM, lot M01), qui garde tout ce qui précède.
-    assert "v0.10 seqenseigne" in dtx and "v0.10 seqenseigne" in sty   # v0.53.1 : v0.10
+    assert "v0.11 seqenseigne" in dtx and "v0.11 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11
     for m in ("seqMaterielSix", "seqOrdinateurSix", "seqCalculatriceSix"):
         assert m in style6e.MACROS
         assert rf"\DescribeMacro{{\{m}}}" in dtx

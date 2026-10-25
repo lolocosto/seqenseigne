@@ -213,9 +213,9 @@
         </div>
         <div class="livret-seq-actions" id="livret-seq-mer" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
           <label title="v0.53.1 — chaque partie peut être placée à un autre moment de l'année">Partie
-            <select id="livret-seq-mer-partie"><option value="">toute la séquence</option></select></label>
+            <select id="livret-seq-mer-partie" onchange="ATELIER_SEQNIV._majSelecteursMer()"><option value="">toute la séquence</option></select></label>
           <label>Document
-            <select id="livret-seq-mer-document">
+            <select id="livret-seq-mer-document" onchange="ATELIER_SEQNIV._majSelecteursMer()">
               <option value="fiche_cours">Fiche de cours</option>
               <option value="planche" selected>Exercices de séance</option>
               <option value="test_court">Test court</option>
@@ -223,23 +223,34 @@
               <option value="dossier" title="v0.53.2 — plan de la partie, fiche de cours complète, corrigés des exercices de séance, tests courts corrigés A et B, activités complémentaires corrigées">Dossier enseignant</option>
               <option value="activite" title="v0.53.2 — activités complémentaires (série AC) de la partie">Activités complémentaires</option>
             </select></label>
-          <label>Version
+          <label id="livret-seq-mer-lbl-version">Version
             <select id="livret-seq-mer-version">
               <option value="eleve">élève</option><option value="corrigee">corrigée</option>
             </select></label>
-          <label title="Exercices de séance : fiches en quart d'A4 par feuille, à découper au massicot ; les exercices en demi-A4 (à figure) sont toujours à 2 par A4, sur leurs propres feuilles (v0.53.1)">Par A4
+          <label title="Exercices de séance : fiches en quart d'A4 par feuille, à découper au massicot ; les exercices en demi-A4 (à figure) sont toujours à 2 par A4, sur leurs propres feuilles (v0.53.1)" id="livret-seq-mer-lbl-par_page">Par A4
             <select id="livret-seq-mer-par-page">
               <option value="2">2</option><option value="3">3</option><option value="4" selected>4</option>
             </select></label>
-          <label title="Fiche de cours et test court : 2 = deux exemplaires A5 par A4">Exemplaires
+          <label title="Fiche de cours et test court : 2 = deux exemplaires A5 par A4" id="livret-seq-mer-lbl-exemplaires">Exemplaires
             <select id="livret-seq-mer-exemplaires">
               <option value="1">1 par A4</option><option value="2">2 par A4 (A5)</option>
             </select></label>
-          <label>Test n°
-            <input id="livret-seq-mer-test" type="number" min="1" value="1" style="width:4em"></label>
-          <label>Sujet
+          <label id="livret-seq-mer-lbl-test" title="v0.53.3 — de 1 au nombre de tests courts de la partie (ou de la séquence)">Test n°
+            <input id="livret-seq-mer-test" type="number" min="1" max="1" value="1" style="width:4em"
+                   onchange="ATELIER_SEQNIV._bornerTestMer()"></label>
+          <label id="livret-seq-mer-lbl-sujet">Sujet
             <select id="livret-seq-mer-sujet"><option value="A">A</option><option value="B">B</option></select></label>
         </div>
+        <!-- v0.53.3 (D-TOUT) — tous les documents de la partie (ou de la séquence) d'un coup. -->
+        <div class="livret-seq-actions" id="livret-seq-mer-tout" style="display:none;gap:8px;font-size:12px">
+          <button class="btn-prim" id="livret-seq-mer-btn-tout" onclick="ATELIER_SEQNIV.merToutCompiler()"
+                  title="Fiches élève et complète, exercices de séance élève et corrigé (4 par A4), tests courts A et B élève et corrigé, plan, dossier enseignant, activités complémentaires ; puis une archive ZIP des PDF">
+            📦 Tout compiler</button>
+          <button class="btn-sec" id="livret-seq-mer-btn-annuler" style="display:none"
+                  onclick="ATELIER_SEQNIV.merToutAnnuler()">Annuler</button>
+          <span id="livret-seq-mer-tout-etat"></span>
+        </div>
+        <ul id="livret-seq-mer-tout-liste" style="display:none;font-size:12px;margin:2px 0 8px 18px;max-height:14em;overflow:auto"></ul>
         <!-- v0.53.1 (MR6 révisé) — contrôle de la séquence de mise en route, par partie. -->
         <div id="livret-seq-mer-controle" style="display:none;font-size:12px;margin:4px 0 8px"></div>
         <div class="livret-seq-rendu" id="livret-seq-rendu">
@@ -2859,6 +2870,9 @@
     _majBlocMer() {
       const bloc = document.getElementById('livret-seq-mer');
       if (bloc) bloc.style.display = this._estMer() ? 'flex' : 'none';
+      const tout = document.getElementById('livret-seq-mer-tout');      // v0.53.3
+      if (tout) tout.style.display = this._estMer() ? 'flex' : 'none';
+      if (this._estMer()) this._majSelecteursMer();
       const btn = document.getElementById('livret-seq-btn-pdf');
       if (btn) btn.textContent = this._estMer() ? '🔧 Compiler le document'
                                                 : '🔧 Compiler le livret';
@@ -2883,6 +2897,7 @@
       if (!rep || !rep.ok || !rep.data) return;
       this._resumeMer = rep.data;
       this._remplirPartiesMer(rep.data);
+      this._majSelecteursMer();                              // v0.53.3
       const ctl = document.getElementById('livret-seq-mer-controle');
       if (ctl) {
         ctl.innerHTML = this._htmlControleMer(rep.data);
@@ -2939,6 +2954,87 @@
       return lignes.join('');
     }
 
+    // v0.53.3 (D-SEL) — seuls les sélecteurs qui ont un sens pour le document
+    // choisi sont affichés (table SeqnivPur.SELECTEURS_DOCUMENT_MER) ; le
+    // test n° est borné par le nombre de tests de la partie (ou séquence).
+    _majSelecteursMer() {
+      const P = window.SeqnivPur;
+      const doc = document.getElementById('livret-seq-mer-document');
+      if (!P || !doc) return;
+      const vis = P.selecteursVisiblesMer(doc.value);
+      for (const k of P.SELECTEURS_MER) {
+        const lbl = document.getElementById('livret-seq-mer-lbl-' + k);
+        if (lbl) lbl.style.display = vis[k] ? '' : 'none';
+      }
+      this._bornerTestMer();
+    }
+
+    _bornerTestMer() {
+      const P = window.SeqnivPur;
+      const inp = document.getElementById('livret-seq-mer-test');
+      if (!P || !inp) return;
+      const part = document.getElementById('livret-seq-mer-partie');
+      const nb = P.nbTestsMer(this._resumeMer, part ? part.value : '');
+      inp.max = String(Math.max(1, nb));
+      const v = String(P.bornerTestMer(inp.value, nb));
+      if (inp.value !== v) inp.value = v;
+    }
+
+    // v0.53.3 (D-TOUT) — « Tout compiler » : flux SSE du serveur (même
+    // mécanisme que le rendu par lot), progression et statuts, puis archive ZIP.
+    merToutCompiler() {
+      const sn = this._sn();
+      if (!sn || this._merSource) return;
+      const P = window.SeqnivPur;
+      const part = document.getElementById('livret-seq-mer-partie');
+      const partie = part ? part.value : '';
+      const liste = document.getElementById('livret-seq-mer-tout-liste');
+      const etat = document.getElementById('livret-seq-mer-tout-etat');
+      const annuler = document.getElementById('livret-seq-mer-btn-annuler');
+      if (liste) { liste.innerHTML = ''; liste.style.display = ''; }
+      if (annuler) annuler.style.display = '';
+      if (etat) etat.textContent = 'Préparation…';
+      const url = `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}`
+                + `/${encodeURIComponent(sn.sequence_code)}/mer/tout-compiler`
+                + (partie ? `?partie=${encodeURIComponent(partie)}` : '');
+      const src = new EventSource(url);
+      this._merSource = src;
+      const finir = (texte) => {
+        src.close();
+        this._merSource = null;
+        if (annuler) annuler.style.display = 'none';
+        if (etat) etat.innerHTML = texte;
+      };
+      src.onmessage = (m) => {
+        let ev;
+        try { ev = JSON.parse(m.data); } catch (_) { return; }
+        if (ev.kind === 'debut') {
+          if (etat) etat.textContent = `0/${ev.total} document(s)`;
+        } else if (ev.kind === 'document') {
+          if (liste && P) liste.insertAdjacentHTML('beforeend', P.htmlStatutToutCompiler(ev));
+          if (etat) etat.textContent = `${ev.index}/${ev.total} document(s)…`;
+        } else if (ev.kind === 'fin') {
+          finir(`${ev.ok} PDF, ${ev.echecs} échec(s) — <a href="${ev.url}">${this._esc(ev.archive)}</a>`);
+          const a = document.createElement('a');
+          a.href = ev.url; a.download = ev.archive;
+          document.body.appendChild(a); a.click(); a.remove();
+        } else if (ev.kind === 'abandon' || ev.kind === 'erreur_serveur') {
+          finir(`<span style="color:#c62828">Arrêt : ${this._esc(ev.message || '')}</span>`);
+        }
+      };
+      src.onerror = () => { if (this._merSource) finir('<span style="color:#c62828">Connexion interrompue.</span>'); };
+    }
+
+    merToutAnnuler() {
+      if (!this._merSource) return;
+      this._merSource.close();
+      this._merSource = null;
+      const annuler = document.getElementById('livret-seq-mer-btn-annuler');
+      if (annuler) annuler.style.display = 'none';
+      const etat = document.getElementById('livret-seq-mer-tout-etat');
+      if (etat) etat.textContent = 'Annulé.';
+    }
+
     _livretSeqOptionsMer() {
       const v = (id, d) => { const e = document.getElementById(id); return e ? e.value : d; };
       return {
@@ -2946,7 +3042,10 @@
         version: v('livret-seq-mer-version', 'eleve'),
         par_page: v('livret-seq-mer-par-page', '4'),
         exemplaires: v('livret-seq-mer-exemplaires', '1'),
-        test: v('livret-seq-mer-test', '1'),
+        test: (window.SeqnivPur && this._resumeMer)                      // v0.53.3
+          ? String(window.SeqnivPur.bornerTestMer(v('livret-seq-mer-test', '1'),
+              window.SeqnivPur.nbTestsMer(this._resumeMer, v('livret-seq-mer-partie', ''))))
+          : v('livret-seq-mer-test', '1'),
         sujet: v('livret-seq-mer-sujet', 'A'),
         partie: v('livret-seq-mer-partie', ''),              // v0.53.1
       };
