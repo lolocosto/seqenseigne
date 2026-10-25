@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.53.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.53.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -159,6 +159,18 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   M01 à M07 au format v2 ; module `seqenseigne-style6e` v0.10. Cycle 4 et
   principal 6e inchangés au caractère près. Détails :
   `doc/redemarrage_v0_53_1.md`.
+- v0.53.2 livrée (25 octobre) : π brut (critère F de M04-22) qui cassait le
+  plan de M04 partie 3 — échappement LaTeX commun `services/latex_texte.py`
+  (E1 : caractères inconnus de pdfLaTeX → `\ensuremath{…}`, sur tout le corps
+  des documents 6e et dans les échappements du cycle 4 ; `& % # _` dans le
+  plan et le dossier des Mnn) ; **dossier enseignant** par partie (plan,
+  fiche complète, corrigés des exercices de séance, tests courts corrigés A
+  et B, activités complémentaires) ; **activités complémentaires** (série AC)
+  dans les Mnn (clé de lot `activites_complementaires`, `objectif`), hors
+  contrôle MR6, document `activite` ; bonus de test court ≠ 1 : anomalie ;
+  référentiel du 25 octobre (S10-02 F, dépendances M03-12 → M04-12,
+  M05-12 → S06-03). Module LaTeX inchangé. Cycle 4 et principal 6e inchangés
+  au caractère près. Détails : `doc/redemarrage_v0_53_2.md`.
 - À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
   les progressions) ; publication d'une mise en
   route comme référentiel « mer » (côté classe, une partie Mnn = un bloc de
@@ -413,7 +425,14 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   n »), codes (p − 1) × 10 + 2… ; fiche de cours **par partie** = fiche sans
   objectif attachée (`objectif_fiches`) aux objectifs de sa partie ; partie
   d'un test court = celle de ses objectifs évalués ; ne jamais recréer une
-  Mnn pour la restructurer (I-MR7 garde les identifiants).
+  Mnn pour la restructurer (I-MR7 garde les identifiants). v0.53.2 : série AC
+  dans une Mnn (partie = celle de son objectif, hors MR6, hors catalogue du
+  principal) ; dossier enseignant (`corps_dossier`).
+- **Texte venu de la base dans un document** (v0.53.2, E1) : toujours par
+  `services/latex_texte.py` (`texte_latex` pour du texte simple,
+  `unicode_latex` quand le LaTeX volontaire doit passer) ; jamais de
+  `\newunicodechar` dans le préambule commun (le `.tex` du cycle 4 et du
+  principal changerait).
 
 ## Dettes restantes (mineures)
 

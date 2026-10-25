@@ -167,6 +167,8 @@ Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (aj
 - S12 AC 2 → M04 : périmètre et aire du carré (lot S12).
 - S13-03 → S07-02 : angles de 90°, 120°, 60° et demi-tour (lot S13).
 - S13-03 → S03 : division 360 ÷ 5 = 72, E « polygone à la demande » et AC 1 (lot S13).
+- M03-12 → M04-12 : l'unité d'aire est expliquée dans la fiche de la partie 2 de M04 ; la fiche de la partie 2 de M03 la rappelle (décision du 25 octobre 2026 : l'ordre est une question de progression, pas de référentiel).
+- M05-12 → S06-03 : les triangles particuliers sont expliqués en S06-03 ; la fiche de la partie 2 de M05 les présente comme un rappel (décision du 25 octobre 2026).
 
 ## S01 — Nombres entiers et décimaux, fractions
 
@@ -492,7 +494,7 @@ Deux parties. Les « droites remarquables » de 6e se limitent à la médiatrice
 
 **S10-02 · Filtrer les données d'un tableau selon un critère**
 
-- F : « Lit une donnée dans un tableau ou un diagramme en barres. » · A : « Filtre les données d'un tableau selon un critère pour répondre à une question. »
+- F : « Lit une donnée dans un tableau déjà filtré ou un diagramme en barres. » · A : « Filtre les données d'un tableau selon un critère pour répondre à une question. »
 - Notions à expliquer : « Tableau à double entrée » (nouvelle) ; « Diagramme en barres, diagramme circulaire, graphique » (nouvelle, fiche M06).
 - Exercices : F : N09/S06/F01 à F07 ; A : N09/S06/A01, A02, A03, A06 ; E : N09/S06/E01 à E05, N09/S01/E04. Approche : N09/S06/AE01 à AE03.
 
@@ -626,7 +628,7 @@ Décision du 22 octobre 2026 : une séquence de mise en route a **une partie par
 - M03-12 · Convertir des aires (5 séances) — partie 2
 - M03-22 · Convertir des durées (4 séances) — partie 3
 - M03-23 · Calculer un horaire ou une durée (3 séances) — partie 3
-- Fiche de cours de début de séquence. Notions à expliquer : « Tableaux de conversion (longueur et aire) » (N10/S10/C03) ; « Aire et unité d'aire » (nouvelle) ; « Horaire initial, horaire final, durée » (N10/S10/C04).
+- Fiche de cours de début de séquence. Notions à expliquer : « Tableaux de conversion (longueur et aire) » (N10/S10/C03) ; « Aire et unité d'aire » (rappel, expliquée dans la fiche M04, partie 2) ; « Horaire initial, horaire final, durée » (N10/S10/C04).
 - Reprend les objectifs retirés du principal : ancien S07-14, ancien S07-32 et ancien S07-33.
 - Changements par rapport à M2026\_N09 : « Conversion et calcul de durées » est dédoublé en M03-22 et M03-23 (6 séances partagées en 3 et 3). Masses et contenances sont retirées de M03-02 le 18 octobre 2026 (CM1, pas au programme de 6e) : leurs exercices de M2026\_N09 passent en révisions, et 2 des 6 séances vont à M03-12 et M03-22 (une chacune). Les conversions de longueurs restent, car ce sont des automatismes de 6e.
 
@@ -638,7 +640,7 @@ Décision du 22 octobre 2026 : une séquence de mise en route a **une partie par
 - M04-12 · Déterminer une aire par comptage ou avec une formule (7 séances) — partie 2
 - M04-22 · Calculer le périmètre d'un cercle (5 séances) — partie 3
 - M04-32 · Déterminer le volume d'un pavé droit en dénombrant des cubes (6 séances) — partie 4
-- Fiche de cours de début de séquence. Notions à expliquer : « Périmètre d'un polygone, d'un cercle » (N10/S10/C01) ; « Nombre π » (nouvelle) ; « Cercle et disque : centre, rayon, diamètre, corde » (nouvelle, expliquée en S06-02) ; « Aire du carré et du rectangle » (nouvelle) ; « Aire et unité d'aire » (nouvelle, expliquée dans la fiche M03) ; « Volume et unité de volume : le centimètre cube » (nouvelle).
+- Fiche de cours de début de séquence. Notions à expliquer : « Périmètre d'un polygone, d'un cercle » (N10/S10/C01) ; « Nombre π » (nouvelle) ; « Cercle et disque : centre, rayon, diamètre, corde » (nouvelle, expliquée en S06-02) ; « Aire du carré et du rectangle » (nouvelle) ; « Aire et unité d'aire » (nouvelle) ; « Volume et unité de volume : le centimètre cube » (nouvelle).
 - Reprend les objectifs retirés du principal : ancien S07-02, ancien S07-03, ancien S07-12, ancien S07-13 et ancien S07-22.
 - Changements par rapport à M2026\_N09 : M04-12 est réécrit avec un seul verbe ; l'aire du disque est retirée de M04-22 et la formule du volume de M04-32 (hors programme de 6e).
 

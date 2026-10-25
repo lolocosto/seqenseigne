@@ -709,4 +709,7 @@ def _echapper(texte: str) -> str:
     Comme livret_recap_cours._echapper, on ne fait PAS d'échappement
     de \\ et de & : les noms peuvent contenir du LaTeX intentionnel.
     """
-    return texte or ''
+    # v0.53.2 (E1) — échappement Unicode commun (π, ≈, ≤… → commandes sûres) ;
+    # une chaîne sans ces caractères est rendue telle quelle (même .tex).
+    from services.latex_texte import unicode_latex
+    return unicode_latex(texte or '')

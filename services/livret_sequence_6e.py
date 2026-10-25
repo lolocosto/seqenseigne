@@ -533,7 +533,17 @@ def document(conn: sqlite3.Connection, niveau: str, titre: str, corps: list[str]
              preambule_sup: tuple | list = ()) -> str:
     r"""Document complet : préambule sur mesure (macros du cœur recopiées
     par `construire_preambule`, module `seqenseigne-style6e` chargé en
-    entier par \usepackage, une seule géométrie — L5)."""
+    entier par \usepackage, une seule géométrie — L5).
+
+    v0.53.2 (E1) — Tout le corps passe par l'échappement Unicode commun
+    (`services.latex_texte.unicode_latex`) : point de passage de tous les
+    documents de 6e (livret, fiches, corrigés, évaluations et tests courts,
+    plans de travail, documents TP/AC/AT, atomes, mises en route). Les
+    caractères que pdfLaTeX ne connaît pas (π, ≈, ≤…), venus de la base
+    (intitulé, critère, titre) ou d'un énoncé, deviennent des commandes
+    sûres ; un corps qui compilait n'en contient pas et reste identique."""
+    from services.latex_texte import unicode_latex
+    corps = [unicode_latex(x) for x in corps]
     texte = "\n".join(corps)
     macros, envs = extraire_utilisations(texte)
     atome = Atome(id="_livret_6e_", type_atome="exercice", niveau=niveau, sequence="",

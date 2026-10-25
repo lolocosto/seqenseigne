@@ -220,6 +220,8 @@
               <option value="planche" selected>Exercices de séance</option>
               <option value="test_court">Test court</option>
               <option value="plan">Plan de séquence (enseignant)</option>
+              <option value="dossier" title="v0.53.2 — plan de la partie, fiche de cours complète, corrigés des exercices de séance, tests courts corrigés A et B, activités complémentaires corrigées">Dossier enseignant</option>
+              <option value="activite" title="v0.53.2 — activités complémentaires (série AC) de la partie">Activités complémentaires</option>
             </select></label>
           <label>Version
             <select id="livret-seq-mer-version">
@@ -2918,10 +2920,13 @@
           ...vp.avertissements.map(a => `<li>Attention : ${this._esc(a)}</li>`)];
         vp.erreurs.concat(vp.avertissements).forEach(x => deja.add(x));
         const tests = (p.tests || []).length;
+        // v0.53.2 (D-AC) — activités complémentaires : affichées, hors contrôle.
+        const acs = (p.activites || []).length;
         lignes.push(`<div><strong>${this._esc(String(p.titre).replace(/ --- /g, ' — '))}</strong>`
                     + ` : ${this._esc((p.objectifs || []).join(', '))} — ${p.exercices} exercice(s)`
                     + ` pour ${p.seances} séance(s), fiche ${p.fiche ? '✔' : '✘'},`
                     + ` ${tests} test(s) court(s)`
+                    + (acs ? `, ${acs} activité(s) complémentaire(s) (hors contrôle)` : '')
                     + (items.length ? `<ul style="margin:2px 0 2px 18px">${items.join('')}</ul>` : '')
                     + `</div>`);
       }

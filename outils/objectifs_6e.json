@@ -529,7 +529,7 @@
      {
       "code": "02",
       "nom": "Filtrer les données d'un tableau selon un critère",
-      "critere_F": "Lit une donnée dans un tableau ou un diagramme en barres.",
+      "critere_F": "Lit une donnée dans un tableau déjà filtré ou un diagramme en barres.",
       "critere_A": "Filtre les données d'un tableau selon un critère pour répondre à une question.",
       "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
      },

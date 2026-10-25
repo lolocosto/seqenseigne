@@ -392,7 +392,10 @@ def _echapper_simple(s: str) -> str:
     """
     if not s:
         return ""
-    return s.replace("&", r"\&").replace("#", r"\#").replace("%", r"\%")
+    # v0.53.2 (E1) — échappement Unicode commun (π, ≈, ≤… → commandes sûres) ;
+    # une chaîne sans ces caractères est rendue telle quelle (même .tex).
+    from services.latex_texte import unicode_latex
+    return unicode_latex(s.replace("&", r"\&").replace("#", r"\#").replace("%", r"\%"))
 
 
 def _lire_nom_court_latex_local(conn: sqlite3.Connection, niveau: str) -> str:

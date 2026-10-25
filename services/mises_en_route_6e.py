@@ -1,4 +1,4 @@
-r"""services/mises_en_route_6e.py — v0.53.0, v0.53.1
+r"""services/mises_en_route_6e.py — v0.53.0, v0.53.1, v0.53.2
 
 Mises en route de 6e au modèle « Fiches de résumé par objectif » (gabarit
 `sixieme`) : séquences M01 à M07 de `outils/ref6e_v2.md` (« Mises en route
@@ -76,6 +76,31 @@ doc/redemarrage_v0_53_1.md) :
   - MR6 révisé — Validation par partie : fiche de cours et au moins un
     exercice MR par objectif ; nombre d'exercices ≠ séances, partie sans
     test court : avertissements.
+
+Révisions v0.53.2 (25 octobre 2026, doc/redemarrage_v0_53_2.md) :
+
+  - E1 — Les chaînes de la base insérées en texte (intitulés, critères,
+    titres, libellés, messages du contrôle) passent par l'échappement LaTeX
+    commun `services.latex_texte.texte_latex` (& % # _ et caractères Unicode
+    inconnus de pdfLaTeX : π, ≈, ≤…) ; tout le corps passe en plus par
+    `unicode_latex` dans `livret_sequence_6e.document` (cas réel : critère F
+    de M04-22 « … avec π ≈ 3,14 », plan de la partie 3 non compilé).
+  - D-DOS — **Dossier enseignant** (document `dossier`, par partie ou toute
+    la séquence partie par partie) : un seul document A4, version corrigée,
+    pages numérotées (en-tête « … — dossier enseignant — page n »), chaque
+    bloc sur une nouvelle page : le plan de la partie, la fiche de cours
+    complète, les corrigés rédigés des exercices de séance dans l'ordre des
+    séances (un exercice sans corrigé rédigé le dit : réponses sur la
+    planche corrigée), les tests courts corrigés (sujet A puis sujet B),
+    puis les activités complémentaires corrigées. Les documents existants
+    restent.
+  - D-AC — **Activités complémentaires** (série AC, comme au principal) dans
+    une Mnn : rattachées à un objectif (objectif_exos, série AC), donc à sa
+    partie ; listées dans le plan de la partie, corrigées dans le dossier,
+    compilables seules (document `activite` de l'onglet « Rendu PDF », par
+    partie ou toute la séquence, élève ou corrigé ; même rendu que le
+    document AC du principal, `documents_6e.corps_document`) ; hors du
+    contrôle MR6 (qui ne compte que la série MR).
 """
 
 from __future__ import annotations
@@ -88,11 +113,14 @@ LIBELLE_MR = "mise en route"
 NUMERO_CYCLE_BASE = 200           # sequences_du_cycle.numero = 200 + n (UNIQUE par cycle)
 PAR_PAGE = (2, 3, 4)
 EXEMPLAIRES = (1, 2)
-DOCUMENTS_MER = ("fiche_cours", "planche", "test_court", "plan")
+DOCUMENTS_MER = ("fiche_cours", "planche", "test_court", "plan", "dossier", "activite")
 LIBELLES_DOCUMENTS_MER = {"fiche_cours": "Fiche de cours",
                           "planche": "Exercices de séance",
                           "test_court": "Test court",
-                          "plan": "Plan de séquence (enseignant)"}
+                          "plan": "Plan de séquence (enseignant)",
+                          "dossier": "Dossier enseignant",                 # v0.53.2 (D-DOS)
+                          "activite": "Activités complémentaires"}         # v0.53.2 (D-AC)
+SERIE_AC = "AC"
 SUFFIXE_COMPLETE = " (version complète)"
 
 _RE_MER = re.compile(r"M\d{2}")
@@ -358,11 +386,13 @@ def lire_sequence_mer(conn: sqlite3.Connection, niveau: str, sequence: str) -> d
         ex["objectif_nom"] = o["nom"] if o else ""
         ex["partie"] = o["partie"] if o else None
         exercices.append(ex)
+    activites = activites_complementaires(conn, niveau, sequence, par_id)   # v0.53.2
     fiches = fiches_de_sequence(conn, niveau, sequence)
     tests = tests_courts(conn, niveau, sequence)
     for p in parties:
         p["objectifs"] = [o for o in objectifs if o["partie"] == p["numero"]]
         p["exercices"] = [e for e in exercices if e["partie"] == p["numero"]]
+        p["activites"] = [a for a in activites if a["partie"] == p["numero"]]
         p["fiche"], p["fiche_complete"] = fiches["parties"].get(p["numero"], (None, None))
         p["tests"] = [t for t in tests if t["partie"] == p["numero"]]
         p["titre"] = titre_partie(p)
@@ -370,9 +400,28 @@ def lire_sequence_mer(conn: sqlite3.Connection, niveau: str, sequence: str) -> d
     return {"code": sequence, "niveau": niveau, "nom": nom or sequence,
             "numero": numero_mer(sequence), "theme_couleur": (th[0] if th else "") or "",
             "objectifs": objectifs, "exercices": exercices, "parties": parties,
+            "activites": activites,
             "fiches_sans_partie": fiches["sans_partie"],
             "fiche": premiere["fiche"], "fiche_complete": premiere["fiche_complete"],
             "tests": tests}
+
+
+def activites_complementaires(conn, niveau: str, sequence: str, par_id: dict) -> list[dict]:
+    """D-AC (v0.53.2) — activités complémentaires (série AC) de la séquence,
+    par numéro : {id, code, titre, num, objectifs: [étiquettes], partie
+    (celle du premier objectif relié ; None sans objectif), …}."""
+    out = []
+    for r in conn.execute("SELECT id, titre, num FROM exercices WHERE niveau = ? AND "
+                          "sequence = ? AND serie_code = ? ORDER BY num, id",
+                          (niveau, sequence, SERIE_AC)).fetchall():
+        objs = [par_id[x[0]] for x in conn.execute(
+            "SELECT objectif_id FROM objectif_exos WHERE exercice_id = ? AND serie = ? "
+            "ORDER BY ordre", (r[0], SERIE_AC)) if x[0] in par_id]
+        out.append({"id": r[0], "titre": r[1] or "", "num": r[2],
+                    "code": f"{SERIE_AC}{int(r[2] or 0):02d}",
+                    "objectifs": [o["etiquette"] for o in objs],
+                    "partie": objs[0]["partie"] if objs else None})
+    return out
 
 
 def partie_de(s: dict, numero) -> dict:
@@ -396,6 +445,8 @@ def resume_mer(conn, niveau: str, sequence: str) -> dict:
                          "seances": sum(o["nb_seances"] for o in p["objectifs"]),
                          "tests": [{"numero": t["numero"], "titre": t["titre"]}
                                    for t in p["tests"]],
+                         "activites": [{"code": a["code"], "titre": a["titre"]}
+                                       for a in p.get("activites") or []],
                          "fiche": (p["fiche"] or {}).get("titre") or ""}
                         for p in s["parties"]],
             "validation": valider_sequence_mer(conn, niveau, sequence, s)}
@@ -528,7 +579,7 @@ def options_mer(options: dict | None) -> dict:
 def _titre_seq(s: dict, partie: int | None = None) -> str:
     """« Mise en route n --- nom » (+ « --- partie p » quand la séquence a
     plusieurs parties)."""
-    t = f"{libelle_mer(s['code'])} --- {s['nom']}"
+    t = f"{libelle_mer(s['code'])} --- {_echapper(s['nom'])}"
     if partie is not None and len(s.get("parties") or []) > 1:
         t += f" --- partie {partie}"
     return t
@@ -536,7 +587,7 @@ def _titre_seq(s: dict, partie: int | None = None) -> str:
 
 def _entete(s: dict, corrige: bool) -> str:
     from services.livret_sequence_6e import entete
-    return entete({"nom": f"{libelle_mer(s['code'])} --- {s['nom']}"}, corrige)
+    return entete({"nom": f"{libelle_mer(s['code'])} --- {_echapper(s['nom'])}"}, corrige)
 
 
 def _copies(corps: list[str], exemplaires: int) -> list[str]:
@@ -608,7 +659,9 @@ def emettre_bande(L: list, s: dict, ex: dict) -> None:
     L.append(_ligne_reference(s, ex))
     enonce = (ex.get("enonce") or "").strip()
     if "seqCalculMental" not in enonce and (ex.get("titre") or "").strip():
-        L.append(r"{\bfseries\color{seqSixBleu}" + ex["titre"].strip() + r"}\par\smallskip")
+        # v0.53.2 (E1) — titre échappé (cas réel : « Passer par 10 % ou 1 % », M02).
+        L.append(r"{\bfseries\color{seqSixBleu}" + _echapper(ex["titre"].strip())
+                 + r"}\par\smallskip")
     if (ex.get("variables") or "").strip():
         L.append(ex["variables"].rstrip())
     L.append(enonce)
@@ -625,7 +678,8 @@ def emettre_corriges_rediges(L: list, s: dict, exos: list[dict]) -> None:
     L.append(r"\begin{center}{\Large\bfseries\color{seqSixVert}Corrigés rédigés}\end{center}")
     for ex in avec:
         titre = " --- ".join(x for x in (f"Séance {ex['seance']}" if ex.get("seance") else "",
-                                         (ex.get("titre") or "").strip(), ex["code"]) if x)
+                                         _echapper((ex.get("titre") or "").strip()),
+                                         ex["code"]) if x)
         L.append(r"\needspace{5\baselineskip}")
         L.append(r"\seqPartieSix{" + titre + "}")
         L.append(r"\seqLocExplication{" + ex["corrige"].strip() + "}")
@@ -670,8 +724,11 @@ def corps_planche(s: dict, par_page: int, version: str,
 
 
 def _echapper(t: str) -> str:
-    """Texte simple (intitulés) dans un tableau : & % # _ échappés."""
-    return re.sub(r"(?<!\\)([&%#_])", r"\\\1", t or "")
+    """Texte simple venu de la base (intitulés, critères, titres, messages) :
+    échappement LaTeX commun (v0.53.2, E1 : & % # _ hors formules, et π, ≈,
+    ≤… en commandes sûres)."""
+    from services.latex_texte import texte_latex
+    return texte_latex(t)
 
 
 def _plan_partie(L: list, s: dict, p: dict, v: dict, multi: bool) -> None:
@@ -680,15 +737,18 @@ def _plan_partie(L: list, s: dict, p: dict, v: dict, multi: bool) -> None:
     L.append(r"\textbf{Objectifs}")
     L.append(r"\begin{itemize}")
     for o in p["objectifs"]:
-        L.append(r"\item \textbf{" + o["etiquette"] + "} " + o["nom"]
+        # v0.53.2 (E1) — intitulé et critères : échappement commun (cas réel :
+        # « π ≈ 3,14 » dans le critère F de M04-22).
+        L.append(r"\item \textbf{" + o["etiquette"] + "} " + _echapper(o["nom"])
                  + f" ({_fmt(o['nb_seances'])} séance" + ("s" if o["nb_seances"] > 1 else "")
-                 + ")" + (r"\\{\footnotesize F : " + o["critere_F"] + "}"
+                 + ")" + (r"\\{\footnotesize F : " + _echapper(o["critere_F"]) + "}"
                           if o["critere_F"] else "")
-                 + (r"\\{\footnotesize A : " + o["critere_A"] + "}" if o["critere_A"] else ""))
+                 + (r"\\{\footnotesize A : " + _echapper(o["critere_A"]) + "}"
+                    if o["critere_A"] else ""))
     L.append(r"\end{itemize}")
     f = p["fiche"]
     L.append(r"\textbf{Fiche de cours} : "
-             + ((r"au début de la partie, « " + (f.get("titre") or "") + " », à coller "
+             + ((r"au début de la partie, « " + _echapper(f.get("titre") or "") + " », à coller "
                  r"dans le cahier.") if f else r"\emph{pas de fiche de cours.}") + r"\par")
     L.append(r"\medskip\textbf{Séances}\par")
     if p["exercices"]:
@@ -710,6 +770,14 @@ def _plan_partie(L: list, s: dict, p: dict, v: dict, multi: bool) -> None:
         L.append(r"\end{itemize}")
     else:
         L.append(r"\emph{Aucun test court.}\par")
+    if p.get("activites"):                                            # v0.53.2 (D-AC)
+        L.append(r"\textbf{Activités complémentaires} {\small (élèves en avance ; hors "
+                 r"contrôle de la séquence)}\par")
+        L.append(r"\begin{itemize}")
+        for a in p["activites"]:
+            L.append(r"\item " + a["code"] + " --- " + _echapper(a["titre"])
+                     + (f" ({', '.join(a['objectifs'])})" if a["objectifs"] else ""))
+        L.append(r"\end{itemize}")
     vp = v["parties"].get(p["numero"]) or {"erreurs": [], "avertissements": []}
     if multi and (vp["erreurs"] or vp["avertissements"]):
         L.append(r"\begin{itemize}")
@@ -818,12 +886,132 @@ def sous_titre_test(conn, niveau: str, sequence: str, objectif_ids) -> str:
 PREAMBULE_MER = (r"\usepackage{longtable}",)
 
 
+# ── D-AC Activités complémentaires, D-DOS Dossier enseignant (v0.53.2) ─────
+
+def _activites_voulues(s: dict, partie: int | None) -> list[dict]:
+    """Activités complémentaires d'une partie, ou de toute la séquence (celles
+    sans objectif comprises, à la fin)."""
+    if partie is not None:
+        return list(partie_de(s, partie).get("activites") or [])
+    return list(s.get("activites") or [])
+
+
+def _corps_activite(conn, a: dict, corrige: bool) -> list[str]:
+    """Une activité complémentaire, rendue comme le document AC du principal
+    (`documents_6e.corps_document`, numéro du titre = numéro AC), sans son
+    en-tête de page."""
+    from services.documents_6e import corps_document, lire_atome
+    return corps_document(conn, lire_atome(conn, a["id"]), corrige)[1:]
+
+
+def corps_activites(conn, s: dict, version: str, partie: int | None = None) -> list[str]:
+    """D-AC — les activités complémentaires d'une partie (ou de toute la
+    séquence), une par page, élève ou corrigé."""
+    acs = _activites_voulues(s, partie)
+    if not acs:
+        raise MiseEnRouteErreur(f"{s['code']}" + (f" partie {partie}" if partie else "")
+                                + " : aucune activité complémentaire (série AC).")
+    L = [_entete(s, version == "corrigee")]
+    for i, a in enumerate(acs):
+        if i:
+            L.append(r"\clearpage")
+        L += _corps_activite(conn, a, version == "corrigee")
+    return L
+
+
+def _entete_dossier(s: dict) -> str:
+    return (r"\fancyhead[R]{\small\bfseries " + libelle_mer(s["code"]) + " --- "
+            + _echapper(s["nom"]) + r" -- dossier enseignant -- page \thepage}")
+
+
+def _titre_bloc(texte: str) -> str:
+    return (r"\begin{center}{\Large\bfseries\color{seqSixVert}" + texte
+            + r"}\end{center}")
+
+
+def _corriges_seances(L: list, s: dict, exos: list[dict]) -> None:
+    """D-DOS — corrigés rédigés des exercices de séance, dans l'ordre des
+    séances (variables de l'exercice émises avant son corrigé) ; un exercice
+    sans corrigé rédigé le dit."""
+    for ex in exos:
+        titre = " --- ".join(x for x in (
+            f"Séance {ex['seance']}" if ex.get("seance") else "",
+            _echapper((ex.get("titre") or "").strip()), ex["code"],
+            ex.get("objectif") or "") if x)
+        L.append(r"\needspace{5\baselineskip}")
+        L.append(r"\seqPartieSix{" + titre + "}")
+        if (ex.get("corrige") or "").strip():
+            if (ex.get("variables") or "").strip():
+                L.append(ex["variables"].rstrip())
+            L.append(r"\seqLocExplication{" + ex["corrige"].strip() + "}")
+        else:
+            L.append(r"{\small\itshape Pas de corrigé rédigé : réponses sur la planche "
+                     r"corrigée.}\par")
+
+
+def _corps_test_corrige(conn, ev_id: str, sujet: str) -> list[str]:
+    """Test court corrigé (rendu 6e du module Évaluations), sans en-tête de
+    page."""
+    from services import render_evaluation as rev
+    from services.marqueurs_exercices import calculatrice_evaluation
+    opts = rev.options_evaluation_6e({"sujet": sujet, "version": "corrigee"})
+    opts["calculatrice"] = calculatrice_evaluation(conn, ev_id)["valeur"]
+    st = rev.structure_evaluation_6e(conn, ev_id)
+    decoupage = rev.parties_evaluation_6e(conn, ev_id, st)
+    return [x for x in rev.corps_evaluation_6e(conn, st, opts, decoupage)
+            if not x.startswith(r"\fancyhead")]
+
+
+def corps_dossier(conn, s: dict, partie: int | None = None) -> list[str]:
+    """D-DOS — dossier enseignant d'une partie (ou de toute la séquence,
+    partie par partie) : plan de la partie, fiche de cours complète,
+    corrigés rédigés des exercices de séance, tests courts corrigés A et B,
+    activités complémentaires corrigées ; chaque bloc sur une nouvelle page."""
+    L = [_entete_dossier(s)]
+    for k, p in enumerate(_parties_voulues(s, partie)):
+        n = p["numero"]
+        if k:
+            L.append(r"\clearpage")
+        # 1. Plan de la partie (sans son en-tête de page).
+        L += [x for x in corps_plan(conn, s, n) if not x.startswith(r"\fancyhead")]
+        # 2. Fiche de cours complète.
+        L.append(r"\clearpage")
+        try:
+            fiche = corps_fiche_cours(s, "corrigee", 1, n)[1:]
+        except MiseEnRouteErreur:
+            fiche = [_titre_bloc("Fiche de cours"), r"\emph{Pas de fiche de cours.}\par"]
+        L += fiche
+        # 3. Corrigés rédigés des exercices de séance.
+        L.append(r"\clearpage")
+        L.append(_titre_bloc("Corrigés des exercices de séance --- "
+                             + _echapper(p["titre"])))
+        if p["exercices"]:
+            _corriges_seances(L, s, p["exercices"])
+        else:
+            L.append(r"\emph{Aucun exercice de séance.}\par")
+        # 4. Tests courts corrigés, sujet A puis sujet B.
+        for t in p["tests"]:
+            for sujet in ("A", "B"):
+                L.append(r"\clearpage")
+                L += _corps_test_corrige(conn, t["id"], sujet)
+        # 5. Activités complémentaires corrigées.
+        for a in p.get("activites") or []:
+            L.append(r"\clearpage")
+            L += _corps_activite(conn, a, True)
+    if partie is None:
+        sans = [a for a in s.get("activites") or [] if a["partie"] is None]
+        for a in sans:
+            L.append(r"\clearpage")
+            L += _corps_activite(conn, a, True)
+    return L
+
+
 def generer_document_mer(conn: sqlite3.Connection, niveau: str, sequence: str,
                          options: dict | None = None, tikz_libraries=None,
                          tblr_libraries=None) -> str:
     """MR5 — .tex d'un document de la séquence de mise en route (option
     `document` : fiche_cours | planche | test_court | plan ; v0.53.1 :
-    `partie`, sans elle toute la séquence)."""
+    `partie`, sans elle toute la séquence ; v0.53.2 : dossier, activite)."""
     from services.livret_sequence_6e import document
     o = options_mer(options)
     if o["document"] == "test_court":
@@ -844,5 +1032,13 @@ def generer_document_mer(conn: sqlite3.Connection, niveau: str, sequence: str,
         return document(conn, niveau, titre, corps_planche(s, o["par_page"], o["version"],
                                                            partie=o["partie"]),
                         corrige, tikz_libraries, tblr_libraries)
+    if o["document"] == "activite":                                   # v0.53.2 (D-AC)
+        return document(conn, niveau, titre, corps_activites(conn, s, o["version"],
+                                                             o["partie"]),
+                        corrige, tikz_libraries, tblr_libraries)
+    if o["document"] == "dossier":                                    # v0.53.2 (D-DOS)
+        # Tout le dossier est en version corrigée (fiche complète, corrigés).
+        return document(conn, niveau, titre, corps_dossier(conn, s, o["partie"]), True,
+                        tikz_libraries, tblr_libraries, preambule_sup=PREAMBULE_MER)
     return document(conn, niveau, titre, corps_plan(conn, s, o["partie"]), False,
                     tikz_libraries, tblr_libraries, preambule_sup=PREAMBULE_MER)

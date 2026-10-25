@@ -768,7 +768,10 @@ def _echapper_titre_latex(titre: str) -> str:
     """
     # Pour l'instant, on fait confiance au titre tel qu'il est en BDD :
     # il a été saisi par un enseignant qui écrit du LaTeX de toute façon.
-    return titre or ''
+    # v0.53.2 (E1) — échappement Unicode commun (π, ≈, ≤… → commandes sûres) ;
+    # une chaîne sans ces caractères est rendue telle quelle (même .tex).
+    from services.latex_texte import unicode_latex
+    return unicode_latex(titre or '')
 
 
 # Mapping série CSV → numéro utilisé par seqSerieExos{N}.

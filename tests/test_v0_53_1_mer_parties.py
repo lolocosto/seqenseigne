@@ -487,9 +487,10 @@ def test_test_court_dont_le_bareme_hors_bonus_n_est_pas_sur_10_signale(base, tmp
         ev["bareme"] = [["M01-02", 9], ["Bonus", 2]]
     r = _essai(base, _ecrire_lot(tmp_path / "l", lot))
     assert any("barème 9 points hors bonus" in a for a in r.anomalies)
-    # Bonus de 2 : pas un écart (les évaluations sur 20 en ont aussi), une information.
-    assert any("bonus de 2 points (hors total, dans la limite de 10)" in i for i in r.infos)
-    assert not any("bonus de" in a for a in r.anomalies)
+    # v0.53.2 (décision du 25 octobre 2026) : bonus de 1 point ; un bonus de 2
+    # est désormais une anomalie à corriger dans le lot (avant : information).
+    assert any("bonus de 2 point(s)" in a and "à corriger dans le lot" in a for a in r.anomalies)
+    assert not any("bonus de" in i for i in r.infos)
 
 
 def test_module_v0_10_fournit_les_macros_des_lots_car_macros_locales_ne_sont_pas_importees():

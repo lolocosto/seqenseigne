@@ -327,4 +327,7 @@ def _entete_sequence(niveau: str, structure: list[dict], version_fiches: str,
 
 def _echapper(texte: str) -> str:
     """Échappement minimal pour titre LaTeX (aligné sur recap_cours)."""
-    return texte or ''
+    # v0.53.2 (E1) — échappement Unicode commun (π, ≈, ≤… → commandes sûres) ;
+    # une chaîne sans ces caractères est rendue telle quelle (même .tex).
+    from services.latex_texte import unicode_latex
+    return unicode_latex(texte or '')

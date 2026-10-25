@@ -55,10 +55,14 @@ def lire_atome(conn: sqlite3.Connection, exercice_id: str) -> dict:
 
 def atomes_de_la_serie(conn: sqlite3.Connection, niveau: str, serie_code: str) -> list[dict]:
     """Atomes d'une série documents du niveau, par séquence puis numéro
-    (sans les archives Xnn)."""
+    (sans les archives Xnn ; v0.53.2 : sans les mises en route Mnn, dont les
+    activités complémentaires sont des documents de la mise en route, pas
+    du référentiel principal — `mises_en_route_6e.hors_principal`)."""
+    from services.mises_en_route_6e import hors_principal
     return [dict(r) for r in conn.execute(
         "SELECT id, titre, sequence, num FROM exercices WHERE niveau = ? AND serie_code = ? "
-        "AND sequence NOT LIKE 'X%' ORDER BY sequence, num, id", (niveau, serie_code))]
+        "AND sequence NOT LIKE 'X%' ORDER BY sequence, num, id", (niveau, serie_code))
+        if not hors_principal(r[2])]
 
 
 def corps_document(conn: sqlite3.Connection, atome: dict, corrige: bool) -> list[str]:

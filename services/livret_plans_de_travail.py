@@ -394,7 +394,10 @@ def _echapper_texte(s: str) -> str:
     informative que ce qu'un échappement aveugle pourrait produire,
     et on évite d'invalider des saisies LaTeX volontaires.
     """
-    return s or ''
+    # v0.53.2 (E1) — échappement Unicode commun (π, ≈, ≤… → commandes sûres) ;
+    # une chaîne sans ces caractères est rendue telle quelle (même .tex).
+    from services.latex_texte import unicode_latex
+    return unicode_latex(s or '')
 
 
 # ── Émetteurs LaTeX par bloc ─────────────────────────────────────────────────

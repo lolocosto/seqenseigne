@@ -388,4 +388,7 @@ def _page_de_garde(niveau: str, structure: list[dict],
 # ── Utilitaires ──────────────────────────────────────────────────────────────
 
 def _echapper(texte: str) -> str:
-    return texte or ''
+    # v0.53.2 (E1) — échappement Unicode commun (π, ≈, ≤… → commandes sûres) ;
+    # une chaîne sans ces caractères est rendue telle quelle (même .tex).
+    from services.latex_texte import unicode_latex
+    return unicode_latex(texte or '')

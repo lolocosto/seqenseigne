@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-r"""outils/import_lot6e_mer.py — v0.53.0, v0.53.1
+r"""outils/import_lot6e_mer.py — v0.53.0, v0.53.1, v0.53.2
 
 Import des lots de **mise en route** de 6e (`reference\lot6e\Mnn\Mnn.json`),
 appelé par `outils/import_lot6e.py` (même commande, même essai à blanc, même
@@ -30,7 +30,8 @@ sur 10 par partie.
 Clés facultatives : `format` d'un exercice de séance (v0.53.1, F1 : « quart »,
 défaut, ou « demi » pour un exercice à figure ; à défaut, « demi-A4 » dans
 `notes`), `figures` d'un élément (comme les lots S),
-`calculatrice_exercices` d'une évaluation (v0.52.9). Un lot au format de la
+`calculatrice_exercices` d'une évaluation (v0.52.9),
+`activites_complementaires` (v0.53.2, I-MR8). Un lot au format de la
 v0.53.0 (`fiche_cours` au premier niveau, sans `parties`) est refusé.
 
 Décisions v0.53.0 (doc/redemarrage_v0_53_0.md, services/mises_en_route_6e.py) :
@@ -89,6 +90,24 @@ Décision v0.53.1 :
     exercice MR ou EV, fiche, test court). Correspondances dans le journal
     (`restructuration`). Idempotente : une fois recodée, la séquence n'a
     plus l'ancienne structure.
+
+Décisions v0.53.2 (doc/redemarrage_v0_53_2.md) :
+
+  - I-MR8 **Activités complémentaires** (série AC, comme au principal) :
+    clé `activites_complementaires` au niveau du lot, même format que les
+    lots S (`titre`, `latex`, `corrige`, `origine`, `notes`, marqueurs),
+    rattachées à un objectif de la séquence par `objectif` (code) ou
+    `objectifs` (liste, comme les lots S). Import commun
+    (`import_lot6e.importer_documents` : AC01, AC02… dans l'ordre du lot,
+    jamais un AC validé réécrit, liens objectif_exos série AC). Une AC sans
+    objectif, ou d'objectif inconnu, est signalée. Elles ne comptent pas
+    dans le contrôle MR6 (série MR seule). `travaux_personnels` et
+    `seances_atelier` n'existent pas dans une mise en route (signalés,
+    ignorés).
+  - I-MR5 révisé — **bonus de 1 point** (décision du 25 octobre 2026) : un
+    bonus d'une autre valeur (barème du lot ou exercices « Bonus… » du
+    sujet) est une anomalie « à corriger dans le lot » (et non plus une
+    information).
 """
 
 from __future__ import annotations
@@ -98,6 +117,7 @@ from pathlib import Path
 
 REF6E_V2 = Path(__file__).resolve().parent / "ref6e_v2.md"
 TOTAL_TEST_COURT = 10
+BONUS_TEST_COURT = 1          # v0.53.2 — décision du 25 octobre 2026
 CLES_OBLIGATOIRES = ("sequence", "titre", "parties", "objectifs", "exercices_seance")
 
 _RE_TITRE = re.compile(r"^### (M\d\d) — (.+?) \((\d+) exercices?")
@@ -198,7 +218,7 @@ def controler_format(lot: dict) -> list[str]:
     if lot.get("type") not in (None, "mise_en_route"):
         err.append(f"type {lot.get('type')!r} (attendu « mise_en_route »)")
     for k in ("parties", "objectifs", "exercices_seance", "evaluations",
-              "evaluations_retirees"):
+              "evaluations_retirees", "activites_complementaires"):
         if k in lot and not isinstance(lot[k], list):
             err.append(f"« {k} » n'est pas une liste")
     for i, p in enumerate(lot.get("parties") or [] if isinstance(lot.get("parties"), list)
@@ -455,6 +475,14 @@ def _retirer_fiches_de_sequence(conn, imp, seq: str, rapport) -> None:
 
 
 _RE_ENV = re.compile(r"\\(begin|end)\s*\{([^}]+)\}")
+
+
+def _bonus_du_sujet(imp, latex: str) -> float:
+    """v0.53.2 — points des exercices « Bonus… » du sujet (0 si illisible)."""
+    try:
+        return sum(x["points"] for x in imp.decouper_evaluation(latex) if imp._est_bonus(x))
+    except Exception:
+        return 0.0
 
 
 def exercices_desequilibres(imp, latex: str) -> list[tuple[str, str]]:
@@ -775,9 +803,12 @@ def importer_lot_mer(conn, imp, lot: dict, themes: dict, ref_mer: dict, rapport)
             rapport.anomalie(f"{seq} « {ev.get('titre', '')} » sujet {ev.get('sujet', '?')} : "
                              f"barème {hors_bonus:g} points hors bonus, un test court est sur "
                              f"{TOTAL_TEST_COURT}")
-        if ev.get("bareme") and bonus and bonus != 1:
-            rapport.infos.append(f"{seq} « {ev.get('titre', '')} » sujet {ev.get('sujet', '?')} : "
-                                 f"bonus de {bonus:g} points (hors total, dans la limite de 10)")
+        for b in sorted({x for x in (bonus, _bonus_du_sujet(imp, ev.get("latex") or ""))
+                         if x and x != BONUS_TEST_COURT}):
+            rapport.anomalie(f"{seq} « {ev.get('titre', '')} » sujet {ev.get('sujet', '?')} : "
+                             f"bonus de {b:g} point(s), un test court a un bonus de "
+                             f"{BONUS_TEST_COURT} point (décision du 25 octobre 2026) — à "
+                             "corriger dans le lot")
         ps = {partie_obj.get(oc) for oc, _ in (ev.get("bareme") or [])
               if oc != "Bonus" and oc in partie_obj}
         if len(ps) > 1:
@@ -801,6 +832,7 @@ def importer_lot_mer(conn, imp, lot: dict, themes: dict, ref_mer: dict, rapport)
                          f"{', '.join(map(str, sans_test))}")
     imp.importer_evaluations(conn, _sans_titres_d_autres_sequences(conn, imp, lot, rapport),
                              objectifs_ids, rapport)
+    figures |= importer_activites_complementaires(conn, imp, lot, objectifs_ids, rapport)
 
     # Contrôle MR6 (par partie).
     v = mer.valider_sequence_mer(conn, imp.NIVEAU, seq)
@@ -809,6 +841,47 @@ def importer_lot_mer(conn, imp, lot: dict, themes: dict, ref_mer: dict, rapport)
                            + " ; ".join(v["erreurs"]))
                         + ("" if not v["avertissements"]
                            else " (attention : " + " ; ".join(v["avertissements"]) + ")"))
+    return figures
+
+
+def activites_du_lot(lot: dict) -> list[dict]:
+    """I-MR8 — activités complémentaires du lot, `objectif` (code) ramené à
+    `objectifs` (liste, format des lots S)."""
+    out = []
+    for a in lot.get("activites_complementaires") or []:
+        if not isinstance(a, dict):
+            continue
+        objs = list(a.get("objectifs") or [])
+        if isinstance(a.get("objectif"), str) and a["objectif"].strip():
+            objs = [a["objectif"].strip()] + [o for o in objs if o != a["objectif"].strip()]
+        out.append(dict(a, objectifs=objs))
+    return out
+
+
+def importer_activites_complementaires(conn, imp, lot: dict, objectifs_ids: dict,
+                                       rapport) -> set:
+    """I-MR8 — série AC d'une mise en route (import commun des documents des
+    lots S) ; retourne les figures utilisées."""
+    seq = lot["sequence"]
+    for cle in ("travaux_personnels", "seances_atelier"):
+        if lot.get(cle):
+            rapport.anomalie(f"{seq} : « {cle} » n'existe pas dans une mise en route (seules les "
+                             "activités complémentaires, série AC), ignoré")
+    acs = activites_du_lot(lot)
+    if not acs:
+        return set()
+    for k, a in enumerate(acs, start=1):
+        if not a["objectifs"]:
+            rapport.anomalie(f"{seq} AC{k:02d} « {a.get('titre', '')} » : sans objectif (clé "
+                             "« objectif ») — une activité complémentaire est rattachée à un "
+                             "objectif de la séquence")
+    figures = imp.importer_documents(conn, {"sequence": seq, "activites_complementaires": acs},
+                                     objectifs_ids, rapport)
+    rapport.seq(seq)["lignes"].append(
+        f"activités complémentaires : {len(acs)} (AC01 à AC{len(acs):02d}) — "
+        + ", ".join(f"AC{k:02d} → {', '.join(a['objectifs']) or 'aucun objectif'}"
+                    for k, a in enumerate(acs, start=1))
+        + " ; hors contrôle de la séquence")
     return figures
 
 
@@ -823,4 +896,6 @@ def figures_du_lot(imp, lot: dict) -> set:
         noms |= imp._figures(lot, e)
     for ev in lot.get("evaluations") or []:
         noms |= imp._figures(lot, ev)
+    for a in activites_du_lot(lot):                                   # v0.53.2 (I-MR8)
+        noms |= imp._figures(lot, a)
     return noms

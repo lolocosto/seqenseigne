@@ -935,6 +935,37 @@ def macros_locales(lots: list[dict]) -> dict:
     return out
 
 
+# v0.53.2 — `\foreach \x in {…} corps;` sans accolades autour du corps : dans
+# l'argument d'une macro (corrigé rendu dans \seqLocExplication{…}), le « ; »
+# est déjà lu actif (babel français) et pgffor ne trouve plus la fin du corps
+# (« Paragraph ended before \pgffor@next was complete »). Cas réel : M04 AC02.
+RE_FOREACH_SANS_ACCOLADES = re.compile(
+    r"\\foreach\s*\\\w+(?:\s*/\s*\\\w+)*\s+in\s*\{[^{}]*\}(?!\s*\{)")
+CHAMPS_EN_ARGUMENT = ("corrige", "remed_corrige")
+
+
+def foreach_en_argument(lots: list[dict]) -> list[str]:
+    r"""v0.53.2 — éléments dont un corrigé (rendu dans l'argument de
+    \seqLocExplication) a un \foreach sans accolades autour de son corps."""
+    out = []
+
+    def parcourir(o, chemin):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k in CHAMPS_EN_ARGUMENT and isinstance(v, str) \
+                        and RE_FOREACH_SANS_ACCOLADES.search(v):
+                    out.append(f"{chemin} {o.get('titre') or ''} ({k})".strip())
+                elif k != "_dossier":
+                    parcourir(v, chemin)
+        elif isinstance(o, list):
+            for v in o:
+                parcourir(v, chemin)
+
+    for lot in lots:
+        parcourir(lot, lot.get("sequence", "?"))
+    return out
+
+
 def macros_module(lots: list[dict]) -> dict:
     """v0.52.8 (I2) — {séquence: ([\\seq…Six appelées], nombre de
     \\seqAstuceSix)} dans les contenus LaTeX des lots."""
@@ -1588,6 +1619,10 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         if absentes:
             rapport.anomalie(f"{seq} : macros locales absentes du module seqenseigne-style6e "
                              f"(à verser dans le .dtx) : {', '.join(absentes)}")
+    for x in foreach_en_argument(lots):                              # v0.53.2
+        rapport.anomalie(f"{x} : \\foreach sans accolades autour de son corps dans un corrigé "
+                         "(rendu en argument de \\seqLocExplication : compilation impossible) — "
+                         "écrire \\foreach \\x in {…} {…} dans le lot")
     # v0.52.8 (I2) — même contrôle pour les macros \seq…Six du module
     # (\seqAstuceSix, v0.8) ; nombre d'astuces par séquence.
     for seq, (ms, n_astuces) in macros_module(lots).items():
