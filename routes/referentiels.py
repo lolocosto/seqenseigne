@@ -157,6 +157,29 @@ def api_creer_coquille():
     return jsonify({"ref": ref}), 201
 
 
+# ── v0.54.0 — Aperçu avant création ─────────────────────────────────────────
+
+@bp.route("/api/referentiels/apercu-creation", methods=["GET"])
+def api_apercu_creation():
+    """v0.54.0 (RI10) — Ce que contiendra un référentiel interne avant sa
+    création : type (principal / mises en route), modèle, nombre de
+    séquences, parties, objectifs, documents du catalogue, état de
+    préparation (séquences validées, atomes et évaluations non validés).
+    Query : niveau, type_ref (principal | mer), gabarit (cycle4 | sixieme).
+    Lecture seule. 400 si niveau absent ou type inconnu."""
+    niveau = (request.args.get("niveau") or "").strip()
+    type_ref = (request.args.get("type_ref") or "principal").strip()
+    gabarit = (request.args.get("gabarit") or "").strip() or None
+    if not niveau:
+        return jsonify({"error": "niveau obligatoire"}), 400
+    from services import referentiels_internes as ri
+    if type_ref not in ri.TYPES_REF:
+        return jsonify({"error": f"Type de référentiel invalide : {type_ref!r}"}), 400
+    store = _store()
+    with store._conn() as conn:
+        return jsonify({"apercu": ri.contenu(conn, niveau, type_ref, gabarit)})
+
+
 # ── v0.13.5.1 — Suppression ──────────────────────────────────────────────────
 
 @bp.route("/api/referentiels/<ref_id>", methods=["DELETE"])
@@ -272,6 +295,14 @@ def api_deverrouiller(ref_id):
             if "introuvable" in msg.lower():
                 return jsonify({"error": msg}), 404
             return jsonify({"error": msg}), 409
+        # v0.54.0 (RI13) — Référentiel créé dans l'atelier : sa publication
+        # figée (première exportation après verrouillage) est mise de côté,
+        # sinon le prochain verrouillage resservirait l'ancien contenu.
+        from services import referentiels_internes as ri
+        if ri.instantane_du_referentiel(conn, ref_id) == ri.INSTANTANE_ATELIER:
+            from services.referentiel_documents_compilation import _dossier_du_referentiel
+            res["publication_mise_de_cote"] = ri.mettre_de_cote_publication(
+                _dossier_du_referentiel(store, ref_id))
     return jsonify(res), 200
 
 
@@ -379,14 +410,17 @@ def api_arbre(ref_id):
 
     with store._conn() as conn:
         row = conn.execute(
-            "SELECT id, niveau, version, etat "
+            "SELECT id, niveau, version, etat, "
+            "COALESCE(type_ref, 'principal') AS type_ref "
             "FROM referentiel_niveaux WHERE id = ?",
             (ref_id,),
         ).fetchone()
         if row is None:
             return jsonify({"error": f"référentiel introuvable : {ref_id}"}), 404
         niveau = row["niveau"]
-        arbre = svc.arbre_du_niveau(conn, niveau)
+        # v0.54.0 (RI1) — l'arbre du périmètre du référentiel (principal :
+        # sans Xnn ni Mnn ; mises en route : les Mnn).
+        arbre = svc.arbre_du_niveau(conn, niveau, row["type_ref"])
 
         return jsonify({
             "ref": {

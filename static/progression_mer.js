@@ -46,6 +46,18 @@ async function progMerCharger() {
         + encodeURIComponent(niveau) + '&type=mer');
       PROGMER_REFS = ((r2 && r2.referentiels) || []).map(x => ({ ...x, source: 'fige' }));
     } catch (e) {}
+    // v0.54.0 (RI12) — Référentiels de mises en route INTERNES verrouillés
+    // (conçus dans l'atelier, publiés) : même structure figée, parties posées
+    // librement comme celles d'un externe.
+    try {
+      const r3 = await api('/api/referentiels?niveau=' + encodeURIComponent(niveau)
+        + '&type=mer&etats=verrouille,utilise');
+      ((r3 && r3.referentiels) || []).forEach(x => {
+        if (!PROGMER_REFS.some(y => y.id === x.id)) {
+          PROGMER_REFS.push({ ...x, source: 'fige', interne: true });
+        }
+      });
+    } catch (e) {}
     await progMerChargerDispo();
   }
   progMerRenderRef();
@@ -216,6 +228,13 @@ async function progMerDocsCharger() {
   if (!z || !PROGMER) return;
   const pref = PROGMER_DOCS_OUVERT;
   const [rid, seq, num] = pref.split('|');
+  // v0.54.0 (RI12) — Référentiel de mises en route interne : ses documents
+  // publiés (par partie) s'associeront avec le chantier des progressions.
+  if ((PROGMER_REFS.find(r => r.id === rid) || {}).interne) {
+    z.innerHTML = '<p class="rx-petit">Référentiel de mises en route interne : ses documents '
+      + 'publiés (par partie) s\'associeront aux séances avec le chantier des progressions.</p>';
+    return;
+  }
   let ref = null, manuels = [];
   try {
     ref = await api('/api/referentiels-principaux-externes/' + encodeURIComponent(rid));

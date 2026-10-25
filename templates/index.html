@@ -2591,15 +2591,17 @@
         <div class="refu-filtres">
           <label>Année <select id="refu-f-annee" onchange="refuFiltre('annee', this.value)"></select></label>
           <label>Type <select id="refu-f-type" onchange="refuFiltre('type', this.value)">
-            <option value="">Tous</option><option value="principal">Principal</option><option value="mer">MER</option></select></label>
+            <option value="">Tous</option><option value="principal">Principal</option><option value="mer">Mises en route</option></select></label>
           <label>Source <select id="refu-f-source" onchange="refuFiltre('source', this.value)">
             <option value="">Toutes</option><option value="interne">Interne</option><option value="externe">Externe</option></select></label>
         </div>
         <div class="refu-creer">
-          <select id="refu-c-source" title="Source du nouveau référentiel" onchange="refuChargerModeles(); refuMajChoixModele()">
+          <select id="refu-c-source" title="Source du nouveau référentiel" onchange="refuAnnulerCreation(); refuChargerModeles(); refuMajChoixModele()">
             <option value="interne">Interne</option><option value="externe">Externe</option></select>
-          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel" onchange="refuChargerModeles(); refuMajChoixModele()">
-            <option value="principal">Principal</option><option value="mer">MER</option></select>
+          <!-- v0.54.0 (RI10) — libellés explicites ; le modèle est proposé pour
+               les deux types internes ; « + Créer » montre d'abord le contenu. -->
+          <select id="atl-ref-type" class="atl-ref-type" title="Type du nouveau référentiel" onchange="refuAnnulerCreation(); refuChargerModeles(); refuMajChoixModele()">
+            <option value="principal">Référentiel principal</option><option value="mer">Référentiel de mises en route</option></select>
           <!-- v0.51.6 — Structure de départ d'un référentiel externe (aperçu à droite). -->
           <select id="refu-c-modele" class="refu-c-modele" title="Structure de départ" style="display:none"
                   onchange="refuApercuModele(this.value)"><option value="">Structure vide</option></select>
@@ -2612,7 +2614,7 @@
           <div id="refu-c-modele-bloc" class="refu-c-modele-bloc">
             <label for="refu-c-gabarit" class="refu-c-modele-label">Modèle du référentiel</label>
             <select id="refu-c-gabarit" title="Modèle du référentiel"
-                    onchange="this.dataset.manuel='1'; refuMajChoixModele()">
+                    onchange="this.dataset.manuel='1'; refuAnnulerCreation(); refuMajChoixModele()">
               <option value="cycle4">Notions et méthodes</option>
               <option value="sixieme">Fiches de résumé par objectif</option></select>
             <div id="refu-c-modele-desc" class="refu-modele-desc" aria-live="polite"></div>

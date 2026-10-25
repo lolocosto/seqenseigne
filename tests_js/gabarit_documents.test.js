@@ -100,11 +100,14 @@ describe('M1 : modèle choisi à la création, avec sa description', () => {
       v => v === 'sixieme' ? 'Fiches de résumé par objectif' : 'Notions et méthodes');
   });
 
-  it('proposé pour un référentiel interne principal seulement (inutile en externe ou MER)', () => {
+  it('proposé pour un référentiel interne, principal ou de mises en route (v0.54.0), jamais externe', () => {
+    // v0.54.0 (RI10, changement voulu) : un référentiel de mises en route
+    // interne au modèle « Fiches » publie ses documents par partie.
     const { refuModeleProposable } = ctx(null);
     expect(refuModeleProposable('interne', 'principal')).toBe(true);
-    expect(refuModeleProposable('interne', 'mer')).toBe(false);
+    expect(refuModeleProposable('interne', 'mer')).toBe(true);
     expect(refuModeleProposable('externe', 'principal')).toBe(false);
+    expect(refuModeleProposable('externe', 'mer')).toBe(false);
   });
 
   it('la description dit documents, séries et règles de complétude du modèle choisi', () => {

@@ -673,3 +673,43 @@ def _produire_document_6e(conn, cible, options, tikz, tblr):
 for _type_doc_6e in ('travaux_personnels_6e', 'activites_complementaires_6e',
                      'seances_atelier_6e'):
     enregistrer_producteur(_type_doc_6e)(_produire_document_6e)
+
+
+# ── v0.54.0 (RI6) — Documents d'un référentiel de mises en route ────────────
+#
+# Cibles : referentiel_documents_compilation._cibles_mer (une par partie, une
+# par test court). Même générateur que l'onglet « Rendu PDF » d'une Mnn.
+
+
+def _produire_document_mer(type_document: str):
+    def _produire(conn, cible, options, tikz, tblr):
+        from services.mises_en_route_6e import generer_document_mer, MiseEnRouteErreur
+        from services.referentiel_documents_compilation import TYPES_MER
+        niveau, sequence, partie = cible.get('niveau'), cible.get('sequence'), cible.get('partie')
+        if not niveau or not sequence or not partie:
+            raise ProducteurErreur(
+                f"{type_document} requiert niveau, sequence et partie : reçu {cible!r}",
+                code='cible_invalide')
+        o = options or {}
+        mer = {'document': TYPES_MER[type_document], 'partie': partie,
+               'version': o.get('version') or 'eleve'}
+        if type_document == 'mer_fiches_cours_6e':
+            mer['exemplaires'] = o.get('exemplaires') or '1'
+        elif type_document == 'mer_seances_6e':
+            mer['par_page'] = o.get('par_page') or '4'
+        elif type_document == 'mer_tests_courts_6e':
+            mer.update({'sujet': o.get('sujet') or 'A', 'exemplaires': o.get('exemplaires') or '1',
+                        'test': cible.get('test') or 1})
+        elif type_document == 'mer_dossiers_6e':
+            mer['version'] = 'corrigee'
+        try:
+            return generer_document_mer(conn, niveau, sequence, mer,
+                                        tikz_libraries=tikz, tblr_libraries=tblr)
+        except MiseEnRouteErreur as e:
+            raise ProducteurErreur(str(e), code='mise_en_route') from e
+    return _produire
+
+
+for _type_doc_mer in ('mer_fiches_cours_6e', 'mer_seances_6e', 'mer_tests_courts_6e',
+                      'mer_activites_6e', 'mer_dossiers_6e'):
+    enregistrer_producteur(_type_doc_mer)(_produire_document_mer(_type_doc_mer))

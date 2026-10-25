@@ -73,9 +73,48 @@ def _niveau_du_referentiel(conn: sqlite3.Connection, ref_id: str) -> str | None:
 _TABLES_HORS_MODELE_FICHES = ('notions', 'methodes', 'cartes_automatisme')
 
 
+def _filtre_perimetre_sql(type_ref: str) -> str:
+    """v0.54.0 (RI1) — filtre SQL sur la colonne `sequence` d'une table
+    d'atomes : principal = ni archives `Xnn` ni mises en route `Mnn` (v0.52.4,
+    v0.53.0) ; mise en route = les `Mnn` seulement."""
+    if (type_ref or "principal") == "mer":
+        return " AND COALESCE(sequence, '') GLOB 'M[0-9][0-9]'"
+    return (" AND COALESCE(sequence, '') NOT LIKE 'X%'"
+            " AND COALESCE(sequence, '') NOT GLOB 'M[0-9][0-9]'")
+
+
+def compter_atomes_perimetre(conn: sqlite3.Connection, niveau: str,
+                             gabarit: str = 'cycle4',
+                             type_ref: str = 'principal') -> dict:
+    """{"non_valides": {table: n}, "total": {table: n}} des atomes du
+    périmètre du référentiel (RI1) ; modèle « Fiches » : notions, méthodes et
+    cartes ne comptent pas (M3)."""
+    from services.gabarits_documents import est_modele_fiches
+    fiches = est_modele_fiches(gabarit)
+    non_valides: dict[str, int] = {}
+    total: dict[str, int] = {}
+    for t in _TABLES_ATOMES:
+        if fiches and t in _TABLES_HORS_MODELE_FICHES:
+            non_valides[t] = total[t] = 0
+            continue
+        try:
+            cols = {r[1] for r in conn.execute(f"PRAGMA table_info({t})")}
+            filtre = _filtre_perimetre_sql(type_ref) if "sequence" in cols else ""
+            row = conn.execute(
+                f"SELECT COUNT(*), SUM(CASE WHEN etat_code != 'valide' THEN 1 ELSE 0 END) "
+                f"FROM {t} WHERE niveau = ?" + filtre, (niveau,)).fetchone()
+            total[t] = int(row[0] or 0) if row else 0
+            non_valides[t] = int(row[1] or 0) if row else 0
+        except sqlite3.OperationalError:
+            # Table absente : pas de blocage
+            non_valides[t] = total[t] = 0
+    return {"non_valides": non_valides, "total": total}
+
+
 def _compter_atomes_non_valides(conn: sqlite3.Connection,
                                   niveau: str,
-                                  gabarit: str = 'cycle4') -> dict[str, int]:
+                                  gabarit: str = 'cycle4',
+                                  type_ref: str = 'principal') -> dict[str, int]:
     """Pour chaque table d'atomes, compte ceux du niveau dont
     `etat_code != 'valide'`. Retourne un dict {table: count} (count=0
     si table absente / niveau vide).
@@ -84,36 +123,23 @@ def _compter_atomes_non_valides(conn: sqlite3.Connection,
       - les archives `Xnn` (anciens exercices de 6e, v0.52.0 D1) ne sont
         jamais comptées, quel que soit le modèle (le cycle 4 n'en a pas) ;
       - modèle « Fiches de résumé par objectif » : notions, méthodes et
-        cartes d'automatisme ne sont pas comptées (0)."""
-    from services.gabarits_documents import est_modele_fiches
-    fiches = est_modele_fiches(gabarit)
-    res: dict[str, int] = {}
-    for t in _TABLES_ATOMES:
-        if fiches and t in _TABLES_HORS_MODELE_FICHES:
-            res[t] = 0
-            continue
-        try:
-            cols = {r[1] for r in conn.execute(f"PRAGMA table_info({t})")}
-            # v0.53.0 (MR7) — ni les mises en route Mnn (référentiel de mise
-            # en route à part).
-            hors_archives = (" AND COALESCE(sequence, '') NOT LIKE 'X%'"
-                             " AND COALESCE(sequence, '') NOT GLOB 'M[0-9][0-9]'"
-                             if "sequence" in cols else "")
-            row = conn.execute(
-                f"SELECT COUNT(*) FROM {t} "
-                f"WHERE niveau = ? AND etat_code != 'valide'" + hors_archives,
-                (niveau,),
-            ).fetchone()
-            res[t] = int(row[0]) if row else 0
-        except sqlite3.OperationalError:
-            # Table absente : pas de blocage
-            res[t] = 0
-    return res
+        cartes d'automatisme ne sont pas comptées (0).
+    v0.53.0 (MR7) — ni les mises en route Mnn ; v0.54.0 (RI1) — un
+    référentiel de mise en route ne compte que ses `Mnn`."""
+    return compter_atomes_perimetre(conn, niveau, gabarit, type_ref)["non_valides"]
 
 
 def _compter_evaluations_non_valides(conn: sqlite3.Connection,
-                                       niveau: str) -> int:
+                                       niveau: str,
+                                       type_ref: str | None = None) -> int:
+    """v0.54.0 (RI1) — `type_ref` donné : évaluations du périmètre seulement
+    (principal : sans les tests courts des mises en route ; mise en route :
+    ses tests courts). Sans `type_ref` : toutes celles du niveau (avant)."""
     try:
+        if type_ref is not None:
+            from services.referentiels_internes import evaluations_du_perimetre
+            return sum(1 for e in evaluations_du_perimetre(conn, niveau, type_ref)
+                       if e["etat_code"] != "valide")
         row = conn.execute(
             "SELECT COUNT(*) FROM evaluations "
             "WHERE niveau = ? AND etat_code != 'valide'",
@@ -122,6 +148,20 @@ def _compter_evaluations_non_valides(conn: sqlite3.Connection,
         return int(row[0]) if row else 0
     except sqlite3.OperationalError:
         return 0
+
+
+def sequences_non_validees(conn: sqlite3.Connection, niveau: str,
+                           type_ref: str) -> list[str]:
+    """v0.54.0 (RI5) — codes des séquences du périmètre qui ne sont pas
+    « validées » dans l'atelier (sequences_par_niveau.etat_code). Le passage à
+    « validée » contrôle la séquence : F et A, critères et fiche par objectif
+    au principal (M2), MR6 pour une mise en route."""
+    try:
+        from services.referentiels_internes import sequences_du_perimetre
+        return [s["code"] for s in sequences_du_perimetre(conn, niveau, type_ref)
+                if s["etat_code"] != "valide"]
+    except sqlite3.OperationalError:
+        return []
 
 
 def _statut_documents_du_referentiel(conn: sqlite3.Connection,
@@ -205,11 +245,20 @@ def evaluer_eligibilite_validation(conn: sqlite3.Connection,
     niveau = row['niveau']
     etat = row['etat']
 
-    from services.gabarits_documents import gabarit_du_referentiel
-    atomes = _compter_atomes_non_valides(conn, niveau,
-                                         gabarit_du_referentiel(conn, ref_id))
-    evals = _compter_evaluations_non_valides(conn, niveau)
+    from services.gabarits_documents import gabarit_du_referentiel, est_modele_fiches
+    from services.referentiels_internes import type_du_referentiel
+    gabarit = gabarit_du_referentiel(conn, ref_id)
+    type_ref = type_du_referentiel(conn, ref_id)
+    atomes = _compter_atomes_non_valides(conn, niveau, gabarit, type_ref)
+    # v0.54.0 (RI1) — évaluations du périmètre : les tests courts des mises
+    # en route ne bloquent plus le principal (et inversement).
+    evals = _compter_evaluations_non_valides(conn, niveau, type_ref)
     docs = _statut_documents_du_referentiel(conn, ref_id)
+    # v0.54.0 (RI5) — modèle « Fiches » : chaque séquence du périmètre doit
+    # être validée dans l'atelier (contrôle de la séquence). « Notions et
+    # méthodes » : inchangé (les séquences ne sont pas exigées).
+    seq_nv = (sequences_non_validees(conn, niveau, type_ref)
+              if est_modele_fiches(gabarit) else [])
 
     raisons: list[str] = []
     for table, n in atomes.items():
@@ -225,6 +274,9 @@ def evaluer_eligibilite_validation(conn: sqlite3.Connection,
             raisons.append(f"{n} {libelle} non validé(e)s")
     if evals > 0:
         raisons.append(f"{evals} évaluation(s) non validée(s)")
+    if seq_nv:
+        raisons.append(f"{len(seq_nv)} séquence(s) non validée(s) dans l'atelier : "
+                       + ", ".join(seq_nv))
     if docs['non_compiles'] > 0:
         raisons.append(f"{docs['non_compiles']} document(s) non compilé(s)")
     if docs['perimes'] > 0:
@@ -240,7 +292,10 @@ def evaluer_eligibilite_validation(conn: sqlite3.Connection,
             'evaluations_non_valides': evals,
             'documents_non_compiles':  docs['non_compiles'],
             'documents_perimes':       docs['perimes'],
+            'sequences_non_validees':  seq_nv,                 # v0.54.0 (RI5)
         },
+        'type_ref':     type_ref,                              # v0.54.0
+        'gabarit':      gabarit,
         'etat_courant': etat,
         'niveau':       niveau,
     }

@@ -1,7 +1,9 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.3** (seqenseigne v0.52.7 : champ facultatif
-> `partie.materiel`, exercices marqués ordinateur / calculatrice). Version
+> Version du format : **1.4** (seqenseigne v0.54.0 : documents compilés
+> rattachés à une **partie**, référentiel interne de mises en route). Version
+> 1.3 : seqenseigne v0.52.7, champ facultatif
+> `partie.materiel`, exercices marqués ordinateur / calculatrice. Version
 > 1.2 : seqenseigne v0.52.4, champ facultatif
 > `partie.fiches`, modèle « Fiches de résumé par objectif ». Version 1.1 :
 > seqenseigne v0.52.1, champ facultatif `referentiel.gabarit_documents`.
@@ -200,6 +202,13 @@ Une entrée par séquence du découpage, dans le même ordre.
   `evaluation|ev_12`).
 - `type` : identifiant d'un type de `types_documents` (fichiers), ou type de
   document compilé (`livret_cours`, `evaluation`…) ; `null` si non typé.
+- v0.54.0 (1.4) — Un PDF compilé d'un référentiel interne **de mises en
+  route** (modèle « Fiches ») est rangé dans `documents` de **sa partie**
+  (une partie = un bloc de séances placé librement côté classe) : `ref`
+  `mer_fiches_cours_6e|N09/M03/p1`, `mer_seances_6e|N09/M03/p1`,
+  `mer_tests_courts_6e|N09/M03/p1/T1`, `mer_activites_6e|N09/M03/p2`,
+  `mer_dossiers_6e|N09/M03/p1`. Les documents compilés des autres
+  référentiels restent rangés par séquence ou annuels (inchangé).
 - `fichier` : nom, type MIME, taille, `sha256` du contenu. **Le contenu
   n'est pas dans le JSON** : il voyage dans le paquet de publication
   (v0.51.2), vérifié par son empreinte. Un document **compilé sans PDF**
@@ -255,14 +264,17 @@ externe est toujours exporté à partir de son état du moment.
 
 - Historique : 1.0 (v0.51.1) ; 1.1 (v0.52.1) ajoute
   `referentiel.gabarit_documents` ; 1.2 (v0.52.4) ajoute `partie.fiches` ;
-  1.3 (v0.52.7) ajoute `partie.materiel`.
+  1.3 (v0.52.7) ajoute `partie.materiel` ; 1.4 (v0.54.0) range des
+  documents compilés dans une partie (mises en route internes).
   Une publication figée produite en 1.0 est resservie telle quelle (sans le
   champ, donc lue `cycle4`).
 - Un document déclare la plus petite version qui décrit son contenu : un
   référentiel « Notions et méthodes » reste en **1.1** (rien ne change pour
   lui, empreinte comprise) ; « Fiches de résumé par objectif » est en 1.2 ;
   un référentiel dont au moins un exercice est marqué est en 1.3 (sans
-  marqueur, document et empreinte sont ceux de la v0.52.6).
+  marqueur, document et empreinte sont ceux de la v0.52.6) ; un référentiel
+  qui a des documents compilés de partie (mises en route internes) est en 1.4
+  (aucun référentiel existant : document et empreinte inchangés).
 - `format_version` = `majeure.mineure`. Ajout d'un champ **facultatif** :
   version mineure (1.1, 1.2…) ; changement incompatible : version majeure
   (2.0).

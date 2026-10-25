@@ -95,6 +95,9 @@ ENDPOINTS = {
     # v0.51.12 — Vues de conception des référentiels (atomes) : atelier.
     "referentiels.api_arbre": "atelier",
     "referentiels.api_eligibilite_validation": "atelier",
+    # v0.54.0 — Aperçu du contenu d'un référentiel interne avant création
+    # (lit les atomes de l'atelier).
+    "referentiels.api_apercu_creation": "atelier",
     # v0.52.1 — Gabarit de documents d'un référentiel : écriture de la
     # structure (atelier seulement).
     "referentiel_documents.api_gabarit": "structure",

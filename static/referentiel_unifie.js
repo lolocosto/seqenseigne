@@ -15,7 +15,7 @@
 // ============================================================================
 
 const REFU = { f: { annee: '', type: '', source: '' }, sel: null, actif: false,
-  modeles: [], apercu: null };
+  modeles: [], apercu: null, creation: null };
 
 function _refuE(s) { return escapeHtml(String(s == null ? '' : s)); }
 function _refuAnneeInterne(version) {
@@ -118,7 +118,7 @@ function _refuRendreApercu(ext) {
 function refuFiltre(cle, v) { REFU.f[cle] = v; refuRendre(); }
 
 const _REFU_LIB = {
-  type: { principal: 'Principal', mer: 'MER' },
+  type: { principal: 'Principal', mer: 'Mises en route' },
   source: { interne: 'Interne', externe: 'Externe' },
 };
 
@@ -168,6 +168,7 @@ function refuRendre() {
 function refuChoisir(cle) {
   REFU.sel = cle;
   REFU.apercu = null;                                          // v0.51.6
+  REFU.creation = null;                                        // v0.54.0
   const mod = document.getElementById('refu-c-modele');
   if (mod) mod.value = '';
   const [k, id] = [cle.slice(0, 1), cle.slice(2)];
@@ -247,6 +248,15 @@ window.refuApercuModele = refuApercuModele;
 function _refuRendreDetailExterne() {
   const ext = document.getElementById('refu-ext');
   if (!ext) return;
+  if (REFU.creation) {                                          // v0.54.0 (RI10)
+    ext.style.display = '';
+    ext.innerHTML = refuApercuCreationHtml(REFU.creation);
+    const empty = document.getElementById('atl-ref-empty');
+    if (empty) empty.style.display = 'none';
+    const det = document.getElementById('atl-ref-detail');
+    if (det) det.style.display = 'none';
+    return;
+  }
   if (REFU.apercu && _refuRendreApercu(ext)) return;          // v0.51.6
   if (!REFU.sel || REFU.sel[0] === 'I') { ext.style.display = 'none'; return; }
   const [k, id] = [REFU.sel.slice(0, 1), REFU.sel.slice(2)];
@@ -271,12 +281,25 @@ function refuGabaritParDefaut(niveau) {
 }
 
 // v0.52.4 (M1) — Le gabarit est le MODÈLE du référentiel, indépendant du
-// niveau. Il n'est proposé à la création que pour un référentiel interne
-// principal (un externe ou une MER ne publie pas de documents compilés), avec
-// sa description : documents produits, séries proposées, règles de complétude.
+// niveau, avec sa description : documents produits, séries proposées, règles
+// de complétude. v0.54.0 (RI10) — proposé pour tout référentiel INTERNE,
+// principal ou de mises en route (un référentiel de mises en route au modèle
+// « Fiches » publie ses documents par partie) ; pas pour un externe.
 function refuModeleProposable(source, type) {
-  return source === 'interne' && (type || 'principal') === 'principal';
+  return source === 'interne';
 }
+
+// v0.54.0 (RI10) — Référentiel de mises en route au modèle « Fiches » : ses
+// documents et sa règle de complétude (même texte que le serveur, MODELE_MER).
+const REFU_MODELE_MER = {
+  resume: "Les séquences de mise en route (Mnn) de l'atelier : une partie = un bloc de "
+    + 'séances placé librement dans la progression de mise en route.',
+  documents: 'par partie : fiche de cours, exercices de séance (2, 3 ou 4 par A4), test court '
+    + 'sur 10, activités complémentaires, dossier enseignant',
+  series: 'MR (un exercice par séance) ; AC ; tests courts (module Évaluations)',
+  completude: 'par partie : la fiche de cours, au moins un exercice de séance par objectif '
+    + '(contrôle MR6)',
+};
 
 function refuDescriptionModele(m) {
   if (!m) return '';
@@ -295,13 +318,75 @@ function refuMajChoixModele() {
   bloc.style.display = visible ? '' : 'none';
   const desc = document.getElementById('refu-c-modele-desc');
   if (desc) {
-    const m = (typeof atlModele === 'function') ? atlModele(sel.value) : null;
+    let m = (typeof atlModele === 'function') ? atlModele(sel.value) : null;
+    if (type === 'mer') {
+      m = sel.value === 'sixieme' ? REFU_MODELE_MER
+        : { resume: 'Au modèle « Notions et méthodes », les mises en route sont les cartes '
+            + "d'automatisme (Leitner) : un référentiel de mises en route interne n'y a pas de "
+            + 'documents. Choisissez « Fiches de résumé par objectif » pour la 6e.' };
+    }
     desc.innerHTML = visible ? refuDescriptionModele(m) : '';
   }
 }
 
+// v0.54.0 (RI10) — Aperçu avant création d'un référentiel interne : type,
+// modèle, état de départ et contenu (séquences, parties, objectifs,
+// documents, préparation), puis « Confirmer la création ».
+function refuApercuCreationHtml(a) {
+  if (!a) return '';
+  const n = x => String(+x || 0).replace('.', ',');
+  const docs = (a.documents || []).map(d => _refuE(d.libelle)).join(', ') || 'aucun';
+  const seqs = (a.sequences || []).map(s => `<li><strong>${_refuE(s.code)}</strong> ${_refuE(s.nom)}
+      <span class="rx-petit">${s.parties} partie(s), ${s.objectifs} objectif(s)${s.validee ? ' — validée' : ''}</span></li>`).join('');
+  const alertes = [];
+  if (!a.nb_sequences) {
+    alertes.push(a.type_ref === 'mer'
+      ? "Aucune séquence de mise en route (Mnn) dans l'atelier de ce niveau : importez d'abord les lots."
+      : "Aucune séquence dans l'atelier de ce niveau.");
+  }
+  if (a.type_ref === 'mer' && a.gabarit !== 'sixieme') {
+    alertes.push('Au modèle « Notions et méthodes », ce référentiel de mises en route n\'aura aucun document.');
+  }
+  return `<div class="card refu-apercu" id="refu-apercu-creation">
+    <div class="rpe-ref-tete"><strong>Avant de créer : ${_refuE(a.libelle_type)}</strong>
+      <span class="rx-petit">modèle « ${_refuE(a.libelle_modele)} »</span></div>
+    <p>Le référentiel sera créé à l'état <strong>en cours</strong>. Son contenu vient de l'atelier du
+      niveau ; il est figé au verrouillage.</p>
+    <p><strong>${a.nb_sequences}</strong> séquence(s), <strong>${a.nb_parties}</strong> partie(s),
+      <strong>${a.nb_objectifs}</strong> objectif(s)${a.nb_objectifs_cours ? ` (+ ${a.nb_objectifs_cours} « Connaître le cours »)` : ''},
+      ${n(a.nb_seances)} séance(s) prévue(s).</p>
+    <p><strong>Documents :</strong> ${docs}.</p>
+    <p><strong>Préparation :</strong> ${a.nb_sequences_validees} / ${a.nb_sequences} séquence(s) validée(s) ;
+      ${a.atomes_non_valides} atome(s) non validé(s) sur ${a.atomes_total} ;
+      ${a.evaluations_non_valides} évaluation(s) ou test(s) court(s) non validé(s) sur ${a.nb_evaluations}.</p>
+    ${alertes.map(x => `<p class="refu-pub-ko">${_refuE(x)}</p>`).join('')}
+    <details><summary>Séquences</summary><ul>${seqs}</ul></details>
+    <div class="rx-ajout"><button class="btn-prim" onclick="refuCreer(true)">Confirmer la création</button>
+      <button class="btn-sm" onclick="refuAnnulerCreation()">Annuler</button></div>
+  </div>`;
+}
+
+async function refuApercuCreation(niveau, type, gabarit) {
+  const q = `niveau=${encodeURIComponent(niveau)}&type_ref=${encodeURIComponent(type)}`
+    + (gabarit ? `&gabarit=${encodeURIComponent(gabarit)}` : '');
+  const r = await fetch('/api/referentiels/apercu-creation?' + q);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Erreur');
+  REFU.creation = d.apercu;
+  REFU.apercu = null;
+  _refuRendreDetailExterne();
+}
+
+function refuAnnulerCreation() {
+  if (!REFU.creation) return;
+  REFU.creation = null;
+  _refuRendreDetailExterne();
+  if (typeof atelRefRendreDetail === 'function' && REFU.sel && REFU.sel[0] === 'I') atelRefRendreDetail();
+}
+if (typeof window !== 'undefined') window.refuAnnulerCreation = refuAnnulerCreation;
+
 function _refuBadgeModele(i) {
-  if (i.source !== 'interne' || i.type !== 'principal') return '';
+  if (i.source !== 'interne') return '';                       // v0.54.0 : MER interne aussi
   const lib = (typeof atlLibelleModele === 'function') ? atlLibelleModele(i.modele)
     : (i.modele === 'sixieme' ? 'Fiches de résumé par objectif' : 'Notions et méthodes');
   return `<span class="refu-modele-badge${i.modele === 'sixieme' ? ' refu-modele-badge--fiches' : ''}"
@@ -317,19 +402,27 @@ function refuPreremplirGabarit() {
   sel.value = refuGabaritParDefaut(niveau);
 }
 
-async function refuCreer() {
+async function refuCreer(confirme) {
   const source = document.getElementById('refu-c-source').value;
   refuPreremplirGabarit();
   const selG = document.getElementById('refu-c-gabarit');
   const type = document.getElementById('atl-ref-type').value;
-  // v0.52.4 — modèle envoyé seulement s'il est proposé (interne principal) ;
-  // sinon le serveur applique la valeur par défaut du niveau.
+  // v0.52.4 — modèle envoyé seulement s'il est proposé (interne) ; sinon le
+  // serveur applique la valeur par défaut du niveau.
   const gabarit = (selG && refuModeleProposable(source, type)) ? selG.value : undefined;
   const desc = document.getElementById('refu-c-desc');
   const st = document.getElementById('refu-status');
   const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
   if (!niveau) { if (st) st.textContent = 'Choisissez d\'abord un niveau.'; return; }
   try {
+    // v0.54.0 (RI10) — interne : aperçu du contenu d'abord, création après
+    // « Confirmer la création ».
+    if (source === 'interne' && confirme !== true) {
+      await refuApercuCreation(niveau, type, gabarit);
+      if (st) st.textContent = 'Vérifiez le contenu, puis confirmez la création.';
+      return;
+    }
+    REFU.creation = null;
     if (source === 'interne') {
       const r = await fetch('/api/referentiels/coquille', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -432,7 +432,11 @@ def _trace_sequences(conn: sqlite3.Connection, ref_id: str,
     return sequences
 
 
-def _trace_evaluations(conn: sqlite3.Connection, niveau: str) -> list[dict]:
+def _trace_evaluations(conn: sqlite3.Connection, niveau: str,
+                       type_ref: str | None = None) -> list[dict]:
+    """v0.54.0 (RI1) — `type_ref` donné : évaluations du périmètre du
+    référentiel (le principal sans les tests courts des mises en route, la
+    mise en route avec ses seuls tests courts)."""
     evals = []
     rows = conn.execute("""
         SELECT id, numero, ordre, titre, mode_notation
@@ -440,6 +444,10 @@ def _trace_evaluations(conn: sqlite3.Connection, niveau: str) -> list[dict]:
          WHERE niveau = ?
          ORDER BY ordre, numero
     """, (niveau,)).fetchall()
+    if type_ref is not None:
+        from services.referentiels_internes import evaluations_du_perimetre
+        gardes = {e["id"] for e in evaluations_du_perimetre(conn, niveau, type_ref)}
+        rows = [r for r in rows if r["id"] in gardes]
     for r in rows:
         ev = dict(r)
         ev_id = ev['id']
@@ -533,13 +541,15 @@ def generer_trace(conn: sqlite3.Connection, ref_id: str,
     """
     ref = _trace_referentiel(conn, ref_id)
     niveau = ref['niveau']
+    from services.referentiels_internes import type_du_referentiel
     return {
         'version_schema': VERSION_SCHEMA_TRACE,
         'date_figeage':   _now_iso_utc(),
         'referentiel':    ref,
         'themes':         _trace_themes(conn, ref_id),
         'sequences':      _trace_sequences(conn, ref_id, niveau),
-        'evaluations':    _trace_evaluations(conn, niveau),
+        'evaluations':    _trace_evaluations(conn, niveau,
+                                             type_du_referentiel(conn, ref_id)),
         'documents':      _trace_documents(conn, ref_id, lister_cibles),
     }
 
@@ -625,6 +635,12 @@ def peupler_snapshot_parties(conn: sqlite3.Connection, ref_id: str,
          WHERE spn.niveau = ?
          ORDER BY spn.sequence_code, sp.numero
     """, (niveau,)).fetchall()
+    # v0.54.0 — seulement les séquences de l'instantané du référentiel (clé
+    # étrangère vers referentiel_sequences : une séquence du niveau absente de
+    # l'instantané — archive, mise en route… — faisait échouer le verrouillage).
+    figees = {r[0] for r in conn.execute(
+        "SELECT code FROM referentiel_sequences WHERE referentiel_id = ?", (ref_id,))}
+    parties = [p for p in parties if p['seq_code'] in figees]
     for p in parties:
         conn.execute("""
             INSERT INTO referentiel_parties
@@ -674,6 +690,12 @@ def purger_snapshot_referentiel(conn: sqlite3.Connection, ref_id: str) -> None:
 
     Le dossier _verrouille/ (trace JSON + PDF) est conservé par l'appelant.
     """
+    # v0.54.0 (RI2) — instantané écrit par l'atelier : retiré entier (il sera
+    # recalculé au prochain verrouillage).
+    from services import referentiels_internes as ri
+    if ri.instantane_du_referentiel(conn, ref_id) == ri.INSTANTANE_ATELIER:
+        ri.purger_instantane(conn, ref_id)
+        return
     conn.execute(
         "DELETE FROM referentiel_parties WHERE referentiel_id = ?", (ref_id,)
     )
@@ -749,6 +771,14 @@ def verrouiller_complet(conn: sqlite3.Connection, ref_id: str,
             'concurrents':          concurrents,
         }
 
+    # 3bis. v0.54.0 (RI2) — Référentiel créé dans l'atelier : instantané
+    # complet (thèmes, séquences, parties, objectifs du périmètre) écrit AVANT
+    # la trace, qui lit les séquences figées. Un référentiel construit
+    # autrement (import historique) garde le mécanisme d'avant (5bis).
+    from services import referentiels_internes as ri
+    par_atelier = ri.instantane_par_atelier(conn, ref_id)
+    instantane = ri.ecrire_instantane(conn, ref_id) if par_atelier else None
+
     # 4. Génération trace
     # v0.15.3 — dossier renommé `_verrouille/` (anciennement `_fige/`).
     # Le migrer_schema_post_ddl renomme automatiquement au boot.
@@ -776,7 +806,8 @@ def verrouiller_complet(conn: sqlite3.Connection, ref_id: str,
     niveau = conn.execute(
         "SELECT niveau FROM referentiel_niveaux WHERE id = ?", (ref_id,)
     ).fetchone()['niveau']
-    peupler_snapshot_parties(conn, ref_id, niveau)
+    if not par_atelier:
+        peupler_snapshot_parties(conn, ref_id, niveau)
 
     # 6. Transition d'état + annulation des concurrents.
     #    `verrouiller_minimal` recalcule lui-même les concurrents et
@@ -795,6 +826,8 @@ def verrouiller_complet(conn: sqlite3.Connection, ref_id: str,
             'trace':          str(chemin_trace),
             'nb_pdfs_copies': len(rapport_copie['copies']),
             'echecs_copie':   rapport_copie['echecs'],
+            # v0.54.0 (RI2) — contenu de l'instantané écrit par l'atelier.
+            'instantane':     instantane,
         },
     }
 

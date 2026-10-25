@@ -40,9 +40,12 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.3"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+FORMAT_VERSION = "1.4"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
 #                          v0.52.4 : + partie.fiches (modèle « Fiches de résumé »)
 #                          v0.52.7 : + partie.materiel (exercices marqués)
+#                          v0.54.0 : documents compilés rattachés à une partie
+#                                    (référentiel interne de mises en route)
+FORMAT_VERSION_MATERIEL = "1.3"
 FORMAT_VERSION_FICHES = "1.2"
 # v0.52.4 (F2) — Un document ne déclare que la version dont il a besoin : un
 # référentiel « Notions et méthodes » (gabarit cycle4) n'a pas de `fiches` et
@@ -223,8 +226,14 @@ def _notions_methodes(conn, niveau: str, seq: str, numero: int,
             "JOIN sequences_par_niveau s ON s.id=p.sequence_par_niveau_id "
             "WHERE s.niveau=? AND s.sequence_code=? AND p.numero=? ORDER BY o.code",
             (niveau, seq, numero)).fetchall()]
-        return [], [], [{"id": f["id"], "titre": f["titre"]}
-                         for f in _fiches_des_objectifs(conn, ids)]
+        fiches = [{"id": f["id"], "titre": f["titre"]} for f in _fiches_des_objectifs(conn, ids)]
+        # v0.54.0 — mise en route : la « version complète » d'une fiche de
+        # cours (MR4) est la même fiche, pas une fiche de plus.
+        from services.mises_en_route_6e import SUFFIXE_COMPLETE, est_sequence_mer
+        if est_sequence_mer(seq):
+            fiches = [f for f in fiches
+                      if not (f["titre"] or "").endswith(SUFFIXE_COMPLETE.strip())]
+        return [], [], fiches
     try:
         c = candidats(conn, niveau, seq, numero, numero)
     except Exception:
@@ -341,7 +350,9 @@ def _pdf_compile(data_dir: Path | None, rid: str, nom: str, fige: bool) -> dict 
 
 def _documents_compiles(conn, ref: dict, data_dir: Path | None,
                         omis: list | None = None) -> dict:
-    """{(seq_code or ''): [doc, ...]} — PDF compilés d'un référentiel interne."""
+    """{(seq_code or ''): [doc, ...]} — PDF compilés d'un référentiel interne.
+    v0.54.0 (RI7) — une cible qui porte sa `partie` (documents d'un
+    référentiel de mises en route) est rangée sous la clé (seq_code, partie)."""
     out: dict[str, list] = {}
     if (ref.get("source") or "interne") == "externe" or \
             not _table_existe(conn, "referentiel_documents"):
@@ -378,7 +389,8 @@ def _documents_compiles(conn, ref: dict, data_dir: Path | None,
                 if omis is not None:
                     omis.append(lib)
                 continue
-            out.setdefault(seq, []).append({
+            cle = (seq, int(c["partie"])) if (seq and c.get("partie")) else seq
+            out.setdefault(cle, []).append({
                 "ref": f"{type_doc}|{cid}", "origine": "compile", "type": type_doc,
                 "libelle": lib, "fichier": fichier, "placement": None})
     return out
@@ -495,6 +507,9 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                 partie["fiches"] = fiches                 # v0.52.4 (format 1.2)
             partie["documents"] = [_doc_fichier(f, data_dir)
                                    for f in _fichiers(conn, rid, code, num)]
+            # v0.54.0 (RI7, format 1.4) — documents compilés de la partie
+            # (mises en route) ; aucun ailleurs (document inchangé).
+            partie["documents"] += compiles.get((code, num), [])
             # v0.52.7 (format 1.3, M5) — exercices marqués de la partie, pour
             # le tableau de bord de l'appli de classe ; absent s'il n'y en a
             # pas (document et empreinte inchangés).
@@ -509,12 +524,20 @@ def construire(conn, rid: str, data_dir: Path | None = None,
             + compiles.get(code, [])})
     annuels = [_doc_fichier(f, data_dir) for f in _fichiers(conn, rid, "", 0)]
     annuels += compiles.get("", [])
-    for code, docs in compiles.items():          # séquence hors découpage
-        if code and code not in {s["code"] for s in sequences}:
+    codes_decoupage = {s["code"] for s in sequences}
+    parties_connues = {(s["code"], p["numero"]) for s in sequences for p in s["parties"]}
+    for code, docs in compiles.items():          # séquence (ou partie) hors découpage
+        if isinstance(code, tuple):
+            if code not in parties_connues:
+                annuels += docs
+        elif code and code not in codes_decoupage:
             annuels += docs
     # Un document déclare la plus petite version qui décrit son contenu (F2).
     avec_materiel = any("materiel" in p for s in sequences for p in s["parties"])
-    version = (FORMAT_VERSION if avec_materiel else
+    avec_docs_partie = any(d["origine"] == "compile" for s in sequences
+                           for p in s["parties"] for d in p["documents"])
+    version = (FORMAT_VERSION if avec_docs_partie else
+               FORMAT_VERSION_MATERIEL if avec_materiel else
                FORMAT_VERSION_FICHES if modele_fiches else FORMAT_VERSION_SANS_FICHES)
     doc = {"format": FORMAT,
            "format_version": version,

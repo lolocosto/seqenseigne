@@ -296,7 +296,9 @@ function atelRefRendreDetail() {
   const meta = document.getElementById('atl-ref-detail-meta');
   if (meta) {
     const parts = [`Niveau : <strong>${r.niveau}</strong>`,
-                   `Version : <strong>${r.version}</strong>`];
+                   `Version : <strong>${r.version}</strong>`,
+                   // v0.54.0 — type du référentiel interne.
+                   `Type : <strong>${(r.type_ref === 'mer') ? 'mises en route' : 'principal'}</strong>`];
     if (r.date_debut) parts.push(`Début : ${r.date_debut}`);
     if (r.date_fin)   parts.push(`Fin : ${r.date_fin}`);
     meta.innerHTML = parts.join(' &middot; ');
@@ -552,6 +554,20 @@ function atelRefObjectifHtml(o) {
         <div style="font-size:13px">
           <strong>${o.code}</strong> ${atelRefEscape(o.nom)}${fc}
         </div>
+      </div>`;
+  }
+
+  // v0.54.0 (RI9) — Objectif d'une mise en route (Mnn) : la fiche de cours
+  // de sa partie et ses exercices de séance (série MR), ni F/A/E ni méthode.
+  if (o.mer) {
+    const lienFiche = o.fiche
+      ? atelRefAtomeLibHtml(o.fiche, 'Fiche de cours')
+      : `<span style="color:#c0392b;opacity:.7;font-size:11px">Fiche de cours (manquante)</span>`;
+    return `
+      <div style="padding:6px 8px;border-top:1px solid var(--border)">
+        <div style="font-size:13px"><strong>${o.code}</strong> ${atelRefEscape(o.nom)}${fc}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;font-size:11px;margin-top:4px">${lienFiche}</div>
+        ${atelRefLigneSerieHtml('MR', o.exos_MR || [])}
       </div>`;
   }
 
@@ -920,6 +936,11 @@ async function atelRefVerrouiller() {
     const v = res.verrouille;
     msg += `\n\nTrace : ${v.trace}`;
     msg += `\nPDFs copiés : ${v.nb_pdfs_copies}`;
+    // v0.54.0 (RI2) — contenu figé (référentiel créé dans l'atelier).
+    if (v.instantane) {
+      msg += `\nContenu figé : ${v.instantane.nb_sequences} séquence(s), `
+           + `${v.instantane.nb_parties} partie(s), ${v.instantane.nb_objectifs} objectif(s).`;
+    }
     if (v.echecs_copie && v.echecs_copie.length > 0) {
       msg += `\nÉchecs de copie : ${v.echecs_copie.length}`
            + v.echecs_copie.map(e =>

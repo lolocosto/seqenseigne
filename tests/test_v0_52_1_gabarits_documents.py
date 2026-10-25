@@ -502,7 +502,10 @@ def test_format_1_1_porte_le_gabarit_et_un_1_0_sans_champ_est_lu_cycle4(app_6e):
     # v0.52.4 : format 1.2 (partie.fiches) ; un référentiel « Notions et
     # méthodes » reste déclaré 1.1 (FORMAT_VERSION_SANS_FICHES).
     # v0.52.7 : 1.3 (partie.materiel), déclaré seulement s'il y en a.
-    assert fmt.FORMAT_VERSION == "1.3" and fmt.FORMAT_VERSION_FICHES == "1.2"
+    # v0.54.0 (changement voulu) : 1.4 (documents compilés d'une partie,
+    # mises en route), déclaré seulement s'il y en a ; 1.3 garde son sens.
+    assert fmt.FORMAT_VERSION == "1.4" and fmt.FORMAT_VERSION_MATERIEL == "1.3"
+    assert fmt.FORMAT_VERSION_FICHES == "1.2"
     assert fmt.FORMAT_VERSION_SANS_FICHES == "1.1"
     prop = fmt.schema()["properties"]["referentiel"]["properties"]["gabarit_documents"]
     assert prop == {"enum": ["cycle4", "sixieme"]}

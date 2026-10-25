@@ -283,10 +283,98 @@ _CATALOGUE_SIXIEME = (
 )
 
 
+# ── v0.54.0 (RI6) — Référentiel de mises en route au modèle « Fiches » ──────
+#
+# Documents d'une séquence de mise en route (services/mises_en_route_6e.py,
+# MR5, D-DOS, D-AC), publiés **par partie** : une partie de mise en route est
+# un bloc de séances placé librement dans la progression de la classe (décision
+# du 22 octobre 2026), ses documents la suivent. Clés nouvelles (G3), toutes
+# préfixées « mer_ ». Même générateur que l'onglet « Rendu PDF » de l'atelier
+# (`generer_document_mer`) : mêmes PDF.
+
+EXEMPLAIRES_MER = ("1", "2")
+PAR_PAGE_MER = ("2", "3", "4")
+
+_CATALOGUE_MER_FICHES = (
+    TypeDocument(
+        cle="mer_fiches_cours_6e",
+        libelle="Fiches de cours",
+        description=("Une par partie : la fiche de cours de la mise en route, à coller "
+                     "dans le cahier (élève : à compléter ; corrigée : complète)."),
+        options={"actif": False, "version": "eleve", "exemplaires": "1"},
+        valeurs={"version": VERSIONS_6E, "exemplaires": EXEMPLAIRES_MER},
+        generateur="services.mises_en_route_6e.generer_document_mer",
+        champs=(("version", "Version", (("eleve", "élève (à compléter)"),
+                                        ("corrigee", "complète"))),
+                ("exemplaires", "Par A4", (("1", "1 (A4)"), ("2", "2 (A5)")))),
+    ),
+    TypeDocument(
+        cle="mer_seances_6e",
+        libelle="Exercices de séance",
+        description=("Une planche par partie : un exercice par séance, 2, 3 ou 4 par "
+                     "A4 avec traits de coupe."),
+        options={"actif": False, "version": "eleve", "par_page": "4"},
+        valeurs={"version": VERSIONS_6E, "par_page": PAR_PAGE_MER},
+        generateur="services.mises_en_route_6e.generer_document_mer",
+        champs=(("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),
+                ("par_page", "Par A4", (("2", "2"), ("3", "3"), ("4", "4")))),
+    ),
+    TypeDocument(
+        cle="mer_tests_courts_6e",
+        libelle="Tests courts",
+        description="Un par test court sur 10 (un par partie) : sujet A ou B.",
+        options={"actif": False, "version": "eleve", "sujet": "A", "exemplaires": "1"},
+        valeurs={"version": VERSIONS_6E, "sujet": SUJETS_6E, "exemplaires": EXEMPLAIRES_MER},
+        generateur="services.mises_en_route_6e.generer_test_court",
+        champs=(("sujet", "Sujet", (("A", "A"), ("B", "B"))),
+                ("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),
+                ("exemplaires", "Par A4", (("1", "1 (A4)"), ("2", "2 (A5)")))),
+    ),
+    TypeDocument(
+        cle="mer_activites_6e",
+        libelle="Activités complémentaires",
+        description="Une par partie qui en a (série AC) : pour les élèves en avance.",
+        options={"actif": False, "version": "eleve"},
+        valeurs={"version": VERSIONS_6E},
+        generateur="services.mises_en_route_6e.generer_document_mer",
+        champs=(("version", "Version", (("eleve", "élève"), ("corrigee", "corrigée"))),),
+    ),
+    TypeDocument(
+        cle="mer_dossiers_6e",
+        libelle="Dossier enseignant",
+        description=("Un par partie : plan, fiche complète, corrigés des exercices de "
+                     "séance, tests courts corrigés A et B, activités corrigées."),
+        options={"actif": False},
+        generateur="services.mises_en_route_6e.generer_document_mer",
+    ),
+)
+
+# Description du référentiel de mises en route (création, « Documents à publier »).
+MODELE_MER = {
+    "libelle": "Mises en route — " + "Fiches de résumé par objectif",
+    "resume": ("Les séquences de mise en route (Mnn) de l'atelier : une partie = un "
+               "bloc de séances placé librement dans la progression de mise en route."),
+    "documents": ("par partie : fiche de cours, exercices de séance (2, 3 ou 4 par A4), "
+                  "test court sur 10, activités complémentaires, dossier enseignant"),
+    "series": "MR (un exercice par séance) ; AC ; tests courts (module Évaluations)",
+    "completude": ("par partie : la fiche de cours, au moins un exercice de séance par "
+                   "objectif (contrôle MR6)"),
+}
+
+
 def catalogue(gabarit: str) -> tuple:
     """Types de documents du gabarit, dans l'ordre d'affichage."""
     g = normaliser(gabarit)
     return _catalogue_cycle4() if g == "cycle4" else _CATALOGUE_SIXIEME
+
+
+def catalogue_type(gabarit: str, type_ref: str | None) -> tuple:
+    """v0.54.0 (RI6) — Catalogue d'un référentiel selon son modèle **et son
+    type** : une mise en route au modèle « Fiches » publie les documents de
+    mise en route ; tout le reste est inchangé (gabarit seul)."""
+    if (type_ref or "principal") == "mer" and normaliser(gabarit) == "sixieme":
+        return _CATALOGUE_MER_FICHES
+    return catalogue(gabarit)
 
 
 def types(gabarit: str) -> tuple:
@@ -294,12 +382,30 @@ def types(gabarit: str) -> tuple:
 
 
 def tous_les_types() -> dict:
-    """{clé: TypeDocument} de tous les gabarits (les clés sont uniques)."""
+    """{clé: TypeDocument} de tous les gabarits (les clés sont uniques) ;
+    v0.54.0 : et du catalogue des mises en route."""
     out = {}
     for g in GABARITS:
         for t in catalogue(g):
             out[t.cle] = t
+    for t in _CATALOGUE_MER_FICHES:
+        out[t.cle] = t
     return out
+
+
+def type_du_referentiel_ref(conn, ref_id: str) -> str:
+    try:
+        r = conn.execute("SELECT type_ref FROM referentiel_niveaux WHERE id=?",
+                         (ref_id,)).fetchone()
+    except Exception:
+        r = None
+    return ((r[0] if r else None) or "principal")
+
+
+def catalogue_du_referentiel(conn, ref_id: str) -> tuple:
+    """v0.54.0 (RI6) — Catalogue du référentiel (modèle et type)."""
+    return catalogue_type(gabarit_du_referentiel(conn, ref_id),
+                          type_du_referentiel_ref(conn, ref_id))
 
 
 def type_document(cle: str) -> TypeDocument | None:
@@ -375,8 +481,9 @@ def gabarits_atelier(conn) -> dict:
 def types_du_referentiel(conn, ref_id: str) -> tuple:
     """D2 (v0.52.4) — Types de documents du gabarit du référentiel : seuls
     ceux-là comptent pour la validation, le figeage et la publication (un
-    document actif d'un autre gabarit reste en base, sans effet)."""
-    return types(gabarit_du_referentiel(conn, ref_id))
+    document actif d'un autre gabarit reste en base, sans effet).
+    v0.54.0 (RI6) — selon le type aussi (mises en route)."""
+    return tuple(t.cle for t in catalogue_du_referentiel(conn, ref_id))
 
 
 # ── Validation des options (G4) ──────────────────────────────────────────────

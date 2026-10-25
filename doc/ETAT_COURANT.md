@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.53.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.54.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -184,10 +184,19 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   document (D-SEL), « Test n° » borné (serveur : 400), bouton **Tout compiler** (D-TOUT : flux
   SSE comme le rendu par lot, statuts, log des échecs, archive ZIP des PDF). Cycle 4 et principal 6e inchangés au caractère près.
   Détails : `doc/redemarrage_v0_53_3.md`.
-- À venir : tuile « Matériel à réserver » du tableau de bord de classe (avec
-  les progressions) ; publication d'une mise en
-  route comme référentiel « mer » (côté classe, une partie Mnn = un bloc de
-  séances placé librement) ; migration du référentiel de 5e
+- v0.54.0 livrée (25 octobre) : les **deux référentiels internes de 6e** se
+  créent dans l'appli (RI1 à RI12) — périmètre selon le type (principal : sans
+  Xnn ni Mnn ; mises en route : les Mnn), instantané complet au verrouillage
+  (`services/referentiels_internes.py`, colonne `referentiel_niveaux.instantane`),
+  séquences validées exigées au modèle Fiches, catalogue de documents des mises
+  en route par partie (`mer_*_6e`), format d'échange 1.4 (documents de partie),
+  concurrents du même type, aperçu avant création, valider une Mnn = MR6,
+  progression de MER de la classe ouverte aux MER internes. Cycle 4 et 6e :
+  même `.tex`. Détails : `doc/redemarrage_v0_54_0.md`.
+- À venir : progressions (séances des objectifs du principal, documents des
+  mises en route internes dans la progression de MER, passage de M2026_N09 au
+  référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
+  les progressions) ; migration du référentiel de 5e
   (doublons) ; dépendances entre objectifs dans l'appli ; outil d'import
   paramétré par niveau. La mise en ligne (prévue en v0.52) prendra le
   numéro suivant.
@@ -358,8 +367,9 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
 - Association posée AU NIVEAU (créneau + rang de séance), pas par classe ; les
   décalages restent gérés par les indisponibilités.
 - Sources de docs : référentiel principal interne (dont planches de cartes),
-  référentiels externes (principal ET MER). Référentiels MER internes : PAS
-  développés (roadmap).
+  référentiels externes (principal ET MER). Référentiels MER internes :
+  créés et publiés depuis v0.54.0 (documents par partie) ; leur association
+  aux séances reste à faire (progressions).
 
 ## Prochaines étapes possibles
 
@@ -446,6 +456,14 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   `unicode_latex` quand le LaTeX volontaire doit passer) ; jamais de
   `\newunicodechar` dans le préambule commun (le `.tex` du cycle 4 et du
   principal changerait).
+
+- **Référentiels internes** (v0.54.0) : tout ce qui énumère le contenu d'un
+  référentiel interne passe par `referentiels_internes.sequences_du_perimetre`
+  / `evaluations_du_perimetre` (type principal ou mer) ; l'instantané d'un
+  référentiel créé dans l'appli est écrit au verrouillage (`ecrire_instantane`),
+  jamais à la main ; le catalogue de documents dépend du modèle ET du type
+  (`gabarits_documents.catalogue_du_referentiel`) ; un document de partie a une
+  cible qui porte `partie` (format 1.4).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

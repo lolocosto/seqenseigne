@@ -293,8 +293,9 @@ def _docs_internes_publies(conn, ref_id: str, sequence: str, annuels: bool):
     seq = "" if annuels else sequence
     # v0.52.1 — seulement les types du gabarit du référentiel (stocké à
     # l'import ; fichier 1.0 sans le champ → cycle4).
-    from services.gabarits_documents import gabarit_du_referentiel, types
-    permis = types(gabarit_du_referentiel(conn, ref_id))
+    # v0.54.0 (RI6) — et selon le type (référentiel de mises en route).
+    from services.gabarits_documents import types_du_referentiel
+    permis = types_du_referentiel(conn, ref_id)
     return [{"source": "interne", "doc_ref": d["ref"], "libelle": d["libelle"],
              "categorie": "annuel" if annuels else "sequence"}
             for d in conn.execute("SELECT * FROM referentiel_docs_publies WHERE "

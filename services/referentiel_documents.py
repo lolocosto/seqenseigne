@@ -176,8 +176,8 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
     `etat_effectif` (cf. services.referentiel_documents_compilation).
     """
     from services import gabarits_documents as gd
-    gabarit = gd.gabarit_du_referentiel(conn, referentiel_id)
-    types_gabarit = gd.types(gabarit)
+    # v0.54.0 (RI6) — catalogue selon le modèle et le type (mises en route).
+    types_gabarit = gd.types_du_referentiel(conn, referentiel_id)
 
     def _lire():
         return [r for r in conn.execute("""
@@ -236,8 +236,7 @@ def initialiser_documents_defaut(conn: sqlite3.Connection,
     Appelable en toute sécurité à plusieurs reprises.
     """
     from services import gabarits_documents as gd
-    gabarit = gd.gabarit_du_referentiel(conn, referentiel_id)
-    for i, t in enumerate(gd.catalogue(gabarit), start=1):
+    for i, t in enumerate(gd.catalogue_du_referentiel(conn, referentiel_id), start=1):
         conn.execute("""
             INSERT OR IGNORE INTO referentiel_documents
                 (id, referentiel_id, type_document, options, ordre)

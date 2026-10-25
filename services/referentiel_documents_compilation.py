@@ -256,6 +256,8 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
     if type_document in ('travaux_personnels_6e', 'activites_complementaires_6e',
                          'seances_atelier_6e'):
         return _cibles_documents_6e(conn, niveau, type_document)
+    if type_document in TYPES_MER:                      # v0.54.0 (RI6)
+        return _cibles_mer(conn, niveau, type_document)
 
     if type_document == 'livret_cartes_planches':
         # v0.15.2.5 — uniquement des cibles par séquence.
@@ -428,6 +430,65 @@ def _cibles_documents_6e(conn: sqlite3.Connection, niveau: str,
     return cibles
 
 
+# v0.54.0 (RI6) — Documents d'un référentiel de mises en route (modèle
+# « Fiches ») : `type_document` → document de `mises_en_route_6e`.
+TYPES_MER = {
+    'mer_fiches_cours_6e': 'fiche_cours',
+    'mer_seances_6e':      'planche',
+    'mer_tests_courts_6e': 'test_court',
+    'mer_activites_6e':    'activite',
+    'mer_dossiers_6e':     'dossier',
+}
+_LIBELLES_MER = {
+    'mer_fiches_cours_6e': 'Fiche de cours',
+    'mer_seances_6e':      'Exercices de séance',
+    'mer_tests_courts_6e': 'Test court',
+    'mer_activites_6e':    'Activités complémentaires',
+    'mer_dossiers_6e':     'Dossier enseignant',
+}
+
+
+def _cibles_mer(conn: sqlite3.Connection, niveau: str, type_document: str) -> list[dict]:
+    """v0.54.0 (RI6) — Une cible **par partie** de chaque séquence de mise en
+    route du niveau (une par test court pour les tests courts), seulement si
+    la partie a ce qu'il faut (fiche, exercices de séance, activités) ; le
+    dossier enseignant existe pour chaque partie. Identifiant
+    « N09/M03/p1 » (« N09/M03/p1/T1 » pour un test court) ; `partie` porte la
+    partie, à laquelle le document est rattaché dans la publication."""
+    from services import mises_en_route_6e as mer
+    from services.referentiels_internes import sequences_du_perimetre
+    cibles = []
+    for sq in sequences_du_perimetre(conn, niveau, 'mer'):
+        seq = sq['code']
+        try:
+            s = mer.lire_sequence_mer(conn, niveau, seq)
+        except mer.MiseEnRouteErreur:
+            continue
+        for p in s['parties']:
+            n = p['numero']
+            base = {'niveau': niveau, 'sequence': seq, 'partie': n}
+            titre = mer.titre_partie(p).replace(' --- ', ' — ')
+            if type_document == 'mer_tests_courts_6e':
+                for rang, t in enumerate(p['tests'], start=1):
+                    cibles.append({**base, 'test': rang, 'eval_id': t['id'],
+                                   'cible_id': f"{niveau}/{seq}/p{n}/T{rang}",
+                                   'libelle': f"{_LIBELLES_MER[type_document]} {seq} p{n} n° {rang}",
+                                   'nom_fichier': f"{type_document}__{niveau}__{seq}__p{n}__T{rang}.pdf",
+                                   'titre_doc': f"{titre} — test n° {rang}"})
+                continue
+            if type_document == 'mer_fiches_cours_6e' and p.get('fiche') is None:
+                continue
+            if type_document == 'mer_seances_6e' and not p['exercices']:
+                continue
+            if type_document == 'mer_activites_6e' and not p.get('activites'):
+                continue
+            cibles.append({**base, 'cible_id': f"{niveau}/{seq}/p{n}",
+                           'libelle': f"{_LIBELLES_MER[type_document]} {seq} p{n}",
+                           'nom_fichier': f"{type_document}__{niveau}__{seq}__p{n}.pdf",
+                           'titre_doc': titre})
+    return cibles
+
+
 def _niveau_du_referentiel(conn: sqlite3.Connection, ref_id: str) -> str:
     row = conn.execute(
         "SELECT niveau FROM referentiel_niveaux WHERE id = ?",
@@ -578,9 +639,10 @@ def compiler_document(store, doc_id: str,
         # v0.52.1 — Le producteur reçoit le référentiel, donc son gabarit
         # de documents (clés ajoutées à une copie de la cible : les
         # producteurs du cycle 4 les ignorent, leur .tex ne change pas).
-        from services.gabarits_documents import gabarit_du_referentiel, types
+        from services.gabarits_documents import gabarit_du_referentiel, types_du_referentiel
         gabarit = gabarit_du_referentiel(conn, ref_id)
-        if type_document not in types(gabarit):
+        # v0.54.0 (RI6) — catalogue selon le modèle et le type du référentiel.
+        if type_document not in types_du_referentiel(conn, ref_id):
             conn.execute("UPDATE referentiel_documents SET compile_en_cours = 0 "
                          "WHERE id = ?", (doc_id,))
             conn.commit()

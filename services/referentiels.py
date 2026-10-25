@@ -336,13 +336,20 @@ def lister_concurrents_a_annuler(conn: sqlite3.Connection,
     suffixe = version[4:]
 
     pattern = annee + '%'
+    # v0.54.0 (RI8) — Concurrents du même TYPE seulement : verrouiller le
+    # référentiel de mises en route (« 2026b ») n'annule pas le principal du
+    # même niveau et de la même année (« 2026 »), et inversement.
+    type_ref = conn.execute(
+        "SELECT COALESCE(type_ref, 'principal') FROM referentiel_niveaux WHERE id = ?",
+        (ref_id,)).fetchone()[0] or 'principal'
     rows = conn.execute(
         "SELECT id, niveau, version, etat, description "
         "FROM referentiel_niveaux "
         "WHERE niveau = ? AND version LIKE ? AND id != ? "
         "AND etat IN ('en_cours', 'valide') "
+        "AND COALESCE(type_ref, 'principal') = ? "
         "ORDER BY version",
-        (niveau, pattern, ref_id),
+        (niveau, pattern, ref_id, type_ref),
     ).fetchall()
     concurrents = []
     for r in rows:
@@ -490,7 +497,8 @@ def deverrouiller(conn: sqlite3.Connection, ref_id: str) -> dict:
 
 # ── v0.13.5.1 — Helper UI : arbre du niveau pour le tableau de bord ──────────
 
-def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
+def arbre_du_niveau(conn: sqlite3.Connection, niveau: str,
+                    type_ref: str | None = None) -> dict:
     """
     Retourne l'arbre **séquence → partie → objectif → atomes** pour
     visualiser dans l'atelier Référentiel l'état des atomes du niveau.
@@ -516,6 +524,11 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
 
     Atomes types : 'notion', 'methode', 'exo', 'fiche'.
     Code court : C01 (notion), M01 (methode), F01/A02/E03 (exo), FR01 (fiche).
+
+    v0.54.0 (RI1) — `type_ref` donné (référentiel sélectionné) : seulement
+    les séquences de son périmètre (principal : sans archives Xnn ni mises en
+    route Mnn ; mise en route : les Mnn) et ses évaluations. Sans `type_ref` :
+    tout le niveau, comme avant.
     """
     # On joint sequences_du_cycle en filtrant sur le cycle du niveau,
     # via param_niveaux. Sans ce filtre, les codes 'S01', 'S02'… qui
@@ -538,6 +551,10 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
     sequences = []
     total = 0
     valides = 0
+
+    if type_ref is not None:
+        from services.referentiels_internes import dans_perimetre
+        seqs = [sq for sq in seqs if dans_perimetre(sq["code"], type_ref)]
 
     for sq in seqs:
         sn_id = sq["sn_id"]
@@ -661,6 +678,7 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
                 exos_F  = []
                 exos_A  = []
                 exos_E  = []
+                exos_MR = []        # v0.54.0 (RI9) — mises en route seulement
 
                 # Méthode liée à l'objectif (cardinalité 1-1)
                 if o["methode_id"]:
@@ -727,7 +745,9 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
                         "nav_niveau": niveau,
                         "nav_seq":    seq_code,
                     }
-                    if e["serie"] == "F":
+                    if e["serie"] == "MR" and est_sequence_mer(seq_code):
+                        exos_MR.append(atome_exo)      # v0.54.0 (RI9)
+                    elif e["serie"] == "F":
                         exos_F.append(atome_exo)
                     elif e["serie"] == "A":
                         exos_A.append(atome_exo)
@@ -747,6 +767,17 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
                     ORDER BY num_fiche, id
                     LIMIT 1
                 """, (obj_id,)).fetchone()
+                if fiche_row is None and est_sequence_mer(seq_code):
+                    # v0.54.0 (RI9) — mise en route : la fiche de cours de
+                    # la partie, attachée aux objectifs (objectif_fiches).
+                    fiche_row = conn.execute("""
+                        SELECT f.id, f.titre, f.num_fiche, f.etat_code
+                          FROM objectif_fiches x
+                          JOIN fiches_resume f ON f.id = x.fiche_id
+                         WHERE x.objectif_id = ?
+                         ORDER BY x.ordre, f.num_fiche
+                         LIMIT 1
+                    """, (obj_id,)).fetchone()
                 if fiche_row:
                     num = fiche_row["num_fiche"]
                     code = (f"FR{int(num):02d}"
@@ -767,7 +798,7 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
                 tous_atomes = (
                     ([methode] if methode else [])
                     + ([fiche] if fiche else [])
-                    + notions + exos_F + exos_A + exos_E
+                    + notions + exos_F + exos_A + exos_E + exos_MR
                 )
                 for a in tous_atomes:
                     total += 1
@@ -788,6 +819,9 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
                     "exos_A":    exos_A,
                     "exos_E":    exos_E,
                 })
+                if est_sequence_mer(seq_code):
+                    # v0.54.0 (RI9) — clés propres aux mises en route.
+                    objectifs[-1].update({"mer": True, "exos_MR": exos_MR})
 
             # Comptage des R/EA dans les stats globales du niveau
             for a in atomes_rae:
@@ -835,6 +869,10 @@ def arbre_du_niveau(conn: sqlite3.Connection, niveau: str) -> dict:
     # v0.13.6.3 — Évaluations du niveau (rattachées au niveau, pas à
     # une séquence) avec leurs exos.
     evaluations = _lister_evaluations_du_niveau(conn, niveau)
+    if type_ref is not None:
+        from services.referentiels_internes import evaluations_du_perimetre
+        gardes = {e["id"] for e in evaluations_du_perimetre(conn, niveau, type_ref)}
+        evaluations = [ev for ev in evaluations if ev["id"] in gardes]
     for ev in evaluations:
         for ex in ev["exos"]:
             total += 1

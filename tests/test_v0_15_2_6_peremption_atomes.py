@@ -82,6 +82,12 @@ def test_mapping_decisions_laurent_v0_15_2_6():
         'seances_atelier_6e':     ['exercices'],
         # v0.52.3 — plan de travail 6e (numéros du livret, fiches, évaluations)
         'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations'],
+        # v0.54.0 (changement voulu) — référentiel de mises en route (RI6).
+        'mer_fiches_cours_6e':    ['fiches_resume'],
+        'mer_seances_6e':         ['exercices'],
+        'mer_tests_courts_6e':    ['exercices', 'evaluations'],
+        'mer_activites_6e':       ['exercices'],
+        'mer_dossiers_6e':        ['exercices', 'fiches_resume', 'evaluations'],
     }
     assert ATOMES_PAR_TYPE_DOCUMENT == attendu
 

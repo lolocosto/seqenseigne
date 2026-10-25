@@ -3139,8 +3139,18 @@ def _valider_sequence_hook(conn, sn_id: str) -> None:
     modèle « Notions et méthodes » garde la règle F, A, E.
     """
     raisons: list[str] = []
-    row_sn = conn.execute("SELECT niveau FROM sequences_par_niveau WHERE id = ?",
+    row_sn = conn.execute("SELECT niveau, sequence_code FROM sequences_par_niveau WHERE id = ?",
                           (sn_id,)).fetchone()
+    # v0.54.0 (RI11) — Séquence de mise en route (Mnn) : contrôle MR6
+    # (fiche de cours par partie, un exercice de séance par objectif…), pas
+    # la règle F/A des séquences principales ; les avertissements MR6 ne
+    # bloquent pas.
+    from services.mises_en_route_6e import est_sequence_mer, valider_sequence_mer
+    if row_sn is not None and est_sequence_mer(row_sn[1]):
+        v = valider_sequence_mer(conn, row_sn[0], row_sn[1])
+        if v["erreurs"]:
+            raise ValidationSequenceErreur(sn_id, list(v["erreurs"]))
+        return
     modele_fiches = False
     if row_sn is not None:
         from services.gabarits_documents import est_modele_fiches, gabarit_atelier_du_niveau

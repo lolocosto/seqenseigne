@@ -1587,6 +1587,16 @@ class SqliteStore:
             conn.commit()
         except Exception as _e:                       # pragma: no cover
             print(f"  [mises_en_route_6e] migration impossible : {_e}")
+        # ── v0.54.0 (RI2) — Référentiels internes : colonne
+        #    `referentiel_niveaux.instantane` ('' par défaut : rien ne change
+        #    pour les référentiels existants ; 'atelier' quand l'instantané
+        #    est écrit au verrouillage) ─
+        try:
+            from services import referentiels_internes as _ri
+            _ri.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [referentiels_internes] migration impossible : {_e}")
 
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 
