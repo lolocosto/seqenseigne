@@ -77,6 +77,14 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      que D1 coupe en deux reçoit `evaluations.calculatrice = ''` (les deux
      mentions sont imposées par D2). L'essai à blanc montre la répartition et
      la durée de la partie 1 (D4).
+  9. **v0.54.1** — Titres de documents en double (décision D-DOUBLON,
+     `doc/redemarrage_v0_54_1.md`) : deux documents des lots importés (TP, AC,
+     AT, évaluations et tests courts, lots S et M) qui portent le même titre
+     sont signalés en anomalie, sauf les sujets A et B d'une même évaluation
+     (même séquence, un seul A et un seul B). Comparaison sans tenir compte des
+     majuscules ni des espaces en trop. Rien n'est bloqué : le titre sert aux
+     élèves et aux collègues, et les évaluations sont repérées par leur titre
+     dans le niveau.
 
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
@@ -935,6 +943,40 @@ def macros_locales(lots: list[dict]) -> dict:
     return out
 
 
+def _cle_titre(titre: str) -> str:
+    """v0.54.1 (D-DOUBLON) — titre comparé sans casse ni espaces en trop."""
+    return re.sub(r"\s+", " ", (titre or "").replace("\\,", " ")).strip().casefold()
+
+
+def titres_documents_en_double(lots: list[dict]) -> list[str]:
+    """v0.54.1 (D-DOUBLON) — titres portés par plusieurs documents des lots
+    (TP, AC, AT, évaluations et tests courts, lots S et M), une ligne par
+    titre : « titre » : S04 TP01, S12 TP01. Les sujets A et B d'une même
+    évaluation (même séquence, un A et un B au plus) ne sont pas des doublons.
+    Une entrée `evaluations_retirees` n'est pas un document du lot."""
+    vus: "OrderedDict[str, list]" = OrderedDict()
+    for lot in lots:
+        seq = lot.get("sequence", "?")
+        for cle_lot, serie, _ in DOCUMENTS_LOT:
+            for k, src in enumerate(lot.get(cle_lot, []) or [], start=1):
+                vus.setdefault(_cle_titre(src.get("titre", "")), []).append(
+                    (seq, f"{serie}{k:02d}", src.get("titre", "")))
+        for ev in lot.get("evaluations", []) or []:
+            sujet = (ev.get("sujet") or "").strip().upper()
+            vus.setdefault(_cle_titre(ev.get("titre", "")), []).append(
+                (seq, f"évaluation{' sujet ' + sujet if sujet else ''}", ev.get("titre", "")))
+    out = []
+    for cle, liste in vus.items():
+        if not cle or len(liste) < 2:
+            continue
+        sujets = [q for _, q, _ in liste]
+        paire = (len({s for s, _, _ in liste}) == 1 and len(liste) == 2
+                 and sorted(sujets) == ["évaluation sujet A", "évaluation sujet B"])
+        if not paire:
+            out.append(f"« {liste[0][2]} » : " + ", ".join(f"{s} {q}" for s, q, _ in liste))
+    return out
+
+
 # v0.53.2 — `\foreach \x in {…} corps;` sans accolades autour du corps : dans
 # l'argument d'une macro (corrigé rendu dans \seqLocExplication{…}), le « ; »
 # est déjà lu actif (babel français) et pgffor ne trouve plus la fin du corps
@@ -1623,6 +1665,9 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.anomalie(f"{x} : \\foreach sans accolades autour de son corps dans un corrigé "
                          "(rendu en argument de \\seqLocExplication : compilation impossible) — "
                          "écrire \\foreach \\x in {…} {…} dans le lot")
+    for x in titres_documents_en_double(lots):                       # v0.54.1 (D-DOUBLON)
+        rapport.anomalie(f"titre de document en double {x} — renommer l'un des documents "
+                         "dans son lot (risque de confusion pour les élèves et les collègues)")
     # v0.52.8 (I2) — même contrôle pour les macros \seq…Six du module
     # (\seqAstuceSix, v0.8) ; nombre d'astuces par séquence.
     for seq, (ms, n_astuces) in macros_module(lots).items():

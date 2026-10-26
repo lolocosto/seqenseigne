@@ -1,5 +1,5 @@
 {
- "source": "col6/ref6e_v2.md (sections S01 à S13 ; copie : outils/ref6e_v2.md), 19 octobre 2026 (découpage de la géométrie), 20 octobre 2026 (critères de S05-12) ; recopie du 22 octobre 2026 : sections S01 à S13 inchangées (mises en route en parties, section « Mises en route » lue par outils/import_lot6e_mer.py)",
+ "source": "col6/ref6e_v2.md (sections S01 à S13 ; copie : outils/ref6e_v2.md), 19 octobre 2026 (découpage de la géométrie), 20 octobre 2026 (critères de S05-12) ; recopie du 22 octobre 2026 : sections S01 à S13 inchangées (mises en route en parties, section « Mises en route » lue par outils/import_lot6e_mer.py) ; recopie du 25 octobre 2026 (v0.54.1) : sections S01 à S13 inchangées (intitulés, critères et parties) — seules changent les contraintes de progression, la ligne de notions de S01-04 (pourcentage), la note de durée de S12, le code AE et le récapitulatif",
  "niveau": "N09",
  "cycle": "C03",
  "themes": [

@@ -11,7 +11,7 @@ Ce document propose une structure de référentiel de 6e à partir des deux réf
 - **Contenus existants** : 411 exercices de 6e (N09) rangés dans les 16 séquences du cycle 3 de l'appli (S01 Nombres entiers … S16 Symétrie axiale), écrits pour l'ancien programme. Aucune notion, méthode, fiche ni carte n'existe en 6e : tout le cours est à écrire.
 - **Texte de référence** : le contrôle de couverture a été refait le 18 octobre 2026 sur le texte complet du programme du cycle 3 fourni par Laurent, puis comparé au livret d'accompagnement de 6e (2026). Ce qui venait auparavant de la progression de l'académie de Bordeaux est vérifié.
 - **Statut** : proposition à valider point par point.
-- **Codes** : N09/S13/F12 = exercice F12 de la séquence 13 du cycle 3 (6e). R = révisions, EA = activité d'approche.
+- **Codes** : N09/S13/F12 = exercice F12 de la séquence 13 du cycle 3 (6e). R = révisions, AE = activité d'approche.
 
 ## Organisation actuelle et comparaison avec le programme
 
@@ -159,8 +159,8 @@ Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (aj
 - S12-02 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
 - S12-03 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
 - S12-04 → S03-24 : diviser un décimal par un entier (prix d'un pot, d'un stylo, d'un litre) (lot S12).
-- S12-02 → M04 : 1 min = 60 s, exercice du cœur (lot S12).
-- S12-02 → M03 : 1 kg = 1 000 g (lot S12).
+- S12-02 → M03-22 : 1 min = 60 s, exercice du cœur (lot S12 ; corrigé le 25 octobre 2026 : les durées sont travaillées en M03, partie 3, et non en M04).
+- S12-02 : 1 kg = 1 000 g (lot S12) est une connaissance du CM1, sans objectif prérequis : les masses ont été retirées de M03 le 18 octobre 2026 (corrigé le 25 octobre 2026 ; la ligne indiquait « → M03 »).
 - S12-04 → M04 : aire du rectangle, boulodrome (lot S12).
 - S12-04 → S03 : multiplier des nombres décimaux (lot S12).
 - S12-05 → M06 : lire un graphique, robinet (lot S12).
@@ -169,6 +169,29 @@ Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (aj
 - S13-03 → S03 : division 360 ÷ 5 = 72, E « polygone à la demande » et AC 1 (lot S13).
 - M03-12 → M04-12 : l'unité d'aire est expliquée dans la fiche de la partie 2 de M04 ; la fiche de la partie 2 de M03 la rappelle (décision du 25 octobre 2026 : l'ordre est une question de progression, pas de référentiel).
 - M05-12 → S06-03 : les triangles particuliers sont expliqués en S06-03 ; la fiche de la partie 2 de M05 les présente comme un rappel (décision du 25 octobre 2026).
+
+Dépendances relevées dans les rapports des lots de mise en route M01 à M07 et dans leurs fiches de cours (ajoutées le 25 octobre 2026, d'après la passe de cohérence du même jour), même forme ; « lot Mnn » désigne le lot de mise en route qui porte la dépendance ou la notion.
+
+- M01-22 → S01-02 : unités de numération (dixième, centième, millième), rappelées dans la fiche de la partie 3 de M01 et expliquées en S01-02 (lot M01).
+- M02-02 → S03-03 : ordre de grandeur, en appui pour contrôler un résultat (lot M02).
+- M02-12 → S01-04 : 37 % = 37/100 : le pourcentage s'appuie sur la fraction décimale (lot M02).
+- M02-12 → S01-13 : simplifier une proportion, critère A (lot M02).
+- M02-22 → S01-13 : fractions égales, rappelées dans la fiche de la partie 3 de M02 (lot M02).
+- M02-32 → S03-24 : 3/4 de 10 = 30 ÷ 4, critère A (lot M02).
+- M03-12 → M03-02 : le tableau des aires vient après celui des longueurs (lot M03).
+- M03-22 → S03-22 : 127 h = 5 j 7 h (division euclidienne), critère A (lot M03).
+- M04-02 → M03-02 : conversions de longueurs (mm, cm, m) (lot M04).
+- M04-12 → S03-13 : 4 × 2,6 de tête, une séance (lot M04).
+- M04-22 → S06-02 : rayon et diamètre, rappelés dans la fiche de la partie 3 de M04 (lot M04).
+- M04-22 → S03-12 : multiplier par 10, par 100 (lot M04).
+- M05-02 → S05-02 : point, droite, segment, expliqués en S05-02 (l'équipe mène les deux en parallèle) (lot M05).
+- M05-02 → S05-03 : codage d'une figure, expliqué en S05-03 (lot M05).
+- M06-02 → S10-02 : « Tableau à double entrée (expliqué dans la séquence S10) », fiche de la partie 1 de M06 (lot M06).
+- M07-12 → S12-02 : rappel de la définition de la proportionnalité, fiche de la partie 2 de M07 (lot M07).
+- M07-12 → S12-04 : retour à l'unité, expliqué en S12-04 (lot M07).
+- S03-34 → M02-22 : fraction d'une quantité, expliquée dans la fiche M02 (partie 3) (lot M02).
+- S03-35 → M02-22 : addition et soustraction de fractions, expliquées dans la fiche M02 (partie 3) (lot M02).
+- Cycle M06-02 ↔ S10-02 : **à trancher** (question 9 du rapport de cohérence du 25 octobre 2026). S10-02 → M06-02 (F02 du lot S10) et M06-02 → S10-02 (fiche de la partie 1 de M06) ne peuvent pas être respectées ensemble ; aucune des deux n'est retirée en attendant la décision.
 
 ## S01 — Nombres entiers et décimaux, fractions
 
@@ -191,7 +214,7 @@ Dépendances entre objectifs relevées dans les rapports des lots S04 à S13 (aj
 **S01-04 · Passer d'une écriture d'un décimal à une autre (à virgule, fraction décimale, nombre mixte, pourcentage)**
 
 - F : « Passe d'une fraction décimale à l'écriture à virgule et inversement. » · A : « Passe d'une écriture à l'autre, pourcentage compris. »
-- Notions à expliquer : « Fraction décimale » (nouvelle) ; « Nombre décimal » (N10/S01/C04, sans les relatifs) ; « Nombre mixte » (nouvelle) ; « Pourcentage » (N10/S01/C02, fiche M02).
+- Notions à expliquer : « Fraction décimale » (nouvelle) ; « Nombre décimal » (N10/S01/C04, sans les relatifs) ; « Nombre mixte » (nouvelle) ; « Pourcentage » (N10/S01/C02, expliquée dans la fiche de S01-04 ; M02-12 la reprend).
 - Exercices : F : N09/S03/F05 ; A : N09/S03/A02, A03 ; E : N09/S03/E02 (Stevin).
 
 L'objectif « arrondir » (ancien S02-06) est retiré : l'arrondi est travaillé dans la mise en route M01-32.
@@ -542,7 +565,7 @@ Le vocabulaire n'est pas exigible : les critères n'en demandent pas.
 
 *Thème E — Proportionnalité*
 
-Séquence courte recréée le 18 octobre 2026 (décision de Laurent, d'après le livret, p. 15 à 24) : environ 4 séances, une par objectif, centrées sur la compréhension de la notion. Elle reprenait le code S04 de l'ancienne numérotation, devient S09 dans la numérotation par thème du 18 octobre 2026, puis S12 après le découpage de la géométrie (19 octobre 2026) ; l'entraînement et les procédures restent dans la mise en route M07, et les pourcentages dans M02. Les anciens objectifs de proportionnalité et de pourcentages retirés le 17 octobre ne reviennent pas tels quels : les codes S12-02 à S12-05 désignent les objectifs ci-dessous. La fiche de cours de S12 porte la notion ; la fiche M07 la rappelle.
+Séquence courte recréée le 18 octobre 2026 (décision de Laurent, d'après le livret, p. 15 à 24) : quatre objectifs centrés sur la compréhension de la notion, soit environ 8 séances d'après la passe de cohérence du 25 octobre 2026 (7,8 séances, de 6,8 à 8,9). Elle reprenait le code S04 de l'ancienne numérotation, devient S09 dans la numérotation par thème du 18 octobre 2026, puis S12 après le découpage de la géométrie (19 octobre 2026) ; l'entraînement et les procédures restent dans la mise en route M07, et les pourcentages dans M02. Les anciens objectifs de proportionnalité et de pourcentages retirés le 17 octobre ne reviennent pas tels quels : les codes S12-02 à S12-05 désignent les objectifs ci-dessous. La fiche de cours de S12 porte la notion ; la fiche M07 la rappelle.
 
 ### Partie 1 — Comprendre la proportionnalité
 
@@ -846,7 +869,7 @@ Le livret d'accompagnement de 6e (2026) a été lu en entier. Il rappelle l'espr
 
 **Écarts tranchés par Laurent le 18 octobre 2026** :
 
-- Proportionnalité tout en mise en route (livret, p. 15, 19). **Tranché** : S12 est recréée dans le principal, courte (4 séances), centrée sur la compréhension : définition, reconnaissance, retour à l'unité, représentation (S12-02 à S12-05). M07 garde l'entraînement : relations multiplicatives, résolution de problèmes, échelles.
+- Proportionnalité tout en mise en route (livret, p. 15, 19). **Tranché** : S12 est recréée dans le principal, courte (4 objectifs ; environ 8 séances d'après l'estimation du 25 octobre 2026), centrée sur la compréhension : définition, reconnaissance, retour à l'unité, représentation (S12-02 à S12-05). M07 garde l'entraînement : relations multiplicatives, résolution de problèmes, échelles.
 - Pourcentages avant probabilités (livret, p. 6). **Tranché** : contrainte de progression, notée dans « Contraintes de progression » : S11-02 dépend de M02-12. L'ordre des séquences ne change pas.
 - Algèbre, probabilités et pensée informatique tôt dans l'année (livret, p. 3). **Tranché** : contrainte de progression, S04, S11 et S13 à traiter pendant le premier semestre.
 - Programme de construction (livret, p. 28, 35). **Tranché** : tâche dans S05-12 (critère A et un exercice à créer), pas d'objectif.
@@ -856,23 +879,43 @@ Le livret d'accompagnement de 6e (2026) a été lu en entier. Il rappelle l'espr
 
 **Points d'accord** : la réactivation des automatismes en rituels avant une séquence (p. 18, 28) correspond aux mises en route ; l'ordre de la séquence sur la médiatrice (définition à l'équerre, propriété caractéristique, construction au compas, problèmes, p. 28-29) correspond à S05-12, S05-13 et S08-12 ; l'échelle de probabilités graduée de 0 à 1 (p. 5, 12) est dans le critère A de S11-02.
 
-## Récapitulatif : ce qui est à créer
+## Récapitulatif : état au 25 octobre 2026
 
-La structure proposée compte, dans la progression principale, 13 séquences, 20 parties et 52 objectifs hors « Cours » (découpage de la géométrie du 19 octobre 2026 : mêmes objectifs, en quatre séquences), dont S10-04 et S10-05 ajoutés au contrôle du 18 octobre 2026 sur le texte complet du programme, et S12-02 à S12-05 (S12, recréée le même jour). Aucun point n'est à confirmer au titre de la couverture : les anciens S01-05 et S01-06, l'ancien M02-01, la construction du diagramme en barres (ancien M06-02) et les masses et contenances de M03-02 ont été retirés le 18 octobre 2026. Les écarts avec le livret d'accompagnement sont tous tranchés (section qui précède) ; les contraintes d'ordre sont dans « Contraintes de progression ». Les mises en route comptent 7 séquences et 25 objectifs. Chaque objectif a un seul verbe d'action. Dix-huit objectifs du principal sont passés dans les mises en route les 17 et 18 octobre 2026 (4 objectifs aujourd'hui dans le référentiel principal X2026\_N09).
+Tout ce que ce document prévoyait est créé. Les 13 séquences du principal (S01 à S13) et les 7 mises en route (M01 à M07) sont écrites en lots (`lot6e/Snn`, `lot6e/Mnn`) et importées dans l'atelier (N09), à l'état « en cours » : aucune n'est encore validée, et les deux référentiels internes (principal et mises en route) restent à créer dans l'appli. Chiffres recalculés à partir des lots le 25 octobre 2026.
 
-- **Cours du principal** : une méthode par objectif (certaines peuvent être partagées entre objectifs voisins) et une fiche de résumé par objectif, soit 52 fiches.
-- **Fiches de cours des mises en route** : 7, une par séquence, à coller dans le cahier en début de séquence.
+- **Principal** : 13 séquences, 20 parties et 52 objectifs hors « Cours », chacun avec ses critères F, A et E ; un objectif « Cours » par partie.
+- **Exercices du principal** : 185 F, 194 A, 104 E et 69 activités d'approche (AE), soit 552 ; 106 exercices ont une remédiation. Chaque objectif a au moins 2 F, 2 A et 1 E. Chaque exercice, chaque activité et chaque remédiation a un corrigé rédigé.
+- **Fiches** : 52 fiches de résumé, une par objectif du principal ; 22 fiches de cours de mise en route, une par partie (décision du 22 octobre 2026).
+- **Évaluations** : 18 évaluations sur 20, chacune en deux sujets A et B (36 sujets), de 2 à 4 objectifs ; une seule est coupée en deux parties pour la calculatrice (S03, ordre de grandeur et multiplication). Aucun test court dans le principal.
+- **Documents** : 24 travaux personnels (TP), 23 activités complémentaires (AC) et 1 séance d'atelier (AT, S02), chacun avec un corrigé rédigé (ceux de S01 à S03 depuis le 25 octobre 2026).
+- **Mises en route** : 7 séquences, 22 parties (une par objectif, sauf les paires liées de M02, M03 et M05) et 25 objectifs avec leurs critères ; 131 exercices de séance, un par séance (M01 : 24 ; M02 : 28 ; M03 : 16 ; M04 : 24 ; M05 : 24 ; M06 : 3 ; M07 : 12) ; 22 fiches de cours ; 22 tests courts sur 10, un par partie, en sujets A et B (44 sujets) ; 2 activités complémentaires (M04).
+- **Reste à faire**, hors contenu : valider les séquences dans l'atelier, créer les deux référentiels internes, fixer les séances du principal et construire les progressions. Les questions ouvertes sont celles de la passe de cohérence du 25 octobre 2026 (§ 8), dont le cycle M06-02 ↔ S10-02 (« Contraintes de progression »).
+
+**Par séquence du principal** (« Évaluations » : évaluations sur 20 distinctes, entre parenthèses le nombre de sujets)
+
+| Séquence | Objectifs | F | A | E | AE | Remédiations | Évaluations (sujets) | TP | AC | AT |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| S01 Nombres entiers et décimaux, fractions | 6 | 43 | 32 | 8 | 13 | 19 | 2 (4) | 2 | 2 | 0 |
+| S02 Comparaison de nombres | 6 | 18 | 21 | 6 | 10 | 11 | 2 (4) | 2 | 2 | 1 |
+| S03 Opérations | 10 | 25 | 35 | 26 | 14 | 21 | 3 (6) | 1 | 2 | 0 |
+| S04 Pré-algèbre | 2 | 7 | 8 | 5 | 3 | 4 | 1 (2) | 2 | 2 | 0 |
+| S05 Points, segments, droites | 5 | 18 | 19 | 12 | 5 | 7 | 2 (4) | 3 | 1 | 0 |
+| S06 Cercles | 2 | 15 | 13 | 6 | 2 | 11 | 1 (2) | 2 | 2 | 0 |
+| S07 Angles | 4 | 13 | 15 | 4 | 5 | 11 | 1 (2) | 2 | 1 | 0 |
+| S08 Triangles | 2 | 5 | 6 | 4 | 2 | 1 | 1 (2) | 3 | 1 | 0 |
+| S09 Symétrie axiale | 3 | 8 | 12 | 9 | 3 | 4 | 1 (2) | 2 | 2 | 0 |
+| S10 Gestion de données | 3 | 10 | 11 | 9 | 3 | 4 | 1 (2) | 2 | 2 | 0 |
+| S11 Probabilité | 3 | 9 | 9 | 6 | 3 | 3 | 1 (2) | 1 | 2 | 0 |
+| S12 Proportionnalité | 4 | 9 | 9 | 6 | 4 | 6 | 1 (2) | 1 | 2 | 0 |
+| S13 Pensée informatique | 2 | 5 | 4 | 3 | 2 | 4 | 1 (2) | 1 | 2 | 0 |
+| **Total** | **52** | **185** | **194** | **104** | **69** | **106** | **18 (36)** | **24** | **23** | **1** |
+
+**Inventaire des notions du 18 octobre 2026** (établi avant l'écriture des fiches, gardé pour mémoire et non recompté depuis) :
+
 - **Notions** : 95 notions distinctes, dont 30 notions de 5e à reprendre, 58 nouvelles et 7 rappels. 70 sont expliquées dans le principal et 25 dans les fiches de mise en route (« Proportion » est passée dans la fiche M02, « Diagramme en barres, diagramme circulaire, graphique » dans la fiche M06).
 - Notions nouvelles à écrire (58) : Unités de numération : dixième, centième, millième ; Partie entière et partie décimale d'un nombre décimal ; Classes des grands nombres : milliers, millions, milliards ; Fraction décimale ; Nombre mixte ; Demi-droite graduée : origine, unité, abscisse ; Fraction comme quotient ; Fractions égales ; Nature d'un quotient : entier, décimal, non décimal ; Comparaison des nombres décimaux ; Ordre croissant, ordre décroissant, symboles < et > ; Encadrement d'un nombre ; Comparaison des fractions ; Ordre de grandeur ; Multiplication et division par 10, 100, 1 000 ; Multiplication par 0,1, 0,01, 0,001 ; Multiplication de deux nombres décimaux ; Division décimale d'un nombre décimal par un entier ; Fraction d'une quantité ; Addition et soustraction de fractions ; Schéma en barres ; Modélisation par une balance ; Motif évolutif : étape, régularité ; Tableau à double entrée ; Diagramme en barres, diagramme circulaire, graphique ; Événement impossible, événement certain ; Notations \[AB\], (AB), \[AB) et AB ; Appartenance et alignement ; Distance entre deux points, longueur d'un segment ; Milieu d'un segment ; Cercle et disque : centre, rayon, diamètre, corde ; Cercle et disque comme ensembles de points ; Angle : sommet, côtés, notation ; Angles aigu, droit, obtus, plat ; Angles adjacents, complémentaires, supplémentaires ; Mesure d'un angle en degrés ; Bissectrice d'un angle ; Triangle : sommets, côtés, angles ; Médiatrice d'un segment ; Propriété caractéristique de la médiatrice ; Cercle circonscrit à un triangle ; Instruction et séquence d'instructions ; Événement déclencheur d'un script ; Boucle répéter n fois ; Complément à 1, à 100, à 1 000, à 10 000 ; Arrondi et valeur approchée ; Addition et soustraction posées de nombres décimaux ; Produit d'une fraction par un entier ; Aire et unité d'aire ; Définition de la proportionnalité entre deux grandeurs ; Nombre π ; Aire du carré et du rectangle ; Volume et unité de volume : le centimètre cube ; Construction d'un triangle connaissant trois longueurs ; Enquête statistique : population, caractère, données ; Entrée et sortie d'un programme ; Grandeur pour une unité : prix au kilo, pages par minute ; Représentations d'une situation de proportionnalité : phrases, flèches, tableau. « Instruction et séquence d'instructions », « Événement déclencheur d'un script », « Boucle répéter n fois » et « Entrée et sortie d'un programme » (citées par le programme de 6e) portent les intitulés de programmation communs aux quatre niveaux ; la 5e les notera en rappel.
 - Notions de rappel (7) : Numération décimale de position ; Fraction : numérateur, dénominateur ; Point, droite, segment, demi-droite ; Droites perpendiculaires ; Tables de multiplication ; Polygones et quadrilatères usuels ; Solides usuels.
 - Notions de 5e reprises en 6e (30) : si elles sont enseignées dès la 6e, elles deviennent des rappels en 5e. Six sont à adapter : Nombre décimal (N10/S01/C04, définie avec les relatifs), Tableau et coefficient de proportionnalité (N10/S08/C01, sans le coefficient), Somme des angles d'un triangle (N10/S12/C07, sans la démonstration), Propriétés de conservation des symétries (N10/S11/C04, partie axiale seulement), Patron (N10/S13/C02, cube et pavé seulement) et Effectif, fréquence d'une valeur (N10/S06/C03, sans la fréquence sauf en S11-04). « Inégalité triangulaire et triangle constructible » (N10/S12/C05) n'est plus reprise en 6e : le programme de 6e ne demande que le constat au compas. La somme des angles d'un triangle, les médiatrices concourantes et le cercle circonscrit sont des objectifs de 6e : en 5e, leurs notions (N10/S12/C07, N10/S12/C08) deviennent des rappels.
-- **Critères** : à saisir pour les 52 objectifs du principal et les 25 des mises en route. Les propositions F et A des objectifs retirés du principal servent de base aux critères des mises en route.
-- **Exercices des mises en route** : 131, un par séance (M01 : 24 ; M02 : 28 ; M05 : 24 ; M03 : 16 ; M07 : 12 ; M06 : 3 ; M04 : 24). Aucun n'est rattaché aujourd'hui ; les exercices N09 cités par les objectifs retirés peuvent servir.
-- **Séries à créer en priorité dans le principal** (aucun exercice existant) : S04-03 (motifs évolutifs), S11-02 à S11-04 (probabilités, avec des exercices de 5e à copier), S01-14, S03-34, S03-35, S03-24 (division décimale), S07-05 (bissectrice, A et E), S10-04 et S10-05 (enquête, mesures), les séries F et E de S12-02 à S12-05 (proportionnalité), et les séries F de S05-02, S05-04.
-- **Exercices à compléter** : N09/S04/A06, N09/S04/E05, N09/S09/F06 (« A rédiger »).
-- **À copier depuis la 5e** : N10/S07/F01, F02, F04, F05, A04 (probabilités).
-- **Mises en route M2026\_N09** : écrire les 7 fiches de cours, saisir les critères, rattacher les exercices et appliquer les objectifs réécrits (un seul verbe, M03-22 dédoublé, aire du disque et formule du volume retirées de M04).
-- **Exercices à sortir du principal** (révisions ou exploration) : positions relatives de droites (N09/S15), aires du triangle et du disque, formules et conversions de volume, priorités et distributivité, divisibilité par 3, agrandissement, quadrilatères particuliers.
 
 **Sources** : [programme du cycle 3 (annexe 2)](https://www.education.gouv.fr/sites/default/files/ensel620_annexe2-v2.pdf) ; [ce qui change en 6e (académie de Bordeaux)](https://ent2d.ac-bordeaux.fr/disciplines/mathematiques/le-nouveau-programme-de-mathematiques-en-sixieme-ce-qui-disparait-et-ce-qui-apparait/) ; [progression détaillée de 6e (académie de Bordeaux)](https://ent2d.ac-bordeaux.fr/disciplines/mathematiques/wp-content/uploads/sites/3/2025/07/Progression_6eme_2025_2.pdf).
 

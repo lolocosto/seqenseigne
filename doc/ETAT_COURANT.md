@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.54.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.54.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -193,6 +193,13 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   concurrents du même type, aperçu avant création, valider une Mnn = MR6,
   progression de MER de la classe ouverte aux MER internes. Cycle 4 et 6e :
   même `.tex`. Détails : `doc/redemarrage_v0_54_0.md`.
+- v0.54.1 livrée (25 octobre) : lots S01–S03 complétés des **12 corrigés rédigés** de
+  leurs TP, AC et atelier (vérifiés en Python) ; TP de S12 renommé « Proportionnalité : les
+  achats de la kermesse » (doublon avec S04) ; l'import signale tout **titre de document en
+  double** (D-DOUBLON, `titres_documents_en_double`) ; `outils/ref6e_v2.md` du 25 octobre
+  (19 dépendances des mises en route, 3 lignes corrigées, cycle M06-02 / S10-02 « à trancher »,
+  durée de S12, code AE, récapitulatif = état réel) ; intitulés et critères inchangés. Rien à
+  migrer ; réimport des lots. Détails : `doc/redemarrage_v0_54_1.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
