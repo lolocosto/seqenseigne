@@ -1,6 +1,9 @@
-9b1062b6f95486079c3673175ccb9ec6  34849  doc\ETAT_COURANT.md
-b68bee1d54ab7fa74f048c3d8b91b99c  4898  doc\redemarrage_v0_54_1.md
-9e95101bd801e64c27108ed3e947286e  93889  outils\import_lot6e.py
-2278edcc83c78efc634cd16be10903d0  23367  outils\objectifs_6e.json
-1505d17857cc75eac6ee179c35d016b7  93147  outils\ref6e_v2.md
-776d06552523707683ee3214ad3b4bd3  7027  tests\test_v0_54_1_lots_6e.py
+fa30641a7ff92e02351552ed2b98b093  35419  doc\ETAT_COURANT.md
+1d6849e715975a6ed057765666ba4b69  5735  doc\redemarrage_v0_54_2.md
+1365211a3a5400fc98637987343d4dd6  22588  routes\livret_sequence.py
+1ada02e15d799c8afb22999035a37252  9480  services\mer_tout_compiler.py
+04278afa42fdaea2502b4909fe5a123a  12837  services\sequence_tout_compiler.py
+a49d0ade13964572657ed52c40a3f830  161894  static\atelier_seqniv_assemblage.js
+20224639c7d6f1c69dfe869273ad8c2a  10588  static\seqniv_pur.js
+222d7cb54a8ec7d1c09eaaee4e70a5cc  12216  tests\test_v0_54_2_tout_compiler_sequence.py
+2edb65abe997ec3a570c5cd617b92bf6  3989  tests_js\tout_compiler_sequence.test.js

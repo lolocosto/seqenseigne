@@ -1,4 +1,4 @@
-r"""services/mer_tout_compiler.py — v0.53.3
+r"""services/mer_tout_compiler.py — v0.53.3 (boucle partagée en v0.54.2)
 
 D-TOUT — « Tout compiler » d'une séquence de mise en route (Mnn), onglet
 « Rendu PDF » de l'atelier (demande de Laurent du 25 octobre 2026) : tous les
@@ -94,35 +94,63 @@ def iter_tout_compiler(conn_factory, niveau: str, sequence: str, partie: int | N
                        max_erreurs_consecutives: int = 5, maintenant=None):
     """D-TOUT-LOT — génère les événements de « Tout compiler » :
       {kind: 'debut', total, documents: [noms]} ;
-      {kind: 'document', index, total, nom, statut: succes|cache|echec, message, log} ;
-      {kind: 'fin', ok, echecs, archive, url} ou {kind: 'abandon', message}.
+      {kind: 'document', index, total, nom, statut: succes|cache|echec, message, log,
+       duree_ms} ;
+      {kind: 'fin', ok, echecs, archive, url, duree_ms} ou {kind: 'abandon', message}.
     `compiler(tex) -> ResultatCompilation` (compilateur_pdf.compiler_atome
     avec le cache et le délai long, fourni par la route) ; `conn_factory()`
-    ouvre une connexion à la base (context manager)."""
+    ouvre une connexion à la base (context manager).
+    v0.54.2 — la boucle est `iter_compiler_documents`, partagée avec le
+    « Tout compiler » des séquences principales (sequence_tout_compiler)."""
     from services.mises_en_route_6e import generer_document_mer, lire_sequence_mer
     with conn_factory() as conn:
         s = lire_sequence_mer(conn, niveau, sequence)
         docs = documents_a_compiler(s, partie)
+
+    def generer(conn, opts):
+        return generer_document_mer(conn, niveau, sequence, options=opts,
+                                    tikz_libraries=tikz_libraries,
+                                    tblr_libraries=tblr_libraries)
+
+    yield from iter_compiler_documents(
+        conn_factory, docs, generer, compiler=compiler, prefixe_echecs=sequence,
+        dossier_echecs=dossier_echecs, dossier_archives=dossier_archives,
+        archive=nom_archive(sequence, partie, maintenant),
+        max_erreurs_consecutives=max_erreurs_consecutives)
+
+
+def iter_compiler_documents(conn_factory, docs, generer, *, compiler, prefixe_echecs: str,
+                            dossier_echecs: Path, dossier_archives: Path, archive: str,
+                            max_erreurs_consecutives: int = 5):
+    """v0.54.2 — Boucle commune de « Tout compiler » : `docs` = [(nom du PDF,
+    description)], `generer(conn, description) -> .tex`. Un document dont le
+    .tex ou la compilation échoue n'arrête pas les autres (sauf N erreurs
+    d'infrastructure consécutives) ; .tex et .log des échecs dans
+    `dossier_echecs` (ceux de `prefixe_echecs_*` sont d'abord effacés) ;
+    archive ZIP des PDF réussis dans `dossier_archives`."""
+    import time
+    t0 = time.monotonic()
     yield {"kind": "debut", "total": len(docs), "documents": [d[0] for d in docs]}
     dossier_echecs.mkdir(parents=True, exist_ok=True)
-    for f in dossier_echecs.glob(f"{sequence}_*"):
+    for f in dossier_echecs.glob(f"{prefixe_echecs}_*"):
         f.unlink()
     pdfs: list[tuple[str, bytes]] = []
     echecs, infra = 0, 0
     for i, (nom, opts) in enumerate(docs, 1):
+        t1 = time.monotonic()
         ev = {"kind": "document", "index": i, "total": len(docs), "nom": nom,
-              "statut": "echec", "message": "", "log": ""}
+              "statut": "echec", "message": "", "log": "", "duree_ms": 0}
         try:
             with conn_factory() as conn:
-                tex = generer_document_mer(conn, niveau, sequence, options=opts,
-                                           tikz_libraries=tikz_libraries,
-                                           tblr_libraries=tblr_libraries)
+                tex = generer(conn, opts)
         except Exception as e:                      # options ou contenu invalides
             echecs += 1
             ev["message"] = f"génération du .tex : {e}"
+            ev["duree_ms"] = int((time.monotonic() - t1) * 1000)
             yield ev
             continue
         r = compiler(tex)
+        ev["duree_ms"] = int((time.monotonic() - t1) * 1000)
         if r.ok:
             infra = 0
             pdf = r.pdf_bytes or (r.pdf_path.read_bytes() if r.pdf_path else b"")
@@ -147,9 +175,10 @@ def iter_tout_compiler(conn_factory, niveau: str, sequence: str, partie: int | N
         else:
             infra = 0
     dossier_archives.mkdir(parents=True, exist_ok=True)
-    archive = dossier_archives / nom_archive(sequence, partie, maintenant)
-    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
+    chemin = dossier_archives / archive
+    with zipfile.ZipFile(chemin, "w", zipfile.ZIP_DEFLATED) as z:
         for nom, pdf in pdfs:
             z.writestr(nom, pdf)
-    yield {"kind": "fin", "ok": len(pdfs), "echecs": echecs, "archive": archive.name,
-           "url": f"/api/v2/livret-sequence/mer/archive/{archive.name}"}
+    yield {"kind": "fin", "ok": len(pdfs), "echecs": echecs, "archive": chemin.name,
+           "url": f"/api/v2/livret-sequence/mer/archive/{chemin.name}",
+           "duree_ms": int((time.monotonic() - t0) * 1000)}

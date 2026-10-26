@@ -233,6 +233,21 @@
     return `<li>${esc(ev.index)}/${esc(ev.total)} ${esc(ev.nom)} : ${etat}</li>`;
   }
 
+  /**
+   * v0.54.2 (D-TOUT-SEQ) — URL du flux « Tout compiler » : une mise en route
+   * (Mnn) garde sa route et son choix de partie ; toute autre séquence
+   * compile les documents de la table de son modèle (sans partie).
+   */
+  function urlToutCompiler(niveau, sequence, partie) {
+    const base = `/api/v2/livret-sequence/${encodeURIComponent(niveau)}`
+               + `/${encodeURIComponent(sequence)}`;
+    if (/^M\d\d$/.test(sequence || '')) {
+      return `${base}/mer/tout-compiler`
+           + (partie ? `?partie=${encodeURIComponent(partie)}` : '');
+    }
+    return `${base}/tout-compiler`;
+  }
+
   // ── Exposition ───────────────────────────────────────────────────────────────
 
   const SeqnivPur = {
@@ -243,6 +258,7 @@
     fmtSeances, fmtSeancesAffichage, couleurTheme,
     SELECTEURS_MER, SELECTEURS_DOCUMENT_MER, selecteursVisiblesMer,       // v0.53.3
     nbTestsMer, bornerTestMer, htmlStatutToutCompiler,
+    urlToutCompiler,                                                     // v0.54.2
   };
 
   // Navigateur : window.SeqnivPur. (Pas d'export ES : le projet charge tout en

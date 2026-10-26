@@ -241,7 +241,8 @@
           <label id="livret-seq-mer-lbl-sujet">Sujet
             <select id="livret-seq-mer-sujet"><option value="A">A</option><option value="B">B</option></select></label>
         </div>
-        <!-- v0.53.3 (D-TOUT) — tous les documents de la partie (ou de la séquence) d'un coup. -->
+        <!-- v0.53.3 (D-TOUT) — tous les documents de la partie (ou de la séquence) d'un coup ;
+             v0.54.2 (D-TOUT-SEQ) : affiché pour toute séquence (titre mis à jour par _majBlocMer). -->
         <div class="livret-seq-actions" id="livret-seq-mer-tout" style="display:none;gap:8px;font-size:12px">
           <button class="btn-prim" id="livret-seq-mer-btn-tout" onclick="ATELIER_SEQNIV.merToutCompiler()"
                   title="Fiches élève et complète, exercices de séance élève et corrigé (4 par A4), tests courts A et B élève et corrigé, plan, dossier enseignant, activités complémentaires ; puis une archive ZIP des PDF">
@@ -284,6 +285,9 @@
       if (!c) return;
       // Libérer le blob URL si présent.
       try { this._livretSeqLiberer(); } catch (_) {}
+      // v0.54.2 — un « Tout compiler » en cours concerne l'ancienne séquence :
+      // il est annulé (sinon le bouton resterait bloqué sur la nouvelle).
+      try { this.merToutAnnuler(); } catch (_) {}
       c.innerHTML = '';
       delete c.dataset.initialise;
     }
@@ -2867,11 +2871,26 @@
       return !!(sn && /^M\d\d$/.test(sn.sequence_code || ''));
     }
 
+    get _titreToutMer() {
+      return "Fiches élève et complète, exercices de séance élève et corrigé (4 par A4), "
+           + "tests courts A et B élève et corrigé, plan, dossier enseignant, activités "
+           + "complémentaires ; puis une archive ZIP des PDF";
+    }
+
     _majBlocMer() {
       const bloc = document.getElementById('livret-seq-mer');
       if (bloc) bloc.style.display = this._estMer() ? 'flex' : 'none';
-      const tout = document.getElementById('livret-seq-mer-tout');      // v0.53.3
-      if (tout) tout.style.display = this._estMer() ? 'flex' : 'none';
+      // v0.53.3 — « Tout compiler » ; v0.54.2 (D-TOUT-SEQ) : pour toute
+      // séquence (Snn : documents de la table du modèle, sans partie).
+      const tout = document.getElementById('livret-seq-mer-tout');
+      if (tout) tout.style.display = 'flex';
+      const btnTout = document.getElementById('livret-seq-mer-btn-tout');
+      if (btnTout) btnTout.title = this._estMer() ? this._titreToutMer
+        : "Tous les documents de la séquence selon le modèle du référentiel — Fiches : "
+          + "livret élève et corrigé, fiches de cours, plan de travail, évaluations "
+          + "(sujets A et B, élève et corrigé), TP, AC, AT (élève et corrigé) ; Notions "
+          + "et méthodes : livret, notions et méthodes, plan de travail, fiches de résumé, "
+          + "planches de cartes, évaluations — puis une archive ZIP des PDF";
       if (this._estMer()) this._majSelecteursMer();
       const btn = document.getElementById('livret-seq-btn-pdf');
       if (btn) btn.textContent = this._estMer() ? '🔧 Compiler le document'
@@ -2987,16 +3006,15 @@
       if (!sn || this._merSource) return;
       const P = window.SeqnivPur;
       const part = document.getElementById('livret-seq-mer-partie');
-      const partie = part ? part.value : '';
+      const partie = (part && this._estMer()) ? part.value : '';         // v0.54.2
       const liste = document.getElementById('livret-seq-mer-tout-liste');
       const etat = document.getElementById('livret-seq-mer-tout-etat');
       const annuler = document.getElementById('livret-seq-mer-btn-annuler');
       if (liste) { liste.innerHTML = ''; liste.style.display = ''; }
       if (annuler) annuler.style.display = '';
       if (etat) etat.textContent = 'Préparation…';
-      const url = `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}`
-                + `/${encodeURIComponent(sn.sequence_code)}/mer/tout-compiler`
-                + (partie ? `?partie=${encodeURIComponent(partie)}` : '');
+      // v0.54.2 (D-TOUT-SEQ) — Mnn : route des mises en route ; Snn : table du modèle.
+      const url = P.urlToutCompiler(sn.niveau, sn.sequence_code, partie);
       const src = new EventSource(url);
       this._merSource = src;
       const finir = (texte) => {

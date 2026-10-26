@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.54.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.54.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -200,6 +200,12 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   (19 dépendances des mises en route, 3 lignes corrigées, cycle M06-02 / S10-02 « à trancher »,
   durée de S12, code AE, récapitulatif = état réel) ; intitulés et critères inchangés. Rien à
   migrer ; réimport des lots. Détails : `doc/redemarrage_v0_54_1.md`.
+- v0.54.2 livrée (26 octobre) : **« Tout compiler » pour toute séquence** (onglet « Rendu PDF »),
+  modèle Fiches (livret élève/corrigé, fiches de cours, plan de travail, évaluations A/B élève/corrigé,
+  TP, AC, AT) et modèle Notions et méthodes (livret, notions et méthodes, plan de travail, fiches,
+  planches de cartes, évaluations) ; une table par modèle rattachée au catalogue (D-LISTE), boucle
+  partagée avec les mises en route (inchangées) ; aucune écriture en base, aucun générateur modifié.
+  Détails : `doc/redemarrage_v0_54_2.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec

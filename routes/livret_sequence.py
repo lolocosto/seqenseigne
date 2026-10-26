@@ -11,6 +11,11 @@ Expose :
   GET  /api/v2/livret-sequence/<niveau>/<sequence>/mer  (v0.53.1)
     → parties et contrôle MR6 d'une séquence de mise en route (Mnn)
 
+  GET  /api/v2/livret-sequence/<niveau>/<Mnn>/mer/tout-compiler  (v0.53.3)
+  GET  /api/v2/livret-sequence/<niveau>/<Snn>/tout-compiler      (v0.54.2)
+    → « Tout compiler » (flux SSE), archive et logs d'échec : mer/archive,
+      mer/echec (communs)
+
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-pdf
     body JSON optionnel : {"options": {...}}
     → compile et renvoie le PDF en application/pdf
@@ -385,6 +390,74 @@ def api_livret_sequence_mer_tout_compiler(niveau: str, sequence: str):
         try:
             for ev in iter_tout_compiler(
                     js._conn, niveau, sequence, partie, compiler=compiler,
+                    tikz_libraries=config.tikz_libraries(),
+                    tblr_libraries=config.tblr_libraries(),
+                    dossier_echecs=cache_dir / 'echecs_mer',
+                    dossier_archives=Path(js.data_dir) / 'rapports',
+                    max_erreurs_consecutives=config.compilation_batch_max_erreurs_consecutives()):
+                yield evenement_vers_sse(ev)
+        except GeneratorExit:                       # annulation depuis l'interface
+            raise
+        except Exception as e:
+            yield evenement_vers_sse({'kind': 'erreur_serveur',
+                                      'message': f"{type(e).__name__}: {e}"})
+
+    return Response(stream_with_context(generateur()), mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+
+
+# ── v0.54.2 (D-TOUT-SEQ) — « Tout compiler » de toute séquence (Snn) ──────────
+#
+# GET /api/v2/livret-sequence/<niveau>/<Snn>/tout-compiler[?gabarit=…]
+#     → text/event-stream, mêmes événements que celui des mises en route ;
+#       la liste des documents est celle de la table du modèle
+#       (services/sequence_tout_compiler.py, D-LISTE) ; le modèle est celui de
+#       l'onglet (_gabarit_demande, règle R1b). L'archive et les logs d'échec
+#       sont servis par les deux routes « mer/archive » et « mer/echec »
+#       ci-dessous (mêmes dossiers). Catégorie « atelier » (blueprint).
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/tout-compiler', methods=['GET'])
+def api_livret_sequence_tout_compiler(niveau: str, sequence: str):
+    from services.sequence_tout_compiler import iter_tout_compiler
+    from services.mises_en_route_6e import est_sequence_mer
+    from services.compilation_batch import evenement_vers_sse
+    from services.gabarits_documents import GabaritErreur
+    from flask import stream_with_context
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    if est_sequence_mer(sequence):
+        return jsonify({'error': 'mise_en_route',
+                        'message': f"{sequence} est une mise en route : "
+                                   f"…/{sequence}/mer/tout-compiler"}), 400
+    js = current_app.json_store
+    try:
+        with js._conn() as conn:
+            gabarit = _gabarit_demande(conn, niveau)
+            if conn.execute("SELECT 1 FROM sequences_par_niveau WHERE niveau=? "
+                            "AND sequence_code=?", (niveau, sequence)).fetchone() is None:
+                return jsonify({'error': 'sequence_introuvable',
+                                'message': f"{niveau}/{sequence} n'est pas dans l'atelier"}), 404
+    except GabaritErreur as e:
+        return jsonify({'error': 'options_invalides', 'message': str(e)}), 400
+    config = _configuration()
+    dossier_images = Path(js.data_dir) / 'images'
+    racine_sources = config.chemin_sources_livrets()
+    pdflatex = config.chemin_pdflatex()
+    timeout = config.timeout_compilation_long()
+    cache_dir = _cache_dir()
+    racine_appli = _racine_appli()
+
+    def compiler(tex):
+        return compiler_atome(tex_source=tex, racine_sources=racine_sources,
+                              cache_dir=cache_dir, pdflatex=pdflatex,
+                              racine_appli=racine_appli, timeout=timeout,
+                              dossier_images=dossier_images if dossier_images.is_dir() else None)
+
+    def generateur():
+        try:
+            for ev in iter_tout_compiler(
+                    js._conn, niveau, sequence, gabarit, compiler=compiler,
                     tikz_libraries=config.tikz_libraries(),
                     tblr_libraries=config.tblr_libraries(),
                     dossier_echecs=cache_dir / 'echecs_mer',
