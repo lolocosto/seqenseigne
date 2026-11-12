@@ -1,4 +1,4 @@
-"""services/style6e.py — v0.52.0 (correctif 2), v0.52.5, v0.52.8, v0.53.3
+"""services/style6e.py — v0.52.0 (correctif 2), v0.52.5, v0.52.8, v0.53.3, v0.54.3
 
 Module LaTeX `seqenseigne-style6e` (documents de 6e, option `sixieme` du
 paquet) : chargé **en entier** par `\\usepackage{seqenseigne-style6e}` dès
@@ -15,7 +15,7 @@ autres modules :
     tous définis chez lui, aucun nom commun avec les autres modules), donc
     le charger entier est sûr et ne change rien au rendu du cycle 4.
 
-La liste ci-dessous est celle de seqenseigne-style6e v0.11 (v0.52.4 :
+La liste ci-dessous est celle de seqenseigne-style6e v0.12 (v0.52.4 :
 \\seqNiveauCourt, \\seqNiveauExposant ; v0.52.5 : macros du lot S05
 \\seqLocCadreTrace, \\seqLocAngle, \\seqLocRapporteur ; du lot S04 \\seqLocBloc,
 \\seqLocAccolade, \\seqLocBalance, \\seqLocSac, \\seqLocMasse, \\seqLocObjet ; page de garde par
@@ -24,7 +24,9 @@ partie : \\seqPartieCouvertureSix ; v0.7, v0.52.7 : marqueurs de l'exercice
 v0.52.8 : astuce \\seqAstuceSix et son pictogramme \\seqPictoAstuceSix ; v0.9, v0.53.0 :
 item de calcul mental \\seqLocItemCM du lot M01 ; v0.10, v0.53.1 : titre du bandeau
 \\seqDefinirTitreCM, item \\seqLocItemGeo du lot M05 ; v0.11, v0.53.3 : tableau de
-conversion commun \\seqTableauConversionSix, \\seqLigneConversionSix) ; un test la
+conversion commun \\seqTableauConversionSix, \\seqLigneConversionSix ; v0.12, v0.54.3 :
+\\seqLocTableauDecimal[4]{…}, tableau décimal à quatre classes, sans nouvelle macro
+publique : la forme sans argument optionnel est inchangée) ; un test la
 compare au .dtx du dossier `paquet/` quand il est présent. Le dossier du
 paquet (`reference\\paquet` par défaut) est ajouté au TEXINPUTS par
 services/compilateur_pdf.py pour que pdflatex trouve le .sty.
@@ -34,7 +36,8 @@ from __future__ import annotations
 
 NOM_PAQUET = "seqenseigne-style6e"
 # v0.53.3 — version du module citée par l'import des lots (messages).
-VERSION = "v0.11"
+# v0.54.3 — v0.12 : \seqLocTableauDecimal[4]{…} (milliards → partie décimale).
+VERSION = "v0.12"
 
 ENVIRONNEMENTS = (
     "seqActiviteSix", "seqBande", "seqCalculMental", "seqCopies",

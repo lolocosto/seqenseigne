@@ -21,6 +21,27 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.12 — 2026-11-12
+
+### Ajouté
+
+- `\seqLocTableauDecimal[4]{lignes}` : tableau décimal à quatre classes (milliards, millions,
+  milliers, unités, virgule, dixièmes, centièmes, millièmes ; 16 cellules par ligne), demandé
+  par Laurent le 12 novembre 2026 pour les fiches de cours de S01. Couleurs des classes :
+  `seqLocMilliards` (nouvelle, blanc, comme la classe des milliards de
+  `\seqLocTableauNumeration`), `seqLocMillions`, `seqLocMilliers`, `seqLocUnites`,
+  `seqLocDecimale`. Colonnes de 0,6 cm, espacement réduit, rangs et noms de classes en
+  `\footnotesize`, filet épais entre les classes (lisible en noir et blanc) : environ 12,5 cm.
+
+### Inchangé
+
+- `\seqLocTableauDecimal{lignes}` (sans argument optionnel, ou `[2]`) : même code, même rendu
+  qu'en v0.11 (le corps est passé tel quel dans `\seqLoc@TableauDecimalDeux`). Une autre
+  valeur que 2 ou 4 est une erreur (`\PackageError`).
+- `.sty` régénéré par `tex seqenseigne.ins` (seqenseigne v0.54.3).
+
+---
+
 ## seqenseigne-style6e v0.11 — 2026-10-25
 
 ### Ajouté

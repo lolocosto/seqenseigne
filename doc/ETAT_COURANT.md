@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.54.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.54.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -206,6 +206,13 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   planches de cartes, évaluations) ; une table par modèle rattachée au catalogue (D-LISTE), boucle
   partagée avec les mises en route (inchangées) ; aucune écriture en base, aucun générateur modifié.
   Détails : `doc/redemarrage_v0_54_2.md`.
+- v0.54.3 livrée (12 novembre) : **tableau décimal à quatre classes** — module
+  `seqenseigne-style6e` v0.12, `\seqLocTableauDecimal[4]{lignes}` (milliards, millions,
+  milliers, unités, virgule, partie décimale ; 16 cellules ; colonnes de 0,6 cm, filets épais
+  entre classes, lisible en noir et blanc) ; sans argument optionnel, le tableau à deux classes
+  garde son code et son rendu (D-OPTION) ; fiche de cours de S01-02 passée à 4 classes (lot S01) ;
+  exercices, S02, S03 inchangés. `services/style6e.py` (`VERSION`). Réimport des lots (seule la
+  fiche S01-02 est mise à jour). Détails : `doc/redemarrage_v0_54_3.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec

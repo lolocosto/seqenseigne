@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/10/25 v0.11 seqenseigne : style des documents de 6e]
+    [2026/11/12 v0.12 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -348,9 +348,17 @@
   \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}\\ \hline
   #1
   \end{tabular}\end{center}}
-%% \seqLocTableauDecimal{lignes} : classe des milliers, classe des unités,
+%% \seqLocTableauDecimal[classes]{lignes} (v0.12) : classes = 2 (par défaut,
+%% rendu d'avant la v0.12) ou 4 (milliards, millions, milliers, unités).
+\newcommand{\seqLocTableauDecimal}[2][2]{%
+  \ifnum#1=4 \expandafter\@firstoftwo\else\expandafter\@secondoftwo\fi
+  {\seqLoc@TableauDecimalQuatre{#2}}%
+  {\ifnum#1=2 \else\PackageError{seqenseigne-style6e}{\string\seqLocTableauDecimal
+     [#1] : 2 ou 4 classes seulement}{Le tableau à deux classes est utilisé.}\fi
+   \seqLoc@TableauDecimalDeux{#2}}}
+%% Deux classes (v0.4, inchangé) : classe des milliers, classe des unités,
 %% virgule, dixièmes, centièmes, millièmes (10 cellules par ligne).
-\newcommand{\seqLocTableauDecimal}[1]{%
+\newcommand{\seqLoc@TableauDecimalDeux}[1]{%
   \begin{center}\renewcommand{\arraystretch}{1.25}\small
   \begin{tabular}{|*{3}{>{\columncolor{seqLocMilliers!45}\centering\arraybackslash}p{0.62cm}|}%
       *{3}{>{\columncolor{seqLocUnites!45}\centering\arraybackslash}p{0.62cm}|}>{\centering\arraybackslash}p{0.2cm}|%
@@ -362,6 +370,38 @@
   \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}&
   \seqLoc@rot{centaines}&\seqLoc@rot{dizaines}&\seqLoc@rot{unités}& &
   \seqLoc@rot{dixièmes}&\seqLoc@rot{centièmes}&\seqLoc@rot{millièmes}\\ \hline
+  #1
+  \end{tabular}\end{center}}
+%% Quatre classes (v0.12) : milliards, millions, milliers, unités, virgule,
+%% dixièmes, centièmes, millièmes (16 cellules par ligne). Colonnes de 0,6 cm,
+%% rangs en \footnotesize, filet épais entre les classes (noir et blanc).
+\definecolor{seqLocMilliards}{HTML}{FFFFFF}
+\newcommand{\seqLoc@rotq}[1]{\rotatebox{90}{\footnotesize\bfseries #1\ }}
+\newcommand{\seqLoc@TableauDecimalQuatre}[1]{%
+  \begin{center}\renewcommand{\arraystretch}{1.2}\small\setlength{\tabcolsep}{2.5pt}%
+  \begin{tabular}{!{\vrule width 0.9pt}%
+      *{2}{>{\columncolor{seqLocMilliards}\centering\arraybackslash}p{0.6cm}|}%
+      >{\columncolor{seqLocMilliards}\centering\arraybackslash}p{0.6cm}!{\vrule width 0.9pt}%
+      *{2}{>{\columncolor{seqLocMillions!45}\centering\arraybackslash}p{0.6cm}|}%
+      >{\columncolor{seqLocMillions!45}\centering\arraybackslash}p{0.6cm}!{\vrule width 0.9pt}%
+      *{2}{>{\columncolor{seqLocMilliers!45}\centering\arraybackslash}p{0.6cm}|}%
+      >{\columncolor{seqLocMilliers!45}\centering\arraybackslash}p{0.6cm}!{\vrule width 0.9pt}%
+      *{2}{>{\columncolor{seqLocUnites!45}\centering\arraybackslash}p{0.6cm}|}%
+      >{\columncolor{seqLocUnites!45}\centering\arraybackslash}p{0.6cm}!{\vrule width 0.9pt}%
+      >{\centering\arraybackslash}p{0.2cm}!{\vrule width 0.9pt}%
+      *{2}{>{\columncolor{seqLocDecimale!60}\centering\arraybackslash}p{0.6cm}|}%
+      >{\columncolor{seqLocDecimale!60}\centering\arraybackslash}p{0.6cm}!{\vrule width 0.9pt}}
+  \hline
+  \multicolumn{3}{!{\vrule width 0.9pt}c!{\vrule width 0.9pt}}{\cellcolor{seqLocMilliards}\footnotesize\bfseries Milliards}&
+  \multicolumn{3}{c!{\vrule width 0.9pt}}{\cellcolor{seqLocMillions}\footnotesize\bfseries Millions}&
+  \multicolumn{3}{c!{\vrule width 0.9pt}}{\cellcolor{seqLocMilliers}\footnotesize\bfseries Milliers}&
+  \multicolumn{3}{c!{\vrule width 0.9pt}}{\cellcolor{seqLocUnites}\footnotesize\bfseries Unités}& &
+  \multicolumn{3}{c!{\vrule width 0.9pt}}{\cellcolor{seqLocDecimale}\footnotesize\bfseries Partie décimale}\\ \hline
+  \seqLoc@rotq{centaines}&\seqLoc@rotq{dizaines}&\seqLoc@rotq{unités}&
+  \seqLoc@rotq{centaines}&\seqLoc@rotq{dizaines}&\seqLoc@rotq{unités}&
+  \seqLoc@rotq{centaines}&\seqLoc@rotq{dizaines}&\seqLoc@rotq{unités}&
+  \seqLoc@rotq{centaines}&\seqLoc@rotq{dizaines}&\seqLoc@rotq{unités}& &
+  \seqLoc@rotq{dixièmes}&\seqLoc@rotq{centièmes}&\seqLoc@rotq{millièmes}\\ \hline
   #1
   \end{tabular}\end{center}}
 
