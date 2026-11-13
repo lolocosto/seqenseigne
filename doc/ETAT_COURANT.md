@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.56.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.56.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -246,6 +246,13 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   de l'atelier Séquence (Compiler, cartes mentales, Tout compiler), « Vider le cache des
   rendus PDF » (Administration › Base de données) ; la **clé du cache** contient
   l'empreinte des `.sty`/`.dtx` du paquet. Détails : `doc/redemarrage_v0_56_2.md`.
+- v0.56.3 livrée (13 novembre) : atelier Carte mentale au niveau des autres ateliers
+  atomiques (inventaire fonctionnalité × atelier) : **multisélection et validation /
+  repassage en cours groupés** (briques d'`AtelierEditeur` ; parties sans carte et
+  séquences validées ignorées), mode côte-à-côte, lien direct, Recherche, ouverture de la
+  partie choisie depuis l'atelier Séquence ; corrigés au passage : côte-à-côte de la
+  Carte d'automatisme, portée posée par le lien direct. Détails :
+  `doc/redemarrage_v0_56_3.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -532,6 +539,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   de partie ; ne jamais lui redonner un mécanisme propre (fetch, onglets, rendu).
   v0.56.2 : sans séquence choisie, identifiant « Snn:n » ; les URL d'un élément passent
   par `urlItem` / `urlRenduItem` (AtelierEditeur), jamais construites à la main.
+  v0.56.3 : changement d'état (unitaire et groupé) par `urlEtat`, exclusions des
+  actions groupées par `raisonHorsEtat` (AtelierEditeur) ; un PATCH `{etat_code}` seul
+  sur une partie sans carte est refusé (409 `carte_absente`). Toute fonctionnalité
+  ajoutée à un atelier atomique se vérifie dans les six (inventaire v0.56.3).
 - **Cache des rendus PDF** (v0.56.2) : `data/cache_rendus/<clé>.pdf|.log`, clé =
   `compilateur_pdf.hash_tex` (sha256 du `.tex` + empreinte des `.sty`/`.dtx` de
   `appli/paquet` et `reference/paquet`) ; toute nouvelle route de compilation passe

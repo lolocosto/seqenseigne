@@ -357,7 +357,8 @@ def api_carte_mentale(niveau: str, sequence: str, numero: int):
                      renvoie l'élément + `etat` et `avertissements` ;
       DELETE       → supprime.
     409 si la séquence est validée ; 400 si la source est refusée (CM-CONTROLE) ;
-    404 partie inconnue."""
+    404 partie inconnue. v0.56.3 : 409 `carte_absente` pour un changement d'état
+    seul ({etat_code}) d'une partie sans carte."""
     from services import cartes_mentales as cm
     erreur = _valider_niveau_sequence(niveau, sequence)
     if erreur:
@@ -379,6 +380,13 @@ def api_carte_mentale(niveau: str, sequence: str, numero: int):
             conn.commit()
             return jsonify({'supprimee': ok})
         actuelle = cm.lire_partie(conn, p['id']) or {}
+        # v0.56.3 — changement d'état seul (Valider / Repasser en cours, unitaire
+        # ou groupé) d'une partie sans carte : rien à valider, refus explicite
+        # (sinon l'appel tenterait de créer une carte vide).
+        if not actuelle and set(body) <= {'etat_code'}:
+            return jsonify({'error': 'carte_absente',
+                            'message': f"La partie {numero} n'a pas de carte mentale : "
+                                       "rien à valider."}), 409
         titre = body['titre'] if 'titre' in body else actuelle.get('titre', '')
         latex = body['latex'] if 'latex' in body else actuelle.get('latex', '')
         try:

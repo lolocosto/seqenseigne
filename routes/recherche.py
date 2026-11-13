@@ -6,6 +6,7 @@ Endpoint unique :
       Recherche transversale sur les cinq types d'atomes.
       Paramètres (query string, tous optionnels) :
         - type            '' | notion | methode | exercice | fiche | carte
+                          | carte_mentale (v0.56.3)
         - niveau          '' | N09 | N10 | N11 | N12 | …
         - sequence        '' | S01 | … | S14
         - etat            '' | tous | en_cours | valide

@@ -309,8 +309,9 @@ function _appliquerDeeplink() {
 
   // v0.18.2 — carte_automatisme ajouté (le chip carte de seqniv génère déjà
   // cette URL depuis v0.13.6.3 ; elle était rejetée ici, deeplink cassé).
+  // v0.56.3 — carte_mentale (atome = numéro de la partie dans la séquence).
   const types_supportes = ['exercice', 'notion', 'methode', 'fiche',
-                           'carte_automatisme'];
+                           'carte_automatisme', 'carte_mentale'];
   if (!types_supportes.includes(atelier)) {
     console.warn('[deeplink] atelier inconnu :', atelier);
     return;
@@ -330,6 +331,14 @@ function _appliquerDeeplink() {
     localStorage.setItem('atl-portee-sel-sequence',
       JSON.stringify({niveau: niveau, sequence: seq}));
   } catch (e) { /* localStorage indisponible — best-effort */ }
+  // v0.56.3 — ATL_SELECTIONS a déjà été lu depuis localStorage au chargement du
+  // script : sans cette ligne, la portée posée ci-dessus ne valait qu'au
+  // chargement SUIVANT (liste de l'atelier sur la séquence précédente). Gênant
+  // partout, faux pour une carte mentale, dont l'identifiant (numéro de partie)
+  // dépend de la séquence.
+  if (typeof ATL_SELECTIONS === 'object' && ATL_SELECTIONS) {
+    ATL_SELECTIONS.sequence = { niveau: niveau, sequence: seq };
+  }
 
   // 2. Basculer vers l'onglet Ateliers (déclenche initAteliers()).
   const btnAteliers = document.querySelector('[data-tab="ateliers"]');
@@ -350,6 +359,7 @@ function _appliquerDeeplink() {
     'methode':           'ATELIER_METHODE',
     'fiche':             'ATELIER_FICHE',
     'carte_automatisme': 'ATELIER_CARTE',
+    'carte_mentale':     'ATELIER_CARTE_MENTALE',   // v0.56.3
   };
   setTimeout(() => {
     if (typeof atelSwitch === 'function') {
@@ -1686,6 +1696,7 @@ function prefSplitAppliquer(actif) {
     const instances = [
       'ATELIER_EXERCICE', 'ATELIER_NOTION', 'ATELIER_METHODE',
       'ATELIER_FICHE', 'ATELIER_CARTE',
+      'ATELIER_CARTE_MENTALE',                     // v0.56.3
     ];
     for (const nom of instances) {
       const atelier = window[nom];
@@ -2697,6 +2708,19 @@ function initAtelierSplitters() {
         largeurMinDroite: 300,
       });
     }
+  }
+
+  // v0.56.3 — Atelier Carte mentale : poignée édition ↔ rendu du mode
+  // côte-à-côte, la même que dans Exercice, Notion, Méthode, Fiche et Carte
+  // d'automatisme (ratio mémorisé sous « split:atl-cm:formrendu »).
+  const cmMain = $('#atl-carte_mentale .atl-main');
+  if (cmMain && typeof atelierInstallerSplitterGrid === 'function') {
+    atelierInstallerSplitterGrid({
+      conteneur:   cmMain,
+      cleStockage: 'split:atl-cm:formrendu',
+      ratioMinPct: 25,
+      ratioMaxPct: 75,
+    });
   }
 }
 
@@ -5161,10 +5185,12 @@ const _RECH_LABEL_TYPE = {
   exercice: 'Exercices',
   fiche:    'Fiches de résumé',
   carte:    "Cartes d'automatisme",
+  carte_mentale: 'Cartes mentales',   // v0.56.3
 };
 // Ordre d'affichage des groupes (aligné sur le rendu par lot : cours → fiches
 // → cartes).
-const _RECH_ORDRE_TYPES = ['notion', 'methode', 'exercice', 'fiche', 'carte'];
+const _RECH_ORDRE_TYPES = ['notion', 'methode', 'exercice', 'fiche', 'carte',
+                           'carte_mentale'];   // v0.56.3
 
 // Init : injecte les séquences S01..S14 dans le filtre (une seule fois).
 function rechercheInit() {
@@ -5721,6 +5747,7 @@ const _OUVRIR_ATELIER_MAPPING = {
   exercice: {sw: 'exercice',          oo: 'ATELIER_EXERCICE'},
   fiche:    {sw: 'fiche',             oo: 'ATELIER_FICHE'},
   carte:    {sw: 'carte_automatisme', oo: 'ATELIER_CARTE'},
+  carte_mentale: {sw: 'carte_mentale', oo: 'ATELIER_CARTE_MENTALE'},   // v0.56.3
 };
 
 function compilBatchOuvrirAtelier(type, id, niveau, sequence) {

@@ -1462,7 +1462,11 @@ body.atelier-mode-split .atl-main > .atelier-splitter-split:active {
 body.atelier-mode-split #atl-exo-form,
 body.atelier-mode-split #atl-notion-form,
 body.atelier-mode-split #atl-methode-form,
-body.atelier-mode-split #atl-fiche-form {
+body.atelier-mode-split #atl-fiche-form,
+/* v0.56.3 — Carte d'automatisme (rendu invisible en mode côte-à-côte : onglets
+   masqués et zone de rendu non forcée) et Carte mentale : mêmes règles. */
+body.atelier-mode-split #atl-carte-form,
+body.atelier-mode-split #atl-cm-form {
   display: block !important;
   grid-area: form;
   min-height: 0;          /* Indispensable pour que overflow-y fonctionne dans grid */
@@ -1471,7 +1475,9 @@ body.atelier-mode-split #atl-fiche-form {
 body.atelier-mode-split #atl-exercice-rendu,
 body.atelier-mode-split #atl-notion-rendu,
 body.atelier-mode-split #atl-methode-rendu,
-body.atelier-mode-split #atl-fiche-rendu {
+body.atelier-mode-split #atl-fiche-rendu,
+body.atelier-mode-split #atl-carte-rendu,
+body.atelier-mode-split #atl-cm-rendu {
   display: flex !important;
   grid-area: rendu;
   min-height: 0;

@@ -2979,7 +2979,16 @@
     }
 
     // Ouvre l'atelier « Carte mentale » (même niveau et même séquence : filtres de portée).
+    // v0.56.3 — partie choisie : elle est ouverte dans l'atelier, par le même
+    // mécanisme que les liens des autres atomes (compilBatchOuvrirAtelier).
     cmOuvrirAtelier() {
+      const sn = this._sn();
+      const p = this._cmPartie();
+      if (sn && p && typeof window.compilBatchOuvrirAtelier === 'function') {
+        window.compilBatchOuvrirAtelier('carte_mentale', String(p.numero),
+                                        sn.niveau, sn.sequence_code);
+        return;
+      }
       if (typeof window.atelSwitch === 'function') window.atelSwitch('carte_mentale');
     }
 

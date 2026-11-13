@@ -78,7 +78,10 @@ from services.compilation_batch import (
 # ── Constantes ────────────────────────────────────────────────────────────────
 
 # Types acceptés par la recherche (les 5 types d'atomes).
-TYPES_RECHERCHE = ('notion', 'methode', 'exercice', 'fiche', 'carte')
+# v0.56.3 — + 'carte_mentale' (une carte par partie de séquence) : la Recherche
+# est une fonctionnalité commune des ateliers atomiques ; ordre d'affichage
+# après les cartes d'automatisme. ORDRE_TYPES (rendu par lot) est inchangé.
+TYPES_RECHERCHE = ('notion', 'methode', 'exercice', 'fiche', 'carte', 'carte_mentale')
 
 # États acceptés pour le filtre. '' (ou 'tous') = pas de filtre.
 ETATS_RECHERCHE = ('en_cours', 'valide')
@@ -146,6 +149,41 @@ def _sections_par_entite(conn, entite_type, ids):
 
 # ── Chargement filtré + agrégation par type ──────────────────────────────────
 
+def _charger_cartes_mentales(conn, niveau, sequence, etat):
+    """v0.56.3 — Cartes mentales de partie : titre + source LaTeX. `id` = numéro
+    de la partie (identifiant de l'élément dans l'atelier « Carte mentale » en
+    mode séquence, donc celui du lien « Ouvrir ») ; identifiant lisible
+    « N09/S03/Carte mentale P2 ». Sans table : aucune."""
+    from services.cartes_mentales import TABLE, table_presente
+    if not table_presente(conn):
+        return []
+    conds, params = [], []
+    for col, val in (('niveau', niveau), ('sequence', sequence), ('etat_code', etat)):
+        if val:
+            conds.append(f"{col} = ?")
+            params.append(val)
+    where = (" WHERE " + " AND ".join(conds)) if conds else ""
+    rows = conn.execute(
+        "SELECT * FROM (SELECT c.titre, c.latex, c.niveau, c.sequence, c.etat_code, "
+        f"p.numero AS num FROM {TABLE} c JOIN sequence_parties p ON p.id = c.partie_id)"
+        + where, params).fetchall()
+    out = []
+    for r in rows:
+        num = int(r['num'])
+        out.append({
+            'id':          str(num),
+            'type':        'carte_mentale',
+            'niveau':      r['niveau'] or '',
+            'sequence':    r['sequence'] or '',
+            'num':         num,
+            'identifiant': f"{r['niveau'] or ''}/{r['sequence'] or ''}/Carte mentale P{num}",
+            'titre':       r['titre'] or '',
+            'etat_code':   r['etat_code'] or 'en_cours',
+            '_texte':      '\n'.join([r['titre'] or '', r['latex'] or '']),
+        })
+    return out
+
+
 def _charger_type(conn, type_atome, niveau, sequence, etat):
     """Charge les atomes d'un type avec leur texte agrégé, filtrés en SQL.
 
@@ -157,6 +195,8 @@ def _charger_type(conn, type_atome, niveau, sequence, etat):
     Les filtres niveau/sequence/etat sont appliqués en SQL (chaîne vide =
     pas de filtre). Le filtre texte est appliqué plus tard, en Python.
     """
+    if type_atome == 'carte_mentale':                 # v0.56.3
+        return _charger_cartes_mentales(conn, niveau, sequence, etat)
     conds = []
     params = []
     if niveau:
@@ -309,6 +349,7 @@ def rechercher(store, *, type='', niveau='', sequence='', etat='',
 
     Paramètres (tous optionnels) :
       - type      : '' (tous) | 'notion' | 'methode' | 'exercice' | 'fiche' | 'carte'
+                    | 'carte_mentale' (v0.56.3)
       - niveau    : '' (tous) | 'N09' | 'N10' | 'N11' | 'N12' | …
       - sequence  : '' (toutes) | 'S01' | … | 'S14'
       - etat      : '' / 'tous' (tous) | 'en_cours' | 'valide'
@@ -331,7 +372,8 @@ def rechercher(store, *, type='', niveau='', sequence='', etat='',
             "type_invalide", type=type,
         )
 
-    types_a_chercher = (type,) if type else ORDRE_TYPES
+    # v0.56.3 — tous les types de TYPES_RECHERCHE (ORDRE_TYPES + cartes mentales).
+    types_a_chercher = (type,) if type else TYPES_RECHERCHE
     # ORDRE_TYPES utilise 'carte'/'fiche' comme nos clés : cohérent.
 
     predicat = _construire_predicat(texte, regex, casse_sensible)

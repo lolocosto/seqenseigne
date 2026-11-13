@@ -451,6 +451,27 @@ class AtelierEditeur extends Atelier {
   }
 
   /**
+   * v0.56.3 — URL du changement d'état d'un élément (PATCH {etat_code}), pour
+   * « Valider / Repasser en cours » unitaire ET pour les actions groupées de la
+   * multisélection : une seule construction. Par défaut, la route unifiée des
+   * états d'édition ; l'atelier Carte mentale la surcharge (PATCH sur la partie).
+   */
+  urlEtat(id) {
+    return `/api/atomes/${encodeURIComponent(this.config.typeApi)}`
+      + `/${encodeURIComponent(id)}/etat`;
+  }
+
+  /**
+   * v0.56.3 — Raison pour laquelle un élément de la liste ne peut pas changer
+   * d'état (null : il le peut). Les actions groupées l'ignorent et le comptent
+   * à part dans le résumé (« 1 ignoré : sans carte »). Aucune par défaut ;
+   * l'atelier Carte mentale : partie sans carte, séquence validée.
+   */
+  raisonHorsEtat(_item) {
+    return null;
+  }
+
+  /**
    * v0.56.2 — Séquence dans laquelle « + Créer » crée l'élément : celle du
    * filtre (vide en mode « toutes les séquences » : création refusée).
    * Surchargée par l'atelier Carte mentale (séquence de la partie visée).
@@ -806,8 +827,7 @@ class AtelierEditeur extends Atelier {
     const cible = this.itemActif.etat_code === 'valide' ? 'en_cours' : 'valide';
     try {
       const resp = await fetch(
-        `/api/atomes/${encodeURIComponent(this.config.typeApi)}` +
-        `/${encodeURIComponent(this.itemActif.id)}/etat`,
+        this.urlEtat(this.itemActif.id),          // v0.56.3 : une seule construction
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -1137,9 +1157,16 @@ class AtelierEditeur extends Atelier {
     // est stricte là-dessus).
     const dejaCible = [];
     const aTraiter = [];
+    // v0.56.3 — éléments que l'atelier exclut (raisonHorsEtat), par raison.
+    const ignores = new Map();
     for (const id of ids) {
       const it = this.liste.find(x => x.id === id);
       if (!it) continue;
+      const raison = this.raisonHorsEtat(it);
+      if (raison) {
+        ignores.set(raison, (ignores.get(raison) || 0) + 1);
+        continue;
+      }
       if ((it.etat_code || 'en_cours') === cible) {
         dejaCible.push(id);
       } else {
@@ -1149,13 +1176,13 @@ class AtelierEditeur extends Atelier {
 
     const reussis = [];
     const echoues = [];
+    let premiereErreur = '';    // v0.56.3 : motif du premier refus du serveur
     for (const id of aTraiter) {
       try {
-        // v0.13.6.14.1 — Même endpoint corrigé que basculerValidation
-        // single : PATCH /api/atomes/<typeApi>/<id>/etat
+        // v0.13.6.14.1 — Même endpoint que basculerValidation single
+        // (v0.56.3 : urlEtat, surchargeable).
         const resp = await fetch(
-          `/api/atomes/${encodeURIComponent(this.config.typeApi)}` +
-          `/${encodeURIComponent(id)}/etat`,
+          this.urlEtat(id),
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -1173,9 +1200,15 @@ class AtelierEditeur extends Atelier {
           }
         } else {
           echoues.push(id);
+          if (!premiereErreur) {
+            const d = await resp.json().catch(() => ({}));
+            const raisons = Array.isArray(d.raisons) ? ' — ' + d.raisons.join(' ; ') : '';
+            premiereErreur = (d.message || d.error || `HTTP ${resp.status}`) + raisons;
+          }
         }
       } catch (e) {
         echoues.push(id);
+        if (!premiereErreur) premiereErreur = e.message;
       }
     }
 
@@ -1184,9 +1217,14 @@ class AtelierEditeur extends Atelier {
     const parts = [];
     if (reussis.length > 0) parts.push(`${reussis.length} ${libelleAction}`);
     if (dejaCible.length > 0) parts.push(`${dejaCible.length} déjà à jour`);
-    if (echoues.length > 0) parts.push(`${echoues.length} en échec`);
-    const msg = parts.join(', ');
+    for (const [raison, n] of ignores) parts.push(`${n} ignoré${n > 1 ? 's' : ''} (${raison})`);
     if (echoues.length > 0) {
+      parts.push(`${echoues.length} en échec` + (premiereErreur ? ` : ${premiereErreur}` : ''));
+    }
+    const msg = parts.join(', ');
+    // v0.56.3 — rien de fait parce que tout était exclu : signalé comme un refus.
+    const toutExclu = reussis.length === 0 && dejaCible.length === 0 && ignores.size > 0;
+    if (echoues.length > 0 || toutExclu) {
       this.toast(msg, 'erreur');
     } else if (reussis.length > 0) {
       this.toast(msg);
@@ -2210,8 +2248,9 @@ window.AtelierEditeur = AtelierEditeur;
     const tag = (ev.target && ev.target.tagName || '').toUpperCase();
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
     // Parcourir les variables ATELIER_* connues
+    // v0.56.3 — + atelier Carte mentale (multisélection comme les autres).
     const noms = ['ATELIER_CARTE', 'ATELIER_NOTION', 'ATELIER_METHODE',
-                  'ATELIER_FICHE', 'ATELIER_EXERCICE'];
+                  'ATELIER_FICHE', 'ATELIER_EXERCICE', 'ATELIER_CARTE_MENTALE'];
     let aQuelqueChose = false;
     for (const n of noms) {
       const at = window[n];

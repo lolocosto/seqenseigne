@@ -38,6 +38,18 @@
  *     urlRenduItem en tirent l'URL de sa séquence (édition, rendu, « toute la
  *     séquence » = la séquence de l'entrée ouverte).
  *
+ * v0.56.3 (demande de Laurent du 13 novembre, 17 h 03 : « toutes les fonctionnalités
+ * communes à tous les ateliers atomiques ») — briques d'AtelierEditeur, aucune copie :
+ *   - multisélection (Ctrl+clic, Maj+clic, clic droit, Échap) et actions groupées
+ *     « Valider » / « Repasser en cours » (selectionMultiAppliquerEtat) : l'atelier
+ *     ne fournit que l'URL du changement d'état (urlEtat = la partie) et les
+ *     exclusions (raisonHorsEtat : partie sans carte, séquence validée) ; la
+ *     sélection est vidée quand la liste change de niveau ou de séquence (les
+ *     identifiants « 1 », « 2 »… se répètent d'une séquence à l'autre) ;
+ *   - mode côte-à-côte (Préférences) : mêmes règles CSS que Notion, Méthode et
+ *     Fiche, poignée édition / rendu (initAtelierSplitters) ;
+ *   - lien direct (?atelier=carte_mentale&niveau&seq&atome=<partie>) et Recherche.
+ *
  * Routes : /api/v2/livret-sequence/<niveau>/<séquence>/cartes-mentales
  *   GET (liste), POST (créer), /<n> GET / PATCH / DELETE,
  *   /<n>/rendu-pdf[/info] et /<n>/rendu-tex (?version=…&portee=partie|sequence) ;
@@ -112,6 +124,18 @@ const CarteMentalePur = {
     p.set('version', version === 'corrigee' ? 'corrigee' : 'eleve');
     p.set('portee', portee === 'sequence' ? 'sequence' : 'partie');
     return '?' + p.toString();
+  },
+
+  /** v0.56.3 — Raison d'exclure un élément d'un changement d'état (unitaire ou
+   *  groupé), null s'il peut changer : partie sans carte (rien à valider),
+   *  séquence validée (lecture seule ; le serveur refuse aussi, 409).
+   *  `modifiableSeq` : droit de la séquence filtrée (mode séquence). */
+  raisonHorsEtat(el, modifiableSeq) {
+    if (!el) return 'introuvable';
+    if (!el.presente) return 'sans carte';
+    const modifiable = (typeof el.modifiable === 'boolean') ? el.modifiable : modifiableSeq !== false;
+    if (!modifiable) return 'séquence validée';
+    return null;
   },
 
   /** Partie à créer : celle qui est ouverte si elle n'a pas de carte, sinon la
@@ -195,6 +219,17 @@ class AtelierCarteMentale extends AtelierEditeur {
     return this.urlItem(id);
   }
 
+  /** v0.56.3 — Changement d'état (unitaire et groupé) : PATCH {etat_code} sur la
+   *  partie, même route que l'enregistrement. */
+  urlEtat(id) {
+    return this.urlItem(id);
+  }
+
+  /** v0.56.3 — Exclusions des actions groupées (voir CarteMentalePur.raisonHorsEtat). */
+  raisonHorsEtat(el) {
+    return CarteMentalePur.raisonHorsEtat(el, this.modifiable);
+  }
+
   sequenceDeCreation() {
     return window.ATL_FILTRE_SEQ || this._seqCible || '';
   }
@@ -229,8 +264,17 @@ class AtelierCarteMentale extends AtelierEditeur {
         this.toast('Erreur réseau : ' + e.message, 'erreur');
       }
     }
+    // v0.56.3 — nouvelle portée (niveau ou séquence) : la sélection multiple est
+    // vidée, car un identifiant « 2 » désignerait la partie 2 d'une AUTRE séquence.
+    const contexte = `${niv}|${seq}`;
+    if (this._contexteListe !== undefined && this._contexteListe !== contexte) {
+      this.selectionMulti.clear();
+      this.ancreSelectionId = null;
+    }
+    this._contexteListe = contexte;
     this._synchroniserItemActifAvecListe();
     this.rendreSidebar();
+    this._majSelectionToolbar();
     this._majBoutonCreer();
   }
 
@@ -262,8 +306,11 @@ class AtelierCarteMentale extends AtelierEditeur {
       : { html: Atelier.escHtml(el.libelle || `Partie ${el.numero}`), derive: true };
     return Atelier.rendreItemHtml({
       actif: this.itemActif && this.itemActif.id === el.id,
+      // v0.56.3 — multisélection d'AtelierEditeur, comme les autres ateliers.
+      selected: this.estSelectionne(el.id),
       dataId: el.id,
-      onclick: `ATELIER_CARTE_MENTALE.ouvrirItem('${Atelier.escAttr(el.id)}')`,
+      onclick: `ATELIER_CARTE_MENTALE.gererClicItem(event, '${Atelier.escAttr(el.id)}')`,
+      oncontextmenu: `ATELIER_CARTE_MENTALE.gererClicDroitItem(event, '${Atelier.escAttr(el.id)}')`,
       id: idLib,
       titre,
       titleAttr: `${el.sequence ? el.sequence + ' · ' : ''}Partie ${el.numero}${el.libelle ? ' — ' + el.libelle : ''}`,
@@ -342,7 +389,7 @@ class AtelierCarteMentale extends AtelierEditeur {
     if (!this.itemActif || !this.itemActif.presente) return;
     const cible = this.itemActif.etat_code === 'valide' ? 'en_cours' : 'valide';
     try {
-      const resp = await fetch(this.urlItem(this.itemActif.id), {
+      const resp = await fetch(this.urlEtat(this.itemActif.id), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ etat_code: cible }),
