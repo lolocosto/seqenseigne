@@ -141,7 +141,9 @@ class AtelierExercice extends AtelierEditeur {
         : cfgBucket.defautReplie;
 
       sections.push(window.atelAsmCatHtml(
-        'exercice', code, cfgBucket.label, exos.length, itemsHtml,
+        'exercice', code,
+        AtelierExercice.libelleBucket(code, window.ATL_FILTRE_NIVEAU || ''),   // v0.56.0
+        exos.length, itemsHtml,
         { collapsed },
       ));
     }
@@ -171,10 +173,12 @@ class AtelierExercice extends AtelierEditeur {
     // v0.13.6.16 — Avant : reconstruction du code via serie_code + num.
     // Maintenant : ex.code arrive déjà préfixé du backend (E01, A03…).
     // niveau/sequence viennent des filtres globaux.
+    // v0.56.0 — code affiché (EN06, AP05, EX02 au modèle Fiches ; interne inchangé).
+    const niveauListe = window.ATL_FILTRE_NIVEAU || '';
     const idExo = [
-      window.ATL_FILTRE_NIVEAU || '',
+      niveauListe,
       window.ATL_FILTRE_SEQ || '',
-      ex.code || '',
+      AtelierExercice.codeAffiche(ex.code || '', niveauListe),
     ].filter(Boolean).join('/');
 
     let titre = ex.titre
@@ -196,7 +200,8 @@ class AtelierExercice extends AtelierEditeur {
     // Badge série coloré
     const badgeCls = badgeCode === 'Autres' ? 'M' : badgeCode;
     const badge = `<span class="asm-item-badge asm-item-badge--${Atelier.escAttr(badgeCls)}">` +
-                  `${Atelier.escHtml(badgeCode === 'Autres' ? '?' : badgeCode)}</span>`;
+                  `${Atelier.escHtml(badgeCode === 'Autres' ? '?'
+                     : AtelierExercice.prefixeAffiche(badgeCode, niveauListe))}</span>`;
 
     const placedTags = window.atelLiensEnTags
       ? window.atelLiensEnTags(ex.liens || [])
@@ -252,6 +257,8 @@ class AtelierExercice extends AtelierEditeur {
       // v0.52.7 — Marqueurs de l'énoncé principal.
       ordinateur:   (this.$('ordinateur')   || {}).value || '',
       calculatrice: (this.$('calculatrice') || {}).value || '',
+      // v0.56.0 — Mention O (obligatoire) / F (facultatif).
+      mention:      AtelierExercice.lireMention(this.$('mention')),
       variables: (this.$('variables') || {}).value || '',
       enonce, corrige,
       remed_enonce:                   remedEnonce,
@@ -274,6 +281,9 @@ class AtelierExercice extends AtelierEditeur {
     if (ordiEl) ordiEl.value = AtelierExercice.ORDINATEUR[ex.ordinateur] ? ex.ordinateur : '';
     const calcEl = this.$('calculatrice');
     if (calcEl) calcEl.value = AtelierExercice.CALCULATRICE[ex.calculatrice] ? ex.calculatrice : '';
+    // v0.56.0 — Mention (valeur inconnue ou absente → O).
+    const mentionEl = this.$('mention');
+    if (mentionEl) mentionEl.value = ex.mention === 'F' ? 'F' : 'O';
 
     const remedEnEl = this.$('remed-enonce');
     const remedCoEl = this.$('remed-corrige');
@@ -418,6 +428,7 @@ class AtelierExercice extends AtelierEditeur {
       overlay.querySelectorAll('[data-serie-document-creation]').forEach(el => {
         el.style.display = docs6e ? '' : 'none';
       });
+      AtelierExercice.majLibellesSeries(window.ATL_FILTRE_NIVEAU || '');   // v0.56.0
       overlay.style.display = 'flex';
       // Écouteur Esc actif tant que la modale est ouverte
       this._gestionnaireEscSerie = (ev) => {
@@ -543,6 +554,16 @@ class AtelierExercice extends AtelierEditeur {
     document.querySelectorAll('[data-serie-document]').forEach(el => {
       el.style.display = visibles ? '' : 'none';
     });
+    // v0.56.0 — Libellés des séries et champ « Mention » (modèle Fiches, séries F,
+    // A, E) selon le niveau de l'exercice ouvert (le filtre peut ne pas être encore
+    // posé à l'ouverture par un lien direct), sinon celui du filtre.
+    const niveauEx = (this.itemActif && this.itemActif.niveau) || window.ATL_FILTRE_NIVEAU || '';
+    AtelierExercice.majLibellesSeries(niveauEx);
+    const champ = document.getElementById('atl-exercice-field-mention');
+    if (champ) {
+      champ.style.display = AtelierExercice.mentionVisible(
+        niveauEx, this.serieCourante) ? 'flex' : 'none';
+    }
   }
 
   majVisibiliteRemediation() {
@@ -799,6 +820,57 @@ AtelierExercice.modeleFiches = function (niveau) {
 AtelierExercice.seriesDocumentsVisibles = function (niveau, serie) {
   return AtelierExercice.modeleFiches(niveau)
     || Object.values(AtelierExercice.SERIE_DOCUMENT).includes(serie);
+};
+
+// v0.56.0 (SERIES, Laurent, 13 novembre) — Modèle Fiches : séries F, A, E affichées
+// « Entraînement (EN) », « Approfondissement (AP) », « Expertise (EX) », codes EN06…
+// Les codes internes (ex.code, série) ne changent pas. Sans le module
+// gabarits_atelier.js : règle de secours N09 (AtelierExercice.modeleFiches).
+AtelierExercice.SERIES_FICHES = {
+  F: { code: 'EN', libelle: 'Entraînement',      serie: 'fondamental' },
+  A: { code: 'AP', libelle: 'Approfondissement', serie: 'avancé' },
+  E: { code: 'EX', libelle: 'Expertise',         serie: 'exploration' },
+};
+AtelierExercice.prefixeAffiche = function (lettre, niveau) {
+  const s = AtelierExercice.SERIES_FICHES[lettre];
+  return (s && AtelierExercice.modeleFiches(niveau)) ? s.code : lettre;
+};
+AtelierExercice.codeAffiche = function (code, niveau) {
+  const m = /^([FAE])(\d+)$/.exec(code || '');
+  if (!m || !AtelierExercice.modeleFiches(niveau)) return code || '';
+  return AtelierExercice.SERIES_FICHES[m[1]].code + m[2];
+};
+AtelierExercice.libelleBucket = function (code, niveau) {
+  const s = AtelierExercice.SERIES_FICHES[code];
+  if (s && AtelierExercice.modeleFiches(niveau)) return `${s.libelle} (${s.code})`;
+  return AtelierExercice.SERIE_BUCKETS[code].label;
+};
+// Boutons de série de l'éditeur et de la modale de création.
+AtelierExercice.LIBELLES_BOUTONS = {
+  fondamental: ['Fondamental', 'F — Fondamental'],
+  avancé:      ['Avancé', 'A — Avancé'],
+  exploration: ['Exploration', 'E — Exploration'],
+};
+AtelierExercice.majLibellesSeries = function (niveau) {
+  if (typeof document === 'undefined') return;
+  const fiches = AtelierExercice.modeleFiches(niveau);
+  for (const [lettre, s] of Object.entries(AtelierExercice.SERIES_FICHES)) {
+    const [court, long] = AtelierExercice.LIBELLES_BOUTONS[s.serie];
+    const btn = document.getElementById('atl-serie-' + s.serie);
+    if (btn) btn.textContent = fiches ? s.libelle : court;
+    const btnC = document.querySelector(`[data-serie-creation="${s.serie}"]`);
+    if (btnC) btnC.textContent = fiches ? `${s.code} — ${s.libelle}` : long;
+  }
+};
+// v0.56.0 — Mention O / F (services/series_fiches.py) : modèle Fiches, séries F, A, E.
+AtelierExercice.MENTIONS = { O: 'obligatoire', F: 'facultatif' };
+AtelierExercice.mentionVisible = function (niveau, serie) {
+  return AtelierExercice.modeleFiches(niveau)
+    && ['fondamental', 'avancé', 'exploration'].includes(serie);
+};
+AtelierExercice.lireMention = function (el) {
+  const v = el && el.value;
+  return v === 'F' ? 'F' : 'O';
 };
 
 // v0.52.2 — Libellés du cadre « Remédiation » : « Sujet B » pour une

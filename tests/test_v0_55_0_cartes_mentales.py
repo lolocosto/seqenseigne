@@ -51,11 +51,12 @@ def _carte(n: int = 4) -> str:
 def test_module_v0_13_definit_la_carte_et_la_liste_de_l_appli_la_connait():
     """Sans la macro dans MACROS, l'analyse des paquets ne chargerait pas le module pour une
     carte seule et l'import refuserait les cartes des lots (« macro inconnue »)."""
-    assert style6e.VERSION == "v0.13"
+    # v0.56.0 : v0.14 garde la carte (taille naturelle) ; la version citée suit le .dtx.
+    assert tuple(int(x) for x in style6e.VERSION[1:].split(".")) >= (0, 13)
     assert "seqCMBranche" in style6e.MACROS and "seqCarteMentaleSix" in style6e.ENVIRONNEMENTS
     for f in ("seqenseigne-style6e.dtx", "seqenseigne-style6e.sty"):
         src = (PAQUET / f).read_text(encoding="utf-8")
-        assert "v0.13 seqenseigne" in src
+        assert style6e.VERSION + " seqenseigne" in src
         assert "\\NewDocumentEnvironment{seqCarteMentaleSix}" in src
         assert "\\NewDocumentCommand{\\seqCMBranche}" in src
         assert all(f"\\definecolor{{seqSixCM{i}}}" in src for i in range(1, 9))
@@ -275,7 +276,7 @@ def test_format_1_5_seulement_avec_une_carte_et_empreinte_inchangee_sans(app_6e)
         apres = fr.construire(c, "R09", None)
     assert avant["empreinte"] == sans_table["empreinte"]
     assert avant["format_version"] == fr.FORMAT_VERSION_FICHES
-    assert apres["format_version"] == fr.FORMAT_VERSION == "1.5"
+    assert apres["format_version"] == fr.FORMAT_VERSION_CARTES == "1.5"   # v0.56.0 : 1.6 = facultatifs
     partie = apres["sequences"][0]["parties"][0]
     assert partie["carte_mentale"]["titre"] == "Les nombres"
     assert fr.valider(apres) == []
@@ -417,9 +418,11 @@ def test_cycle4_document_cartes_mentales_par_la_route(app_c4):
     assert r"\seqVersionComplete" in tex and "Carte mentale --- Partie 1" in tex
 
 
-def test_carte_etiree_sur_la_hauteur_disponible_pour_remplir_la_page():
-    """Retour des lots : réduite à la largeur, une carte n'occupait que le haut de la page ;
-    elle est étirée à (hauteur disponible) / s, les branches se répartissent sur la page."""
+def test_carte_a_sa_taille_naturelle_sans_etirement_a_la_hauteur_de_la_page():
+    """v0.56.0 (module v0.14), Laurent : « on les laisse sur 1/2 page car le rendu est trop
+    étiré ». L'étirement de la v0.13 à (hauteur disponible) / s est retiré ; la carte reste
+    réduite (jamais agrandie) à la largeur et à la hauteur disponible."""
     sty = (PAQUET / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
-    assert "\\l__seqsix_cm_dispo_dim - 1pt } / \\l_tmpb_fp" in sty
+    assert "\\l__seqsix_cm_dispo_dim - 1pt } / \\l_tmpb_fp" not in sty
     assert "ecart_max" not in sty
+    assert "min ( 1 ," in sty and "\\l__seqsix_cm_dispo_dim" in sty

@@ -400,15 +400,19 @@ def test_livret_6e_structure_par_objectif(app_6e):
     # Couverture : capacités seulement (L3), nom de séquence du cycle 3 (L6).
     # v0.52.5 (C2, changement voulu) : objectifs rangés par partie, libellé
     # de outils/objectifs_6e.json, trait de la couleur du thème.
+    # v0.56.0 (SUIVI, changement voulu) : tableau de suivi par objectif.
     assert (r"\seqCouvertureLivretSix*{Nombres entiers et décimaux}{%" "\n"
-            r"\seqPartieCouvertureSix{Partie 1 --- Entiers et décimaux}"
-            r"{S01-02/{Utiliser la valeur des chiffres},S01-03/{Écrire un grand nombre}}}") in corps
+            r"\seqSuiviObjectifsSix{%" "\n"
+            r"\seqPartieSuiviSix{Partie 1 --- Entiers et décimaux}"
+            r"{S01-02/{Utiliser la valeur des chiffres},S01-03/{Écrire un grand nombre}}}}") in corps
     assert "S01-01" not in corps
     # Partie → activité de partie (L1) → objectif 02 : fiche puis F, A, E.
+    # v0.56.0 (MENTION, changement voulu) : l'en-tête porte la mention (O par
+    # défaut) dans toutes les séries, et non plus la série (O / A / E).
     assert i("Partie 1") < i("Un sudoku") < i(r"\seqBandeauCapacite{S01-02}") \
         < i(r"\begin{seqFicheResumeSix}{La valeur d'un chiffre}") \
         < i(r"\begin{seqExoSix}[O][Former des nombres") < i("[R][Remédiation -- Former") \
-        < i(r"\begin{seqExoSix}[A][Devinettes") < i(r"\begin{seqExoSix}[E][Défi") \
+        < i(r"\begin{seqExoSix}[O][Devinettes") < i(r"\begin{seqExoSix}[O][Défi") \
         < i(r"\seqBandeauCapacite{S01-03}")
     # Objectif 03 : activité rattachée à l'objectif sous son bandeau (L1).
     assert i(r"\seqBandeauCapacite{S01-03}") < i("Les grands nombres\\hfill") \
@@ -431,9 +435,9 @@ def test_livret_6e_une_seule_geometrie_celle_du_module_6e(app_6e):
 
 def test_livret_6e_options(app_6e):
     sans = _livret(app_6e, inclure_activites=False, inclure_serie_E=False, remediations="aucune")
-    assert "Un sudoku" not in sans and "[E][Défi" not in sans and "Remédiation" not in sans
+    assert "Un sudoku" not in sans and "[O][Défi" not in sans and "Remédiation" not in sans
     fin = _livret(app_6e, remediations="en_fin")
-    assert fin.index("[E][Défi") < fin.index("[R][Remédiation -- Former")
+    assert fin.index("[O][Défi") < fin.index("[R][Remédiation -- Former")
     corr = _livret(app_6e, version="corrigee")
     assert r"\seqVersionCorrigee" in corr and "corrigé}" in corr
     from services.livret_sequence_6e import Livret6eErreur

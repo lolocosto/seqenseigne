@@ -21,6 +21,32 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.14 — 2026-11-13
+
+### Ajouté
+
+- Page de garde avec suivi par objectif (décision de Laurent du 13 novembre 2026, les
+  collègues trouvaient la page de garde vide) : `\seqSuiviObjectifsSix{parties}`, où
+  `parties` est une suite de `\seqPartieSuiviSix{titre de la partie}{C1/{texte},C2/{texte}}`.
+  Tableau : une ligne par objectif (code et intitulé), trois cases à cocher, une par série
+  (« Je me suis entraîné », « J'ai approfondi », « Je suis expert ») et la note du test court
+  (« … / 10 ») ; au-dessus, la consigne « Coche une case seulement quand tu as fini toute la
+  série. » ; au-dessous, la légende « O : obligatoire — R : remédiation — F : facultatif »
+  (mention des exercices dans l'en-tête du livret) ; en-têtes
+  écrits une fois, titre de partie et code de l'objectif à la couleur du thème
+  (`seqSixTheme`). Cases vides dans toutes les versions. Le tableau tient toujours sur une
+  page : interligne réduit, puis `\footnotesize`, puis réduction de la boîte en dernier
+  recours. `\seqPartieCouvertureSix` reste disponible.
+- `\seqSepColonnesSix` : trait vertical gris entre deux colonnes (minipages) d'un énoncé,
+  à la place du `\hfill` (« sinon c'est très compliqué à suivre », S06 A05).
+
+### Modifié
+
+- Carte mentale à sa taille naturelle : plus d'étirement à la hauteur de la page (« le rendu
+  est trop étiré ») ; toujours réduite, jamais agrandie.
+- Cadre de la fiche de résumé (`seqFicheResumeSix`) insécable (« quitte à perdre le bas de
+  la page », S01-12).
+
 ## seqenseigne-style6e v0.13 — 2026-11-12
 
 ### Ajouté

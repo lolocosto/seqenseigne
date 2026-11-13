@@ -51,9 +51,10 @@ class RenduAtome6eErreur(ValueError):
 
 def _lire(conn, exercice_id: str) -> dict | None:
     from services.marqueurs_exercices import sql_colonnes          # v0.52.7
+    from services.series_fiches import sql_colonne                 # v0.56.0
     cur = conn.execute("SELECT id, titre, enonce, corrige, remed_enonce, remed_corrige, "
                        "variables, niveau, sequence, serie_code, num" + sql_colonnes(conn)
-                       + " FROM exercices WHERE id = ?", (exercice_id,))
+                       + sql_colonne(conn) + " FROM exercices WHERE id = ?", (exercice_id,))
     r = cur.fetchone()
     if r is None:
         return None
@@ -87,11 +88,9 @@ def options_rendu(options: dict | None) -> dict:
 
 def _exercice_livret(ex: dict) -> dict:
     """Exercice au format attendu par les émetteurs du livret 6e."""
+    from services.series_fiches import code_affiche
     d = dict(ex)
-    try:
-        d["code"] = f"{d['serie_code']}{int(d['num']):02d}"
-    except (TypeError, ValueError):
-        d["code"] = f"{d['serie_code']}{d['num']}"
+    d["code"] = code_affiche(d["serie_code"], d["num"])      # v0.56.0 : EN/AP/EX
     return d
 
 
@@ -198,10 +197,8 @@ def generer_tex_atome_6e(conn: sqlite3.Connection, exercice_id: str,
         return generer_document_6e(conn, exercice_id, {"version": opts["version"]},
                                    tikz_libraries, tblr_libraries)
     from services.livret_sequence_6e import document
-    try:
-        etiquette = f"{code}{int(ex['num']):02d}"
-    except (TypeError, ValueError):
-        etiquette = code
+    from services.series_fiches import code_affiche
+    etiquette = code_affiche(code, ex["num"]) if ex.get("num") is not None else code
     if code == "EV":
         corps, _ = _corps_evaluation(conn, ex, opts)
         titre = f"Exercice d'évaluation 6e — {ex['sequence']} {etiquette} — sujet {opts['sujet']}"

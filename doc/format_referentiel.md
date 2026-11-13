@@ -1,7 +1,8 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.5** (seqenseigne v0.55.0 : champ facultatif
-> `partie.carte_mentale`, carte mentale de la partie). Version 1.4 :
+> Version du format : **1.6** (seqenseigne v0.56.0 : champ facultatif
+> `partie.facultatifs`, exercices de mention F). Version 1.5 : seqenseigne v0.55.0,
+> champ facultatif `partie.carte_mentale`, carte mentale de la partie. Version 1.4 :
 > seqenseigne v0.54.0, documents compilés
 > rattachés à une **partie**, référentiel interne de mises en route. Version
 > 1.3 : seqenseigne v0.52.7, champ facultatif
@@ -175,6 +176,13 @@ Une entrée par séquence du découpage, dans le même ordre.
   source LaTeX reste dans l'atelier ; la carte voyage dans les PDF : livret
   de séquence, document « Cartes mentales »). **Absent** pour une partie sans
   carte (document et empreinte inchangés).
+- `facultatifs` (facultatif, 1.6, seqenseigne v0.56.0) : référentiel interne —
+  exercices de **mention F** (facultatif : il fait travailler la même procédure
+  qu'une remédiation placée juste avant) des séries F, A, E de la partie :
+  `{objectif, serie, exercice, titre}`, avec les **codes internes** (`F`, `A`, `E`,
+  « F03 ») ; les codes affichés EN/AP/EX du modèle Fiches ne sont qu'un affichage.
+  **Absent** quand tous les exercices de la partie sont obligatoires (O, valeur
+  par défaut) : document et empreinte inchangés.
 - `materiel` (facultatif, 1.3, seqenseigne v0.52.7) : exercices **marqués**
   de la partie (champs `ordinateur` et `calculatrice` de l'atelier), pour le
   tableau de bord de l'appli de classe (réserver la salle informatique, le
@@ -273,7 +281,8 @@ externe est toujours exporté à partir de son état du moment.
   `referentiel.gabarit_documents` ; 1.2 (v0.52.4) ajoute `partie.fiches` ;
   1.3 (v0.52.7) ajoute `partie.materiel` ; 1.4 (v0.54.0) range des
   documents compilés dans une partie (mises en route internes) ; 1.5
-  (v0.55.0) ajoute `partie.carte_mentale`.
+  (v0.55.0) ajoute `partie.carte_mentale` ; 1.6 (v0.56.0) ajoute
+  `partie.facultatifs`.
   Une publication figée produite en 1.0 est resservie telle quelle (sans le
   champ, donc lue `cycle4`).
 - Un document déclare la plus petite version qui décrit son contenu : un
@@ -284,7 +293,8 @@ externe est toujours exporté à partir de son état du moment.
   qui a des documents compilés de partie (mises en route internes) est en 1.4
   (aucun référentiel existant : document et empreinte inchangés) ; un
   référentiel dont au moins une partie a une carte mentale est en 1.5 (sans
-  carte : document et empreinte inchangés).
+  carte : document et empreinte inchangés) ; un référentiel dont au moins un exercice est
+  de mention F est en 1.6 (tout à O : document et empreinte inchangés).
 - `format_version` = `majeure.mineure`. Ajout d'un champ **facultatif** :
   version mineure (1.1, 1.2…) ; changement incompatible : version majeure
   (2.0).

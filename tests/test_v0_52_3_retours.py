@@ -286,9 +286,10 @@ def test_numeros_du_livret_releves_pendant_l_emission_concordent_avec_le_livret(
             n += 1
             code = re.search(r"seqSixGrisTexte\}(\w+)\}\]$", ligne).group(1)
             vus.setdefault(("R" if "[R]" in ligne else "") + code, n)
-    assert vus == {**{f"{c}": N.exercices[i] for i, c in (("f1", "F01"), ("aa1", "A01"),
-                                                          ("e1", "E01"), ("f2", "F02"))},
-                   "RF01": N.remediations["f1"]}
+    # v0.56.0 : codes affichés EN / AP / EX (codes internes F01, A01, E01).
+    assert vus == {**{f"{c}": N.exercices[i] for i, c in (("f1", "EN01"), ("aa1", "AP01"),
+                                                          ("e1", "EX01"), ("f2", "EN02"))},
+                   "REN01": N.remediations["f1"]}
     assert N.activites == {"a1": 1, "a2": 2}
 
 

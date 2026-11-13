@@ -40,12 +40,14 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.5"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+FORMAT_VERSION = "1.6"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
 #                          v0.52.4 : + partie.fiches (modèle « Fiches de résumé »)
 #                          v0.52.7 : + partie.materiel (exercices marqués)
 #                          v0.54.0 : documents compilés rattachés à une partie
 #                                    (référentiel interne de mises en route)
 #                          v0.55.0 : + partie.carte_mentale (facultatif)
+#                          v0.56.0 : + partie.facultatifs (exercices de mention F)
+FORMAT_VERSION_CARTES = "1.5"
 FORMAT_VERSION_DOCS_PARTIE = "1.4"
 FORMAT_VERSION_MATERIEL = "1.3"
 FORMAT_VERSION_FICHES = "1.2"
@@ -317,6 +319,38 @@ def _materiel(conn, niveau: str, seq: str, numero: int) -> list[dict]:
     return out
 
 
+def _facultatifs(conn, niveau: str, seq: str, numero: int) -> list[dict]:
+    """v0.56.0 (format 1.6) — Exercices de mention F (facultatif) des séries F, A, E
+    reliés aux objectifs de la partie : objectif, série (code interne F, A, E),
+    code interne de l'exercice (« F03 »), titre. Vide quand tout est O (le
+    document et son empreinte ne changent pas), ou sur une base sans la colonne."""
+    from services import series_fiches as sf
+    if not (_table_existe(conn, "objectifs") and _table_existe(conn, "sequence_parties")
+            and sf.colonne_presente(conn)):
+        return []
+    rows = conn.execute(
+        "SELECT o.code AS lien_objectif, oe.serie AS lien_serie, oe.ordre AS lien_ordre, "
+        "e.serie_code, e.num, e.titre FROM objectif_exos oe "
+        "JOIN objectifs o ON o.id = oe.objectif_id "
+        "JOIN sequence_parties p ON p.id = o.partie_id "
+        "JOIN sequences_par_niveau s ON s.id = p.sequence_par_niveau_id "
+        "JOIN exercices e ON e.id = oe.exercice_id "
+        "WHERE s.niveau = ? AND s.sequence_code = ? AND p.numero = ? "
+        "AND oe.serie IN ('F', 'A', 'E') AND e.mention = 'F'",
+        (niveau, seq, numero)).fetchall()
+    out = []
+    for r in sorted(rows, key=lambda r: (r["lien_objectif"],
+                                         _ORDRE_SERIES.index(r["lien_serie"]),
+                                         r["lien_ordre"] or 0)):
+        try:
+            code_ex = f"{r['serie_code']}{int(r['num']):02d}"
+        except (TypeError, ValueError):
+            code_ex = r["serie_code"] or ""
+        out.append({"objectif": r["lien_objectif"], "serie": r["lien_serie"],
+                    "exercice": code_ex, "titre": vers_texte(r["titre"] or "")})
+    return out
+
+
 def _doc_fichier(f: dict, data_dir: Path | None) -> dict:
     d = {"ref": f["id"], "origine": "fichier", "type": f.get("type_id") or None}
     lib = (f"{f['type_libelle']} : " if f.get("type_libelle") else "") + f["nom_fichier"]
@@ -540,6 +574,12 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                         if source == "interne" else [])
             if materiel:
                 partie["materiel"] = materiel
+            # v0.56.0 (format 1.6) — exercices facultatifs (mention F) de la
+            # partie ; absent quand tout est O (document et empreinte inchangés).
+            facultatifs = (_facultatifs(conn, ref["niveau"], code, num)
+                           if source == "interne" else [])
+            if facultatifs:
+                partie["facultatifs"] = facultatifs
             parties.append(partie)
         sequences.append({
             "code": code, "parties": parties,
@@ -560,7 +600,9 @@ def construire(conn, rid: str, data_dir: Path | None = None,
     avec_docs_partie = any(d["origine"] == "compile" for s in sequences
                            for p in s["parties"] for d in p["documents"])
     avec_cartes = any("carte_mentale" in p for s in sequences for p in s["parties"])
-    version = (FORMAT_VERSION if avec_cartes else
+    avec_facultatifs = any("facultatifs" in p for s in sequences for p in s["parties"])
+    version = (FORMAT_VERSION if avec_facultatifs else
+               FORMAT_VERSION_CARTES if avec_cartes else
                FORMAT_VERSION_DOCS_PARTIE if avec_docs_partie else
                FORMAT_VERSION_MATERIEL if avec_materiel else
                FORMAT_VERSION_FICHES if modele_fiches else FORMAT_VERSION_SANS_FICHES)

@@ -269,9 +269,11 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
                opts: dict) -> list[str]:
     a_E = any(x["id"] in N.exercices for p in seq["parties"] for o in p["objectifs"]
               for x in (o["series"].get("E") or []))
-    legende = (r"exercices sans marque : obligatoires (O) --- ( \ldots{} ) : approfondissement (A)"
-               r" --- [ \ldots{} ] : répétition (R)"
-               + (r" --- \{ \ldots{} \} : expertise (E)" if a_E else ""))
+    # v0.56.0 (SERIES) — séries renommées : Entraînement (EN), Approfondissement
+    # (AP), Expertise (EX) ; les marques du plan ne changent pas.
+    legende = (r"exercices sans marque : entraînement (EN) --- ( \ldots{} ) : approfondissement (AP)"
+               r" --- [ \ldots{} ] : remédiation (R)"
+               + (r" --- \{ \ldots{} \} : expertise (EX)" if a_E else ""))
     sous_titre = " --- ".join(x for x in (
         f"Séquence {seq['numero']}" if seq.get("numero") else "",
         f"{_fmt(duree)} séances" if duree else "",

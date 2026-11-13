@@ -70,10 +70,13 @@ from services.preambule_atome import construire_preambule
 # entier, comme dans les aperçus validés du lot S01.
 GEOMETRIE_6E = r"\geometry{left=35pt,right=35pt,top=50pt,bottom=70pt,head=30pt,foot=10pt}"
 
-STATUT_SERIE = {"F": "O", "A": "A", "E": "E"}
-TITRES_SERIES = (("F", "Exercices fondamentaux"),
-                 ("A", "Exercices d'approfondissement"),
-                 ("E", "Exercices d'expertise"))
+# v0.56.0 (SERIES, Laurent, 13 novembre) — séries F, A, E renommées « Entraînement »,
+# « Approfondissement », « Expertise » ; codes affichés EN/AP/EX (codes internes
+# inchangés, services/series_fiches.py). L'en-tête d'un exercice porte sa mention
+# (O obligatoire ou F facultatif) dans toutes les séries, R pour une remédiation.
+TITRES_SERIES = (("F", "Entraînement"),
+                 ("A", "Approfondissement"),
+                 ("E", "Expertise"))
 
 # Contenus volumineux : on réserve plus de place avant l'exercice (aperçu).
 _MARQUEURS_GRANDS = ("tabular", "tikzpicture", "\\seqLocTableau", "includegraphics")
@@ -116,16 +119,14 @@ def _est_objectif_cours(code: str, numero_partie: int) -> bool:
 
 def _exercice(conn, ex_id: str) -> dict | None:
     from services.marqueurs_exercices import sql_colonnes
+    from services.series_fiches import code_affiche, sql_colonne
     r = conn.execute("SELECT id, titre, enonce, corrige, remed_enonce, remed_corrige, "
-                     "variables, serie_code, num" + sql_colonnes(conn)
+                     "variables, serie_code, num" + sql_colonnes(conn) + sql_colonne(conn)
                      + " FROM exercices WHERE id = ?", (ex_id,)).fetchone()
     if r is None:
         return None
     d = {k: (r[k] if r[k] is not None else "") for k in r.keys()}
-    try:
-        d["code"] = f"{d['serie_code']}{int(d['num']):02d}"
-    except (TypeError, ValueError):
-        d["code"] = f"{d['serie_code']}{d['num']}"
+    d["code"] = code_affiche(d["serie_code"], d["num"])      # v0.56.0 : EN06, AP05, EX02
     return d
 
 
@@ -308,7 +309,8 @@ def _emettre_exercice(L: list, ex: dict, serie: str, opts: dict, remeds_fin: lis
         L.append(ex["variables"])
     grand = any(m in enonce for m in _MARQUEURS_GRANDS)
     L.append(r"\needspace{%d\baselineskip}" % (14 if grand else 6))
-    L.append(r"\begin{seqExoSix}[" + STATUT_SERIE[serie] + "][" + _titre_exo(ex) + "]")
+    from services.series_fiches import lire as mention
+    L.append(r"\begin{seqExoSix}[" + mention(ex) + "][" + _titre_exo(ex) + "]")
     L.append(enonce)
     if (ex.get("corrige") or "").strip():
         L.append(r"\seqLocExplication{" + ex["corrige"] + "}")
@@ -350,23 +352,29 @@ def titre_partie_couverture(seq: dict, p: dict) -> str:
 
 def couverture(seq: dict) -> str:
     """Page de garde. C2 (v0.52.5, demande de Laurent) : objectifs rangés
-    par partie (`\\seqCouvertureLivretSix*` + `\\seqPartieCouvertureSix`,
-    module v0.6), trait vertical de la couleur du thème de la séquence
-    (`seqSixTheme`, bleu du module si le thème n'a pas de couleur connue).
-    Une partie sans objectif de capacité n'apparaît pas."""
+    par partie, de la couleur du thème de la séquence (`seqSixTheme`, bleu
+    du module si le thème n'a pas de couleur connue). Une partie sans
+    objectif de capacité n'apparaît pas.
+
+    v0.56.0 (SUIVI, décision de Laurent du 13 novembre : « suivi par
+    objectif ») : tableau `\\seqSuiviObjectifsSix` + `\\seqPartieSuiviSix`
+    (module v0.14) — une ligne par objectif, cases « Je découvre », « Je
+    m'entraîne », « Je sais faire » et note du test court sur 10 ; le même
+    texte en livret élève et corrigé (cases vides), sur une page au plus.
+    `\\seqPartieCouvertureSix` reste dans le module (ancienne forme)."""
     from services.couleurs_themes import famille_par_slug
     blocs = []
     for p in seq["parties"]:
         if not p["objectifs"]:
             continue
         liste = ",".join(f"{seq['code']}-{o['code']}/{{{o['nom']}}}" for o in p["objectifs"])
-        blocs.append(r"\seqPartieCouvertureSix{" + titre_partie_couverture(seq, p) + "}{"
+        blocs.append(r"\seqPartieSuiviSix{" + titre_partie_couverture(seq, p) + "}{"
                      + liste + "}")
     fam = famille_par_slug(seq.get("theme_couleur") or "")
     couleur = (r"\definecolor{seqSixTheme}{HTML}{" + fam["hex_principal"].lstrip("#").upper()
                + "}") if fam else ""
     return (couleur + r"\seqCouvertureLivretSix*{" + seq["nom"] + "}{%\n"
-            + "\n".join(blocs) + "}")
+            + r"\seqSuiviObjectifsSix{%" + "\n" + "\n".join(blocs) + "}}")
 
 
 def entete(seq: dict, corrige: bool) -> str:

@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/11/12 v0.13 seqenseigne : style des documents de 6e]
+    [2026/11/13 v0.14 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -97,6 +97,105 @@
       \foreach \seq@c/\seq@t in {#2}{\item\textit{\seq@c\ : \seq@t}}
     \end{itemize}
   \end{tcolorbox}}
+\ExplSyntaxOn
+\tl_new:N \l__seqsix_suivi_lignes_tl
+\box_new:N \l__seqsix_suivi_box
+\dim_new:N \l__seqsix_suivi_dispo_dim
+\dim_new:N \l__seqsix_suivi_objectif_dim
+\cs_new_protected:Npn \__seqsix_suivi_case:
+  { \tikz[baseline=0.4ex] \draw [ line~width = 0.6pt , black!65 ]
+      (0,0) rectangle (4mm,4mm) ; }
+\cs_new_protected:Npn \__seqsix_suivi_note:
+  { \makebox[1.1cm]{\dotfill} \, / \, 10 }
+\cs_new_protected:Npn \__seqsix_suivi_ligne:w #1 / #2 \q_stop
+  {
+    \tl_put_right:Nn \l__seqsix_suivi_lignes_tl
+      {
+        {\bfseries\color{seqSixTheme} #1} \ #2
+        & \__seqsix_suivi_case: & \__seqsix_suivi_case: & \__seqsix_suivi_case:
+        & \__seqsix_suivi_note: \tabularnewline \hline
+      }
+  }
+\cs_new_protected:Npn \__seqsix_suivi_partie:nn #1#2
+  {
+    \tl_put_right:Nn \l__seqsix_suivi_lignes_tl
+      {
+        \rowcolor{seqSixTheme!14}
+        \multicolumn{5}{@{\hspace{4pt}}l}{\bfseries\color{seqSixTheme}#1}
+        \tabularnewline \hline
+      }
+    \clist_map_inline:nn {#2} { \__seqsix_suivi_ligne:w ##1 \q_stop }
+  }
+\cs_new_protected:Npn \__seqsix_suivi_composer:Nn #1#2
+  {
+    % #1 : taille de police ; #2 : \arraystretch
+    \hbox_set:Nn \l__seqsix_suivi_box
+      {
+        #1
+        \setlength{\tabcolsep}{4pt}
+        \renewcommand{\arraystretch}{#2}
+        \arrayrulecolor{black!30}
+        \dim_set:Nn \l__seqsix_suivi_objectif_dim
+          { \linewidth - 3 \c__seqsix_suivi_case_dim
+            - \c__seqsix_suivi_note_dim - 10 \tabcolsep - 6\arrayrulewidth }
+        \begin{tabular}
+          { | >{\raggedright\arraybackslash}m{\l__seqsix_suivi_objectif_dim}
+            | *{3}{ >{\centering\arraybackslash}m{\c__seqsix_suivi_case_dim} |}
+              >{\centering\arraybackslash}m{\c__seqsix_suivi_note_dim} | }
+          \hline
+          \rowcolor{seqSixTheme}
+          \color{white}\bfseries Objectif
+          & \color{white}\bfseries Je~me~suis \newline entraîné
+          & \color{white}\bfseries J'ai \newline approfondi
+          & \color{white}\bfseries Je~suis \newline expert
+          & \color{white}\bfseries Test \newline court
+          \tabularnewline \hline
+          \tl_use:N \l__seqsix_suivi_lignes_tl
+        \end{tabular}
+      }
+  }
+\dim_const:Nn \c__seqsix_suivi_case_dim { 1.85cm }
+\tl_new:N \l__seqsix_suivi_consigne_tl
+\tl_set:Nn \l__seqsix_suivi_consigne_tl
+  { Coche~une~case~seulement~quand~tu~as~fini~toute~la~série. }
+\tl_new:N \l__seqsix_suivi_legende_tl
+\tl_set:Nn \l__seqsix_suivi_legende_tl
+  { \textbf{O}~:~obligatoire~---~\textbf{R}~:~remédiation~---~\textbf{F}~:~facultatif }
+\dim_const:Nn \c__seqsix_suivi_note_dim { 2.05cm }
+\NewDocumentCommand{\seqPartieSuiviSix}{ m m }
+  { \__seqsix_suivi_partie:nn {#1} {#2} }
+\NewDocumentCommand{\seqSuiviObjectifsSix}{ +m }
+  {
+    \par
+    \group_begin:
+      \tl_clear:N \l__seqsix_suivi_lignes_tl
+      #1
+      % consigne (Laurent, 13 nov., 12 h 12), sous « Objectifs du chapitre »
+      \noindent{\small\itshape \l__seqsix_suivi_consigne_tl}\par\smallskip
+      \dim_compare:nNnTF { \pagegoal } = { \maxdimen }
+        { \dim_set:Nn \l__seqsix_suivi_dispo_dim { \textheight - \pagetotal } }
+        { \dim_set:Nn \l__seqsix_suivi_dispo_dim { \pagegoal - \pagetotal } }
+      \dim_sub:Nn \l__seqsix_suivi_dispo_dim { 3\baselineskip }
+      \__seqsix_suivi_composer:Nn \small { 2.0 }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \__seqsix_suivi_composer:Nn \small { 1.6 } }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \__seqsix_suivi_composer:Nn \small { 1.25 } }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \__seqsix_suivi_composer:Nn \footnotesize { 1.1 } }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \box_resize_to_ht_plus_dp:Nn \l__seqsix_suivi_box
+            { \l__seqsix_suivi_dispo_dim } }
+      \noindent \box_use_drop:N \l__seqsix_suivi_box \par
+      \smallskip
+      \noindent{\footnotesize \l__seqsix_suivi_legende_tl}\par
+    \group_end:
+  }
+\ExplSyntaxOff
 \newcommand{\seqBandeauCapacite}[2]{%
   \par\addvspace{0.6\baselineskip}%
   \begin{tcolorbox}[enhanced, colback=white, colframe=black, boxrule=1.2pt,
@@ -113,7 +212,7 @@
         {Activité \theseqActiviteSix};\ {\bfseries #1}\par\medskip}]}{%
   \end{tcolorbox}\par\addvspace{0.5\baselineskip}}
 \NewDocumentEnvironment{seqFicheResumeSix}{m}{%
-  \begin{tcolorbox}[enhanced, breakable, colback=white, colframe=seqSixRouge,
+  \begin{tcolorbox}[enhanced, unbreakable, colback=white, colframe=seqSixRouge,
       boxrule=1.2pt, arc=2pt, left=5pt, right=5pt,
       title={\ifseq@corrige Fiche de cours\else Fiche de résumé
              à compléter\fi\ --- #1},
@@ -166,6 +265,8 @@
   {\small\noindent\hangindent=1.3em\hangafter=1
    \makebox[1.3em][l]{\seqPictoAstuceSix}\textbf{Astuce.}\ #1\par}%
   \smallskip}
+\NewDocumentCommand{\seqSepColonnesSix}{}{%
+  \hfill{\color{black!35}\vrule width 0.6pt}\hfill}
 \newcounter{seqItemCM}
 \newcounter{seq@cm@col}
 \newcommand{\seqTitreCM}{CALCUL MENTAL}
@@ -1104,15 +1205,8 @@
     \dim_set:Nn \l__seqsix_cm_haut_dim
       { \dim_max:nn { \l__seqsix_cm_haut_dim }
           { \box_ht_plus_dp:N \l__seqsix_cm_bulle_box } }
-    % remplir la hauteur disponible : la largeur impose la réduction s ; la
-    % carte, haute de h, est étirée à (hauteur disponible) / s, les branches
-    % se répartissent alors sur toute la page (v0.13, retour des lots)
-    \fp_set:Nn \l_tmpb_fp
-      { min ( 1 , \dim_to_fp:n { \linewidth } / \dim_to_fp:n { \l__seqsix_cm_largeur_dim } ) }
-    \dim_set:Nn \l__seqsix_cm_h_dim
-      { \fp_to_dim:n { \dim_to_fp:n { \l__seqsix_cm_dispo_dim - 1pt } / \l_tmpb_fp } }
-    \dim_set:Nn \l__seqsix_cm_haut_dim
-      { \dim_max:nn { \l__seqsix_cm_haut_dim } { \l__seqsix_cm_h_dim } }
+    % v0.14 (Laurent, 13 nov.) : plus d'étirement à la hauteur de la page ;
+    % la carte garde sa taille naturelle (souvent une demi-page)
     \tl_clear:N \l__seqsix_cm_dessin_tl
     \tl_clear:N \l__seqsix_cm_noeuds_tl
     % colonne de gauche : 1 .. k de haut en bas

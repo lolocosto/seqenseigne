@@ -3440,7 +3440,10 @@ function atelRenderListe() {
     const idExo = [
       ex.niveau || '',
       ex.sequence || '',
-      (ex.serie_code || '') + (ex.num != null ? String(ex.num).padStart(2,'0') : ''),
+      // v0.56.0 — code affiché (EN06… au modèle Fiches ; interne inchangé).
+      (window.atlCodeExercice
+        ? window.atlCodeExercice((ex.serie_code || '') + (ex.num != null ? String(ex.num).padStart(2,'0') : ''), ex.niveau)
+        : (ex.serie_code || '') + (ex.num != null ? String(ex.num).padStart(2,'0') : '')),
     ].filter(Boolean).join('/');
     const titre = ex.titre ? ex.titre : { html: '(sans titre)', derive: true };
     // Badge série coloré, format identique au modèle d'assemblage.
@@ -5228,7 +5231,11 @@ function rechercheRendre(data) {
         `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;` +
         `border-top:1px solid var(--border)">` +
         `<code style="font-size:11px;color:var(--text-secondary);` +
-        `white-space:nowrap">${escapeHtml(a.identifiant)}</code>` +
+        `white-space:nowrap">${escapeHtml(
+          // v0.56.0 — code affiché d'un exercice (EN06… au modèle Fiches).
+          (t === 'exercice' && window.atlCodeExercice && a.identifiant)
+            ? a.identifiant.replace(/[^/]+$/, c => window.atlCodeExercice(c, a.niveau))
+            : a.identifiant)}</code>` +
         `<span style="flex:1;min-width:0;overflow:hidden;` +
         `text-overflow:ellipsis;white-space:nowrap">${titre}</span>` +
         `${etatBadge}` +

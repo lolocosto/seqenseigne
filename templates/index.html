@@ -960,6 +960,15 @@
                 <option value="interdite">interdite</option>
               </select>
             </label>
+            <!-- v0.56.0 — Mention de l'exercice (modèle Fiches, séries EN, AP, EX) :
+                 O obligatoire (défaut) ou F facultatif (même procédure qu'une
+                 remédiation placée juste avant) ; (O) ou (F) dans l'en-tête du livret. -->
+            <label class="atl-label" id="atl-exercice-field-mention" style="display:none;align-items:center;gap:6px;margin:0">Mention
+              <select id="atl-exercice-mention" title="O : obligatoire — F : facultatif (même procédure qu'une remédiation placée juste avant)">
+                <option value="O">O — obligatoire</option>
+                <option value="F">F — facultatif</option>
+              </select>
+            </label>
           </div>
 
           <!-- v0.10.7 — Zone "Objectifs associés" retirée. La liaison
@@ -4021,15 +4030,15 @@
         Sélectionnez la série de l'exercice à créer :
       </p>
       <div class="serie-btns">
-        <button class="serie-btn active-fondamental"
+        <button class="serie-btn active-fondamental" data-serie-creation="fondamental"
                 onclick="ATELIER_EXERCICE._validerChoixSerie('fondamental')">
           F — Fondamental
         </button>
-        <button class="serie-btn active-avancé"
+        <button class="serie-btn active-avancé" data-serie-creation="avancé"
                 onclick="ATELIER_EXERCICE._validerChoixSerie('avancé')">
           A — Avancé
         </button>
-        <button class="serie-btn active-exploration"
+        <button class="serie-btn active-exploration" data-serie-creation="exploration"
                 onclick="ATELIER_EXERCICE._validerChoixSerie('exploration')">
           E — Exploration
         </button>

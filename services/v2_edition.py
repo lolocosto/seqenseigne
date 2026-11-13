@@ -3211,9 +3211,16 @@ def _valider_sequence_hook(conn, sn_id: str) -> None:
                 manquantes = [s for s in series_exigees
                               if s not in series_presentes]
                 if manquantes:
+                    # v0.56.0 (SERIES) — modèle Fiches : nom affiché de la
+                    # série (« Entraînement (EN) ») ; cycle 4 inchangé.
+                    if modele_fiches:
+                        from services.series_fiches import TITRES, prefixe_affiche
+                        noms = [f"{TITRES[s]} ({prefixe_affiche(s)})" for s in manquantes]
+                    else:
+                        noms = manquantes
                     raisons.append(
                         f"{etiquette} n'a pas d'exercice dans la série "
-                        f"{', '.join(manquantes)}."
+                        f"{', '.join(noms)}."
                     )
                 # M2 — modèle Fiches : la fiche de résumé de l'objectif.
                 if modele_fiches and conn.execute(

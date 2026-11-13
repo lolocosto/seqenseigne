@@ -125,6 +125,7 @@ if str(RACINE_APPLI) not in sys.path:          # lancement par chemin (Windows)
 from services import fiches_resume as svc_fiches          # noqa: E402
 from services.atomes import SERIES_DOCUMENTS, _deduire_type_format  # noqa: E402
 from services import marqueurs_exercices as mq                     # noqa: E402
+from services import series_fiches as sf                         # noqa: E402  (v0.56.0)
 
 NIVEAU = "N09"
 CYCLE = "C03"
@@ -359,6 +360,9 @@ class Rapport:
             if s.get("marqueurs"):                                   # v0.52.7
                 L.append("  marqueurs : " + ", ".join(f"{k} {n}" for k, n in
                                                       s["marqueurs"].items()))
+            if s.get("mentions"):                                    # v0.56.0
+                L.append("  mentions (séries F, A, E) : " + ", ".join(
+                    f"{k} {n}" for k, n in s["mentions"].items()))
         L.append("")
         L.append("== Figures ==")
         L += [f"  {x}" for x in self.figures] or ["  aucune"]
@@ -692,13 +696,37 @@ def _compter_marqueurs(rapport: "Rapport", seq: str, marques: dict) -> None:
         c[k] = c.get(k, 0) + 1
 
 
+def mention_lot(src: dict, quoi: str, rapport: "Rapport | None" = None) -> str:
+    """v0.56.0 — Clé facultative `mention` d'un exercice de série F, A ou E :
+    absente = 'O' (obligatoire), 'F' = facultatif ; valeur inconnue : signalée
+    (anomalie) et lue 'O'."""
+    try:
+        return sf.valider(src.get("mention"))
+    except sf.MentionInvalide:
+        if rapport is not None:
+            rapport.anomalie(f"{quoi} : mention {src.get('mention')!r} inconnue "
+                             "(attendu O ou F), lue O")
+        return sf.MENTION_DEFAUT
+
+
+def _compter_mention(rapport: "Rapport", seq: str, mention: str) -> None:
+    c = rapport.seq(seq).setdefault("mentions", OrderedDict([("obligatoire", 0),
+                                                           ("facultatif", 0)]))
+    k = sf.LIBELLES_MENTIONS[mention]
+    c[k] = c.get(k, 0) + 1
+
+
 def _exercice(conn, seq: str, serie_code: str, num: int, src: dict,
-              marques: dict | None = None) -> tuple[str, str]:
+              marques: dict | None = None, mention: str | None = None) -> tuple[str, str]:
     """(id, état) de l'exercice (N09, séquence, série, num).
 
     v0.52.7 — `marques` : marqueurs du lot (`marqueurs_lot`), comparés et
     écrits avec le contenu quand la base a les colonnes ; None = non
-    marqué."""
+    marqué.
+
+    v0.56.0 — `mention` (séries F, A, E : 'O' ou 'F', `mention_lot`) : comparée
+    et écrite comme le contenu (jamais sur un exercice validé) ; None (autres
+    séries) : la colonne n'est pas touchée."""
     vals = {"titre": src.get("titre", "") or "",
             "enonce": src.get("enonce", src.get("latex", "")) or "",
             "corrige": src.get("corrige", "") or "",
@@ -706,6 +734,8 @@ def _exercice(conn, seq: str, serie_code: str, num: int, src: dict,
             "remed_corrige": src.get("remed_corrige", "") or ""}
     if mq.colonnes_presentes(conn):
         vals.update({c: (marques or {}).get(c, "") or "" for c in mq.CHAMPS})
+    if mention is not None and sf.colonne_presente(conn):
+        vals["mention"] = mention
     rows = conn.execute("SELECT * FROM exercices WHERE niveau=? AND sequence=? AND "
                         "serie_code=? AND num=?", (NIVEAU, seq, serie_code, num)).fetchall()
     if len(rows) > 1:
@@ -871,7 +901,9 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
             vus[cle] = code
             marques = marqueurs_lot(e, f"{seq} {sc}{cle[1]:02d}", rapport)
             _compter_marqueurs(rapport, seq, marques)
-            eid, etat_e = _exercice(conn, seq, sc, cle[1], e, marques)
+            mention = mention_lot(e, f"{seq} {sc}{cle[1]:02d}", rapport)   # v0.56.0
+            _compter_mention(rapport, seq, mention)
+            eid, etat_e = _exercice(conn, seq, sc, cle[1], e, marques, mention)
             series[sc].append(eid)
             Rapport.compter(ro, f"exercices {sc}", etat_e)
             if (e.get("remed_enonce") or "").strip():
@@ -1729,6 +1761,8 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.infos.append("Base complétée : colonne calculatrice des évaluations (v0.52.8)")
     if mq.migrer_duree_partie1(conn):                                # v0.52.9 (D4)
         rapport.infos.append("Base complétée : colonne duree_partie1 des évaluations (v0.52.9)")
+    if sf.migrer(conn):                                              # v0.56.0
+        rapport.infos.append("Base complétée : colonne mention des exercices (v0.56.0)")
     from services import cartes_mentales as _cm                         # v0.55.0
     if _cm.migrer(conn):
         rapport.infos.append("Base complétée : table cartes_mentales (v0.55.0)")

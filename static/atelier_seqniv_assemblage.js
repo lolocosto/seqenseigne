@@ -1064,11 +1064,20 @@
       // est utile pour construire les plans de travail).
       let zonesContenu = estConnaitre ? zoneFiches : zoneNotions;
       if (!estConnaitre) {
+        // v0.56.0 (SERIES) — modèle Fiches : « Série EN — Entraînement », codes
+        // affichés EN06… (codes internes F, A, E inchangés : data-serie, glisser).
+        const SF = {F: ['EN', 'Entraînement'], A: ['AP', 'Approfondissement'],
+                    E: ['EX', 'Expertise']};
         const zonesExos = ['F', 'A', 'E'].map(s => {
           const exos = (o.exos_par_serie && o.exos_par_serie[s]) || [];
+          const nomSerie = modeleFiches ? `${SF[s][0]} — ${SF[s][1]}` : s;
           const chips = exos.map(e => {
             const ex = e.exercice || {};
-            const lib = ex.fichier ? ex.fichier.replace(/\.tex$/i, '') : (e.exercice_id || '?').slice(0, 12);
+            const lib = ex.fichier ? ex.fichier.replace(/\.tex$/i, '')
+              : (modeleFiches && ex.serie_code && ex.num != null)
+                ? `${(SF[ex.serie_code] || [ex.serie_code])[0]}${String(ex.num).padStart(2, '0')}`
+                  + (ex.mention === 'F' ? ' (F)' : '')
+                : (e.exercice_id || '?').slice(0, 12);
             const etatChip = this._classeEtatAtome(ex.etat_code, 'asm-exo-chip');
             return `
               <span class="asm-exo-chip${etatChip}"
@@ -1086,13 +1095,13 @@
           }).join('');
           return `
             <div class="asm-obj-exos">
-              <div class="asm-obj-exos-titre">Série ${s}</div>
+              <div class="asm-obj-exos-titre">Série ${this._esc(nomSerie)}</div>
               <div class="asm-obj-exos-zone"
                    data-obj-id="${this._escAttr(o.id)}" data-serie="${this._escAttr(s)}"
                    ondragover="ATELIER_SEQNIV.dragOver(event, this)"
                    ondragleave="ATELIER_SEQNIV.dragLeave(event, this)"
                    ondrop="ATELIER_SEQNIV.dropExoObj(event, '${this._escAttr(o.id)}', '${this._escAttr(s)}')">
-                ${chips || '<span class="asm-obj-exos-vide">Glisse un exercice de la série ' + s + ' ici.</span>'}
+                ${chips || '<span class="asm-obj-exos-vide">Glisse un exercice de la série ' + this._esc(modeleFiches ? SF[s][0] : s) + ' ici.</span>'}
               </div>
             </div>`;
         }).join('');

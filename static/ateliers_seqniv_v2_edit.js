@@ -890,7 +890,10 @@
         // On encode (niveau, seq, serie_code) dans la valeur pour que
         // le handler d'ajout ait tout sous la main sans fetch supplémentaire.
         const val = `${e.id}|${e.niveau}|${e.sequence}|${e.serie_code}`;
-        opts.push(`<option value="${esc(val)}">${esc(libelle)} [${esc(e.serie_code)}]</option>`);
+        // v0.56.0 — série affichée (AP au modèle Fiches ; valeur interne inchangée).
+        const serieAff = window.atlPrefixeSerie ? window.atlPrefixeSerie(e.serie_code, e.niveau)
+                                                : e.serie_code;
+        opts.push(`<option value="${esc(val)}">${esc(libelle)} [${esc(serieAff)}]</option>`);
       });
       _status(`${r.data.exos.length} exo(s) disponibles en révision`, false);
     } else {

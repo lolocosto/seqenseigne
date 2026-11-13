@@ -270,7 +270,7 @@ def test_macros_du_lot_s05_dans_le_module_v0_6_car_les_enonces_du_lot_les_appell
     dtx, sty = DTX.read_text(encoding="utf-8"), STY.read_text(encoding="utf-8")
     # v0.52.7 : le module est passé en v0.7 ; v0.52.8 : v0.8 ; les macros v0.6 restent.
     # v0.53.0 : module v0.9 (\seqLocItemCM, lot M01), qui garde tout ce qui précède.
-    assert "v0.13 seqenseigne" in dtx and "v0.13 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11 ; v0.54.3 : v0.12 ; v0.55.0 : v0.13
+    assert "v0.14 seqenseigne" in dtx and "v0.14 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11 ; v0.54.3 : v0.12 ; v0.55.0 : v0.13 ; v0.56.0 : v0.14
     for m in MACROS_S05:
         assert m in style6e.MACROS
         assert style6e.correspondances()["\\" + m] == "seqenseigne-style6e"
@@ -321,13 +321,14 @@ def _seq(nom="Géométrie plane", couleur="geometrie", libelles=("Premiers élé
 
 
 def test_page_de_garde_range_les_objectifs_sous_le_titre_de_leur_partie():
-    """Laurent : la liste des objectifs à la suite ne montrait pas les parties."""
+    """Laurent : la liste des objectifs à la suite ne montrait pas les parties.
+    v0.56.0 : une ligne de tableau de suivi par objectif, sous le titre de sa partie."""
     from services.livret_sequence_6e import couverture
     tex = couverture(_seq())
     assert r"\seqCouvertureLivretSix*{Géométrie plane}" in tex
     i = tex.index
-    assert i(r"\seqPartieCouvertureSix{Partie 1 --- Premiers éléments}{S05-02/{Tracer},"
-             r"S05-03/{Noter}}") < i(r"\seqPartieCouvertureSix{Partie 2 --- Cercles}"
+    assert i(r"\seqPartieSuiviSix{Partie 1 --- Premiers éléments}{S05-02/{Tracer},"
+             r"S05-03/{Noter}}") < i(r"\seqPartieSuiviSix{Partie 2 --- Cercles}"
                                      r"{S05-12/{Cercle}}")
     assert "Partie 3" not in tex            # partie sans objectif de capacité : rien
 
@@ -346,8 +347,8 @@ def test_partie_sans_libelle_ou_qui_repete_le_nom_de_la_sequence_titree_partie_n
     nom de la séquence pour libellé (décision O2) : inutile de le répéter."""
     from services.livret_sequence_6e import couverture
     tex = couverture(_seq(nom="Pré-algèbre", libelles=("Pré-algèbre", "")))
-    assert r"\seqPartieCouvertureSix{Partie 1}{" in tex
-    assert r"\seqPartieCouvertureSix{Partie 2}{" in tex
+    assert r"\seqPartieSuiviSix{Partie 1}{" in tex
+    assert r"\seqPartieSuiviSix{Partie 2}{" in tex
 
 
 def test_libelles_des_parties_lus_dans_objectifs_6e_pour_son_niveau_seulement():

@@ -558,11 +558,12 @@ def _charger_exos_par_serie(conn, objectif_id):
             ex.num            AS exercice_num,
             ex.serie_code     AS exercice_serie_code,
             ex.etat_code      AS exercice_etat_code
+            {mention}
         FROM objectif_exos oe
         LEFT JOIN exercices ex ON ex.id = oe.exercice_id
         WHERE oe.objectif_id = ?
         ORDER BY oe.serie, oe.ordre
-        """,
+        """.replace("{mention}", _sql_mention(conn)),
         (objectif_id,),
     ).fetchall()
 
@@ -590,10 +591,19 @@ def _charger_exos_par_serie(conn, objectif_id):
                 "num":        r["exercice_num"],
                 "serie_code": r["exercice_serie_code"] or "",
                 "etat_code":  r["exercice_etat_code"] or "en_cours",
+                # v0.56.0 — mention O / F (affichage de l'assemblage).
+                "mention":    r["exercice_mention"] or "O",
             },
         })
 
     return resultat
+
+
+def _sql_mention(conn) -> str:
+    """v0.56.0 — `, ex.mention AS exercice_mention` ('O' sans la colonne)."""
+    from services.series_fiches import colonne_presente
+    return (", ex.mention AS exercice_mention" if colonne_presente(conn)
+            else ", 'O' AS exercice_mention")
 
 
 # ── v0.52.4 — Enrichissement pour l'atelier d'assemblage (route seulement) ──

@@ -1578,6 +1578,15 @@ class SqliteStore:
         except Exception as _e:                       # pragma: no cover
             print(f"  [marqueurs_exercices] migration impossible : {_e}")
 
+        # ── v0.56.0 — Mention des exercices (modèle Fiches) : colonne
+        #    `exercices.mention` ('O' obligatoire par défaut, ou 'F') ─────────
+        try:
+            from services import series_fiches as _sf
+            _sf.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [series_fiches] migration impossible : {_e}")
+
         # ── v0.53.1 (P1) — Libellé des parties de séquence-niveau : colonne
         #    `sequence_parties.libelle` (défaut '' : rien ne change pour les
         #    séquences existantes ; remplie par l'import des mises en route) ─
@@ -2633,6 +2642,8 @@ class SqliteStore:
             from services import marqueurs_exercices as _mq
             if not _mq.colonnes_presentes(conn):
                 _mq.migrer(conn)
+            from services import series_fiches as _sf      # v0.56.0
+            _sf.migrer(conn)
             ids_cibles = {e["id"] for e in liste if e.get("id")}
             rows_en_base = conn.execute("SELECT id FROM exercices").fetchall()
             ids_en_base = {r["id"] for r in rows_en_base}
@@ -2694,7 +2705,9 @@ class SqliteStore:
                         # v0.52.7 — marqueurs : clé absente du dict (scanner,
                         # appel partiel) → valeur en base gardée (COALESCE).
                         "  ordinateur=COALESCE(?, ordinateur), "
-                        "  calculatrice=COALESCE(?, calculatrice) "
+                        "  calculatrice=COALESCE(?, calculatrice), "
+                        # v0.56.0 — mention O/F : clé absente → gardée.
+                        "  mention=COALESCE(?, mention) "
                         "WHERE id=?",
                         (
                             e.get("serie", ""), e.get("titre", ""),
@@ -2714,6 +2727,7 @@ class SqliteStore:
                             e.get("type_format") or "standard",
                             (e.get("ordinateur") or "") if "ordinateur" in e else None,
                             (e.get("calculatrice") or "") if "calculatrice" in e else None,
+                            (e.get("mention") or "O") if "mention" in e else None,
                             e["id"],
                         )
                     )
@@ -2731,8 +2745,8 @@ class SqliteStore:
                         " niveau, sequence, num, serie_code, fichier, etat_code, "
                         " remed_enonce, remed_corrige, "
                         " cadre_reponse_lignes_principal, cadre_reponse_lignes_remed, "
-                        " type_format, ordinateur, calculatrice) "
-                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        " type_format, ordinateur, calculatrice, mention) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (
                             e["id"], e.get("serie", ""), e.get("titre", ""),
                             e.get("variables", ""), e.get("enonce", ""),
@@ -2751,6 +2765,7 @@ class SqliteStore:
                             e.get("type_format") or "standard",
                             e.get("ordinateur") or "",      # v0.52.7
                             e.get("calculatrice") or "",
+                            e.get("mention") or "O",        # v0.56.0
                         )
                     )
 

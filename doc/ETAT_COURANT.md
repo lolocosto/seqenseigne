@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.55.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.56.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -222,6 +222,17 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   avertissement si une partie n'a pas de carte ; format d'échange 1.5 ; import (clé
   `cartes_mentales`). Fiches de cours de S01–S13 et M01–M07 réécrites (plus graphiques) par
   les lots. Détails : `doc/redemarrage_v0_55_0.md`.
+- v0.56.0 livrée (13 novembre, refaite à 12 h 12) : **séries Entraînement /
+  Approfondissement / Expertise** au modèle Fiches (codes affichés EN06 / AP05 / EX02 dans
+  les documents et l'interface ; codes internes F / A / E inchangés) ; **mention O / F**
+  des exercices (`exercices.mention`, atelier, clé de lot `mention`, format d'échange 1.6
+  `partie.facultatifs`, en-tête (O) / (F) / (R) du livret) ; **page de garde de suivi**
+  (module `seqenseigne-style6e` v0.14 : `\seqSuiviObjectifsSix`, colonnes « Je me suis
+  entraîné », « J'ai approfondi », « Je suis expert », « Test court … / 10 », consigne,
+  légende O / R / F, une page au plus) ; fiche de résumé insécable ; carte mentale à sa
+  taille naturelle ; `\seqSepColonnesSix`. Corrigés en phrases complètes et séparations par
+  les lots. Le champ `corrige` d'une évaluation n'est pas importé (le corrigé rendu est dans
+  son `latex`). Détails : `doc/redemarrage_v0_56_0.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -493,6 +504,12 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   jamais à la main ; le catalogue de documents dépend du modèle ET du type
   (`gabarits_documents.catalogue_du_referentiel`) ; un document de partie a une
   cible qui porte `partie` (format 1.4).
+
+- **Séries du modèle Fiches** (v0.56.0) : afficher un code d'exercice par
+  `series_fiches.code_affiche` (Python) ou `atlCodeExercice` (JS) ; ne jamais écrire EN/AP/EX
+  en base, dans un lot ou dans le format d'échange. Mention : `series_fiches` (O par défaut).
+- **Page de garde 6e** (v0.56.0) : toujours `\seqSuiviObjectifsSix` (une page au plus,
+  aucune différence élève / corrigé) ; `\seqPartieCouvertureSix` gardé pour les anciens `.tex`.
 
 - **Cartes mentales** (v0.55.0) : une carte par partie de séquence principale, table
   `cartes_mentales` (jamais une fiche de résumé) ; tout ce qui la lit passe par

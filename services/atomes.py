@@ -10,6 +10,7 @@ from persistence.ids import (
     nouveau_id_notion, nouveau_id_methode, nouveau_id_exercice
 )
 from services import marqueurs_exercices as _mq
+from services import series_fiches as _sf  # v0.56.0
 
 # v0.52.2 — Séries « documents » de l'atelier d'exercices (gabarit 6e) :
 # un atome = un document entier (évaluation : un exercice, sujet A dans
@@ -287,6 +288,11 @@ def creer_exercice(liste: list, data: dict) -> tuple[list, dict, str | None]:
             exercice[champ] = _mq.valider(champ, data.get(champ))
     except _mq.MarqueurInvalide as e:
         return liste, {}, str(e)
+    # v0.56.0 — Mention O (obligatoire, défaut) / F (facultatif).
+    try:
+        exercice["mention"] = _sf.valider(data.get("mention"))
+    except _sf.MentionInvalide as e:
+        return liste, {}, str(e)
     liste.append(exercice)
     return liste, exercice, None
 
@@ -347,6 +353,12 @@ def modifier_exercice(liste: list, exo_id: str,
                 liste[idx][champ] = _mq.valider(champ, data[champ])
             except _mq.MarqueurInvalide as e:
                 return liste, None, str(e)
+    # v0.56.0 — Mention O / F (services/series_fiches.py).
+    if "mention" in data:
+        try:
+            liste[idx]["mention"] = _sf.valider(data["mention"])
+        except _sf.MentionInvalide as e:
+            return liste, None, str(e)
     for champ_int in ("cadre_reponse_lignes_principal",
                       "cadre_reponse_lignes_remed"):
         if champ_int in data:

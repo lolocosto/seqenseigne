@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/11/12 v0.13 seqenseigne : style des documents de 6e]
+    [2026/11/13 v0.14 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,11 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.14}{2026/11/13}{Carte mentale à sa taille naturelle (plus
+%   d'étirement sur la page) ; cadre de la fiche de résumé insécable ;
+%   \cs{seqSepColonnesSix}, trait entre deux colonnes d'un énoncé ; page de
+%   garde avec suivi par objectif (\cs{seqSuiviObjectifsSix} : une case par
+%   série, consigne, légende O / R / F)}
 % \changes{v0.13}{2026/11/12}{Carte mentale de partie :
 %   \texttt{seqCarteMentaleSix} et \cs{seqCMBranche} (lots S01 à S13) ; bulle
 %   élargie au mot le plus long du titre ; carte étirée sur la hauteur disponible}
@@ -175,6 +180,14 @@
 % trait vertical à gauche, de la couleur \texttt{seqSixTheme} (couleur du thème de la
 % séquence, |\definecolor{seqSixTheme}{HTML}{7326A0}| par exemple ; bleu du module
 % par défaut).
+%
+% \DescribeMacro{\seqSuiviObjectifsSix}\DescribeMacro{\seqPartieSuiviSix}
+% Depuis la v0.14, la page de garde du livret suit chaque objectif :
+% \cs{seqCouvertureLivretSix*}\marg{titre}\marg{\cs{seqSuiviObjectifsSix}\marg{parties}},
+% où \meta{parties} est une suite de \cs{seqPartieSuiviSix}\marg{titre de la partie}\marg{liste}
+% (même \meta{liste} que ci-dessus). On obtient un tableau : une ligne par objectif, trois
+% cases « Je me suis entraîné », « J'ai approfondi », « Je suis expert » et la note du
+% test court (sur 10), avec une consigne et la légende O, R, F. Il tient toujours sur une page. \cs{seqPartieCouvertureSix} reste disponible.
 %
 % \DescribeMacro{\seqBandeauCapacite}
 % \cs{seqBandeauCapacite}\marg{code}\marg{intitulé} ouvre la section d'un objectif.
@@ -651,6 +664,126 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\seqSuiviObjectifsSix}\begin{macro}{\seqPartieSuiviSix}
+% \changes{v0.14}{2026/11/13}{\cs{seqSuiviObjectifsSix} et
+%   \cs{seqPartieSuiviSix} : page de garde avec suivi par objectif}
+% v0.14 (décision de Laurent, 13 novembre : « suivi par objectif ») : la page de
+% garde devient un tableau, une ligne par objectif (code et intitulé à gauche), trois
+% cases à cocher « Je me suis entraîné », « J'ai approfondi », « Je suis expert » (une
+% par série : Entraînement, Approfondissement, Expertise) et une case « Test court »
+% pour la note sur 10. Au-dessus, la consigne « Coche une case seulement quand tu as
+% fini toute la série. » ; au-dessous, la légende des mentions des exercices
+% (O obligatoire, R remédiation, F facultatif). Les en-têtes de colonnes sont écrits une seule
+% fois, en haut du tableau ; chaque partie a sa ligne de titre, de la couleur
+% \texttt{seqSixTheme}. Les cases restent vides dans toutes les versions (élève,
+% corrigé). Les lignes sont rangées dans une liste de lexèmes par
+% \cs{seqPartieSuiviSix} (les |&| sont lus au niveau de l'alignement), puis le
+% tableau est composé en boîte : s'il dépasse la place restante sur la page, on
+% resserre (police \cs{footnotesize}, interligne réduit), puis, en dernier recours,
+% on le réduit : il tient toujours sur une page.
+%    \begin{macrocode}
+\ExplSyntaxOn
+\tl_new:N \l__seqsix_suivi_lignes_tl
+\box_new:N \l__seqsix_suivi_box
+\dim_new:N \l__seqsix_suivi_dispo_dim
+\dim_new:N \l__seqsix_suivi_objectif_dim
+\cs_new_protected:Npn \__seqsix_suivi_case:
+  { \tikz[baseline=0.4ex] \draw [ line~width = 0.6pt , black!65 ]
+      (0,0) rectangle (4mm,4mm) ; }
+\cs_new_protected:Npn \__seqsix_suivi_note:
+  { \makebox[1.1cm]{\dotfill} \, / \, 10 }
+\cs_new_protected:Npn \__seqsix_suivi_ligne:w #1 / #2 \q_stop
+  {
+    \tl_put_right:Nn \l__seqsix_suivi_lignes_tl
+      {
+        {\bfseries\color{seqSixTheme} #1} \ #2
+        & \__seqsix_suivi_case: & \__seqsix_suivi_case: & \__seqsix_suivi_case:
+        & \__seqsix_suivi_note: \tabularnewline \hline
+      }
+  }
+\cs_new_protected:Npn \__seqsix_suivi_partie:nn #1#2
+  {
+    \tl_put_right:Nn \l__seqsix_suivi_lignes_tl
+      {
+        \rowcolor{seqSixTheme!14}
+        \multicolumn{5}{@{\hspace{4pt}}l}{\bfseries\color{seqSixTheme}#1}
+        \tabularnewline \hline
+      }
+    \clist_map_inline:nn {#2} { \__seqsix_suivi_ligne:w ##1 \q_stop }
+  }
+\cs_new_protected:Npn \__seqsix_suivi_composer:Nn #1#2
+  {
+    % #1 : taille de police ; #2 : \arraystretch
+    \hbox_set:Nn \l__seqsix_suivi_box
+      {
+        #1
+        \setlength{\tabcolsep}{4pt}
+        \renewcommand{\arraystretch}{#2}
+        \arrayrulecolor{black!30}
+        \dim_set:Nn \l__seqsix_suivi_objectif_dim
+          { \linewidth - 3 \c__seqsix_suivi_case_dim
+            - \c__seqsix_suivi_note_dim - 10 \tabcolsep - 6\arrayrulewidth }
+        \begin{tabular}
+          { | >{\raggedright\arraybackslash}m{\l__seqsix_suivi_objectif_dim}
+            | *{3}{ >{\centering\arraybackslash}m{\c__seqsix_suivi_case_dim} |}
+              >{\centering\arraybackslash}m{\c__seqsix_suivi_note_dim} | }
+          \hline
+          \rowcolor{seqSixTheme}
+          \color{white}\bfseries Objectif
+          & \color{white}\bfseries Je~me~suis \newline entraîné
+          & \color{white}\bfseries J'ai \newline approfondi
+          & \color{white}\bfseries Je~suis \newline expert
+          & \color{white}\bfseries Test \newline court
+          \tabularnewline \hline
+          \tl_use:N \l__seqsix_suivi_lignes_tl
+        \end{tabular}
+      }
+  }
+\dim_const:Nn \c__seqsix_suivi_case_dim { 1.85cm }
+\tl_new:N \l__seqsix_suivi_consigne_tl
+\tl_set:Nn \l__seqsix_suivi_consigne_tl
+  { Coche~une~case~seulement~quand~tu~as~fini~toute~la~série. }
+\tl_new:N \l__seqsix_suivi_legende_tl
+\tl_set:Nn \l__seqsix_suivi_legende_tl
+  { \textbf{O}~:~obligatoire~---~\textbf{R}~:~remédiation~---~\textbf{F}~:~facultatif }
+\dim_const:Nn \c__seqsix_suivi_note_dim { 2.05cm }
+\NewDocumentCommand{\seqPartieSuiviSix}{ m m }
+  { \__seqsix_suivi_partie:nn {#1} {#2} }
+\NewDocumentCommand{\seqSuiviObjectifsSix}{ +m }
+  {
+    \par
+    \group_begin:
+      \tl_clear:N \l__seqsix_suivi_lignes_tl
+      #1
+      % consigne (Laurent, 13 nov., 12 h 12), sous « Objectifs du chapitre »
+      \noindent{\small\itshape \l__seqsix_suivi_consigne_tl}\par\smallskip
+      \dim_compare:nNnTF { \pagegoal } = { \maxdimen }
+        { \dim_set:Nn \l__seqsix_suivi_dispo_dim { \textheight - \pagetotal } }
+        { \dim_set:Nn \l__seqsix_suivi_dispo_dim { \pagegoal - \pagetotal } }
+      \dim_sub:Nn \l__seqsix_suivi_dispo_dim { 3\baselineskip }
+      \__seqsix_suivi_composer:Nn \small { 2.0 }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \__seqsix_suivi_composer:Nn \small { 1.6 } }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \__seqsix_suivi_composer:Nn \small { 1.25 } }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \__seqsix_suivi_composer:Nn \footnotesize { 1.1 } }
+      \dim_compare:nNnT
+        { \box_ht_plus_dp:N \l__seqsix_suivi_box } > { \l__seqsix_suivi_dispo_dim }
+        { \box_resize_to_ht_plus_dp:Nn \l__seqsix_suivi_box
+            { \l__seqsix_suivi_dispo_dim } }
+      \noindent \box_use_drop:N \l__seqsix_suivi_box \par
+      \smallskip
+      \noindent{\footnotesize \l__seqsix_suivi_legende_tl}\par
+    \group_end:
+  }
+\ExplSyntaxOff
+%    \end{macrocode}
+% \end{macro}\end{macro}
+%
 % \begin{macro}{\seqBandeauCapacite}
 %    \begin{macrocode}
 \newcommand{\seqBandeauCapacite}[2]{%
@@ -679,7 +812,7 @@
 % \begin{environment}{seqFicheResumeSix}
 %    \begin{macrocode}
 \NewDocumentEnvironment{seqFicheResumeSix}{m}{%
-  \begin{tcolorbox}[enhanced, breakable, colback=white, colframe=seqSixRouge,
+  \begin{tcolorbox}[enhanced, unbreakable, colback=white, colframe=seqSixRouge,
       boxrule=1.2pt, arc=2pt, left=5pt, right=5pt,
       title={\ifseq@corrige Fiche de cours\else Fiche de résumé
              à compléter\fi\ --- #1},
@@ -791,6 +924,17 @@
   {\small\noindent\hangindent=1.3em\hangafter=1
    \makebox[1.3em][l]{\seqPictoAstuceSix}\textbf{Astuce.}\ #1\par}%
   \smallskip}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\seqSepColonnesSix}
+% v0.14 (Laurent, 13 novembre) : trait vertical gris entre deux colonnes d'un
+% énoncé (minipages côte à côte), pour suivre plus facilement chaque colonne.
+% Il prend la hauteur de la ligne qui contient les colonnes ; s'utilise à la
+% place du \cs{hfill} entre deux \texttt{minipage}.
+%    \begin{macrocode}
+\NewDocumentCommand{\seqSepColonnesSix}{}{%
+  \hfill{\color{black!35}\vrule width 0.6pt}\hfill}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1973,15 +2117,8 @@
     \dim_set:Nn \l__seqsix_cm_haut_dim
       { \dim_max:nn { \l__seqsix_cm_haut_dim }
           { \box_ht_plus_dp:N \l__seqsix_cm_bulle_box } }
-    % remplir la hauteur disponible : la largeur impose la réduction s ; la
-    % carte, haute de h, est étirée à (hauteur disponible) / s, les branches
-    % se répartissent alors sur toute la page (v0.13, retour des lots)
-    \fp_set:Nn \l_tmpb_fp
-      { min ( 1 , \dim_to_fp:n { \linewidth } / \dim_to_fp:n { \l__seqsix_cm_largeur_dim } ) }
-    \dim_set:Nn \l__seqsix_cm_h_dim
-      { \fp_to_dim:n { \dim_to_fp:n { \l__seqsix_cm_dispo_dim - 1pt } / \l_tmpb_fp } }
-    \dim_set:Nn \l__seqsix_cm_haut_dim
-      { \dim_max:nn { \l__seqsix_cm_haut_dim } { \l__seqsix_cm_h_dim } }
+    % v0.14 (Laurent, 13 nov.) : plus d'étirement à la hauteur de la page ;
+    % la carte garde sa taille naturelle (souvent une demi-page)
     \tl_clear:N \l__seqsix_cm_dessin_tl
     \tl_clear:N \l__seqsix_cm_noeuds_tl
     % colonne de gauche : 1 .. k de haut en bas

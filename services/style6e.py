@@ -1,4 +1,4 @@
-"""services/style6e.py — v0.52.0 (correctif 2), v0.52.5, v0.52.8, v0.53.3, v0.54.3, v0.55.0
+"""services/style6e.py — v0.52.0 (correctif 2), v0.52.5, v0.52.8, v0.53.3, v0.54.3, v0.55.0, v0.56.0
 
 Module LaTeX `seqenseigne-style6e` (documents de 6e, option `sixieme` du
 paquet) : chargé **en entier** par `\\usepackage{seqenseigne-style6e}` dès
@@ -15,7 +15,7 @@ autres modules :
     tous définis chez lui, aucun nom commun avec les autres modules), donc
     le charger entier est sûr et ne change rien au rendu du cycle 4.
 
-La liste ci-dessous est celle de seqenseigne-style6e v0.13 (v0.52.4 :
+La liste ci-dessous est celle de seqenseigne-style6e v0.14 (v0.52.4 :
 \\seqNiveauCourt, \\seqNiveauExposant ; v0.52.5 : macros du lot S05
 \\seqLocCadreTrace, \\seqLocAngle, \\seqLocRapporteur ; du lot S04 \\seqLocBloc,
 \\seqLocAccolade, \\seqLocBalance, \\seqLocSac, \\seqLocMasse, \\seqLocObjet ; page de garde par
@@ -27,7 +27,10 @@ item de calcul mental \\seqLocItemCM du lot M01 ; v0.10, v0.53.1 : titre du band
 conversion commun \\seqTableauConversionSix, \\seqLigneConversionSix ; v0.12, v0.54.3 :
 \\seqLocTableauDecimal[4]{…}, tableau décimal à quatre classes, sans nouvelle macro
 publique : la forme sans argument optionnel est inchangée ; v0.13, v0.55.0 : carte
-mentale de partie, environnement seqCarteMentaleSix et \\seqCMBranche) ; un test la
+mentale de partie, environnement seqCarteMentaleSix et \\seqCMBranche ; v0.14, v0.56.0 :
+page de garde avec suivi par objectif \\seqSuiviObjectifsSix, \\seqPartieSuiviSix, trait
+entre deux colonnes d'un énoncé \\seqSepColonnesSix ; carte à sa taille naturelle, fiche de
+résumé insécable, sans nouvelle macro) ; un test la
 compare au .dtx du dossier `paquet/` quand il est présent. Le dossier du
 paquet (`reference\\paquet` par défaut) est ajouté au TEXINPUTS par
 services/compilateur_pdf.py pour que pdflatex trouve le .sty.
@@ -39,7 +42,9 @@ NOM_PAQUET = "seqenseigne-style6e"
 # v0.53.3 — version du module citée par l'import des lots (messages).
 # v0.54.3 — v0.12 : \seqLocTableauDecimal[4]{…} (milliards → partie décimale).
 # v0.55.0 — v0.13 : carte mentale de partie (seqCarteMentaleSix, \seqCMBranche).
-VERSION = "v0.13"
+# v0.56.0 — v0.14 : suivi par objectif (page de garde), \seqSepColonnesSix,
+#           carte non étirée, fiche de résumé insécable.
+VERSION = "v0.14"
 
 ENVIRONNEMENTS = (
     "seqActiviteSix", "seqBande", "seqCalculMental", "seqCarteMentaleSix", "seqCopies",
@@ -64,6 +69,7 @@ MACROS = (
     "seqDefinirTitreCM", "seqLocItemGeo",                                  # v0.10 (v0.53.1)
     "seqTableauConversionSix", "seqLigneConversionSix",                    # v0.11 (v0.53.3)
     "seqCMBranche",                                                        # v0.13 (v0.55.0)
+    "seqSuiviObjectifsSix", "seqPartieSuiviSix", "seqSepColonnesSix",      # v0.14 (v0.56.0)
     "seqReponse", "seqScore", "seqSectionFicheSix", "seqTitreCM",
     "seqTitreComplementSix", "seqTitreEvalSix", "seqTitreFicheSix",
     "seqTitreTravailSix", "seqTrous", "seqVersionACompleter",

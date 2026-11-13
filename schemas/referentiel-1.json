@@ -157,7 +157,20 @@
                           "titre_latex": { "type": "string" } }
         },
         "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } },
-        "materiel": { "type": "array", "items": { "$ref": "#/$defs/materiel" } }
+        "materiel": { "type": "array", "items": { "$ref": "#/$defs/materiel" } },
+        "facultatifs": { "type": "array", "items": { "$ref": "#/$defs/facultatif" } }
+      }
+    },
+    "facultatif": {
+      "description": "1.6 (v0.56.0) : exercice de mention F (facultatif) des séries F, A, E de la partie (codes internes).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objectif", "serie", "exercice", "titre"],
+      "properties": {
+        "objectif": { "type": "string" },
+        "serie": { "enum": ["F", "A", "E"] },
+        "exercice": { "type": "string" },
+        "titre": { "type": "string" }
       }
     },
     "materiel": {
