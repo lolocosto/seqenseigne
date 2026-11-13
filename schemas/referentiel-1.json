@@ -148,6 +148,14 @@
         "notions": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
         "methodes": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
         "fiches": { "type": "array", "items": { "$ref": "#/$defs/titre" } },
+        "carte_mentale": {
+          "description": "1.5 (v0.55.0) : carte mentale de la partie (référentiel interne).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "titre"],
+          "properties": { "id": { "type": "string" }, "titre": { "type": "string" },
+                          "titre_latex": { "type": "string" } }
+        },
         "documents": { "type": "array", "items": { "$ref": "#/$defs/document" } },
         "materiel": { "type": "array", "items": { "$ref": "#/$defs/materiel" } }
       }

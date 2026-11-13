@@ -49,10 +49,11 @@ def _src(nom):
 
 def test_module_v0_12_et_tableau_decimal_toujours_dans_la_liste_de_l_appli():
     """Sans la version à jour, l'import citerait une version du module qui n'a pas la forme [4]."""
-    assert style6e.VERSION == "v0.12"
+    # v0.55.0 : v0.13 (carte mentale) garde la forme [4] ; la version citée suit le .dtx.
+    assert tuple(int(x) for x in style6e.VERSION[1:].split(".")) >= (0, 12)
     assert "seqLocTableauDecimal" in style6e.MACROS
     for f in ("seqenseigne-style6e.dtx", "seqenseigne-style6e.sty"):
-        assert "v0.12 seqenseigne" in _src(f)
+        assert style6e.VERSION + " seqenseigne" in _src(f)
 
 
 @pytest.mark.parametrize("fichier", ["seqenseigne-style6e.dtx", "seqenseigne-style6e.sty"])

@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.54.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.55.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -213,6 +213,15 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   garde son code et son rendu (D-OPTION) ; fiche de cours de S01-02 passée à 4 classes (lot S01) ;
   exercices, S02, S03 inchangés. `services/style6e.py` (`VERSION`). Réimport des lots (seule la
   fiche S01-02 est mise à jour). Détails : `doc/redemarrage_v0_54_3.md`.
+- v0.55.0 livrée (12 novembre) : **cartes mentales de partie** — module `seqenseigne-style6e`
+  v0.13 (`seqCarteMentaleSix`, `\seqCMBranche` : bulle, deux colonnes anti-horaires, réduction
+  à une page) ; table `cartes_mentales` (une par partie) ; carte en fin de partie du livret 6e
+  (élève à compléter, corrigé complète ; sans carte : même `.tex`) ; document « Cartes
+  mentales » (catalogue Fiches, « Tout compiler ») ; atelier dédié « Carte mentale » (portée
+  Séquence, tous modèles) ; au cycle 4, cartes après le cours (livret) ; validation :
+  avertissement si une partie n'a pas de carte ; format d'échange 1.5 ; import (clé
+  `cartes_mentales`). Fiches de cours de S01–S13 et M01–M07 réécrites (plus graphiques) par
+  les lots. Détails : `doc/redemarrage_v0_55_0.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -484,6 +493,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   jamais à la main ; le catalogue de documents dépend du modèle ET du type
   (`gabarits_documents.catalogue_du_referentiel`) ; un document de partie a une
   cible qui porte `partie` (format 1.4).
+
+- **Cartes mentales** (v0.55.0) : une carte par partie de séquence principale, table
+  `cartes_mentales` (jamais une fiche de résumé) ; tout ce qui la lit passe par
+  `services/cartes_mentales.py` ; une source est contrôlée (`controler_latex`) avant
+  d'être enregistrée (import et atelier).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

@@ -16,6 +16,11 @@ Expose :
     → « Tout compiler » (flux SSE), archive et logs d'échec : mer/archive,
       mer/echec (communs)
 
+  GET/PUT/DELETE /api/v2/livret-sequence/<niveau>/<Snn>/cartes-mentales[/<n>]  (v0.55.0)
+    → cartes mentales de partie (liste, enregistrement, suppression) ;
+      rendu PDF : rendu-pdf ou rendu-tex ?document=cartes_mentales
+      &version=eleve|corrigee[&partie=n] (tout modèle ; atelier « Carte mentale »)
+
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-pdf
     body JSON optionnel : {"options": {...}}
     → compile et renvoie le PDF en application/pdf
@@ -171,6 +176,16 @@ def _generer_tex(conn, niveau: str, sequence: str, config) -> str:
         gabarit = _gabarit_demande(conn, niveau)
     except GabaritErreur as e:
         raise ValueError(str(e)) from e
+    if request.args.get('document') == 'cartes_mentales':
+        # v0.55.0 — document « Cartes mentales » de la séquence (une partie
+        # avec ?partie=n), tout modèle ; même générateur que « Tout compiler ».
+        from services.cartes_mentales import generer_cartes_mentales_6e
+        return generer_cartes_mentales_6e(
+            conn, niveau, sequence,
+            options={'version': request.args.get('version') or 'eleve',
+                     'partie': request.args.get('partie') or ''},
+            tikz_libraries=config.tikz_libraries(),
+            tblr_libraries=config.tblr_libraries())
     if gabarit == 'sixieme':
         from services.livret_sequence_6e import generer_livret_sequence_6e
         return generer_livret_sequence_6e(
@@ -222,6 +237,68 @@ def api_livret_sequence_tex(niveau: str, sequence: str):
         }), 500
 
     return Response(tex, mimetype='text/plain; charset=utf-8')
+
+
+# ── v0.55.0 — Routes : cartes mentales de partie ────────────────────────────
+
+def _sn_etat(conn, niveau: str, sequence: str):
+    return conn.execute("SELECT id, etat_code FROM sequences_par_niveau WHERE niveau = ? "
+                        "AND sequence_code = ?", (niveau, sequence)).fetchone()
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales', methods=['GET'])
+def api_cartes_mentales(niveau: str, sequence: str):
+    """v0.55.0 — Parties de la séquence et leur carte mentale (ou null) ;
+    `modifiable` : faux quand la séquence est validée (lecture seule)."""
+    from services import cartes_mentales as cm
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    try:
+        with current_app.json_store._conn() as conn:
+            parties = cm.parties_de_sequence(conn, niveau, sequence)
+            sn = _sn_etat(conn, niveau, sequence)
+    except cm.CarteMentaleErreur as e:
+        return jsonify({'error': e.code, 'message': str(e)}), 404
+    return jsonify({'parties': parties,
+                    'modifiable': bool(sn) and sn['etat_code'] != 'valide'})
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales/<int:numero>',
+          methods=['PUT', 'DELETE'])
+def api_carte_mentale(niveau: str, sequence: str, numero: int):
+    """v0.55.0 — Enregistre (PUT {titre, latex, etat_code}) ou supprime la
+    carte mentale de la partie `numero`. 409 si la séquence est validée ;
+    400 si la source est refusée (CM-CONTROLE) ; 404 partie inconnue."""
+    from services import cartes_mentales as cm
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    body = request.get_json(silent=True) or {}
+    with current_app.json_store._conn() as conn:
+        sn = _sn_etat(conn, niveau, sequence)
+        p = conn.execute("SELECT id FROM sequence_parties WHERE sequence_par_niveau_id = ? "
+                         "AND numero = ?", (sn['id'], numero)).fetchone() if sn else None
+        if p is None:
+            return jsonify({'error': 'partie_introuvable',
+                            'message': f"{niveau}/{sequence} : pas de partie {numero}"}), 404
+        if sn['etat_code'] == 'valide':
+            return jsonify({'error': 'sequence_validee',
+                            'message': "Séquence validée : la repasser en cours pour "
+                                       "modifier sa carte mentale."}), 409
+        if request.method == 'DELETE':
+            ok = cm.supprimer(conn, p['id'])
+            conn.commit()
+            return jsonify({'supprimee': ok})
+        try:
+            cid, etat = cm.enregistrer(conn, p['id'], body.get('titre') or '',
+                                       body.get('latex') or '', body.get('etat_code') or None,
+                                       forcer_valide=True)
+        except cm.CarteMentaleErreur as e:
+            return jsonify({'error': e.code, 'message': str(e)}), 400
+        conn.commit()
+        _, avert = cm.controler_latex(body.get('latex') or '')
+    return jsonify({'id': cid, 'etat': etat, 'avertissements': avert})
 
 
 # ── v0.53.1 — Route : résumé d'une séquence de mise en route ────────────────

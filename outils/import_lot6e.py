@@ -273,6 +273,8 @@ class Rapport:
         self.infos: list[str] = []
         self.figures: list[str] = []
         self.documents: list[str] = []
+        self.cartes_mentales: "OrderedDict[str, dict]" = OrderedDict()   # v0.55.0
+        self.fiches_cours: "OrderedDict[str, int]" = OrderedDict()       # v0.55.0 (lots M)
         self.journal: dict = {"archivage": [], "import": []}
         # Découpage de la géométrie : séquences dont le code a changé de sens
         # alors qu'un contenu de l'ancien sens existe (lot non importé).
@@ -296,6 +298,41 @@ class Rapport:
 
     def anomalie(self, texte: str) -> None:
         self.anomalies.append(texte)
+
+    def resume_fiches(self) -> "OrderedDict[str, int]":
+        """v0.55.0 — fiches de résumé de toutes les séquences, par état
+        (compteurs « fiche » des objectifs, lots S et M)."""
+        tot: "OrderedDict[str, int]" = OrderedDict()
+        for s in self.sequences.values():
+            for o in s["objectifs"].values():
+                for quoi, etats in o["c"].items():
+                    if quoi in ("fiche", "fiche de cours"):
+                        for e, n in etats.items():
+                            tot[e] = tot.get(e, 0) + n
+        return tot
+
+    def texte_resume(self) -> list[str]:
+        """v0.55.0 — Résumé des fiches de résumé et des cartes mentales, en
+        tête de lecture de l'essai à blanc : les fiches non validées sont mises
+        à jour d'après le lot, les fiches validées dans l'atelier ne le sont
+        jamais (signalées)."""
+        L = ["== Fiches de résumé et cartes mentales (v0.55.0) =="]
+        f = self.resume_fiches()
+        L.append("  fiches de résumé (lots S) : "
+                 + (", ".join(f"{e} {n}" for e, n in f.items()) or "aucune"))
+        L.append("  fiches de cours de partie (lots M) : "
+                 + (", ".join(f"{e} {n}" for e, n in self.fiches_cours.items()) or "aucune"))
+        if f.get("validée, non modifiée") or self.fiches_cours.get("validée, non modifiée"):
+            L.append("  ATTENTION : des fiches validées dans l'atelier ne sont pas mises à "
+                     "jour (les repasser « en cours » puis relancer l'import)")
+        tot: dict = {}
+        for seq, c in self.cartes_mentales.items():
+            L.append(f"  cartes mentales {seq} : " + ", ".join(f"{e} {n}" for e, n in c.items()))
+            for e, n in c.items():
+                tot[e] = tot.get(e, 0) + n
+        L.append("  cartes mentales (total) : "
+                 + (", ".join(f"{e} {n}" for e, n in tot.items()) or "aucune"))
+        return L
 
     def texte(self) -> str:
         L = []
@@ -329,6 +366,8 @@ class Rapport:
             L.append("")
             L.append("== Documents et évaluations (séries TP, AC, AT, EV) ==")
             L += [f"  {x}" for x in self.documents]
+        L.append("")
+        L += self.texte_resume()                                     # v0.55.0
         L.append("")
         L.append(f"== Anomalies ({len(self.anomalies)}) ==")
         L += [f"  - {x}" for x in self.anomalies] or ["  aucune"]
@@ -905,6 +944,67 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
                 objectifs_ids[c_obj] = r["id"]
     figures |= importer_documents(conn, lot, objectifs_ids, rapport)
     importer_evaluations(conn, lot, objectifs_ids, rapport)
+    figures |= importer_cartes_mentales(conn, lot, parties, rapport)     # v0.55.0
+    return figures
+
+
+# ── v0.55.0 — Cartes mentales de partie (clé `cartes_mentales`) ─────────────
+
+def importer_cartes_mentales(conn, lot: dict, parties: dict, rapport: Rapport) -> set:
+    r"""Clé facultative `cartes_mentales` d'un lot S :
+    `[{"partie": n, "titre": "…", "latex": "\begin{seqCarteMentaleSix}…"}]`
+    (SP/lot6e/FORMAT_CARTE_MENTALE.md). Une carte par partie, rangée dans
+    `cartes_mentales` (services/cartes_mentales.py). Contrôles : partie
+    existante (référentiel), un seul environnement `seqCarteMentaleSix`, au
+    moins une branche, macros `\seq…` connues du module ; une carte refusée
+    est signalée en anomalie et n'est pas importée. Idempotent ; une carte
+    validée dans l'atelier n'est jamais modifiée (signalé). Une partie sans
+    carte est signalée en information. Retourne les figures utilisées."""
+    from services import cartes_mentales as cm
+    seq = lot["sequence"]
+    sr = rapport.seq(seq)
+    figures: set = set()
+    entrees = lot.get("cartes_mentales") or []
+    vues: set = set()
+    compte: "OrderedDict[str, int]" = OrderedDict()
+    for k, src in enumerate(entrees, start=1):
+        try:
+            numero = int(src.get("partie"))
+        except (TypeError, ValueError):
+            rapport.anomalie(f"{seq} carte mentale n°{k} : partie {src.get('partie')!r} "
+                             "invalide, ignorée")
+            continue
+        quoi = f"{seq} carte mentale de la partie {numero}"
+        if numero not in parties:
+            rapport.anomalie(f"{quoi} : partie absente du référentiel "
+                             f"(parties {', '.join(map(str, sorted(parties)))}), ignorée")
+            continue
+        if numero in vues:
+            rapport.anomalie(f"{quoi} en double, seconde ignorée")
+            continue
+        vues.add(numero)
+        latex = src.get("latex") or ""
+        erreurs, avert = cm.controler_latex(latex)
+        if erreurs:
+            rapport.anomalie(f"{quoi} non importée : {'; '.join(erreurs)}")
+            continue
+        for a in avert:
+            rapport.infos.append(f"{quoi} : {a}")
+        cm.migrer(conn)
+        _cid, etat = cm.enregistrer(conn, parties[numero], src.get("titre") or "", latex)
+        compte[etat] = compte.get(etat, 0) + 1
+        sr["lignes"].append(f"carte mentale partie {numero} « {(src.get('titre') or '')[:50]} »"
+                            f" : {etat} ({cm.nb_branches(latex)} branches, "
+                            f"{latex.count(chr(92) + 'seqACompleter')} trous)")
+        if etat == "validée, non modifiée":
+            rapport.anomalie(f"{quoi} validée dans l'atelier, non modifiée")
+        figures |= _figures(lot, {"latex": latex})
+    sans = sorted(n for n in parties if n not in vues)
+    if sans and not lot.get("_mer"):
+        rapport.infos.append(f"{seq} : partie(s) sans carte mentale dans le lot : "
+                             + ", ".join(map(str, sans)))
+    if compte:
+        rapport.cartes_mentales[seq] = compte
     return figures
 
 
@@ -1629,6 +1729,9 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.infos.append("Base complétée : colonne calculatrice des évaluations (v0.52.8)")
     if mq.migrer_duree_partie1(conn):                                # v0.52.9 (D4)
         rapport.infos.append("Base complétée : colonne duree_partie1 des évaluations (v0.52.9)")
+    from services import cartes_mentales as _cm                         # v0.55.0
+    if _cm.migrer(conn):
+        rapport.infos.append("Base complétée : table cartes_mentales (v0.55.0)")
     from services import mises_en_route_6e as mer                      # v0.53.1 (P1)
     if mer.migrer(conn):
         rapport.infos.append("Base complétée : colonne libelle des parties de séquence "

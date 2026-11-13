@@ -1597,6 +1597,15 @@ class SqliteStore:
             conn.commit()
         except Exception as _e:                       # pragma: no cover
             print(f"  [referentiels_internes] migration impossible : {_e}")
+        # ── v0.55.0 (CM-TABLE) — Cartes mentales de partie : table
+        #    `cartes_mentales` (une ligne par partie de séquence ; aucune
+        #    carte dans une base existante : rien ne change) ─
+        try:
+            from services import cartes_mentales as _cm
+            _cm.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [cartes_mentales] migration impossible : {_e}")
 
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 

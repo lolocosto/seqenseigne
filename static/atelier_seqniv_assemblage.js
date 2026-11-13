@@ -252,6 +252,20 @@
           <span id="livret-seq-mer-tout-etat"></span>
         </div>
         <ul id="livret-seq-mer-tout-liste" style="display:none;font-size:12px;margin:2px 0 8px 18px;max-height:14em;overflow:auto"></ul>
+        <!-- v0.55.0 — cartes mentales de partie : rendu seul ; édition dans l'atelier « Carte mentale ». -->
+        <div class="livret-seq-actions" id="livret-seq-cm" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
+          <label>Carte mentale
+            <select id="livret-seq-cm-partie" onchange="ATELIER_SEQNIV.cmMajEtat()"><option value="">toutes les parties</option></select></label>
+          <label>Version
+            <select id="livret-seq-cm-version">
+              <option value="eleve">à compléter</option><option value="corrigee">complète</option>
+            </select></label>
+          <button class="btn-prim" id="livret-seq-cm-btn-pdf" onclick="ATELIER_SEQNIV.cmCompiler()"
+                  title="Compile la carte mentale de la partie choisie (ou toutes les cartes de la séquence, une par page)">🧠 Compiler les cartes mentales</button>
+          <button class="btn-sec" id="livret-seq-cm-btn-atelier" onclick="ATELIER_SEQNIV.cmOuvrirAtelier()"
+                  title="Créer ou modifier les cartes dans l'atelier « Carte mentale » (portée Séquence)">✏️ Modifier dans l'atelier Carte mentale</button>
+          <span id="livret-seq-cm-etat"></span>
+        </div>
         <!-- v0.53.1 (MR6 révisé) — contrôle de la séquence de mise en route, par partie. -->
         <div id="livret-seq-mer-controle" style="display:none;font-size:12px;margin:4px 0 8px"></div>
         <div class="livret-seq-rendu" id="livret-seq-rendu">
@@ -2435,7 +2449,10 @@
         }
         return;
       }
-      this.toast('Séquence validée (lecture seule).');
+      // v0.55.0 (CM-VALID) — avertissements non bloquants (partie sans carte mentale).
+      const avert = (rep.data && rep.data.avertissements) || [];
+      this.toast('Séquence validée (lecture seule).'
+        + (avert.length ? ' Attention : ' + avert.join(' • ') : ''));
       await this.rafraichir();
     }
 
@@ -2900,6 +2917,86 @@
       const ctl = document.getElementById('livret-seq-mer-controle');
       if (ctl && !this._estMer()) ctl.style.display = 'none';
       if (this._estMer()) this._chargerResumeMer();          // v0.53.1
+      // v0.55.0 — cartes mentales : séquence principale, tout modèle (Fiches et
+      // Notions et méthodes) ; l'édition est dans l'atelier « Carte mentale ».
+      const cm = document.getElementById('livret-seq-cm');
+      const avecCartes = !this._estMer();
+      if (cm) cm.style.display = avecCartes ? 'flex' : 'none';
+      if (avecCartes) this.cmCharger();
+    }
+
+    // ── v0.55.0 — Cartes mentales de partie ──────────────────────────────────
+    //
+    // GET/PUT/DELETE /api/v2/livret-sequence/<niveau>/<séquence>/cartes-mentales[/<n>] ;
+    // le PDF passe par la route du livret (?document=cartes_mentales).
+
+    async cmCharger() {
+      const sn = this._sn();
+      if (!sn) return;
+      let rep;
+      try {
+        rep = await apiJson('GET', _PUR.urlCartesMentales(sn.niveau, sn.sequence_code));
+      } catch (_) { return; }
+      if (!rep || !rep.ok || !rep.data) return;
+      this._cartesMentales = rep.data;
+      const sel = document.getElementById('livret-seq-cm-partie');
+      if (sel) {
+        const avant = sel.value;
+        sel.innerHTML = `<option value="">toutes les parties</option>`
+          + (rep.data.parties || []).map(p => `<option value="${p.numero}">Partie ${p.numero}`
+            + (p.carte ? '' : ' (sans carte)') + `</option>`).join('');
+        if (avant && (rep.data.parties || []).some(p => String(p.numero) === avant)) sel.value = avant;
+      }
+      this.cmMajEtat();
+    }
+
+    _cmPartie() {
+      const sel = document.getElementById('livret-seq-cm-partie');
+      const n = sel ? sel.value : '';
+      const parties = (this._cartesMentales && this._cartesMentales.parties) || [];
+      return n ? parties.find(p => String(p.numero) === n) || null : null;
+    }
+
+    cmMajEtat() {
+      const parties = (this._cartesMentales && this._cartesMentales.parties) || [];
+      const avec = parties.filter(p => p.carte).length;
+      const etat = document.getElementById('livret-seq-cm-etat');
+      if (etat) etat.textContent = `${avec} carte(s) sur ${parties.length} partie(s)`;
+    }
+
+    // Ouvre l'atelier « Carte mentale » (même niveau et même séquence : filtres de portée).
+    cmOuvrirAtelier() {
+      if (typeof window.atelSwitch === 'function') window.atelSwitch('carte_mentale');
+    }
+
+    async cmCompiler() {
+      const sn = this._sn();
+      if (!sn) return;
+      const p = this._cmPartie();
+      const v = (document.getElementById('livret-seq-cm-version') || {}).value || 'eleve';
+      const url = `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
+                + `${encodeURIComponent(sn.sequence_code)}/rendu-pdf`
+                + _PUR.requeteRenduCartes(v, p ? p.numero : '');
+      this._livretSeqAfficherLoader();
+      try {
+        const r = await fetch(url, { method: 'POST' });
+        if (!r.ok) {
+          const data = await r.json().catch(() => null);
+          let m = (data && (data.message || data.error)) || `Erreur HTTP ${r.status}.`;
+          if (data && Array.isArray(data.erreurs) && data.erreurs.length > 0) {
+            m += '\n\nDétail :\n' + data.erreurs.slice(0, 3).map(er =>
+              `  • Ligne ${er.ligne || '?'} : ${er.message}`).join('\n');
+          }
+          this._livretSeqAfficherErreur(m, data && data.log_complet);
+          return;
+        }
+        this._livretSeqLiberer();
+        const blob = await r.blob();
+        this._livretBlobUrl = URL.createObjectURL(blob);
+        this._livretSeqAfficherPdf(this._livretBlobUrl);
+      } catch (err) {
+        this._livretSeqAfficherErreur(`Erreur réseau : ${err.message || err}`);
+      }
     }
 
     // v0.53.1 (MR5, MR6 révisés) — Parties de la séquence de mise en route

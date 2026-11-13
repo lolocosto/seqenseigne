@@ -40,11 +40,13 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.4"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+FORMAT_VERSION = "1.5"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
 #                          v0.52.4 : + partie.fiches (modèle « Fiches de résumé »)
 #                          v0.52.7 : + partie.materiel (exercices marqués)
 #                          v0.54.0 : documents compilés rattachés à une partie
 #                                    (référentiel interne de mises en route)
+#                          v0.55.0 : + partie.carte_mentale (facultatif)
+FORMAT_VERSION_DOCS_PARTIE = "1.4"
 FORMAT_VERSION_MATERIEL = "1.3"
 FORMAT_VERSION_FICHES = "1.2"
 # v0.52.4 (F2) — Un document ne déclare que la version dont il a besoin : un
@@ -241,6 +243,21 @@ def _notions_methodes(conn, niveau: str, seq: str, numero: int,
     notions = [{"id": n["id"], "titre": n["titre"]} for n in c.get("notions", [])]
     methodes = [{"id": m["id"], "titre": m["titre"]} for m in c.get("methodes", [])]
     return notions, methodes, []
+
+
+def _carte_mentale(conn, niveau: str, seq: str, numero: int) -> dict | None:
+    """v0.55.0 (format 1.5) — {id, titre} de la carte mentale de la partie
+    (comme les fiches : la source LaTeX reste dans l'atelier), None sans carte."""
+    from services.cartes_mentales import cartes_de_sequence
+    try:
+        c = cartes_de_sequence(conn, niveau, seq).get(numero)
+    except Exception:
+        return None
+    if not c:
+        return None
+    d = {"id": c["id"]}
+    _texte(d, "titre", c.get("titre") or "")
+    return d
 
 
 _ORDRE_SERIES = ("R", "EA", "AE", "F", "A", "E", "TP", "AC", "AT", "EV")
@@ -505,6 +522,12 @@ def construire(conn, rid: str, data_dir: Path | None = None,
             partie["methodes"] = methodes
             if modele_fiches:
                 partie["fiches"] = fiches                 # v0.52.4 (format 1.2)
+            # v0.55.0 (format 1.5) — carte mentale de la partie (tout modèle,
+            # interne) ; absente sans carte (document et empreinte inchangés).
+            if source == "interne":
+                carte = _carte_mentale(conn, ref["niveau"], code, num)
+                if carte:
+                    partie["carte_mentale"] = carte
             partie["documents"] = [_doc_fichier(f, data_dir)
                                    for f in _fichiers(conn, rid, code, num)]
             # v0.54.0 (RI7, format 1.4) — documents compilés de la partie
@@ -536,7 +559,9 @@ def construire(conn, rid: str, data_dir: Path | None = None,
     avec_materiel = any("materiel" in p for s in sequences for p in s["parties"])
     avec_docs_partie = any(d["origine"] == "compile" for s in sequences
                            for p in s["parties"] for d in p["documents"])
-    version = (FORMAT_VERSION if avec_docs_partie else
+    avec_cartes = any("carte_mentale" in p for s in sequences for p in s["parties"])
+    version = (FORMAT_VERSION if avec_cartes else
+               FORMAT_VERSION_DOCS_PARTIE if avec_docs_partie else
                FORMAT_VERSION_MATERIEL if avec_materiel else
                FORMAT_VERSION_FICHES if modele_fiches else FORMAT_VERSION_SANS_FICHES)
     doc = {"format": FORMAT,

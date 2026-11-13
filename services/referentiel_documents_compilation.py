@@ -249,7 +249,7 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
         return cibles
 
     if type_document in ('livret_sequence_6e', 'fiches_cours_6e', 'corriges_6e',
-                         'plans_travail_6e'):
+                         'plans_travail_6e', 'cartes_mentales_6e'):
         return _cibles_6e(conn, doc_id, niveau, type_document)
     if type_document == 'evaluation_6e':
         return _cibles_evaluations_6e(conn, niveau)
@@ -342,6 +342,12 @@ def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,
             SELECT DISTINCT sequence AS seq FROM fiches_resume
              WHERE niveau = ? ORDER BY sequence
         """, (niveau,)).fetchall()
+    elif type_document == 'cartes_mentales_6e':            # v0.55.0
+        from services.cartes_mentales import table_presente
+        rows = conn.execute("""
+            SELECT DISTINCT sequence AS seq FROM cartes_mentales
+             WHERE niveau = ? ORDER BY sequence
+        """, (niveau,)).fetchall() if table_presente(conn) else []
     else:
         rows = conn.execute("""
             SELECT DISTINCT sequence_code AS seq FROM sequences_par_niveau
@@ -352,7 +358,7 @@ def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,
     sequences = [x['seq'] for x in rows if x['seq'] and not hors_principal(x['seq'])]
     libelles = {'livret_sequence_6e': 'Livret 6e', 'fiches_cours_6e': 'Fiches de cours 6e',
                 'plans_travail_6e': 'Plan de travail 6e',
-                'corriges_6e': 'Corrigés 6e'}
+                'corriges_6e': 'Corrigés 6e', 'cartes_mentales_6e': 'Cartes mentales 6e'}
     decoupage = ('par_sequence' if type_document in ('livret_sequence_6e', 'plans_travail_6e')
                  else opts.get('decoupage') or 'par_sequence')
     cibles = []

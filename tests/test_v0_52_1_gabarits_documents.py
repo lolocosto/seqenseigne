@@ -207,7 +207,8 @@ def test_catalogue_cycle4_reprend_les_9_cles_et_options_car_les_chaines_type_cib
     assert set(gd.types("sixieme")) == {"livret_sequence_6e", "fiches_cours_6e", "corriges_6e",
                                         "evaluation_6e", "travaux_personnels_6e",
                                         "activites_complementaires_6e", "seances_atelier_6e",
-                                        "plans_travail_6e"}   # v0.52.3
+                                        "plans_travail_6e",   # v0.52.3
+                                        "cartes_mentales_6e"}  # v0.55.0
     assert not set(gd.types("sixieme")) & set(rd.TYPES_DOCUMENT)
 
 
@@ -504,7 +505,7 @@ def test_format_1_1_porte_le_gabarit_et_un_1_0_sans_champ_est_lu_cycle4(app_6e):
     # v0.52.7 : 1.3 (partie.materiel), déclaré seulement s'il y en a.
     # v0.54.0 (changement voulu) : 1.4 (documents compilés d'une partie,
     # mises en route), déclaré seulement s'il y en a ; 1.3 garde son sens.
-    assert fmt.FORMAT_VERSION == "1.4" and fmt.FORMAT_VERSION_MATERIEL == "1.3"
+    assert fmt.FORMAT_VERSION_DOCS_PARTIE == "1.4" and fmt.FORMAT_VERSION_MATERIEL == "1.3"  # v0.55.0 : 1.5 = cartes mentales
     assert fmt.FORMAT_VERSION_FICHES == "1.2"
     assert fmt.FORMAT_VERSION_SANS_FICHES == "1.1"
     prop = fmt.schema()["properties"]["referentiel"]["properties"]["gabarit_documents"]

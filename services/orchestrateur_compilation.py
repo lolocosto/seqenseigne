@@ -627,6 +627,19 @@ def _produire_fiches_cours_6e(conn, cible, options, tikz, tblr):
                                    tblr_libraries=tblr)
 
 
+@enregistrer_producteur('cartes_mentales_6e')
+def _produire_cartes_mentales_6e(conn, cible, options, tikz, tblr):
+    """v0.55.0 — Cartes mentales de partie (élève : à compléter ; complète)."""
+    from services.cartes_mentales import generer_cartes_mentales_6e
+    niveau = cible.get('niveau')
+    if not niveau:
+        raise ProducteurErreur(
+            f"cartes_mentales_6e requiert niveau : reçu {cible!r}", code='cible_invalide')
+    return generer_cartes_mentales_6e(conn, niveau, sequence=cible.get('sequence'),
+                                      options=options, tikz_libraries=tikz,
+                                      tblr_libraries=tblr)
+
+
 @enregistrer_producteur('corriges_6e')
 def _produire_corriges_6e(conn, cible, options, tikz, tblr):
     """Corrigés enseignant 6e (livret corrigé, remédiations comprises)."""

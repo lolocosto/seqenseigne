@@ -21,6 +21,24 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-style6e v0.13 — 2026-11-12
+
+### Ajouté
+
+- Carte mentale de partie (demande de Laurent du 12 novembre 2026, une carte par partie des
+  séquences S01 à S13) : environnement `seqCarteMentaleSix`[contenu sous le titre]{titre central}
+  et `\seqCMBranche{titre}{contenu}`. Bulle centrale ; branches en deux colonnes, dans le sens
+  anti-horaire (gauche de haut en bas, puis droite de bas en haut) ; 5 mm au moins entre deux
+  branches d'une colonne ; un trait de la couleur de la branche la relie à la bulle ; palette de huit couleurs
+  `seqSixCM1` à `seqSixCM8` (bord épais, fond à 10 %, lisible en noir et blanc). Dessinée sur
+  20 cm de large puis réduite (jamais agrandie) pour tenir dans la ligne, puis étirée en
+  hauteur jusqu'à la place restante sur la page (une page entière si moins de la moitié reste
+  libre) : les branches se répartissent sur toute la hauteur. Chaque branche est
+  composée dans une boîte avant le dessin : `\seqACompleter`, tableaux, formules, TikZ et
+  tkz-euclide y sont permis sans `tikzpicture` imbriqué (`\foreach` compris). La bulle prend
+  la largeur du mot le plus long du titre (2,9 cm au moins, sans césure) et la gouttière
+  s'élargit d'autant. Aucune macro existante modifiée.
+
 ## seqenseigne-style6e v0.12 — 2026-11-12
 
 ### Ajouté

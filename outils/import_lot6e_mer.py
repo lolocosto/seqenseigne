@@ -702,6 +702,8 @@ def importer_lot_mer(conn, imp, lot: dict, themes: dict, ref_mer: dict, rapport)
         entiere = bool(corr) and est_fiche_entiere(corr)
         note = "" if entiere else corr
         fid, etat = _fiche_de_partie(conn, imp, seq, ids, titre_fc, fc["latex"], False, note)
+        if hasattr(rapport, "fiches_cours"):                          # v0.55.0 (résumé)
+            rapport.fiches_cours[etat] = rapport.fiches_cours.get(etat, 0) + 1
         sr["lignes"].append(f"partie {n}, fiche de cours « {titre_fc} » : {etat}"
                             + (" (note de corrigé en version complète)" if note else ""))
         if etat == "validée, non modifiée":

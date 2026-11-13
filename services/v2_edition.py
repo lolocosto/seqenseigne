@@ -3242,7 +3242,30 @@ def valider_sequence_niveau(conn, sn_id: str) -> dict:
         "UPDATE sequences_par_niveau SET etat_code = 'valide' WHERE id = ?",
         (sn_id,),
     )
-    return {"id": sn_id, "etat_code": "valide"}
+    rep = {"id": sn_id, "etat_code": "valide"}
+    avert = avertissements_validation(conn, sn_id)          # v0.55.0
+    if avert:
+        rep["avertissements"] = avert
+    return rep
+
+
+def avertissements_validation(conn, sn_id: str) -> list[str]:
+    """v0.55.0 (CM-VALID) — Avertissements de la validation d'une séquence,
+    qui ne la bloquent pas : au modèle « Fiches de résumé par objectif », une
+    partie de séquence principale sans carte mentale. Rien pour une mise en
+    route (pas de carte), ni au modèle « Notions et méthodes »."""
+    row = conn.execute("SELECT niveau, sequence_code FROM sequences_par_niveau WHERE id = ?",
+                       (sn_id,)).fetchone()
+    if row is None:
+        return []
+    from services.mises_en_route_6e import hors_principal
+    if hors_principal(row[1]):
+        return []
+    from services.gabarits_documents import est_modele_fiches, gabarit_atelier_du_niveau
+    if not est_modele_fiches(gabarit_atelier_du_niveau(conn, row[0])):
+        return []
+    from services.cartes_mentales import parties_sans_carte
+    return [f"La partie {n} n'a pas de carte mentale." for n in parties_sans_carte(conn, sn_id)]
 
 
 def devalider_sequence_niveau(conn, sn_id: str) -> dict:

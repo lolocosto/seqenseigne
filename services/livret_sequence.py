@@ -917,6 +917,16 @@ def generer_livret_sequence(conn: sqlite3.Connection,
             tous_textes.append(bloc)
     for _, t in fiches_tex:   tous_textes.append(t)
 
+    # v0.55.0 (CM-LIVRET-C4) — cartes mentales des parties (cours inclus) :
+    # leur source entre dans la détection des paquets (seqenseigne-style6e).
+    cartes_c4 = []
+    if opts["cours"]["inclure"]:
+        from services.cartes_mentales import cartes_de_sequence
+        cartes_c4 = sorted(cartes_de_sequence(conn, niveau, sequence_code).items())
+    for _, carte in cartes_c4:
+        tous_textes.append(carte.get("latex") or "")
+        tous_textes.append(r"\seqVersionACompleter \seqVersionComplete")
+
     # Macros émises par le squelette du livret (cf. FRAGMENT_SQUELETTE_LIVRET).
     tous_textes.append(FRAGMENT_SQUELETTE_LIVRET)
     texte_global = "\n".join(tous_textes)
@@ -1198,6 +1208,19 @@ def generer_livret_sequence(conn: sqlite3.Connection,
                 L.append(tex)
                 L.append("")
 
+    # ── 6 bis. v0.55.0 (CM-LIVRET-C4) — Cartes mentales de partie ───────────
+    # Décision de Laurent (12 novembre) : au modèle « Notions et méthodes »,
+    # la carte est la synthèse du cours : après le bloc notions/méthodes,
+    # avant les exercices, une page par carte (ordre des parties ; le cours
+    # de ce livret est d'un seul bloc pour la séquence), version à compléter ;
+    # la version complète suit les corrigés. Sans carte : rien n'est émis
+    # (même .tex qu'avant).
+    if cartes_c4:
+        from services.cartes_mentales import emettre
+        L.append(r"\seqVersionACompleter")
+        for numero, carte in cartes_c4:
+            emettre(L, carte, numero)
+
     # ── 7. Bloc Exercices F / A / E (après le cours) ───────────────────────
     if opts["exercices"]["inclure"]:
         # Émission des séries pédagogiques F (1), A (2), E (3) dans l'ordre.
@@ -1221,6 +1244,13 @@ def generer_livret_sequence(conn: sqlite3.Connection,
         L.append(r"\clearpage")
         L.append(r"\seqAfficheCorriges")
     L.append("")
+    if cartes_c4:                                    # v0.55.0 — cartes complètes
+        from services.cartes_mentales import emettre
+        L.append(r"\seqVersionComplete")
+        for numero, carte in cartes_c4:
+            emettre(L, carte, numero)
+        L.append(r"\seqVersionACompleter")
+        L.append("")
 
     # v0.11.6 — Sections de remédiation, à la suite des corrigés principaux.
     # Émises uniquement si au moins un exo de la séquence a une

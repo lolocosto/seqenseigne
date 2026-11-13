@@ -45,6 +45,7 @@
     'methode':           'ATELIER_METHODE',
     'fiche':             'ATELIER_FICHE',
     'carte_automatisme': 'ATELIER_CARTE',
+    'carte_mentale':     'ATELIER_CARTE_MENTALE',     // v0.55.0
   };
 
   function _rechargerAtelierActif() {

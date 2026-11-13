@@ -2721,7 +2721,8 @@ setTimeout(initAtelierSplitters, 0);
 const ATL_PORTEES = {
   sequence: {
     label: 'Séquence',
-    ateliers: ['exercice', 'notion', 'methode', 'fiche', 'carte_automatisme', 'livret'],
+    ateliers: ['exercice', 'notion', 'methode', 'fiche', 'carte_automatisme', 'carte_mentale',
+               'livret'],                                                // v0.55.0
     selecteurs: ['niveau', 'sequence'],
   },
   niveau: {
@@ -3298,6 +3299,7 @@ const ATL_INITS = {
   referentiel:       'atelRefInit',         // v0.13.5.1
   fiche:             'atelFicheInit',  // v0.10.5
   carte_automatisme: 'atelCarteCharger',    // v0.13.6.1
+  carte_mentale:     'atelCarteMentaleInit', // v0.55.0
   // v0.13.6.17 — notion/methode/exercice ont besoin de se recharger à
   // la bascule pour refléter le filtre niveau/sequence courant (depuis
   // que le hook atelier_filtres_hook ne recharge plus tous les ateliers

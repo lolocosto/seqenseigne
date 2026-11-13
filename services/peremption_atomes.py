@@ -60,9 +60,11 @@ ATOMES_PAR_TYPE_DOCUMENT: dict[str, list[str]] = {
     'livret_cartes_recap':    ['cartes_automatisme'],
     'livret_cartes_planches': ['cartes_automatisme'],
     # v0.52.1 — gabarit « sixieme » (services/gabarits_documents.py).
-    'livret_sequence_6e':     ['exercices', 'fiches_resume'],
+    # v0.55.0 — + cartes mentales de partie (fin de partie du livret).
+    'livret_sequence_6e':     ['exercices', 'fiches_resume', 'cartes_mentales'],
     'fiches_cours_6e':        ['fiches_resume'],
-    'corriges_6e':            ['exercices', 'fiches_resume'],
+    'corriges_6e':            ['exercices', 'fiches_resume', 'cartes_mentales'],
+    'cartes_mentales_6e':     ['cartes_mentales'],                     # v0.55.0
     # v0.52.2
     'evaluation_6e':          ['exercices', 'evaluations'],
     'travaux_personnels_6e':  ['exercices'],

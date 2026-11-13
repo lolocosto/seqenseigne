@@ -81,6 +81,10 @@ class DocumentSequence:
 DOCUMENTS_SEQUENCE_FICHES = (
     DocumentSequence("livret_sequence_6e", "livret", "Livret", _VERSIONS),
     DocumentSequence("fiches_cours_6e", "fiches_cours", "Fiches de cours (complètes)"),
+    # v0.55.0 — cartes mentales de partie (si la séquence en a).
+    DocumentSequence("cartes_mentales_6e", "cartes_mentales", "Cartes mentales",
+                     (("eleve", "à compléter", {"version": "eleve"}),
+                      ("complete", "complètes", {"version": "corrigee"}))),
     DocumentSequence("plans_travail_6e", "plan_de_travail", "Plan de travail"),
     DocumentSequence("evaluation_6e", "eval{rang}", "Évaluation", _SUJETS_VERSIONS,
                      portee="evaluations"),
@@ -146,6 +150,9 @@ def _a_contenu(conn, niveau: str, sequence: str, type_document: str) -> bool:
     if type_document in ("fiches_cours_6e", "livret_fiches"):
         return conn.execute("SELECT 1 FROM fiches_resume WHERE niveau=? AND sequence=? LIMIT 1",
                             (niveau, sequence)).fetchone() is not None
+    if type_document == "cartes_mentales_6e":                       # v0.55.0
+        from services.cartes_mentales import cartes_de_sequence
+        return bool(cartes_de_sequence(conn, niveau, sequence))
     if type_document == "livret_cartes_planches":
         return conn.execute("SELECT 1 FROM cartes_automatisme WHERE niveau=? AND sequence=? "
                             "AND etat_code='valide' LIMIT 1", (niveau, sequence)).fetchone() is not None

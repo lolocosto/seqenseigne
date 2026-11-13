@@ -56,6 +56,7 @@ TABLES_ATELIER = (
     "atome_sections", "atome_section_items", "cartes_automatisme", "cartes_atelier_config",
     "evaluations", "evaluation_exercices", "evaluation_objectifs", "etats_edition", "images",
     "ui_etat_atelier_sequence",
+    "cartes_mentales",                                                   # v0.55.0
     # Mise en forme LaTeX (tables créées par l'import du paquet)
     "paquet_definitions", "paquet_requirepackage",
     # Échanges propres à l'atelier

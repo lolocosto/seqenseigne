@@ -32,10 +32,11 @@ def test_macros_du_tableau_de_conversion_dans_le_module_v0_11_et_dans_la_liste_d
     """Sans elles dans MACROS, l'import signalerait le lot M03 (« macros absentes du module ») et
     l'analyse des paquets ne chargerait pas le module pour un atome qui n'utilise qu'un tableau."""
     assert set(MACROS_TABLEAU) <= set(style6e.MACROS)
-    assert style6e.VERSION == "v0.12"          # v0.54.3 : v0.12 (tableau décimal à 4 classes), garde tout
+    # v0.54.3 : v0.12 (tableau décimal à 4 classes) ; v0.55.0 : v0.13 (carte mentale) ; garde tout
+    assert tuple(int(x) for x in style6e.VERSION[1:].split(".")) >= (0, 11)
     for f in ("seqenseigne-style6e.dtx", "seqenseigne-style6e.sty"):
         src = (PAQUET / f).read_text(encoding="utf-8")
-        assert "v0.12 seqenseigne" in src
+        assert style6e.VERSION + " seqenseigne" in src
         for m in MACROS_TABLEAU:
             assert "\\NewDocumentCommand{\\" + m + "}" in src
 

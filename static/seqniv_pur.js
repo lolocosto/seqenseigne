@@ -248,6 +248,21 @@
     return `${base}/tout-compiler`;
   }
 
+  // v0.55.0 — Cartes mentales de partie : liste et édition (une carte par
+  // partie), et rendu par la route du livret (`document=cartes_mentales`).
+  function urlCartesMentales(niveau, sequence, numero) {
+    return `/api/v2/livret-sequence/${encodeURIComponent(niveau)}`
+         + `/${encodeURIComponent(sequence)}/cartes-mentales`
+         + (numero ? `/${encodeURIComponent(numero)}` : '');
+  }
+
+  function requeteRenduCartes(version, partie) {
+    const q = [`document=cartes_mentales`,
+               `version=${encodeURIComponent(version === 'corrigee' ? 'corrigee' : 'eleve')}`];
+    if (partie) q.push(`partie=${encodeURIComponent(partie)}`);
+    return '?' + q.join('&');
+  }
+
   // ── Exposition ───────────────────────────────────────────────────────────────
 
   const SeqnivPur = {
@@ -259,6 +274,7 @@
     SELECTEURS_MER, SELECTEURS_DOCUMENT_MER, selecteursVisiblesMer,       // v0.53.3
     nbTestsMer, bornerTestMer, htmlStatutToutCompiler,
     urlToutCompiler,                                                     // v0.54.2
+    urlCartesMentales, requeteRenduCartes,                               // v0.55.0
   };
 
   // Navigateur : window.SeqnivPur. (Pas d'export ES : le projet charge tout en

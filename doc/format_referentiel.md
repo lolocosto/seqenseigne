@@ -1,7 +1,9 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.4** (seqenseigne v0.54.0 : documents compilés
-> rattachés à une **partie**, référentiel interne de mises en route). Version
+> Version du format : **1.5** (seqenseigne v0.55.0 : champ facultatif
+> `partie.carte_mentale`, carte mentale de la partie). Version 1.4 :
+> seqenseigne v0.54.0, documents compilés
+> rattachés à une **partie**, référentiel interne de mises en route. Version
 > 1.3 : seqenseigne v0.52.7, champ facultatif
 > `partie.materiel`, exercices marqués ordinateur / calculatrice. Version
 > 1.2 : seqenseigne v0.52.4, champ facultatif
@@ -168,6 +170,11 @@ Une entrée par séquence du découpage, dans le même ordre.
   objectif, puis celles rattachées à l'objectif « Cours »), qui forment la
   partie « cours » de la synthèse Pronote (« Cours : fiches de résumé (…) ») ;
   `notions` et `methodes` y sont vides. Absent pour « Notions et méthodes ».
+- `carte_mentale` (facultatif, 1.5, seqenseigne v0.55.0) : tout modèle,
+  référentiel interne — `{id, titre}` de la carte mentale de la partie (la
+  source LaTeX reste dans l'atelier ; la carte voyage dans les PDF : livret
+  de séquence, document « Cartes mentales »). **Absent** pour une partie sans
+  carte (document et empreinte inchangés).
 - `materiel` (facultatif, 1.3, seqenseigne v0.52.7) : exercices **marqués**
   de la partie (champs `ordinateur` et `calculatrice` de l'atelier), pour le
   tableau de bord de l'appli de classe (réserver la salle informatique, le
@@ -265,7 +272,8 @@ externe est toujours exporté à partir de son état du moment.
 - Historique : 1.0 (v0.51.1) ; 1.1 (v0.52.1) ajoute
   `referentiel.gabarit_documents` ; 1.2 (v0.52.4) ajoute `partie.fiches` ;
   1.3 (v0.52.7) ajoute `partie.materiel` ; 1.4 (v0.54.0) range des
-  documents compilés dans une partie (mises en route internes).
+  documents compilés dans une partie (mises en route internes) ; 1.5
+  (v0.55.0) ajoute `partie.carte_mentale`.
   Une publication figée produite en 1.0 est resservie telle quelle (sans le
   champ, donc lue `cycle4`).
 - Un document déclare la plus petite version qui décrit son contenu : un
@@ -274,7 +282,9 @@ externe est toujours exporté à partir de son état du moment.
   un référentiel dont au moins un exercice est marqué est en 1.3 (sans
   marqueur, document et empreinte sont ceux de la v0.52.6) ; un référentiel
   qui a des documents compilés de partie (mises en route internes) est en 1.4
-  (aucun référentiel existant : document et empreinte inchangés).
+  (aucun référentiel existant : document et empreinte inchangés) ; un
+  référentiel dont au moins une partie a une carte mentale est en 1.5 (sans
+  carte : document et empreinte inchangés).
 - `format_version` = `majeure.mineure`. Ajout d'un champ **facultatif** :
   version mineure (1.1, 1.2…) ; changement incompatible : version majeure
   (2.0).

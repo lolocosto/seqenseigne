@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/11/12 v0.12 seqenseigne : style des documents de 6e]
+    [2026/11/12 v0.13 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,9 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.13}{2026/11/12}{Carte mentale de partie :
+%   \texttt{seqCarteMentaleSix} et \cs{seqCMBranche} (lots S01 à S13) ; bulle
+%   élargie au mot le plus long du titre ; carte étirée sur la hauteur disponible}
 % \changes{v0.12}{2026/11/12}{Tableau décimal à quatre classes :
 %   \cs{seqLocTableauDecimal}\oarg{4}\marg{lignes} (milliards, millions, milliers,
 %   unités, virgule, partie décimale ; 16 cellules par ligne) ; sans argument
@@ -457,6 +460,54 @@
 % \begin{verbatim}
 % \seqLocTableauDecimal[4]{ & & & & & & & & 5 & 0 & 4 & 8 & , & 3 & 7 & 2\\ \hline}
 % \end{verbatim}
+%
+% \subsection{Carte mentale de partie (v0.13)}
+% \DescribeEnv{seqCarteMentaleSix}\DescribeMacro{\seqCMBranche}
+% Une carte mentale résume une partie de séquence sur une page A4 portrait au plus.
+% \begin{verbatim}
+% \begin{seqCarteMentaleSix}[contenu sous le titre central]{Titre central}
+%   \seqCMBranche{Titre de la branche 1}{contenu}
+%   \seqCMBranche{Titre de la branche 2}{contenu}
+%   ...
+% \end{seqCarteMentaleSix}
+% \end{verbatim}
+% La bulle centrale porte le \meta{titre central} et, sous un filet, le contenu
+% facultatif. Les branches (4 à 8 conseillées, de 1 à 16 acceptées) se rangent en
+% deux colonnes, dans le sens anti-horaire : la colonne de gauche reçoit les
+% $\lceil n/2\rceil$ premières branches de haut en bas, la colonne de droite les
+% suivantes de bas en haut. Deux branches d'une même colonne sont séparées par
+% 5\,mm au moins ; les branches de chaque colonne se répartissent sur toute la
+% hauteur de la carte, qui occupe toute la hauteur disponible. Un trait de la couleur de la branche la relie
+% à la bulle.
+%
+% Chaque branche est un cadre à bord épais de sa couleur et à fond clair, lisible
+% imprimé en noir et blanc ; son titre est en gras sur un bandeau un peu plus foncé.
+% La palette suit l'ordre des branches et recommence après la huitième :
+% \texttt{seqSixCM1} à \texttt{seqSixCM8} (bleu, rouge, vert, orange, violet,
+% bleu canard, framboise, brun).
+%
+% Le contenu d'une branche peut contenir plusieurs paragraphes, des formules, de
+% petits tableaux, des \texttt{tikzpicture} et des figures \textsf{tkz-euclide} :
+% chaque branche est composée dans une boîte \emph{avant} la figure d'ensemble, il
+% n'y a donc pas de \texttt{tikzpicture} imbriqué. La largeur utile d'une branche
+% est d'environ 7,6\,cm avant réduction. Les trous s'écrivent avec \cs{seqACompleter}
+% (pointillés en version élève, réponse en rouge en version complète) :
+% \cs{seqVersionACompleter} ou \cs{seqVersionComplete} avant la carte.
+%
+% La bulle a un texte de 2,9\,cm de large, élargi au mot le plus long du titre
+% (« Proportionnalité ») ; on ne coupe pas les mots du titre. La gouttière entre les
+% colonnes (4\,cm au moins) s'élargit d'autant. Une branche dont le contenu contient
+% \cs{foreach} est relue avec un point-virgule ordinaire : le |;| que \textsf{babel}
+% (français) rend actif ne gêne plus la boucle (le point-virgule du texte de cette
+% branche perd alors son espace fine).
+%
+% \paragraph{Réduction automatique.} La carte est dessinée sur une largeur de
+% 20\,cm (plus si la bulle l'exige), puis réduite pour tenir dans la largeur de la ligne et dans la hauteur
+% qui reste sur la page (une page entière si moins de la moitié de la page reste
+% libre). Elle n'est jamais agrandie ; quand elle est moins haute que la place
+% disponible, elle est étirée en hauteur (les branches s'écartent) pour occuper toute
+% cette place. Elle ne coupe donc jamais une page ; un contenu très chargé donne
+% seulement une carte plus petite.
 %
 % \StopEventually{}
 %
@@ -1674,6 +1725,310 @@
 \ExplSyntaxOff
 %    \end{macrocode}
 % \end{macro}\end{macro}
+%
+
+% \subsection{Carte mentale de partie (v0.13)}
+% \changes{v0.13}{2026/11/12}{Carte mentale de partie : environnement
+%   \texttt{seqCarteMentaleSix} et \cs{seqCMBranche} (bulle centrale, deux
+%   colonnes en sens anti-horaire, 5\,mm entre branches, palette \texttt{seqSixCM1}
+%   à \texttt{seqSixCM8}, réduction pour tenir sur une page A4 portrait)}
+% \begin{macro}{seqSixCM1}
+% La palette des branches : huit couleurs franches, assez foncées pour un bord
+% épais lisible en noir et blanc ; le fond de la branche en est une teinte à 10\,\%.
+%    \begin{macrocode}
+\definecolor{seqSixCM1}{HTML}{1F5FA8}
+\definecolor{seqSixCM2}{HTML}{D7191C}
+\definecolor{seqSixCM3}{HTML}{2E8B3A}
+\definecolor{seqSixCM4}{HTML}{E07B00}
+\definecolor{seqSixCM5}{HTML}{7326A0}
+\definecolor{seqSixCM6}{HTML}{00838F}
+\definecolor{seqSixCM7}{HTML}{C2185B}
+\definecolor{seqSixCM8}{HTML}{795548}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{environment}{seqCarteMentaleSix}\begin{macro}{\seqCMBranche}
+% Chaque \cs{seqCMBranche} compose sa branche dans une boîte numérotée
+% (\cs{l\_\_seqsix\_cm\_}\meta{n}\cs{\_box}) de la largeur d'une colonne. La fin de
+% l'environnement calcule les positions, dessine traits, branches et bulle dans un
+% seul \texttt{tikzpicture} mis en boîte, puis le réduit.
+%    \begin{macrocode}
+\ExplSyntaxOn
+\dim_const:Nn \c__seqsix_cm_colonne_dim { 8cm }
+\dim_const:Nn \c__seqsix_cm_ecart_dim { 5mm }
+\dim_const:Nn \c__seqsix_cm_bulle_dim { 2.9cm }
+\dim_const:Nn \c__seqsix_cm_goutiere_dim { 4cm }
+\dim_new:N \l__seqsix_cm_largeur_dim
+\dim_new:N \l__seqsix_cm_bulle_dim
+\seq_new:N \l__seqsix_cm_mots_seq
+\int_new:N \l__seqsix_cm_nb_int
+\int_new:N \l__seqsix_cm_gauche_int
+\int_new:N \l__seqsix_cm_i_int
+\tl_new:N \l__seqsix_cm_titre_tl
+\tl_new:N \l__seqsix_cm_sous_titre_tl
+\tl_new:N \l__seqsix_cm_dessin_tl
+\dim_new:N \l__seqsix_cm_dispo_dim
+\dim_new:N \l__seqsix_cm_haut_dim
+\dim_new:N \l__seqsix_cm_somme_dim
+\dim_new:N \l__seqsix_cm_pas_dim
+\dim_new:N \l__seqsix_cm_y_dim
+\dim_new:N \l__seqsix_cm_h_dim
+\dim_new:N \l__seqsix_cm_x_dim
+\dim_new:N \l__seqsix_cm_xtrait_dim
+\box_new:N \l__seqsix_cm_bulle_box
+\box_new:N \l__seqsix_cm_carte_box
+\bool_new:N \l__seqsix_cm_dans_bool
+\msg_new:nnn { seqenseigne-style6e } { cm-hors-carte }
+  { \token_to_str:N \seqCMBranche \ hors~de~l'environnement~seqCarteMentaleSix. }
+\msg_new:nnn { seqenseigne-style6e } { cm-vide }
+  { carte~mentale~'#1'~sans~branche~(\token_to_str:N \seqCMBranche). }
+\msg_new:nnn { seqenseigne-style6e } { cm-trop }
+  { carte~mentale~:~#1~branches,~16~au~plus. }
+\cs_new:Npn \__seqsix_cm_boite:n #1 { l__seqsix_cm_ \int_eval:n {#1} _box }
+\cs_new:Npn \__seqsix_cm_couleur:n #1
+  { seqSixCM \int_eval:n { \int_mod:nn { #1 - 1 } { 8 } + 1 } }
+%    \end{macrocode}
+% Une branche : boîte verticale de la largeur d'une colonne, contenant un
+% \texttt{tcolorbox} (bord épais coloré, fond clair, titre gras).
+%    \begin{macrocode}
+\NewDocumentCommand{\seqCMBranche}{ m +m }
+  {
+    \bool_if:NTF \l__seqsix_cm_dans_bool
+      {
+        \int_incr:N \l__seqsix_cm_nb_int
+        \int_compare:nNnTF { \l__seqsix_cm_nb_int } > { 16 }
+          { \exp_args:NnnV \msg_error:nnn { seqenseigne-style6e } { cm-trop }
+              \l__seqsix_cm_nb_int }
+          {
+            \box_if_exist:cF { \__seqsix_cm_boite:n { \l__seqsix_cm_nb_int } }
+              { \box_new:c { \__seqsix_cm_boite:n { \l__seqsix_cm_nb_int } } }
+            \tl_set:Nx \l_tmpa_tl { \__seqsix_cm_couleur:n { \l__seqsix_cm_nb_int } }
+            \__seqsix_cm_branche:Vnn \l_tmpa_tl {#1} {#2}
+          }
+      }
+      { \msg_error:nn { seqenseigne-style6e } { cm-hors-carte } }
+  }
+\cs_new_protected:Npn \__seqsix_cm_branche:nnn #1#2#3
+  {
+    \vbox_set:cn { \__seqsix_cm_boite:n { \l__seqsix_cm_nb_int } }
+      {
+        \hsize = \c__seqsix_cm_colonne_dim
+        \linewidth = \hsize
+        \parindent = 0pt
+        \noindent
+        \begin{tcolorbox}[enhanced, width=\c__seqsix_cm_colonne_dim,
+            colframe=#1, colback=#1!10, boxrule=1.6pt, arc=3pt,
+            left=4pt, right=4pt, top=3pt, bottom=4pt, boxsep=0pt,
+            before~skip=0pt, after~skip=0pt, nobeforeafter,
+            title={#2}, fonttitle=\bfseries\small, coltitle=black,
+            colbacktitle=#1!32, toptitle=2pt, bottomtitle=2pt,
+            fontupper=\small, halign=left]
+          #3
+        \end{tcolorbox}
+      }
+  }
+\cs_generate_variant:Nn \__seqsix_cm_branche:nnn { V }
+%    \end{macrocode}
+% L'environnement : place disponible sur la page au début, branches au fil du
+% contenu, puis le dessin.
+%    \begin{macrocode}
+\NewDocumentEnvironment{seqCarteMentaleSix}{ O{} m }
+  {
+    \par
+    \dim_compare:nNnTF { \pagegoal } = { \maxdimen }
+      { \dim_set:Nn \l__seqsix_cm_dispo_dim { \textheight } }
+      { \dim_set:Nn \l__seqsix_cm_dispo_dim { \pagegoal - \pagetotal } }
+    \dim_compare:nNnT { \l__seqsix_cm_dispo_dim } < { 0.5\textheight }
+      { \newpage \dim_set:Nn \l__seqsix_cm_dispo_dim { \textheight } }
+    \dim_sub:Nn \l__seqsix_cm_dispo_dim { 2pt }
+    \tl_set:Nn \l__seqsix_cm_titre_tl {#2}
+    \tl_set:Nn \l__seqsix_cm_sous_titre_tl {#1}
+    \int_zero:N \l__seqsix_cm_nb_int
+    \bool_set_true:N \l__seqsix_cm_dans_bool
+    \ignorespaces
+  }
+  {
+    \bool_set_false:N \l__seqsix_cm_dans_bool
+    \int_compare:nNnTF { \l__seqsix_cm_nb_int } = { 0 }
+      { \exp_args:NnnV \msg_error:nnn { seqenseigne-style6e } { cm-vide }
+          \l__seqsix_cm_titre_tl }
+      { \__seqsix_cm_dessiner: }
+    \par
+  }
+%    \end{macrocode}
+% Hauteur cumulée des branches \meta{début} à \meta{fin} (écarts non compris).
+%    \begin{macrocode}
+\cs_new_protected:Npn \__seqsix_cm_somme:nn #1#2
+  {
+    \dim_zero:N \l__seqsix_cm_somme_dim
+    \int_step_inline:nnn {#1} {#2}
+      {
+        \dim_add:Nn \l__seqsix_cm_somme_dim
+          { \box_ht_plus_dp:c { \__seqsix_cm_boite:n {##1} } }
+      }
+  }
+%    \end{macrocode}
+% Une colonne : la liste des numéros de branches de haut en bas (|#1|), leur
+% nombre (|#2|), l'abscisse du bord gauche (|#3|) et celle de l'extrémité du trait
+% (|#4|). La colonne la moins haute répartit l'écart, borné à 2\,cm, puis se centre.
+%    \begin{macrocode}
+\cs_new_protected:Npn \__seqsix_cm_colonne:nnnn #1#2#3#4
+  {
+    \dim_zero:N \l__seqsix_cm_somme_dim
+    \clist_map_inline:nn {#1}
+      {
+        \dim_add:Nn \l__seqsix_cm_somme_dim
+          { \box_ht_plus_dp:c { \__seqsix_cm_boite:n {##1} } }
+      }
+    \int_compare:nNnTF {#2} > { 1 }
+      {
+        \dim_set:Nn \l__seqsix_cm_pas_dim
+          { ( \l__seqsix_cm_haut_dim - \l__seqsix_cm_somme_dim ) / ( #2 - 1 ) }
+        \dim_set:Nn \l__seqsix_cm_pas_dim
+          { \dim_max:nn { \l__seqsix_cm_pas_dim } { \c__seqsix_cm_ecart_dim } }
+      }
+      { \dim_zero:N \l__seqsix_cm_pas_dim }
+    \dim_set:Nn \l__seqsix_cm_y_dim
+      { ( \l__seqsix_cm_haut_dim - \l__seqsix_cm_somme_dim
+          - \l__seqsix_cm_pas_dim * ( #2 - 1 ) ) / 2 }
+    \clist_map_inline:nn {#1}
+      {
+        \dim_set:Nn \l__seqsix_cm_h_dim
+          { \box_ht_plus_dp:c { \__seqsix_cm_boite:n {##1} } }
+        \tl_put_right:Nx \l__seqsix_cm_dessin_tl
+          {
+            \exp_not:N \draw [ line~width=1.4pt, \__seqsix_cm_couleur:n {##1} ]
+              ( \dim_eval:n { \l__seqsix_cm_largeur_dim / 2 } ,
+                \dim_eval:n { - \l__seqsix_cm_haut_dim / 2 } )
+              -- ( \dim_use:N #4 ,
+                   \dim_eval:n { - \l__seqsix_cm_y_dim - \l__seqsix_cm_h_dim / 2 } ) ;
+          }
+        \tl_put_left:Nx \l__seqsix_cm_noeuds_tl
+          {
+            \exp_not:N \node [ anchor=north~west, inner~sep=0pt, outer~sep=0pt ]
+              at ( \dim_use:N #3 , \dim_eval:n { - \l__seqsix_cm_y_dim } )
+              { \exp_not:N \box_use:c { \__seqsix_cm_boite:n {##1} } } ;
+          }
+        \dim_add:Nn \l__seqsix_cm_y_dim
+          { \l__seqsix_cm_h_dim + \l__seqsix_cm_pas_dim }
+      }
+  }
+\tl_new:N \l__seqsix_cm_noeuds_tl
+\dim_new:N \l__seqsix_cm_xd_dim
+\dim_new:N \l__seqsix_cm_xtd_dim
+%    \end{macrocode}
+% Le dessin d'ensemble, puis la réduction : $s=\min(1, L/l, H/h)$, où $L$ est la
+% largeur de la ligne, $H$ la hauteur disponible, $l$ et $h$ celles du dessin.
+%    \begin{macrocode}
+\cs_new_protected:Npn \__seqsix_cm_dessiner:
+  {
+    \int_set:Nn \l__seqsix_cm_gauche_int
+      { \int_div_truncate:nn { \l__seqsix_cm_nb_int + 1 } { 2 } }
+    % largeur du texte de la bulle : 2,9 cm, ou le mot le plus long du titre
+    \dim_set_eq:NN \l__seqsix_cm_bulle_dim \c__seqsix_cm_bulle_dim
+    \seq_set_split:NnV \l__seqsix_cm_mots_seq { ~ } \l__seqsix_cm_titre_tl
+    \seq_map_inline:Nn \l__seqsix_cm_mots_seq
+      {
+        \hbox_set:Nn \l_tmpa_box { \bfseries \large ##1 }
+        \dim_set:Nn \l__seqsix_cm_bulle_dim
+          { \dim_max:nn { \l__seqsix_cm_bulle_dim } { \box_wd:N \l_tmpa_box + 2pt } }
+      }
+    \hbox_set:Nn \l__seqsix_cm_bulle_box
+      {
+        \begin{tikzpicture}
+          \node [ ellipse, draw=seqSixTheme, line~width=2pt, fill=seqSixTheme!12,
+                  inner~xsep=-3pt, inner~ysep=4pt, align=center,
+                  text~width=\l__seqsix_cm_bulle_dim ]
+            {
+              \hyphenpenalty = 10000 \exhyphenpenalty = 10000
+              {\bfseries\large \tl_use:N \l__seqsix_cm_titre_tl}
+              \tl_if_blank:VF \l__seqsix_cm_sous_titre_tl
+                {
+                  \\[-2pt] \rule{0.8\l__seqsix_cm_bulle_dim}{0.4pt} \\
+                  \small \tl_use:N \l__seqsix_cm_sous_titre_tl
+                }
+            } ;
+        \end{tikzpicture}
+      }
+    % largeur du dessin : deux colonnes et une gouttière d'au moins 4 cm,
+    % élargie pour laisser 3 mm de chaque côté de la bulle
+    \dim_set:Nn \l__seqsix_cm_largeur_dim
+      { 2 \c__seqsix_cm_colonne_dim
+        + \dim_max:nn { \c__seqsix_cm_goutiere_dim }
+                       { \box_wd:N \l__seqsix_cm_bulle_box + 6mm } }
+    % hauteur de la carte : la plus haute colonne (écarts minimaux) ou la bulle
+    \__seqsix_cm_somme:nn { 1 } { \l__seqsix_cm_gauche_int }
+    \dim_set:Nn \l__seqsix_cm_haut_dim
+      { \l__seqsix_cm_somme_dim
+        + \c__seqsix_cm_ecart_dim * ( \l__seqsix_cm_gauche_int - 1 ) }
+    \int_compare:nNnT { \l__seqsix_cm_nb_int } > { \l__seqsix_cm_gauche_int }
+      {
+        \__seqsix_cm_somme:nn { \l__seqsix_cm_gauche_int + 1 } { \l__seqsix_cm_nb_int }
+        \dim_set:Nn \l__seqsix_cm_haut_dim
+          { \dim_max:nn { \l__seqsix_cm_haut_dim }
+              { \l__seqsix_cm_somme_dim
+                + \c__seqsix_cm_ecart_dim
+                  * ( \l__seqsix_cm_nb_int - \l__seqsix_cm_gauche_int - 1 ) } }
+      }
+    \dim_set:Nn \l__seqsix_cm_haut_dim
+      { \dim_max:nn { \l__seqsix_cm_haut_dim }
+          { \box_ht_plus_dp:N \l__seqsix_cm_bulle_box } }
+    % remplir la hauteur disponible : la largeur impose la réduction s ; la
+    % carte, haute de h, est étirée à (hauteur disponible) / s, les branches
+    % se répartissent alors sur toute la page (v0.13, retour des lots)
+    \fp_set:Nn \l_tmpb_fp
+      { min ( 1 , \dim_to_fp:n { \linewidth } / \dim_to_fp:n { \l__seqsix_cm_largeur_dim } ) }
+    \dim_set:Nn \l__seqsix_cm_h_dim
+      { \fp_to_dim:n { \dim_to_fp:n { \l__seqsix_cm_dispo_dim - 1pt } / \l_tmpb_fp } }
+    \dim_set:Nn \l__seqsix_cm_haut_dim
+      { \dim_max:nn { \l__seqsix_cm_haut_dim } { \l__seqsix_cm_h_dim } }
+    \tl_clear:N \l__seqsix_cm_dessin_tl
+    \tl_clear:N \l__seqsix_cm_noeuds_tl
+    % colonne de gauche : 1 .. k de haut en bas
+    \dim_zero:N \l__seqsix_cm_x_dim
+    \dim_set_eq:NN \l__seqsix_cm_xtrait_dim \c__seqsix_cm_colonne_dim
+    \__seqsix_cm_colonne:xnnn
+      { \int_step_function:nN { \l__seqsix_cm_gauche_int } \__seqsix_cm_virgule:n }
+      { \l__seqsix_cm_gauche_int } { \l__seqsix_cm_x_dim } { \l__seqsix_cm_xtrait_dim }
+    % colonne de droite : n .. k+1 de haut en bas (k+1 .. n de bas en haut)
+    \int_compare:nNnT { \l__seqsix_cm_nb_int } > { \l__seqsix_cm_gauche_int }
+      {
+        \dim_set:Nn \l__seqsix_cm_xd_dim
+          { \l__seqsix_cm_largeur_dim - \c__seqsix_cm_colonne_dim }
+        \dim_set_eq:NN \l__seqsix_cm_xtd_dim \l__seqsix_cm_xd_dim
+        \__seqsix_cm_colonne:xnnn
+          { \int_step_function:nnnN { \l__seqsix_cm_nb_int } { -1 }
+              { \l__seqsix_cm_gauche_int + 1 } \__seqsix_cm_virgule:n }
+          { \l__seqsix_cm_nb_int - \l__seqsix_cm_gauche_int }
+          { \l__seqsix_cm_xd_dim } { \l__seqsix_cm_xtd_dim }
+      }
+    \hbox_set:Nn \l__seqsix_cm_carte_box
+      {
+        \begin{tikzpicture}[x=1pt, y=1pt]
+          \path [use~as~bounding~box] (0pt, 0pt) rectangle
+            ( \dim_use:N \l__seqsix_cm_largeur_dim , - \dim_use:N \l__seqsix_cm_haut_dim ) ;
+          \tl_use:N \l__seqsix_cm_dessin_tl
+          \tl_use:N \l__seqsix_cm_noeuds_tl
+          \node [ inner~sep=0pt ] at
+            ( \dim_eval:n { \l__seqsix_cm_largeur_dim / 2 } ,
+              \dim_eval:n { - \l__seqsix_cm_haut_dim / 2 } )
+            { \box_use:N \l__seqsix_cm_bulle_box } ;
+        \end{tikzpicture}
+      }
+    \fp_set:Nn \l_tmpa_fp
+      { min ( 1 ,
+              \dim_to_fp:n { \linewidth } / \dim_to_fp:n { \box_wd:N \l__seqsix_cm_carte_box } ,
+              \dim_to_fp:n { \l__seqsix_cm_dispo_dim }
+                / \dim_to_fp:n { \box_ht_plus_dp:N \l__seqsix_cm_carte_box } ) }
+    \box_scale:Nnn \l__seqsix_cm_carte_box { \l_tmpa_fp } { \l_tmpa_fp }
+    \noindent \hbox_to_wd:nn { \linewidth }
+      { \hfil \box_use_drop:N \l__seqsix_cm_carte_box \hfil }
+  }
+\cs_new:Npn \__seqsix_cm_virgule:n #1 { #1 , }
+\cs_generate_variant:Nn \__seqsix_cm_colonne:nnnn { x }
+\ExplSyntaxOff
+%    \end{macrocode}
+% \end{macro}\end{environment}
 %
 %    \begin{macrocode}
 %</package>

@@ -72,9 +72,10 @@ def test_mapping_decisions_laurent_v0_15_2_6():
         'livret_cartes_recap':    ['cartes_automatisme'],
         'livret_cartes_planches': ['cartes_automatisme'],
         # v0.52.1 — gabarit « sixieme ».
-        'livret_sequence_6e':     ['exercices', 'fiches_resume'],
+        'livret_sequence_6e':     ['exercices', 'fiches_resume', 'cartes_mentales'],   # v0.55.0
         'fiches_cours_6e':        ['fiches_resume'],
-        'corriges_6e':            ['exercices', 'fiches_resume'],
+        'corriges_6e':            ['exercices', 'fiches_resume', 'cartes_mentales'],   # v0.55.0
+        'cartes_mentales_6e':     ['cartes_mentales'],                                 # v0.55.0
         # v0.52.2 — évaluations et documents du gabarit 6e
         'evaluation_6e':          ['exercices', 'evaluations'],
         'travaux_personnels_6e':  ['exercices'],

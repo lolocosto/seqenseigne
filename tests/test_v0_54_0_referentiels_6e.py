@@ -366,7 +366,7 @@ def test_ri7_un_principal_sans_document_de_partie_garde_sa_version_et_son_emprei
     _verrouiller(c, rid, tmp_path)
     doc = fmt.construire(c, rid)
     assert doc["format_version"] == fmt.FORMAT_VERSION_FICHES
-    assert fmt.FORMAT_VERSION == "1.4" and fmt.FORMAT_VERSION_MATERIEL == "1.3"
+    assert fmt.FORMAT_VERSION_DOCS_PARTIE == "1.4" and fmt.FORMAT_VERSION_MATERIEL == "1.3"  # v0.55.0 : 1.5 = cartes mentales
 
 
 # ── RI10 Aperçu avant création, migration, profils ──────────────────────────

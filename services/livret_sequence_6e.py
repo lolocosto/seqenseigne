@@ -19,6 +19,7 @@ Rendu visé : les aperçus validés du lot S01 (`apercu_eleve.tex`,
         activités d'introduction           (seqActiviteSix)
         fiche de résumé à compléter         (seqFicheResumeSix)
         exercices F, A, E                   (seqExoSix[O|A|E]) et remédiations
+      v0.55.0 : carte mentale de la partie  (seqCarteMentaleSix, nouvelle page)
 
 Le contenu vient de la base de l'atelier (sequences_par_niveau,
 sequence_parties, objectifs, objectif_exos, partie_exos_revision_approche,
@@ -209,8 +210,12 @@ def lire_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_code: str) 
                         "objectifs": objectifs})
     nom, numero = _nom_sequence(conn, niveau, sequence_code)
     libelles = libelles_parties(niveau, sequence_code)          # C1 (v0.52.5)
+    # v0.55.0 (CM-LIVRET) — carte mentale de la partie (None sans carte).
+    from services.cartes_mentales import cartes_de_sequence
+    cartes = cartes_de_sequence(conn, niveau, sequence_code)
     for p in parties:
         p["libelle"] = libelles.get(p["numero"], "")
+        p["carte"] = cartes.get(p["numero"])
     return {"code": sequence_code, "nom": nom or sn.get("sequence_nom") or sequence_code,
             "numero": numero, "niveau": niveau, "parties": parties,
             "theme_couleur": sn.get("theme_code_couleur") or ""}
@@ -443,6 +448,13 @@ def corps_livret(seq: dict, opts: dict, numeros: "_Numeros | None" = None) -> li
                     if ((ex.get("remed_enonce") or "").strip()
                             and opts["remediations"] == "apres_exercice"):
                         N.noter_remediation(ex)
+        # v0.55.0 (CM-LIVRET) — carte mentale en fin de partie, après les
+        # exercices, sur une nouvelle page (à compléter dans le livret élève,
+        # complète dans le livret corrigé : \seqVersionCorrigee) ; une partie
+        # sans carte n'émet rien (même .tex qu'avant).
+        if p.get("carte"):
+            from services.cartes_mentales import emettre
+            emettre(L, p["carte"], p["numero"])
     if remeds_fin:
         L.append(r"\clearpage")
         L.append(r"\begin{center}{\Large\bfseries\color{seqSixVert}Remédiations}\end{center}")

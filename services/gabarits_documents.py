@@ -207,6 +207,21 @@ _CATALOGUE_SIXIEME = (
                  (("par_sequence", "par séquence"), ("annuel", "un livret annuel"),
                   ("les_deux", "les deux"))),),
     ),
+    # v0.55.0 — Cartes mentales de partie (services/cartes_mentales.py).
+    TypeDocument(
+        cle="cartes_mentales_6e",
+        libelle="Cartes mentales",
+        description=("Une carte mentale par partie de séquence, une par page "
+                     "(élève : à compléter ; complète)."),
+        options={"actif": False, "version": "eleve", "decoupage": "par_sequence"},
+        valeurs={"version": VERSIONS_6E, "decoupage": DECOUPAGES_6E},
+        generateur="services.cartes_mentales.generer_cartes_mentales_6e",
+        champs=(("version", "Version", (("eleve", "élève (à compléter)"),
+                                        ("corrigee", "complète"))),
+                ("decoupage", "Découpage",
+                 (("par_sequence", "par séquence"), ("annuel", "un livret annuel"),
+                  ("les_deux", "les deux")))),
+    ),
     TypeDocument(
         cle="corriges_6e",
         libelle="Corrigés enseignant",
