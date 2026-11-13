@@ -433,6 +433,32 @@ class AtelierEditeur extends Atelier {
            'Aucun élément.</div>';
   }
 
+  // ── URL d'un élément (v0.56.2) ─────────────────────────────────────────
+
+  /**
+   * v0.56.2 — URL REST d'un élément (GET unitaire, PATCH, DELETE). Une seule
+   * construction, au lieu de la même chaîne recopiée dans chaque méthode ;
+   * surchargée par l'atelier Carte mentale, dont l'élément porte sa séquence
+   * en mode « toutes les séquences ».
+   */
+  urlItem(id) {
+    return `${this.config.endpointBase}/${encodeURIComponent(id)}`;
+  }
+
+  /** v0.56.2 — Base des routes de rendu d'un élément (…/rendu-pdf[/info], …/rendu-tex). */
+  urlRenduItem(id) {
+    return `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}`;
+  }
+
+  /**
+   * v0.56.2 — Séquence dans laquelle « + Créer » crée l'élément : celle du
+   * filtre (vide en mode « toutes les séquences » : création refusée).
+   * Surchargée par l'atelier Carte mentale (séquence de la partie visée).
+   */
+  sequenceDeCreation() {
+    return window.ATL_FILTRE_SEQ || '';
+  }
+
   // ── Ouverture / création / fermeture d'un item ──────────────────────────
 
   /**
@@ -465,9 +491,7 @@ class AtelierEditeur extends Atelier {
     }
     let item;
     try {
-      const resp = await fetch(
-        `${this.config.endpointBase}/${encodeURIComponent(id)}`,
-      );
+      const resp = await fetch(this.urlItem(id));
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       item = await resp.json();
     } catch (e) {
@@ -510,7 +534,7 @@ class AtelierEditeur extends Atelier {
    */
   async nouvelItem() {
     const niveau = window.ATL_FILTRE_NIVEAU || '';
-    const sequence = window.ATL_FILTRE_SEQ || '';
+    const sequence = this.sequenceDeCreation();   // v0.56.2
     if (!niveau || !sequence) {
       this.toast('Choisir une séquence précise pour créer un élément '
         + '(la création est désactivée en mode « toutes les séquences »).',
@@ -645,7 +669,7 @@ class AtelierEditeur extends Atelier {
       return false;
     }
     const url = this.itemActif
-      ? `${this.config.endpointBase}/${encodeURIComponent(this.itemActif.id)}`
+      ? this.urlItem(this.itemActif.id)
       : this.config.endpointBase;
     // v0.13.7.0e — PATCH par défaut (sémantique HTTP correcte : tous les
     // services `modifier_*` côté backend font de la modification partielle
@@ -699,7 +723,7 @@ class AtelierEditeur extends Atelier {
     if (!confirm(this.config.confirmSuppression)) return;
     try {
       const resp = await fetch(
-        `${this.config.endpointBase}/${encodeURIComponent(this.itemActif.id)}`,
+        this.urlItem(this.itemActif.id),
         { method: 'DELETE' },
       );
       if (!resp.ok) {
@@ -1558,12 +1582,25 @@ class AtelierEditeur extends Atelier {
     btnLatex.style.display = 'none';  // visibilité pilotée par majToolbar
     btnLatex.addEventListener('click', () => this.voirLatex());
 
+    // v0.56.2 — « Recompiler sans cache » (brique commune à tous les ateliers
+    // qui héritent d'AtelierEditeur) : par exemple après la modification d'une
+    // macro de mise en forme, quand le contenu du document est identique.
+    const btnSansCache = document.createElement('button');
+    btnSansCache.className = 'btn-sm';
+    btnSansCache.type = 'button';
+    btnSansCache.id = this.prefixe + '-btn-compiler-sans-cache';
+    btnSansCache.textContent = 'Recompiler sans cache';
+    btnSansCache.title = 'Ignorer le PDF en cache de ce document et le recompiler '
+      + '(par exemple après la modification d\'une macro de mise en forme)';
+    btnSansCache.addEventListener('click', () => this.recompilerSansCache());
+
     const status = document.createElement('span');
     status.id = this.prefixe + '-rendu-status';
     status.style.cssText =
       'font-size:11px;color:var(--text-muted);margin-left:auto';
 
     conteneur.appendChild(btnCompiler);
+    conteneur.appendChild(btnSansCache);
     conteneur.appendChild(btnLatex);
     conteneur.appendChild(status);
     conteneur.dataset.genere = '1';
@@ -1583,7 +1620,7 @@ class AtelierEditeur extends Atelier {
     const maGen = ++this._genRendu;
     try {
       const resp = await fetch(
-        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-pdf/info`
+        `${this.urlRenduItem(id)}/rendu-pdf/info`
           // v0.52.3 — mêmes paramètres que la compilation (sujet, version) :
           // l'information de cache porte sur le PDF qui sera affiché.
           + this.parametresRendu(),
@@ -1700,6 +1737,20 @@ class AtelierEditeur extends Atelier {
   }
 
   /**
+   * v0.56.2 — « Recompiler sans cache » : même compilation que « Compiler le
+   * rendu », avec ?sans_cache=1 (le serveur ignore et remplace le PDF en cache
+   * du document affiché, cf. services/cache_rendus.py).
+   */
+  async recompilerSansCache() {
+    this._sansCache = true;
+    try {
+      await this.compilerRendu();
+    } finally {
+      this._sansCache = false;
+    }
+  }
+
+  /**
    * Compile le PDF de l'item courant en POSTant vers
    * `${endpointBase}/${id}/rendu-pdf`. Affiche le PDF dans l'iframe
    * `#{prefixe}-pdf-iframe` ou les erreurs dans
@@ -1723,6 +1774,8 @@ class AtelierEditeur extends Atelier {
     if (!this.itemActif) return;
     this._assurerToolbarRendu();
     const id = this.itemActif.id;
+    // v0.56.2 — drapeau posé par recompilerSansCache (lu avant tout await).
+    const sansCache = !!this._sansCache;
 
     // v0.13.7.6.1.1.2 — Si on est appelé en dehors d'un auto-chargement
     // (clic utilisateur), on incrémente la génération pour invalider
@@ -1794,9 +1847,11 @@ class AtelierEditeur extends Atelier {
     if (loadingEl) loadingEl.style.display = 'flex';
 
     try {
+      // v0.56.2 — « Recompiler sans cache » : ?sans_cache=1 (le serveur
+      // ignore et remplace le PDF en cache du document affiché).
       const resp = await fetch(
-        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-pdf`
-          + this.parametresRendu(),
+        Atelier.urlSansCache(
+          `${this.urlRenduItem(id)}/rendu-pdf` + this.parametresRendu(), sansCache),
         { method: 'POST' },
       );
       // v0.13.7.6.1.1.2 — Si une exécution plus récente est en cours
@@ -2010,7 +2065,7 @@ class AtelierEditeur extends Atelier {
       if (!dejaCharge && this.itemActif) {
         try {
           const resp = await fetch(
-            `${this.config.endpointRenduPdf}/${encodeURIComponent(this.itemActif.id)}/rendu-tex` + this.parametresRendu(),   // v0.52.3
+            `${this.urlRenduItem(this.itemActif.id)}/rendu-tex` + this.parametresRendu(),   // v0.52.3
           );
           if (resp.ok) {
             const tex = await resp.text();
@@ -2099,7 +2154,7 @@ class AtelierEditeur extends Atelier {
     let tex;
     try {
       const resp = await fetch(
-        `${this.config.endpointRenduPdf}/${encodeURIComponent(id)}/rendu-tex` + this.parametresRendu(),   // v0.52.3
+        `${this.urlRenduItem(id)}/rendu-tex` + this.parametresRendu(),   // v0.52.3
         { method: 'GET' },
       );
       if (!resp.ok) {

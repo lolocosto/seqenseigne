@@ -45,6 +45,7 @@ from services.compilateur_pdf import (
     chemin_log_cache,
 )
 from services.configuration import Configuration
+from services.cache_rendus import sans_cache_demande   # v0.56.2
 
 
 bp = Blueprint('rendu_atome', __name__)
@@ -238,6 +239,7 @@ def api_rendu_pdf(type_atome: str, atome_id: str):
         racine_appli=_racine_appli(),
         timeout=config.timeout_compilation_court(),
         dossier_images=dossier_images if dossier_images.is_dir() else None,
+        ignorer_cache=sans_cache_demande(request.args),   # v0.56.2
     )
 
     if resultat.ok:

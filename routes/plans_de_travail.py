@@ -33,6 +33,7 @@ from services.livret_plans_de_travail import (
 )
 from services.compilateur_pdf import compiler_atome
 from services.configuration import Configuration
+from services.cache_rendus import sans_cache_demande   # v0.56.2
 
 bp = Blueprint('plans_de_travail', __name__)
 
@@ -163,6 +164,7 @@ def api_plan_travail_sequence_pdf(niveau: str, sequence_code: str):
         racine_appli=_racine_appli(),
         timeout=config.timeout_compilation_long(),
         dossier_images=dossier_images if dossier_images.is_dir() else None,
+        ignorer_cache=sans_cache_demande(request.args),   # v0.56.2
     )
 
     if resultat.ok:

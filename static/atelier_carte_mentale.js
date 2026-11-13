@@ -1,5 +1,5 @@
 /**
- * static/atelier_carte_mentale.js — v0.56.1
+ * static/atelier_carte_mentale.js — v0.56.2
  *
  * Atelier « Carte mentale » (portée Séquence) : une carte mentale par partie de
  * séquence, pour les deux modèles de référentiel (Fiches de résumé par objectif et
@@ -28,9 +28,20 @@
  *   - rendu : version à compléter / complète, la carte de la partie ou toutes
  *     celles de la séquence (même générateur que le livret et « Tout compiler »).
  *
+ * v0.56.2 (demandes de Laurent du 13 novembre, 16 h 11) :
+ *   - poignée de redimensionnement de la liste (atelierInstallerSplitter, comme
+ *     les autres ateliers, installée par initAtelierSplitters dans app.js) ;
+ *   - aucune séquence choisie (« — Toutes les séquences — ») : la liste montre
+ *     les parties de toutes les séquences du niveau, groupées par séquence
+ *     (préfixe N09/S03/P2), filtres d'état et « Sans carte » actifs. L'élément
+ *     porte alors sa séquence dans son identifiant (« S03:2 ») ; urlItem /
+ *     urlRenduItem en tirent l'URL de sa séquence (édition, rendu, « toute la
+ *     séquence » = la séquence de l'entrée ouverte).
+ *
  * Routes : /api/v2/livret-sequence/<niveau>/<séquence>/cartes-mentales
  *   GET (liste), POST (créer), /<n> GET / PATCH / DELETE,
- *   /<n>/rendu-pdf[/info] et /<n>/rendu-tex (?version=…&portee=partie|sequence).
+ *   /<n>/rendu-pdf[/info] et /<n>/rendu-tex (?version=…&portee=partie|sequence) ;
+ *   v0.56.2 : /api/v2/livret-sequence/<niveau>/cartes-mentales (toutes les séquences).
  */
 
 // ── Logique pure (testée par tests_js/cartes_mentales_atelier.test.js) ─────
@@ -40,11 +51,25 @@ const CarteMentalePur = {
     return ((latex || '').match(/\\seqCMBranche(?![A-Za-z])/g) || []).length;
   },
 
-  /** Élément de liste (contrat d'AtelierEditeur) depuis une partie de l'API. */
-  element(p) {
+  /** v0.56.2 — Identifiant d'un élément en mode « toutes les séquences ». */
+  idToutes(sequence, numero) {
+    return `${sequence}:${numero}`;
+  },
+
+  /** v0.56.2 — {sequence, numero} d'un identifiant (« S03:2 » ou « 2 »). */
+  decouperId(id) {
+    const m = /^([^:]+):(\d+)$/.exec(String(id == null ? '' : id));
+    return m ? { sequence: m[1], numero: m[2] } : { sequence: '', numero: String(id) };
+  },
+
+  /** Élément de liste (contrat d'AtelierEditeur) depuis une partie de l'API.
+   *  v0.56.2 — `sequence` donnée (mode « toutes les séquences ») : l'élément
+   *  porte sa séquence et son droit de modification, et son identifiant
+   *  contient la séquence (unique sur tout le niveau). */
+  element(p, sequence, modifiable) {
     const c = p.carte || null;
-    return {
-      id: String(p.numero),
+    const el = {
+      id: sequence ? CarteMentalePur.idToutes(sequence, p.numero) : String(p.numero),
       numero: p.numero,
       libelle: p.libelle || '',
       presente: !!c,
@@ -52,6 +77,26 @@ const CarteMentalePur = {
       etat_code: c ? (c.etat_code || 'en_cours') : 'en_cours',
       branches: c ? CarteMentalePur.nbBranches(c.latex) : 0,
     };
+    if (sequence) {
+      el.sequence = sequence;
+      el.modifiable = modifiable !== false;
+    }
+    return el;
+  },
+
+  /** v0.56.2 — Liste à plat de la réponse « toutes les séquences » du niveau. */
+  elementsNiveau(data) {
+    return ((data && data.sequences) || []).flatMap(s =>
+      (s.parties || []).map(p => CarteMentalePur.element(p, s.sequence, s.modifiable)));
+  },
+
+  /** v0.56.2 — Partie visée par « + Créer » : la partie ouverte si elle n'a pas
+   *  de carte, sinon la première partie sans carte (de la séquence de la partie
+   *  ouverte, s'il y en a une) ; null si aucune. Retour : l'élément de liste. */
+  cibleCreation(liste, actif) {
+    if (actif && !actif.presente) return actif;
+    const seq = actif ? (actif.sequence || '') : '';
+    return (liste || []).find(el => !el.presente && (!seq || (el.sequence || '') === seq)) || null;
   },
 
   /** Filtre d'état de la liste : '' | 'en_cours' | 'valide' | 'absente'. */
@@ -96,9 +141,10 @@ class AtelierCarteMentale extends AtelierEditeur {
     });
     // L'URL dépend de la séquence filtrée : endpointBase (CRUD) et
     // endpointRenduPdf (rendu) sont calculés à chaque usage.
+    // v0.56.2 — sans séquence filtrée : séquence de la partie visée ou ouverte.
     const url = () => {
       const niv = window.ATL_FILTRE_NIVEAU || '';
-      const seq = window.ATL_FILTRE_SEQ || '';
+      const seq = this._seqContexte();
       return (niv && seq && window.SeqnivPur)
         ? window.SeqnivPur.urlCartesMentales(niv, seq) : '/api/v2/livret-sequence/-/-/cartes-mentales';
     };
@@ -106,6 +152,51 @@ class AtelierCarteMentale extends AtelierEditeur {
     Object.defineProperty(this.config, 'endpointRenduPdf', { get: url, configurable: true });
     this.filtreEtat = '';
     this.modifiable = true;          // faux si la séquence est validée
+    this._seqCible = '';             // v0.56.2 : séquence de la partie à créer
+  }
+
+  // ── v0.56.2 — Mode « toutes les séquences » ─────────────────────────────
+
+  /** Aucune séquence choisie (niveau seul) : toutes les séquences du niveau. */
+  _toutes() {
+    return !!(window.ATL_FILTRE_NIVEAU || '') && !(window.ATL_FILTRE_SEQ || '');
+  }
+
+  /** Séquence des URL : celle du filtre, sinon celle de la partie visée ou ouverte. */
+  _seqContexte() {
+    return window.ATL_FILTRE_SEQ || this._seqCible
+      || (this._itemActif && this._itemActif.sequence) || '';
+  }
+
+  // L'élément renvoyé par le serveur (GET, PATCH, POST) a pour identifiant le
+  // numéro de la partie ; en mode « toutes les séquences », il reçoit
+  // l'identifiant de la liste (« S03:2 ») pour rester reconnu par la liste
+  // (élément actif, rechargement) et pour que ses URL visent sa séquence.
+  get itemActif() {
+    return this._itemActif || null;
+  }
+
+  set itemActif(item) {
+    if (item && typeof item === 'object' && item.sequence && item.numero != null
+        && this._toutes()) {
+      item.id = CarteMentalePur.idToutes(item.sequence, item.numero);
+    }
+    this._itemActif = item || null;
+  }
+
+  urlItem(id) {
+    const { sequence, numero } = CarteMentalePur.decouperId(id);
+    const niv = window.ATL_FILTRE_NIVEAU || '';
+    const seq = sequence || this._seqContexte();
+    return window.SeqnivPur.urlCartesMentales(niv || '-', seq || '-', numero);
+  }
+
+  urlRenduItem(id) {
+    return this.urlItem(id);
+  }
+
+  sequenceDeCreation() {
+    return window.ATL_FILTRE_SEQ || this._seqCible || '';
   }
 
   // ── Liste ───────────────────────────────────────────────────────────────
@@ -115,17 +206,24 @@ class AtelierCarteMentale extends AtelierEditeur {
     const seq = window.ATL_FILTRE_SEQ || '';
     this._messageListe = '';
     this.liste = [];
-    if (!niv || !seq) {
-      this._messageListe = 'Choisir une séquence précise : une carte mentale par partie de séquence.';
+    if (!niv) {
+      this._messageListe = 'Choisir un niveau.';
     } else {
+      // v0.56.2 — sans séquence : toutes les séquences du niveau (comme les
+      // autres ateliers) ; le droit de modification est porté par chaque entrée.
+      const url = seq ? this.config.endpointBase
+        : `/api/v2/livret-sequence/${encodeURIComponent(niv)}/cartes-mentales`;
       try {
-        const resp = await fetch(this.config.endpointBase);
+        const resp = await fetch(url);
         const data = await resp.json().catch(() => ({}));
         if (!resp.ok) {
           this._messageListe = data.message || `Erreur chargement liste : HTTP ${resp.status}`;
-        } else {
-          this.liste = (data.parties || []).map(CarteMentalePur.element);
+        } else if (seq) {
+          this.liste = (data.parties || []).map(p => CarteMentalePur.element(p));
           this.modifiable = data.modifiable !== false;
+        } else {
+          this.liste = CarteMentalePur.elementsNiveau(data);
+          this.modifiable = true;
         }
       } catch (e) {
         this.toast('Erreur réseau : ' + e.message, 'erreur');
@@ -148,14 +246,16 @@ class AtelierCarteMentale extends AtelierEditeur {
   }
 
   _htmlListeVide() {
+    const vide = this._toutes() ? 'Aucune partie dans les séquences de ce niveau.'
+                                : 'Aucune partie dans cette séquence.';
     const msg = this._messageListe
-      || (this.liste.length === 0 ? 'Aucune partie dans cette séquence.' : 'Aucune partie avec ce filtre.');
+      || (this.liste.length === 0 ? vide : 'Aucune partie avec ce filtre.');
     return '<div class="atl-list-vide" style="padding:14px 10px;color:var(--text-muted);'
          + `font-size:12px;text-align:center">${Atelier.escHtml(msg)}</div>`;
   }
 
   rendreItem(el) {
-    const idLib = [window.ATL_FILTRE_NIVEAU || '', window.ATL_FILTRE_SEQ || '', 'P' + el.numero]
+    const idLib = [window.ATL_FILTRE_NIVEAU || '', el.sequence || window.ATL_FILTRE_SEQ || '', 'P' + el.numero]
       .filter(Boolean).join('/');
     const titre = el.presente
       ? (el.titre || { html: '(sans titre)', derive: true })
@@ -166,7 +266,7 @@ class AtelierCarteMentale extends AtelierEditeur {
       onclick: `ATELIER_CARTE_MENTALE.ouvrirItem('${Atelier.escAttr(el.id)}')`,
       id: idLib,
       titre,
-      titleAttr: `Partie ${el.numero}${el.libelle ? ' — ' + el.libelle : ''}`,
+      titleAttr: `${el.sequence ? el.sequence + ' · ' : ''}Partie ${el.numero}${el.libelle ? ' — ' + el.libelle : ''}`,
       placedTags: el.presente ? [`${el.branches} br.`] : ['sans carte'],
       etatCode: el.etat_code,
     });
@@ -179,21 +279,31 @@ class AtelierCarteMentale extends AtelierEditeur {
   }
 
   async nouvelItem() {
-    if (!this.modifiable) {
+    const toutes = this._toutes();
+    const cible = CarteMentalePur.cibleCreation(this.liste, this.itemActif);
+    // v0.56.2 — toutes les séquences : le droit est celui de la séquence visée.
+    const modifiable = toutes ? !(cible && cible.modifiable === false) : this.modifiable;
+    if (!modifiable) {
       this.toast('Séquence validée : la repasser en cours pour créer une carte mentale.', 'erreur');
       return;
     }
-    this._numeroACreer = CarteMentalePur.partieACreer(this.liste, this.itemActif);
-    if (this._numeroACreer == null) {
-      this.toast('Toutes les parties de la séquence ont déjà leur carte mentale.', 'erreur');
+    if (!cible) {
+      this.toast(toutes ? 'Aucune partie sans carte mentale.'
+                        : 'Toutes les parties de la séquence ont déjà leur carte mentale.', 'erreur');
       return;
     }
-    await super.nouvelItem();
+    this._numeroACreer = cible.numero;
+    this._seqCible = toutes ? (cible.sequence || '') : '';
+    try {
+      await super.nouvelItem();
+    } finally {
+      this._seqCible = '';
+    }
   }
 
   _majBoutonCreer() {
     const b = document.getElementById('atl-cm-btn-creer');
-    if (b) b.disabled = !this.modifiable;
+    if (b) b.disabled = this._toutes() ? false : !this.modifiable;
   }
 
   // ── Formulaire ──────────────────────────────────────────────────────────
@@ -208,7 +318,8 @@ class AtelierCarteMentale extends AtelierEditeur {
     if (typeof item.modifiable === 'boolean') this.modifiable = item.modifiable;
     const info = this.$('info');
     if (info) {
-      const partie = `Partie ${item.numero}` + (item.libelle ? ` — ${item.libelle}` : '');
+      const partie = (this._toutes() && item.sequence ? `${item.sequence} · ` : '')
+        + `Partie ${item.numero}` + (item.libelle ? ` — ${item.libelle}` : '');
       info.textContent = item.presente
         ? `${partie} · ${CarteMentalePur.nbBranches(item.latex)} branche(s) (4 à 8 conseillées)`
         : `${partie} · pas encore de carte : modèle proposé (Enregistrer ou « Créer la carte »).`;
@@ -231,7 +342,7 @@ class AtelierCarteMentale extends AtelierEditeur {
     if (!this.itemActif || !this.itemActif.presente) return;
     const cible = this.itemActif.etat_code === 'valide' ? 'en_cours' : 'valide';
     try {
-      const resp = await fetch(`${this.config.endpointBase}/${encodeURIComponent(this.itemActif.id)}`, {
+      const resp = await fetch(this.urlItem(this.itemActif.id), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ etat_code: cible }),

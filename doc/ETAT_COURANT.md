@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.56.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.56.2** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -239,6 +239,13 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   contrat d'AtelierEditeur, une entrée par partie) ; **miroir du verso des planches** de
   cartes d'automatisme rétabli (`_miroir_horizontal_verso`, perdu entre v0.29.0 et
   v0.32.5). Détails : `doc/redemarrage_v0_56_1.md`.
+- v0.56.2 livrée (13 novembre) : atelier Carte mentale avec **poignée de
+  redimensionnement** de la liste et **« toutes les séquences »** (parties de toutes les
+  séquences du niveau) ; **invalidation du rendu PDF** : « Recompiler sans cache » dans
+  l'onglet Rendu PDF de tous les ateliers (brique `AtelierEditeur`), case « Sans cache »
+  de l'atelier Séquence (Compiler, cartes mentales, Tout compiler), « Vider le cache des
+  rendus PDF » (Administration › Base de données) ; la **clé du cache** contient
+  l'empreinte des `.sty`/`.dtx` du paquet. Détails : `doc/redemarrage_v0_56_2.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -523,6 +530,13 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   d'être enregistrée (import et atelier).
   Atelier (v0.56.1) : classe fille d'`AtelierEditeur`, identifiant d'élément = numéro
   de partie ; ne jamais lui redonner un mécanisme propre (fetch, onglets, rendu).
+  v0.56.2 : sans séquence choisie, identifiant « Snn:n » ; les URL d'un élément passent
+  par `urlItem` / `urlRenduItem` (AtelierEditeur), jamais construites à la main.
+- **Cache des rendus PDF** (v0.56.2) : `data/cache_rendus/<clé>.pdf|.log`, clé =
+  `compilateur_pdf.hash_tex` (sha256 du `.tex` + empreinte des `.sty`/`.dtx` de
+  `appli/paquet` et `reference/paquet`) ; toute nouvelle route de compilation passe
+  `ignorer_cache=sans_cache_demande(request.args)` à `compiler_atome`
+  (`services/cache_rendus.py`).
 - **Planches de cartes** (v0.29.0, rétabli v0.56.1) : le verso est le miroir gauche-droite
   du recto ligne par ligne (`render_carte_centralise._miroir_horizontal_verso`) ;
   `\seqCartePlanche` ne réordonne rien (seul le récap est mis en miroir côté LaTeX).

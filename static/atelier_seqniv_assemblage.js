@@ -210,6 +210,11 @@
                   onclick="ATELIER_SEQNIV.livretSeqVoirTex()">
             LaTeX généré
           </button>
+          <!-- v0.56.2 — option « sans cache » : livret, plan de travail, cartes
+               mentales et « Tout compiler » ignorent et remplacent leurs PDF en cache. -->
+          <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px"
+                 title="Ignorer les PDF en cache et recompiler (par exemple après la modification d'une macro de mise en forme). S'applique à « Compiler », aux cartes mentales et à « Tout compiler ».">
+            <input type="checkbox" id="livret-seq-sans-cache"> Sans cache</label>
         </div>
         <div class="livret-seq-actions" id="livret-seq-mer" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
           <label title="v0.53.1 — chaque partie peut être placée à un autre moment de l'année">Partie
@@ -2983,9 +2988,9 @@
       if (!sn) return;
       const p = this._cmPartie();
       const v = (document.getElementById('livret-seq-cm-version') || {}).value || 'eleve';
-      const url = `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
+      const url = this._urlCache(`/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
                 + `${encodeURIComponent(sn.sequence_code)}/rendu-pdf`
-                + _PUR.requeteRenduCartes(v, p ? p.numero : '');
+                + _PUR.requeteRenduCartes(v, p ? p.numero : ''));
       this._livretSeqAfficherLoader();
       try {
         const r = await fetch(url, { method: 'POST' });
@@ -3120,7 +3125,8 @@
       if (annuler) annuler.style.display = '';
       if (etat) etat.textContent = 'Préparation…';
       // v0.54.2 (D-TOUT-SEQ) — Mnn : route des mises en route ; Snn : table du modèle.
-      const url = P.urlToutCompiler(sn.niveau, sn.sequence_code, partie);
+      // v0.56.2 — option « sans cache » (case de l'onglet Rendu PDF).
+      const url = this._urlCache(P.urlToutCompiler(sn.niveau, sn.sequence_code, partie));
       const src = new EventSource(url);
       this._merSource = src;
       const finir = (texte) => {
@@ -3288,6 +3294,12 @@
       }
     }
 
+    // v0.56.2 — Case « Sans cache » de l'onglet Rendu PDF : ?sans_cache=1.
+    _urlCache(url) {
+      const c = document.getElementById('livret-seq-sans-cache');
+      return window.Atelier.urlSansCache(url, !!(c && c.checked));
+    }
+
     // Action publique : compiler le PDF
     async livretSeqGenererPdf() {
       const sn = this._sn();
@@ -3295,8 +3307,8 @@
         this._livretSeqAfficherErreur('Aucune séquence sélectionnée.');
         return;
       }
-      const url = `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
-                + `${encodeURIComponent(sn.sequence_code)}/rendu-pdf`;
+      const url = this._urlCache(`/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
+                + `${encodeURIComponent(sn.sequence_code)}/rendu-pdf`);
       this._livretSeqAfficherLoader();
       try {
         const r = await fetch(url, {
@@ -3371,8 +3383,8 @@
         this._livretSeqAfficherErreur('Aucune séquence sélectionnée.');
         return;
       }
-      const url = `/api/plans-de-travail/${encodeURIComponent(sn.niveau)}`
-                + `/${encodeURIComponent(sn.sequence_code)}/pdf`;
+      const url = this._urlCache(`/api/plans-de-travail/${encodeURIComponent(sn.niveau)}`
+                + `/${encodeURIComponent(sn.sequence_code)}/pdf`);
       this._livretSeqAfficherLoader();
       try {
         const r = await fetch(url, { method: 'POST' });

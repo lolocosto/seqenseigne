@@ -143,9 +143,68 @@ def _chercher_miktex_portable(racine_appli: Path) -> str | None:
 
 # ── Cache par hash ────────────────────────────────────────────────────────────
 
+#
+# v0.56.2 (CACHE-EMPREINTE) — La clé du cache était sha256(.tex)[:16] seul :
+# un PDF restait servi après une modification du paquet LaTeX (macro de mise
+# en forme changée, contenu de l'atome identique). La clé contient désormais
+# une empreinte des sources du paquet (`.sty` et `.dtx`) des deux dossiers où
+# il vit : `appli/paquet` (sources poussées sur GitHub) et
+# `<racine>/reference/paquet` (dossier mis dans le TEXINPUTS, cf.
+# dossier_paquet_effectif). Toute modification d'un de ces fichiers change la
+# clé : le cache s'invalide tout seul. Sans aucun de ces dossiers (tests,
+# scripts), la clé reste celle d'avant (sha256 du .tex seul).
+#
+# L'empreinte porte sur le contenu (sha256), recalculé seulement quand la
+# signature (nom, taille, date) d'un fichier change : un appel ne coûte que
+# quelques `stat`.
+
+_APPLI = Path(__file__).resolve().parent.parent
+_EXTENSIONS_PAQUET = ('.sty', '.dtx')
+_memo_empreinte: dict = {'signature': None, 'empreinte': ''}
+
+
+def dossiers_paquet_empreinte() -> list[Path]:
+    """Dossiers dont les `.sty`/`.dtx` entrent dans la clé du cache."""
+    candidats = [_APPLI / 'paquet', _APPLI.parent / 'reference' / 'paquet']
+    return [d for d in candidats if d.is_dir()]
+
+
+def _fichiers_paquet(dossiers: list[Path]) -> list[Path]:
+    out = []
+    for d in dossiers:
+        out.extend(sorted(p for p in d.iterdir()
+                          if p.is_file() and p.suffix.lower() in _EXTENSIONS_PAQUET))
+    return out
+
+
+def empreinte_paquet(dossiers: list[Path] | None = None) -> str:
+    """Empreinte (sha256 court) des `.sty`/`.dtx` du paquet ; '' sans fichier."""
+    if dossiers is None:
+        dossiers = dossiers_paquet_empreinte()
+    fichiers = _fichiers_paquet(dossiers)
+    if not fichiers:
+        return ''
+    signature = tuple((str(p), p.stat().st_size, p.stat().st_mtime_ns) for p in fichiers)
+    if _memo_empreinte['signature'] == signature:
+        return _memo_empreinte['empreinte']
+    h = hashlib.sha256()
+    for p in fichiers:
+        h.update(p.name.encode('utf-8'))
+        h.update(b'\0')
+        h.update(p.read_bytes())
+        h.update(b'\0')
+    empreinte = h.hexdigest()[:16]
+    _memo_empreinte.update(signature=signature, empreinte=empreinte)
+    return empreinte
+
+
 def hash_tex(tex_source: str) -> str:
-    """Hash court d'un .tex source, utilisé comme clé de cache."""
-    return hashlib.sha256(tex_source.encode('utf-8')).hexdigest()[:16]
+    """Hash court d'un .tex source, utilisé comme clé de cache.
+
+    v0.56.2 — inclut l'empreinte du paquet LaTeX (voir plus haut)."""
+    empreinte = empreinte_paquet()
+    contenu = tex_source if not empreinte else f'{tex_source}\n%paquet:{empreinte}'
+    return hashlib.sha256(contenu.encode('utf-8')).hexdigest()[:16]
 
 
 def chemin_pdf_cache(cache_dir: Path, hash_source: str) -> Path:
@@ -282,6 +341,7 @@ def compiler_atome(
     workdir: Path | None = None,
     on_passe_demarree=None,
     dossier_paquet: Path | None = None,
+    ignorer_cache: bool = False,
 ) -> ResultatCompilation:
     """Compile un .tex d'atome et retourne le résultat.
 
@@ -327,6 +387,11 @@ def compiler_atome(
         que l'utilisateur voie « passe 1/2 » puis « passe 2/2 » pendant
         la compile. Si la callback lève, l'exception est avalée :
         elle ne doit jamais casser la compilation.
+    ignorer_cache : bool
+        v0.56.2 — « Recompiler sans cache » : le PDF en cache n'est pas
+        servi ; il est supprimé avant la compilation (un PDF périmé ne doit
+        plus jamais revenir, même si la recompilation échoue) puis remplacé
+        par le nouveau PDF en cas de succès.
 
     Returns
     -------
@@ -342,7 +407,11 @@ def compiler_atome(
         cache_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = chemin_pdf_cache(cache_dir, h)
         log_path = chemin_log_cache(cache_dir, h)
-        if pdf_path.is_file():
+        if ignorer_cache:
+            for p in (pdf_path, log_path):
+                with contextlib.suppress(OSError):
+                    p.unlink()
+        elif pdf_path.is_file():
             return ResultatCompilation(
                 ok=True,
                 pdf_bytes=pdf_path.read_bytes(),

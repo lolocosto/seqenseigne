@@ -2680,6 +2680,9 @@ function initAtelierSplitters() {
     { shell: '#atl-theme .atl-shell',        cle: 'split:atl-theme:aside' },
     { shell: '#atl-seqcycle .atl-shell',     cle: 'split:atl-seqcycle:aside' },
     { shell: '#atl-evaluation .atl-shell',   cle: 'split:atl-evaluation:aside' },
+    // v0.56.2 — Atelier Carte mentale (demande de Laurent du 13 novembre) :
+    // même poignée que les autres ateliers, largeur mémorisée de la même façon.
+    { shell: '#atl-carte_mentale .atl-shell', cle: 'split:atl-cm:aside' },
   ];
   for (const s of shellsSimples) {
     const shell = $(s.shell);
@@ -4252,6 +4255,51 @@ async function adminCyclesAutoImportRelancer() {
   }
 }
 
+
+// v0.56.2 — Cache des rendus PDF (Administration › Base de données).
+function adminCacheRendusTaille(octets) {
+  const o = Number(octets) || 0;
+  if (o >= 1024 * 1024) return (o / (1024 * 1024)).toFixed(1).replace('.', ',') + ' Mo';
+  if (o >= 1024) return Math.round(o / 1024) + ' Ko';
+  return o + ' o';
+}
+
+async function adminCacheRendusEtat() {
+  const zone = document.getElementById('admin-cache-rendus-resultat');
+  if (!zone) return;
+  zone.textContent = 'Chargement…';
+  try {
+    const r = await fetch('/api/admin/cache-rendus');
+    if (!r.ok) { zone.textContent = `Erreur HTTP ${r.status}`; return; }
+    const d = await r.json();
+    zone.textContent = `${d.nb_pdf} PDF et ${d.nb_log} log(s) en cache `
+      + `(${adminCacheRendusTaille(d.octets)})`
+      + (d.empreinte_paquet ? ` — empreinte du paquet : ${d.empreinte_paquet}` : '');
+  } catch (e) {
+    zone.textContent = 'Erreur : ' + e.message;
+  }
+}
+
+async function adminCacheRendusVider() {
+  const zone = document.getElementById('admin-cache-rendus-resultat');
+  if (!window.confirm('Vider le cache des rendus PDF ? Tous les documents (tous niveaux) '
+                      + 'seront recompilés à leur prochain affichage.')) return;
+  if (zone) zone.textContent = 'Suppression…';
+  try {
+    const r = await fetch('/api/admin/cache-rendus/vider', { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) {
+      if (zone) zone.textContent = `Erreur : ${d.message || d.error || ('HTTP ' + r.status)}`;
+      return;
+    }
+    const msg = `✓ ${d.nb_fichiers} fichier(s) supprimé(s) : ${d.nb_pdf} PDF et ${d.nb_log} log(s) `
+              + `(${adminCacheRendusTaille(d.octets)}).`;
+    if (zone) zone.textContent = msg;
+    if (typeof showToast === 'function') showToast(msg);
+  } catch (e) {
+    if (zone) zone.textContent = 'Erreur : ' + e.message;
+  }
+}
 
 async function adminExportSqlite() {
   try {

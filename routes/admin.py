@@ -564,6 +564,31 @@ def _configuration_admin():
     return Configuration(current_app.json_store.data_dir)
 
 
+# ── v0.56.2 — Cache des rendus PDF (Administration › Base de données) ────────
+#
+# GET  /api/admin/cache-rendus        → {nb_pdf, nb_log, octets, empreinte_paquet}
+# POST /api/admin/cache-rendus/vider  → {ok, nb_pdf, nb_log, nb_fichiers, octets}
+# Tout le cache (la clé ne garde pas le niveau, cf. services/cache_rendus.py).
+
+def _dossier_cache_rendus():
+    from pathlib import Path
+    return Path(current_app.json_store.data_dir) / "cache_rendus"
+
+
+@bp.route("/api/admin/cache-rendus", methods=["GET"])
+def api_cache_rendus_etat():
+    from services.cache_rendus import etat_cache
+    from services.compilateur_pdf import empreinte_paquet
+    return jsonify({**etat_cache(_dossier_cache_rendus()),
+                    "empreinte_paquet": empreinte_paquet()})
+
+
+@bp.route("/api/admin/cache-rendus/vider", methods=["POST"])
+def api_cache_rendus_vider():
+    from services.cache_rendus import vider_cache
+    return jsonify({"ok": True, **vider_cache(_dossier_cache_rendus())})
+
+
 @bp.route("/api/admin/reset/tout", methods=["POST"])
 def api_admin_reset_tout():
     js, _, _ = _stores()

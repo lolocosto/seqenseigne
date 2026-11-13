@@ -76,6 +76,10 @@ ENDPOINTS = {
     "admin.api_etablissements": "classe",
     "admin.api_admin_reset_suivi": "classe",
     "admin.api_admin_reset_tout": "complet",
+    # v0.56.2 — Cache des rendus PDF : seules les routes de l'atelier compilent
+    # avec ce cache (rendus d'atelier, Tout compiler, rendu par lot).
+    "admin.api_cache_rendus_etat": "atelier",
+    "admin.api_cache_rendus_vider": "atelier",
     # Import de classes historiques (SequencesDB) : profil complet seulement
     # (il crée à la fois un référentiel et une classe).
     "progression.api_import_historique": "complet",

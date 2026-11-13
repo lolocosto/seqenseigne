@@ -173,11 +173,14 @@ describe("v0.56.1 — atelier « Carte mentale » harmonisé sur AtelierEditeur"
     expect(document.getElementById('atl-cm-list').textContent).not.toMatch(/P1/);
   });
 
-  it('sans séquence précise : liste vide et message, aucun appel', async () => {
+  // v0.56.2 — décision renversée à la demande de Laurent (13 novembre, 16 h 11) :
+  // sans séquence choisie, la liste montre toutes les séquences du niveau
+  // (tests_js/v0_56_2_carte_mentale_toutes_et_cache.test.js).
+  it("sans séquence précise (v0.56.2) : plus de message « Choisir une séquence précise », liste du niveau", async () => {
     globalThis.window.ATL_FILTRE_SEQ = '';
     await C.chargerListe();
-    expect(appels.length).toBe(0);
-    expect(document.getElementById('atl-cm-list').textContent).toMatch(/séquence précise/);
+    expect(appels.map(a => a.url)).toEqual(['/api/v2/livret-sequence/N11/cartes-mentales']);
+    expect(document.getElementById('atl-cm-list').textContent).not.toMatch(/séquence précise/);
   });
 
   it('ouvrir puis enregistrer : GET unitaire puis PATCH (méthode héritée), avertissement affiché', async () => {

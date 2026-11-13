@@ -3319,6 +3319,25 @@
                   white-space:pre-wrap;max-height:300px;overflow:auto"></div>
     </div>
 
+    <!-- v0.56.2 — Cache des rendus PDF ───────────────────────────────── -->
+    <div class="card" style="margin-bottom:12px" data-profils="atelier" id="admin-cache-rendus">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Cache des rendus PDF</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+        Les PDF compilés sont gardés dans <code>data/cache_rendus/</code> et resservis tant que
+        le <code>.tex</code> et le paquet LaTeX (<code>.sty</code>, <code>.dtx</code>) sont
+        inchangés. Vider le cache force la recompilation de tous les documents (tous niveaux) ;
+        pour un seul document, utiliser « Recompiler sans cache » dans son onglet Rendu PDF.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn-sm" style="font-size:12px" id="admin-cache-rendus-btn-etat"
+                onclick="adminCacheRendusEtat()">État</button>
+        <button class="btn-danger" style="font-size:12px" id="admin-cache-rendus-btn-vider"
+                onclick="adminCacheRendusVider()">Vider le cache des rendus PDF</button>
+        <span id="admin-cache-rendus-resultat" style="font-size:12px;color:var(--text-secondary)"
+              role="status" aria-live="polite"></span>
+      </div>
+    </div>
+
     <!-- Réinitialisation -->
     <div class="card admin-reset-card">
       <div style="font-size:13px;font-weight:500;margin-bottom:4px;color:var(--danger)">

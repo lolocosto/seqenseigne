@@ -181,6 +181,22 @@ def parties_de_sequence(conn: sqlite3.Connection, niveau: str, sequence: str) ->
     return out
 
 
+def parties_du_niveau(conn: sqlite3.Connection, niveau: str) -> list[dict]:
+    """v0.56.2 — Atelier en mode « toutes les séquences » : pour chaque séquence
+    principale du niveau (sans archives Xnn ni mises en route Mnn, qui n'ont pas
+    de carte mentale), dans l'ordre des codes : {sequence, modifiable, parties}
+    (parties au format de parties_de_sequence)."""
+    from services.livret_sequence_6e import sequences_du_niveau
+    out = []
+    for code in sequences_du_niveau(conn, niveau):
+        sn = conn.execute("SELECT etat_code FROM sequences_par_niveau WHERE niveau = ? "
+                          "AND sequence_code = ?", (niveau, code)).fetchone()
+        out.append({"sequence": code,
+                    "modifiable": bool(sn) and sn["etat_code"] != "valide",
+                    "parties": parties_de_sequence(conn, niveau, code)})
+    return out
+
+
 def element_atelier(partie: dict, niveau: str, sequence: str,
                     modifiable: bool = True) -> dict:
     """v0.56.1 — Élément de l'atelier « Carte mentale » (contrat d'AtelierEditeur) :

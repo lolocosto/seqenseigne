@@ -24,6 +24,12 @@ Expose :
       (créer, {numero}), GET / PATCH …/cartes-mentales/<n> (élément, enregistrement
       partiel), …/cartes-mentales/<n>/rendu-pdf[/info] et /rendu-tex
       (?version=eleve|corrigee&portee=partie|sequence)
+    v0.56.2 : GET /api/v2/livret-sequence/<niveau>/cartes-mentales (toutes les
+      séquences du niveau, atelier sans séquence choisie).
+
+  v0.56.2 : toute route de compilation accepte ?sans_cache=1 (ignorer et
+  remplacer le PDF en cache, services/cache_rendus.py), y compris les deux
+  « Tout compiler ».
 
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-pdf
     body JSON optionnel : {"options": {...}}
@@ -50,6 +56,7 @@ from flask import Blueprint, jsonify, request, current_app, Response
 from services.livret_sequence import generer_livret_sequence, normaliser_options
 from services.compilateur_pdf import compiler_atome
 from services.configuration import Configuration
+from services.cache_rendus import sans_cache_demande   # v0.56.2
 
 
 bp = Blueprint('livret_sequence', __name__)
@@ -266,6 +273,20 @@ def api_cartes_mentales(niveau: str, sequence: str):
         return jsonify({'error': e.code, 'message': str(e)}), 404
     return jsonify({'parties': parties,
                     'modifiable': bool(sn) and sn['etat_code'] != 'valide'})
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/cartes-mentales', methods=['GET'])
+def api_cartes_mentales_niveau(niveau: str):
+    """v0.56.2 — Atelier « Carte mentale » sans séquence choisie (comme les
+    autres ateliers) : les parties de toutes les séquences principales du
+    niveau, {sequences: [{sequence, modifiable, parties}]}. Catégorie
+    « atelier » (blueprint)."""
+    from services import cartes_mentales as cm
+    if niveau not in _NIVEAUX_VALIDES:
+        return jsonify({'error': f"niveau invalide : {niveau!r}",
+                        'valeurs_attendues': list(_NIVEAUX_VALIDES)}), 400
+    with current_app.json_store._conn() as conn:
+        return jsonify({'niveau': niveau, 'sequences': cm.parties_du_niveau(conn, niveau)})
 
 
 def _partie_de(conn, sn, numero: int):
@@ -533,6 +554,7 @@ def _reponse_compilation(tex: str, config):
         racine_appli=_racine_appli(),
         timeout=config.timeout_compilation_long(),
         dossier_images=dossier_images if dossier_images.is_dir() else None,
+        ignorer_cache=sans_cache_demande(request.args),   # v0.56.2
     )
 
     if resultat.ok:
@@ -609,12 +631,14 @@ def api_livret_sequence_mer_tout_compiler(niveau: str, sequence: str):
     timeout = config.timeout_compilation_long()
     cache_dir = _cache_dir()
     racine_appli = _racine_appli()
+    sans_cache = sans_cache_demande(request.args)   # v0.56.2 : option « sans cache »
 
     def compiler(tex):
         return compiler_atome(tex_source=tex, racine_sources=racine_sources,
                               cache_dir=cache_dir, pdflatex=pdflatex,
                               racine_appli=racine_appli, timeout=timeout,
-                              dossier_images=dossier_images if dossier_images.is_dir() else None)
+                              dossier_images=dossier_images if dossier_images.is_dir() else None,
+                              ignorer_cache=sans_cache)
 
     def generateur():
         try:
@@ -677,12 +701,14 @@ def api_livret_sequence_tout_compiler(niveau: str, sequence: str):
     timeout = config.timeout_compilation_long()
     cache_dir = _cache_dir()
     racine_appli = _racine_appli()
+    sans_cache = sans_cache_demande(request.args)   # v0.56.2 : option « sans cache »
 
     def compiler(tex):
         return compiler_atome(tex_source=tex, racine_sources=racine_sources,
                               cache_dir=cache_dir, pdflatex=pdflatex,
                               racine_appli=racine_appli, timeout=timeout,
-                              dossier_images=dossier_images if dossier_images.is_dir() else None)
+                              dossier_images=dossier_images if dossier_images.is_dir() else None,
+                              ignorer_cache=sans_cache)
 
     def generateur():
         try:

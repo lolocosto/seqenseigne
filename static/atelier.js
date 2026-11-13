@@ -153,6 +153,17 @@ class Atelier {
     return Atelier.escHtml(s).replace(/"/g, '&quot;');
   }
 
+  /**
+   * v0.56.2 — « Recompiler sans cache » : ajoute `sans_cache=1` à l'URL d'une
+   * route de compilation (qu'elle ait déjà une query string ou non). Le
+   * serveur ignore alors le PDF en cache et le remplace
+   * (services/cache_rendus.py). `actif` faux : URL inchangée.
+   */
+  static urlSansCache(url, actif = true) {
+    if (!actif) return url;
+    return url + (String(url).includes('?') ? '&' : '?') + 'sans_cache=1';
+  }
+
   // ── Persistance localStorage des préférences UI ───────────────────────────
   //
   // Préfixée par this.id pour ne pas collisionner entre ateliers.
