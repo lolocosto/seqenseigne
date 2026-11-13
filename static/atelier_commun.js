@@ -134,6 +134,7 @@
       fiche:             'Fiche de résumé',
       evaluation:        'Évaluation',
       carte_automatisme: "Carte d'automatisme",
+      carte_mentale:     'Carte mentale',        // v0.56.1
       livret_sequence:   'Livret de séquence',
     }[type] || 'Atome';
     _titreModale.textContent = `LaTeX généré — ${libelle}`;

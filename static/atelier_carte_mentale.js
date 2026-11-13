@@ -1,225 +1,317 @@
 /**
- * static/atelier_carte_mentale.js — v0.55.0
+ * static/atelier_carte_mentale.js — v0.56.1
  *
  * Atelier « Carte mentale » (portée Séquence) : une carte mentale par partie de
- * séquence, pour tous les modèles de référentiel (Fiches de résumé par objectif et
- * Notions et méthodes). Demande de Laurent du 12 novembre 2026 (décision CM-ATELIER,
- * doc/redemarrage_v0_55_0.md).
+ * séquence, pour les deux modèles de référentiel (Fiches de résumé par objectif et
+ * Notions et méthodes).
  *
- *   - niveau et séquence : sélecteurs de la portée Séquence (ATL_FILTRE_NIVEAU/SEQ) ;
- *   - liste des parties de la séquence, avec l'état de la carte et son nombre de branches ;
- *   - éditeur LaTeX (titre, état, source) : Enregistrer, Enregistrer et voir (aperçu
- *     à compléter ou complet), Supprimer ;
- *   - Compiler : la carte de la partie, ou toutes celles de la séquence.
+ * v0.56.1 — HARMONISATION (demande de Laurent du 13 novembre 2026) : l'atelier est
+ * refait sur les briques des autres ateliers. Il étend AtelierEditeur, comme
+ * AtelierFiche et AtelierCarte, et en hérite tout le comportement : liste à gauche
+ * (filtre d'état), ouverture, création (« + Créer »), enregistrement (PATCH),
+ * suppression, Valider / Repasser en cours, badge « modifié », garde de sortie
+ * (modale 3 boutons), verrou lecture seule d'une carte validée, onglets Édition /
+ * Rendu PDF, compilation avec cache, viewer pdf.js, erreurs LaTeX cliquables,
+ * .tex brut, « LaTeX généré » (Ctrl+L). La v0.55 avait son propre mécanisme
+ * (fetch maison, pas d'onglets ni de garde) : supprimé.
  *
- * Routes : GET/PUT/DELETE /api/v2/livret-sequence/<niveau>/<séquence>/cartes-mentales[/<n>] ;
- * PDF : …/rendu-pdf?document=cartes_mentales&version=…&partie=… (même générateur que
- * « Tout compiler » et la publication).
+ * Spécificités (seules surcharges) :
+ *   - un élément par PARTIE de la séquence, carte présente ou absente ;
+ *     identifiant = numéro de la partie ; une partie sans carte s'ouvre sur le
+ *     modèle proposé par le serveur ;
+ *   - l'URL dépend de la séquence filtrée (endpointBase calculé, URL de
+ *     SeqnivPur.urlCartesMentales, partagée avec l'onglet « Rendu PDF » de la
+ *     séquence) ;
+ *   - filtre « Sans carte » ; « + Créer » crée la carte de la partie ouverte (ou
+ *     de la première partie sans carte) ;
+ *   - séquence validée : tout en lecture seule (le serveur refuse par 409) ;
+ *   - rendu : version à compléter / complète, la carte de la partie ou toutes
+ *     celles de la séquence (même générateur que le livret et « Tout compiler »).
+ *
+ * Routes : /api/v2/livret-sequence/<niveau>/<séquence>/cartes-mentales
+ *   GET (liste), POST (créer), /<n> GET / PATCH / DELETE,
+ *   /<n>/rendu-pdf[/info] et /<n>/rendu-tex (?version=…&portee=partie|sequence).
  */
-(function (root) {
-  'use strict';
 
-  // ── Logique pure (testée par tests_js/atelier_carte_mentale.test.js) ──────────
+// ── Logique pure (testée par tests_js/cartes_mentales_atelier.test.js) ─────
 
-  function nbBranches(latex) {
+const CarteMentalePur = {
+  nbBranches(latex) {
     return ((latex || '').match(/\\seqCMBranche(?![A-Za-z])/g) || []).length;
+  },
+
+  /** Élément de liste (contrat d'AtelierEditeur) depuis une partie de l'API. */
+  element(p) {
+    const c = p.carte || null;
+    return {
+      id: String(p.numero),
+      numero: p.numero,
+      libelle: p.libelle || '',
+      presente: !!c,
+      titre: c ? (c.titre || '') : '',
+      etat_code: c ? (c.etat_code || 'en_cours') : 'en_cours',
+      branches: c ? CarteMentalePur.nbBranches(c.latex) : 0,
+    };
+  },
+
+  /** Filtre d'état de la liste : '' | 'en_cours' | 'valide' | 'absente'. */
+  garder(el, filtre) {
+    if (!filtre) return true;
+    if (filtre === 'absente') return !el.presente;
+    return el.presente && el.etat_code === filtre;
+  },
+
+  /** Paramètres du rendu (version, portée). */
+  parametres(version, portee) {
+    const p = new URLSearchParams();
+    p.set('version', version === 'corrigee' ? 'corrigee' : 'eleve');
+    p.set('portee', portee === 'sequence' ? 'sequence' : 'partie');
+    return '?' + p.toString();
+  },
+
+  /** Partie à créer : celle qui est ouverte si elle n'a pas de carte, sinon la
+   *  première partie sans carte ; null si toutes ont leur carte. */
+  partieACreer(liste, actif) {
+    if (actif && !actif.presente) return actif.numero;
+    const libre = (liste || []).find(el => !el.presente);
+    return libre ? libre.numero : null;
+  },
+};
+
+
+class AtelierCarteMentale extends AtelierEditeur {
+  constructor() {
+    super({
+      id:                 'carte_mentale',
+      prefixe:            'atl-cm',
+      titreToolbar:       'Atelier Carte mentale',
+      endpointBase:       '',          // calculé (séquence filtrée), voir plus bas
+      typeLatex:          'carte_mentale',
+      labelExistant:      'Modifier la carte mentale',
+      labelNouveau:       'Nouvelle carte mentale',
+      confirmSuppression: 'Supprimer la carte mentale de cette partie ?',
+      messageEnregistre:  'Carte mentale enregistrée.',
+      messageSupprime:    'Carte mentale supprimée.',
+      typeApi:            'carte_mentale',
+    });
+    // L'URL dépend de la séquence filtrée : endpointBase (CRUD) et
+    // endpointRenduPdf (rendu) sont calculés à chaque usage.
+    const url = () => {
+      const niv = window.ATL_FILTRE_NIVEAU || '';
+      const seq = window.ATL_FILTRE_SEQ || '';
+      return (niv && seq && window.SeqnivPur)
+        ? window.SeqnivPur.urlCartesMentales(niv, seq) : '/api/v2/livret-sequence/-/-/cartes-mentales';
+    };
+    Object.defineProperty(this.config, 'endpointBase', { get: url, configurable: true });
+    Object.defineProperty(this.config, 'endpointRenduPdf', { get: url, configurable: true });
+    this.filtreEtat = '';
+    this.modifiable = true;          // faux si la séquence est validée
   }
 
-  function urlListe(niveau, sequence, numero) {
-    return `/api/v2/livret-sequence/${encodeURIComponent(niveau)}`
-         + `/${encodeURIComponent(sequence)}/cartes-mentales`
-         + (numero ? `/${encodeURIComponent(numero)}` : '');
-  }
+  // ── Liste ───────────────────────────────────────────────────────────────
 
-  function urlPdf(niveau, sequence, version, partie) {
-    const q = [`document=cartes_mentales`,
-               `version=${version === 'corrigee' ? 'corrigee' : 'eleve'}`];
-    if (partie) q.push(`partie=${encodeURIComponent(partie)}`);
-    return `/api/v2/livret-sequence/${encodeURIComponent(niveau)}`
-         + `/${encodeURIComponent(sequence)}/rendu-pdf?` + q.join('&');
-  }
-
-  function libelleEtat(carte) {
-    if (!carte) return 'sans carte';
-    return (carte.etat_code === 'valide' ? 'validée' : 'en cours')
-         + ` · ${nbBranches(carte.latex)} branche(s)`;
-  }
-
-  const MODELE = '\\begin{seqCarteMentaleSix}{Titre central}\n'
-    + '  \\seqCMBranche{Branche 1}{contenu avec un \\seqACompleter{trou}}\n'
-    + '  \\seqCMBranche{Branche 2}{contenu}\n'
-    + '  \\seqCMBranche{Branche 3}{contenu}\n'
-    + '  \\seqCMBranche{Branche 4}{contenu}\n'
-    + '\\end{seqCarteMentaleSix}';
-
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  // ── Atelier ──────────────────────────────────────────────────────────────────
-
-  class AtelierCarteMentale {
-    constructor() {
-      this.parties = [];
-      this.modifiable = true;
-      this.numero = null;            // partie sélectionnée
-      this._blob = null;
-    }
-
-    _el(id) { return document.getElementById(id); }
-
-    _seq() {
-      return { niveau: root.ATL_FILTRE_NIVEAU || '', sequence: root.ATL_FILTRE_SEQ || '' };
-    }
-
-    _toast(msg, type) {
-      if (typeof root.showToast === 'function') root.showToast(msg, type);
-      const m = this._el('atl-cm-message');
-      if (m) m.textContent = msg;
-    }
-
-    async _json(method, url, body) {
-      const r = await fetch(url, {
-        method, headers: body ? { 'Content-Type': 'application/json' } : {},
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      const data = await r.json().catch(() => ({}));
-      return { ok: r.ok, status: r.status, data };
-    }
-
-    async chargerListe() {
-      const { niveau, sequence } = this._seq();
-      const liste = this._el('atl-cm-liste');
-      if (!liste) return;
-      if (!niveau || !sequence) {
-        this.parties = [];
-        liste.innerHTML = '<div class="atl-vide">Choisis un niveau et une séquence.</div>';
-        this._afficherEditeur();
-        return;
-      }
-      const rep = await this._json('GET', urlListe(niveau, sequence));
-      if (!rep.ok) {
-        this.parties = [];
-        liste.innerHTML = `<div class="atl-vide">${esc(rep.data.message || 'Séquence absente de l\'atelier.')}</div>`;
-        this._afficherEditeur();
-        return;
-      }
-      this.parties = rep.data.parties || [];
-      this.modifiable = rep.data.modifiable !== false;
-      if (!this.parties.some(p => p.numero === this.numero)) {
-        this.numero = this.parties.length ? this.parties[0].numero : null;
-      }
-      this._afficherListe();
-      this._afficherEditeur();
-    }
-
-    _afficherListe() {
-      const liste = this._el('atl-cm-liste');
-      if (!liste) return;
-      liste.innerHTML = this.parties.map(p => `
-        <div class="asm-item atl-cm-item${p.numero === this.numero ? ' active' : ''}"
-             data-numero="${p.numero}" onclick="ATELIER_CARTE_MENTALE.choisir(${p.numero})"
-             style="cursor:pointer;padding:4px 6px">
-          <strong>Partie ${p.numero}</strong>${p.libelle ? ' — ' + esc(p.libelle) : ''}
-          <div style="font-size:11px;color:var(--text-muted)">${esc(p.carte ? (p.carte.titre || '(sans titre)') : '')}
-            <span class="atl-cm-etat">${esc(libelleEtat(p.carte))}</span></div>
-        </div>`).join('') || '<div class="atl-vide">Aucune partie.</div>';
-    }
-
-    _partie() { return this.parties.find(p => p.numero === this.numero) || null; }
-
-    choisir(numero) {
-      this.numero = numero;
-      this._afficherListe();
-      this._afficherEditeur();
-    }
-
-    _afficherEditeur() {
-      const p = this._partie();
-      const titre = this._el('atl-cm-titre-partie');
-      if (titre) titre.textContent = p ? `Carte mentale — partie ${p.numero}`
-        + (this.modifiable ? '' : ' (séquence validée : lecture seule)') : 'Carte mentale';
-      const c = (p && p.carte) || null;
-      const set = (id, v) => { const e = this._el(id); if (e) e.value = v; };
-      set('atl-cm-titre', c ? c.titre : '');
-      set('atl-cm-etat-code', c ? c.etat_code : 'en_cours');
-      set('atl-cm-latex', c ? c.latex : (p ? MODELE : ''));
-      ['atl-cm-btn-enregistrer', 'atl-cm-btn-voir', 'atl-cm-btn-supprimer'].forEach(id => {
-        const b = this._el(id);
-        if (b) b.disabled = !p || !this.modifiable || (id === 'atl-cm-btn-supprimer' && !c);
-      });
-      const m = this._el('atl-cm-message');
-      if (m) m.textContent = p && !c ? 'Pas encore de carte : modèle proposé.' : '';
-    }
-
-    async enregistrer(voir) {
-      const { niveau, sequence } = this._seq();
-      const p = this._partie();
-      if (!p) return;
-      const rep = await this._json('PUT', urlListe(niveau, sequence, p.numero), {
-        titre: this._el('atl-cm-titre').value,
-        latex: this._el('atl-cm-latex').value,
-        etat_code: this._el('atl-cm-etat-code').value,
-      });
-      if (!rep.ok) {
-        this._toast('Non enregistrée : ' + (rep.data.message || rep.data.error || rep.status), 'erreur');
-        return;
-      }
-      const av = rep.data.avertissements || [];
-      await this.chargerListe();
-      this._toast(`Carte ${rep.data.etat || 'enregistrée'}` + (av.length ? ' — attention : ' + av.join(' ; ') : ''));
-      if (voir) await this.compiler(true);
-    }
-
-    async supprimer() {
-      const { niveau, sequence } = this._seq();
-      const p = this._partie();
-      if (!p || !p.carte) return;
-      if (root.confirm && !root.confirm(`Supprimer la carte mentale de la partie ${p.numero} ?`)) return;
-      const rep = await this._json('DELETE', urlListe(niveau, sequence, p.numero));
-      if (!rep.ok) { this._toast('Erreur : ' + (rep.data.message || rep.status), 'erreur'); return; }
-      await this.chargerListe();
-      this._toast('Carte supprimée.');
-    }
-
-    // seule = true : la carte de la partie choisie ; sinon selon le sélecteur « Compiler ».
-    async compiler(seule) {
-      const { niveau, sequence } = this._seq();
-      if (!niveau || !sequence) return;
-      const version = (this._el('atl-cm-version') || {}).value || 'eleve';
-      const portee = seule ? 'partie' : ((this._el('atl-cm-portee') || {}).value || 'partie');
-      const partie = portee === 'partie' && this.numero ? this.numero : '';
-      const etat = this._el('atl-cm-rendu-etat');
-      if (etat) etat.textContent = 'Compilation en cours…';
+  async chargerListe() {
+    const niv = window.ATL_FILTRE_NIVEAU || '';
+    const seq = window.ATL_FILTRE_SEQ || '';
+    this._messageListe = '';
+    this.liste = [];
+    if (!niv || !seq) {
+      this._messageListe = 'Choisir une séquence précise : une carte mentale par partie de séquence.';
+    } else {
       try {
-        const r = await fetch(urlPdf(niveau, sequence, version, partie), { method: 'POST' });
-        if (!r.ok) {
-          const d = await r.json().catch(() => ({}));
-          let msg = d.message || d.error || `Erreur HTTP ${r.status}`;
-          if (Array.isArray(d.erreurs) && d.erreurs.length) {
-            msg += ' — ' + d.erreurs.slice(0, 3).map(e => `ligne ${e.ligne || '?'} : ${e.message}`).join(' ; ');
-          }
-          if (etat) etat.textContent = '✗ ' + msg;
-          return;
+        const resp = await fetch(this.config.endpointBase);
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          this._messageListe = data.message || `Erreur chargement liste : HTTP ${resp.status}`;
+        } else {
+          this.liste = (data.parties || []).map(CarteMentalePur.element);
+          this.modifiable = data.modifiable !== false;
         }
-        const blob = await r.blob();
-        if (this._blob) { try { URL.revokeObjectURL(this._blob); } catch (_) {} }
-        this._blob = URL.createObjectURL(blob);
-        const iframe = this._el('atl-cm-pdf');
-        if (iframe) {
-          iframe.src = '/static/vendor/pdfjs/web/viewer.html?file=' + encodeURIComponent(this._blob);
-          iframe.style.display = 'block';
-        }
-        if (etat) etat.textContent = '✓ Compilé';
       } catch (e) {
-        if (etat) etat.textContent = '✗ Erreur réseau : ' + (e.message || e);
+        this.toast('Erreur réseau : ' + e.message, 'erreur');
       }
+    }
+    this._synchroniserItemActifAvecListe();
+    this.rendreSidebar();
+    this._majBoutonCreer();
+  }
+
+  filtrerListe(liste) {
+    return (liste || []).filter(el => CarteMentalePur.garder(el, this.filtreEtat));
+  }
+
+  filtrerEtat(btn, etat) {
+    btn.parentElement.querySelectorAll('.exo-etat').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    this.filtreEtat = etat;
+    this.rendreSidebar();
+  }
+
+  _htmlListeVide() {
+    const msg = this._messageListe
+      || (this.liste.length === 0 ? 'Aucune partie dans cette séquence.' : 'Aucune partie avec ce filtre.');
+    return '<div class="atl-list-vide" style="padding:14px 10px;color:var(--text-muted);'
+         + `font-size:12px;text-align:center">${Atelier.escHtml(msg)}</div>`;
+  }
+
+  rendreItem(el) {
+    const idLib = [window.ATL_FILTRE_NIVEAU || '', window.ATL_FILTRE_SEQ || '', 'P' + el.numero]
+      .filter(Boolean).join('/');
+    const titre = el.presente
+      ? (el.titre || { html: '(sans titre)', derive: true })
+      : { html: Atelier.escHtml(el.libelle || `Partie ${el.numero}`), derive: true };
+    return Atelier.rendreItemHtml({
+      actif: this.itemActif && this.itemActif.id === el.id,
+      dataId: el.id,
+      onclick: `ATELIER_CARTE_MENTALE.ouvrirItem('${Atelier.escAttr(el.id)}')`,
+      id: idLib,
+      titre,
+      titleAttr: `Partie ${el.numero}${el.libelle ? ' — ' + el.libelle : ''}`,
+      placedTags: el.presente ? [`${el.branches} br.`] : ['sans carte'],
+      etatCode: el.etat_code,
+    });
+  }
+
+  // ── Création : la carte de la partie ouverte (ou de la première sans carte) ─
+
+  _payloadCreation() {
+    return { numero: this._numeroACreer };
+  }
+
+  async nouvelItem() {
+    if (!this.modifiable) {
+      this.toast('Séquence validée : la repasser en cours pour créer une carte mentale.', 'erreur');
+      return;
+    }
+    this._numeroACreer = CarteMentalePur.partieACreer(this.liste, this.itemActif);
+    if (this._numeroACreer == null) {
+      this.toast('Toutes les parties de la séquence ont déjà leur carte mentale.', 'erreur');
+      return;
+    }
+    await super.nouvelItem();
+  }
+
+  _majBoutonCreer() {
+    const b = document.getElementById('atl-cm-btn-creer');
+    if (b) b.disabled = !this.modifiable;
+  }
+
+  // ── Formulaire ──────────────────────────────────────────────────────────
+
+  collecterFormulaire() {
+    return { titre: this.$('titre').value, latex: this.$('latex').value };
+  }
+
+  remplirFormulaire(item) {
+    this.$('titre').value = item.titre || '';
+    this.$('latex').value = item.latex || '';
+    if (typeof item.modifiable === 'boolean') this.modifiable = item.modifiable;
+    const info = this.$('info');
+    if (info) {
+      const partie = `Partie ${item.numero}` + (item.libelle ? ` — ${item.libelle}` : '');
+      info.textContent = item.presente
+        ? `${partie} · ${CarteMentalePur.nbBranches(item.latex)} branche(s) (4 à 8 conseillées)`
+        : `${partie} · pas encore de carte : modèle proposé (Enregistrer ou « Créer la carte »).`;
+    }
+    const creer = this.$('btn-creer-partie');
+    if (creer) creer.style.display = item.presente ? 'none' : '';
+  }
+
+  // Avertissements du contrôle (hors 4 à 8 branches) après l'enregistrement.
+  async sauvegarder(options = {}) {
+    const ok = await super.sauvegarder(options);
+    const av = (ok && this.itemActif && this.itemActif.avertissements) || [];
+    if (av.length) this.toast('Attention : ' + av.join(' ; '), 'erreur');
+    return ok;
+  }
+
+  // ── Validation : PATCH de l'état sur la partie (même route que l'enregistrement) ─
+
+  async basculerValidation() {
+    if (!this.itemActif || !this.itemActif.presente) return;
+    const cible = this.itemActif.etat_code === 'valide' ? 'en_cours' : 'valide';
+    try {
+      const resp = await fetch(`${this.config.endpointBase}/${encodeURIComponent(this.itemActif.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ etat_code: cible }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        this.toast(`Erreur validation : ${data.message || data.error || resp.status}`, 'erreur');
+        return;
+      }
+      this.itemActif.etat_code = cible;
+      this.majToolbar();
+      await this.chargerListe();
+    } catch (e) {
+      this.toast(`Erreur réseau : ${e.message}`, 'erreur');
     }
   }
 
-  root.CarteMentalePur = { nbBranches, urlListe, urlPdf, libelleEtat, MODELE };
-  root.AtelierCarteMentale = AtelierCarteMentale;
-  root.ATELIER_CARTE_MENTALE = new AtelierCarteMentale();
-  root.atelCarteMentaleInit = () => root.ATELIER_CARTE_MENTALE.chargerListe();
-})(typeof window !== 'undefined' ? window : globalThis);
+  // ── Barre d'outils : partie sans carte, séquence validée ─────────────────
+
+  majToolbar() {
+    super.majToolbar();
+    const it = this.itemActif;
+    if (!it) return;
+    const masquer = (suffixe) => { const e = this.$(suffixe); if (e) e.style.display = 'none'; };
+    if (!it.presente) {
+      masquer('btn-valider');
+      masquer('btn-suppr');
+      const badge = this.$('etat-badge');
+      if (badge) { badge.textContent = 'Sans carte'; badge.className = 'atome-etat-badge'; }
+    }
+    if (!this.modifiable) {
+      this._appliquerVerrouLectureSeule(true);
+      ['btn-valider', 'btn-suppr', 'btn-save'].forEach(masquer);
+      const titre = this.$('toolbar-title');
+      if (titre) titre.textContent = this.config.labelExistant + ' (séquence validée : lecture seule)';
+    }
+  }
+
+  // ── Rendu : version et portée dans la barre du rendu ─────────────────────
+
+  _assurerToolbarRendu() {
+    super._assurerToolbarRendu();
+    const conteneur = this.$('rendu-toolbar');
+    if (!conteneur || document.getElementById('atl-cm-rendu-version')) return;
+    const mk = (id, titre, choix) => {
+      const sel = document.createElement('select');
+      sel.id = id;
+      sel.className = 'btn-sm';
+      sel.title = titre;
+      for (const [v, lib] of choix) {
+        const o = document.createElement('option');
+        o.value = v;
+        o.textContent = lib;
+        sel.appendChild(o);
+      }
+      sel.addEventListener('change', () => this.verifierCacheEtAfficher());
+      return sel;
+    };
+    const version = mk('atl-cm-rendu-version', 'Version',
+                       [['eleve', 'À compléter (élève)'], ['corrigee', 'Complète']]);
+    const portee = mk('atl-cm-rendu-portee', 'Compiler',
+                      [['partie', 'Cette carte'], ['sequence', 'Toutes les cartes de la séquence']]);
+    const status = conteneur.querySelector('[id$="-rendu-status"]');
+    conteneur.insertBefore(version, status);
+    conteneur.insertBefore(portee, status);
+  }
+
+  parametresRendu() {
+    const v = document.getElementById('atl-cm-rendu-version');
+    const p = document.getElementById('atl-cm-rendu-portee');
+    return CarteMentalePur.parametres(v ? v.value : 'eleve', p ? p.value : 'partie');
+  }
+}
+
+// ── Instance et exposition globale ─────────────────────────────────────────
+
+window.CarteMentalePur = CarteMentalePur;
+window.AtelierCarteMentale = AtelierCarteMentale;
+window.ATELIER_CARTE_MENTALE = new AtelierCarteMentale();
+window.atelCarteMentaleInit = () => window.ATELIER_CARTE_MENTALE.chargerListe();
+if (typeof window.atelGardeEnregistrer === 'function') {
+  window.atelGardeEnregistrer('Carte mentale', window.ATELIER_CARTE_MENTALE);
+}

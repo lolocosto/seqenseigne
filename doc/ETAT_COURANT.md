@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.56.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.56.1** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -233,6 +233,12 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   taille naturelle ; `\seqSepColonnesSix`. Corrigés en phrases complètes et séparations par
   les lots. Le champ `corrige` d'une évaluation n'est pas importé (le corrigé rendu est dans
   son `latex`). Détails : `doc/redemarrage_v0_56_0.md`.
+- v0.56.1 livrée (13 novembre) : **atelier Carte mentale harmonisé** sur les autres
+  ateliers (`AtelierCarteMentale` ← `AtelierEditeur`, même template que Fiche de résumé et
+  Carte d'automatisme : filtre d'état, barre d'outils, onglets Édition / Rendu PDF ; API au
+  contrat d'AtelierEditeur, une entrée par partie) ; **miroir du verso des planches** de
+  cartes d'automatisme rétabli (`_miroir_horizontal_verso`, perdu entre v0.29.0 et
+  v0.32.5). Détails : `doc/redemarrage_v0_56_1.md`.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -515,6 +521,12 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   `cartes_mentales` (jamais une fiche de résumé) ; tout ce qui la lit passe par
   `services/cartes_mentales.py` ; une source est contrôlée (`controler_latex`) avant
   d'être enregistrée (import et atelier).
+  Atelier (v0.56.1) : classe fille d'`AtelierEditeur`, identifiant d'élément = numéro
+  de partie ; ne jamais lui redonner un mécanisme propre (fetch, onglets, rendu).
+- **Planches de cartes** (v0.29.0, rétabli v0.56.1) : le verso est le miroir gauche-droite
+  du recto ligne par ligne (`render_carte_centralise._miroir_horizontal_verso`) ;
+  `\seqCartePlanche` ne réordonne rien (seul le récap est mis en miroir côté LaTeX).
+  Protégé par `tests/test_v0_56_1_verso_miroir_planches.py`.
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

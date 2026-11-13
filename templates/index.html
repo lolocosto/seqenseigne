@@ -2586,50 +2586,125 @@
   </div><!-- /atl-carte_automatisme -->
 
   <!-- ── Atelier Carte mentale (portée Séquence, v0.55.0) ───────────────────
-       Une carte mentale par partie de séquence, tous modèles de référentiel
-       (static/atelier_carte_mentale.js ; décision CM-ATELIER). -->
+       Une carte mentale par partie de séquence, tous modèles de référentiel.
+       v0.56.1 — Harmonisé sur les autres ateliers (même structure que Fiche de
+       résumé et Carte d'automatisme, classe AtelierCarteMentale ← AtelierEditeur,
+       static/atelier_carte_mentale.js) : liste et filtre d'état à gauche, barre
+       d'outils (modifié, état, Valider, Supprimer, Enregistrer), onglets Édition /
+       Rendu PDF. -->
   <div id="atl-carte_mentale" class="atl-panel" style="display:none">
     <div class="atl-shell">
+
       <aside class="atl-sidebar">
         <div class="atl-sidebar-head">
-          <span class="atl-sidebar-title">Parties de la séquence</span>
+          <span class="atl-sidebar-title">Cartes mentales</span>
+          <button class="btn-prim atl-sidebar-btn-creer" id="atl-cm-btn-creer"
+                  onclick="ATELIER_CARTE_MENTALE.nouvelItem()"
+                  title="Créer la carte de la partie ouverte (ou de la première partie sans carte)">+ Créer</button>
         </div>
-        <div id="atl-cm-liste" class="atl-sidebar-liste"></div>
+        <!-- Filtre par état (même ligne que les autres ateliers) -->
+        <div style="padding:4px 8px;display:flex;gap:4px;align-items:center;
+                    border-bottom:1px solid var(--border);font-size:11px;
+                    color:var(--text-muted)">
+          <span>État&nbsp;:</span>
+          <button class="exo-etat active" data-etat=""
+                  onclick="ATELIER_CARTE_MENTALE.filtrerEtat(this, '')">Tous</button>
+          <button class="exo-etat" data-etat="en_cours"
+                  onclick="ATELIER_CARTE_MENTALE.filtrerEtat(this, 'en_cours')">En cours</button>
+          <button class="exo-etat" data-etat="valide"
+                  onclick="ATELIER_CARTE_MENTALE.filtrerEtat(this, 'valide')">Validé</button>
+          <span style="margin:0 4px;color:#ccc">|</span>
+          <button class="exo-etat" data-etat="absente" title="Parties qui n'ont pas encore de carte mentale"
+                  onclick="ATELIER_CARTE_MENTALE.filtrerEtat(this, 'absente')">Sans carte</button>
+        </div>
+        <div id="atl-cm-list" class="atl-list"></div>
       </aside>
-      <main class="atl-main" style="padding:8px 12px;overflow:auto">
-        <div class="atl-cadre">
-          <div class="atl-cadre-titre" id="atl-cm-titre-partie">Carte mentale</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px">
-            <label>Titre <input id="atl-cm-titre" type="text" style="width:22em"></label>
-            <label>État <select id="atl-cm-etat-code">
-              <option value="en_cours">en cours</option><option value="valide">validée</option></select></label>
+
+      <div class="atl-main">
+        <div class="atl-toolbar">
+          <span id="atl-cm-toolbar-title"
+                style="font-size:14px;font-weight:500;flex:1">Atelier Carte mentale</span>
+          <span id="atl-cm-badge-modifie" class="atl-badge-modifie" style="display:none">modifié</span>
+          <span id="atl-cm-etat-badge" class="atome-etat-badge" style="display:none"></span>
+          <button class="btn-sm" id="atl-cm-btn-valider"
+                  onclick="ATELIER_CARTE_MENTALE.basculerValidation()" style="display:none"></button>
+          <button class="btn-danger" id="atl-cm-btn-suppr"
+                  onclick="ATELIER_CARTE_MENTALE.supprimer()" style="display:none">Supprimer</button>
+          <button class="btn-prim" id="atl-cm-btn-save"
+                  onclick="ATELIER_CARTE_MENTALE.sauvegarder()" style="display:none">Enregistrer</button>
+        </div>
+
+        <div class="atl-tabs" id="atl-cm-tabs" style="display:none">
+          <button class="atl-tab active" id="atl-cm-tab-btn-edition"
+                  onclick="ATELIER_CARTE_MENTALE.basculerOnglet('edition')">Édition</button>
+          <button class="atl-tab" id="atl-cm-tab-btn-rendu"
+                  onclick="ATELIER_CARTE_MENTALE.basculerOnglet('rendu')">Rendu PDF</button>
+        </div>
+
+        <div id="atl-cm-empty" class="atl-empty">
+          <div style="font-size:32px;opacity:.3">🧠</div>
+          <p>Sélectionner une partie de la séquence</p>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px">
+            Une carte mentale par partie : à compléter dans le livret élève,
+            complète dans le livret corrigé.
+          </p>
+        </div>
+
+        <div id="atl-cm-form" style="display:none;padding:20px;overflow-y:auto;flex:1">
+          <div id="atl-cm-info" style="font-size:12px;color:var(--text-muted);margin-bottom:10px"></div>
+          <div class="atl-field">
+            <label class="atl-label" for="atl-cm-titre">Titre</label>
+            <input type="text" id="atl-cm-titre" style="width:100%"
+                   placeholder="ex : Ordre de grandeur">
           </div>
-          <textarea id="atl-cm-latex" rows="20" spellcheck="false"
-                    title="Environnement seqCarteMentaleSix et \seqCMBranche (module seqenseigne-style6e v0.13) ; trous : \seqACompleter{…}"
-                    style="width:100%;font-family:monospace;font-size:12px;margin-top:6px"></textarea>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;font-size:12px">
-            <button class="btn-prim" id="atl-cm-btn-enregistrer" onclick="ATELIER_CARTE_MENTALE.enregistrer()">Enregistrer</button>
-            <button class="btn-sec" id="atl-cm-btn-voir" onclick="ATELIER_CARTE_MENTALE.enregistrer(true)"
-                    title="Enregistre puis compile la carte de cette partie, dans la version choisie">Enregistrer et voir</button>
-            <button class="btn-sec" id="atl-cm-btn-supprimer" onclick="ATELIER_CARTE_MENTALE.supprimer()">Supprimer</button>
-            <span id="atl-cm-message"></span>
+          <div class="atl-cadre" style="margin-bottom:14px">
+            <div class="atl-cadre-titre-row">
+              <div class="atl-cadre-titre">Source LaTeX<span class="atl-label-obligatoire">*</span></div>
+              <button type="button" class="btn-ed-latex-manuel"
+                      onclick="EditeurLatex.ouvrir(document.getElementById('atl-cm-latex'))"
+                      title="Ouvrir l'éditeur LaTeX">✎ Éditer</button>
+            </div>
+            <textarea id="atl-cm-latex" rows="22" spellcheck="false" class="latex-textarea"
+                      style="width:100%;font-family:'Cascadia Code',monospace;font-size:12px"
+                      data-contexte-latex="fiche-section" data-ed-latex-attache="1"
+                      title="Environnement seqCarteMentaleSix et \seqCMBranche (module seqenseigne-style6e) ; trous : \seqACompleter{…}"></textarea>
+          </div>
+          <div style="margin-bottom:10px">
+            <button type="button" class="btn-sec" id="atl-cm-btn-creer-partie" style="display:none"
+                    onclick="ATELIER_CARTE_MENTALE.nouvelItem()">Créer la carte de cette partie</button>
+          </div>
+          <div class="atl-legende-obligatoire">
+            Un seul environnement <code>seqCarteMentaleSix</code>, de 1 à 16 branches
+            (<code>\seqCMBranche</code>, 4 à 8 conseillées) ; trous :
+            <code>\seqACompleter{…}</code>.
+          </div>
+        </div><!-- /atl-cm-form -->
+
+        <div id="atl-cm-rendu" style="display:none;flex:1;flex-direction:column">
+          <div id="atl-cm-rendu-toolbar"
+               style="padding:8px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;align-items:center;background:var(--bg-secondary)"></div>
+          <iframe id="atl-cm-pdf-iframe" style="flex:1;width:100%;border:none;display:none"
+                  title="Aperçu PDF de la carte mentale"></iframe>
+          <div id="atl-cm-rendu-erreur"
+               style="display:none;padding:14px;font-size:12px;color:var(--err);background:var(--err-bg);
+                      border:1px solid var(--err);margin:8px;border-radius:4px"></div>
+          <div id="atl-cm-rendu-loading" class="rendu-loading" style="display:none;flex:1">
+            <div class="rendu-spinner"></div>
+            <p>Compilation en cours…</p>
+          </div>
+          <div id="atl-cm-rendu-placeholder"
+               style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+                      color:var(--text-muted);padding:30px;text-align:center">
+            <div style="font-size:32px;opacity:.3">📄</div>
+            <p style="margin-top:12px;font-size:13px">
+              Cliquez sur <strong>Compiler le rendu</strong> pour générer le PDF
+              (version à compléter ou complète, cette carte ou toute la séquence).
+            </p>
           </div>
         </div>
-        <div class="atl-cadre atl-cadre--compact" style="margin-top:8px">
-          <div class="atl-cadre-titre">Rendu PDF</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px">
-            <label>Version <select id="atl-cm-version">
-              <option value="eleve">à compléter (élève)</option><option value="corrigee">complète</option></select></label>
-            <label>Compiler <select id="atl-cm-portee">
-              <option value="partie">la carte de cette partie</option>
-              <option value="sequence">toutes les cartes de la séquence</option></select></label>
-            <button class="btn-prim" onclick="ATELIER_CARTE_MENTALE.compiler()">🔧 Compiler</button>
-            <span id="atl-cm-rendu-etat"></span>
-          </div>
-          <iframe id="atl-cm-pdf" style="display:none;width:100%;height:75vh;border:1px solid var(--border);margin-top:6px"></iframe>
-        </div>
-      </main>
-    </div>
+
+      </div><!-- /atl-main -->
+    </div><!-- /atl-shell -->
   </div><!-- /atl-carte_mentale -->
 
 

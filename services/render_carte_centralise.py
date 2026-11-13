@@ -334,6 +334,34 @@ def rendre_ligne_recap(conn: sqlite3.Connection, cartes: list,
     return {'appel': appel}
 
 PLANCHE_NB_CELLULES = 16
+PLANCHE_NB_COLONNES = 4
+
+
+def _miroir_horizontal_verso(cellules: list, nb_colonnes: int = PLANCHE_NB_COLONNES) -> list:
+    r"""Miroir gauche-droite du verso d'une planche (v0.29.0, rétabli en v0.56.1).
+
+    Les planches sont imprimées en recto-verso **bord court** : après
+    retournement, la colonne 1 du recto se trouve derrière la colonne 4 du
+    verso. Dans la grille remplie ligne par ligne (le .dtx place les cellules
+    dans l'ordre reçu, 4 par ligne), on inverse donc l'ordre de chaque ligne :
+
+        recto  0  1  2  3      verso  3  2  1  0
+               4  5  6  7             7  6  5  4   …
+
+    Indispensable pour une carte **paramétrée** (un tirage différent par
+    cellule : sans miroir, la réponse ne tombe pas derrière son énoncé) ; sans
+    effet visible sur une carte fixe (16 cellules identiques), appliqué
+    partout par cohérence. Le récap (une ligne de 4 cartes différentes) est
+    mis en miroir côté LaTeX par `\seqCarteRecapAjouteLigneCartes` (v0.32.4) ;
+    `\seqCartePlanche`, lui, ne réordonne rien : le miroir est ici.
+
+    Historique : ajouté en v0.29.0, perdu entre la v0.29.0 et la v0.32.5 (fichier
+    reconstruit sans lui), test supprimé en v0.41.0 sur l'idée fausse que le
+    miroir était passé côté LaTeX — voir doc/redemarrage_v0_56_1.md."""
+    out = []
+    for debut in range(0, len(cellules), nb_colonnes):
+        out.extend(reversed(cellules[debut:debut + nb_colonnes]))
+    return out
 
 
 def rendre_carte_planche(conn: sqlite3.Connection,
@@ -399,6 +427,9 @@ def rendre_carte_planche(conn: sqlite3.Connection,
                           for _ in range(PLANCHE_NB_CELLULES)]
         cellules_verso = [f'\\seqCelluleVerso{{{verso}}}'
                           for _ in range(PLANCHE_NB_CELLULES)]
+
+    # v0.56.1 — miroir gauche-droite du verso (recto-verso bord court), rétabli.
+    cellules_verso = _miroir_horizontal_verso(cellules_verso)
 
     bloc_recto = '\n'.join(cellules_recto)
     bloc_verso = '\n'.join(cellules_verso)

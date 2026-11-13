@@ -42,6 +42,15 @@ ETATS = ("en_cours", "valide")
 BRANCHES_CONSEILLEES = (4, 8)
 BRANCHES_MAX = 16                      # limite du module (v0.13)
 
+# v0.56.1 — Modèle proposé pour une partie sans carte (atelier « Carte mentale ») ;
+# une seule source, servie par l'API (auparavant dupliqué dans le JS).
+MODELE = ("\\begin{seqCarteMentaleSix}{Titre central}\n"
+          "  \\seqCMBranche{Branche 1}{contenu avec un \\seqACompleter{trou}}\n"
+          "  \\seqCMBranche{Branche 2}{contenu}\n"
+          "  \\seqCMBranche{Branche 3}{contenu}\n"
+          "  \\seqCMBranche{Branche 4}{contenu}\n"
+          "\\end{seqCarteMentaleSix}")
+
 DDL = f"""
 CREATE TABLE IF NOT EXISTS {TABLE} (
     id         TEXT PRIMARY KEY,                    -- 'cm_xxxxxxxx'
@@ -170,6 +179,22 @@ def parties_de_sequence(conn: sqlite3.Connection, niveau: str, sequence: str) ->
                     "carte": ({k: c[k] for k in ("id", "titre", "latex", "etat_code", "mtime")}
                               if c else None)})
     return out
+
+
+def element_atelier(partie: dict, niveau: str, sequence: str,
+                    modifiable: bool = True) -> dict:
+    """v0.56.1 — Élément de l'atelier « Carte mentale » (contrat d'AtelierEditeur) :
+    une entrée par partie, `id` = numéro de la partie (une partie sans carte a
+    aussi un identifiant), `presente`, et pour une partie sans carte le modèle
+    proposé (`latex` = MODELE, état « en_cours »)."""
+    c = partie.get("carte")
+    latex = c["latex"] if c else MODELE
+    return {"id": str(partie["numero"]), "numero": partie["numero"],
+            "partie_id": partie["partie_id"], "libelle": partie.get("libelle", ""),
+            "niveau": niveau, "sequence": sequence, "presente": bool(c),
+            "carte_id": c["id"] if c else None, "titre": c["titre"] if c else "",
+            "latex": latex, "etat_code": c["etat_code"] if c else "en_cours",
+            "branches": nb_branches(latex) if c else 0, "modifiable": modifiable}
 
 
 def parties_sans_carte(conn: sqlite3.Connection, sn_id: str) -> list[int]:

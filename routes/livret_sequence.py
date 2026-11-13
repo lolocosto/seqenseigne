@@ -20,6 +20,10 @@ Expose :
     → cartes mentales de partie (liste, enregistrement, suppression) ;
       rendu PDF : rendu-pdf ou rendu-tex ?document=cartes_mentales
       &version=eleve|corrigee[&partie=n] (tout modèle ; atelier « Carte mentale »)
+    v0.56.1 (atelier harmonisé, contrat d'AtelierEditeur) : POST …/cartes-mentales
+      (créer, {numero}), GET / PATCH …/cartes-mentales/<n> (élément, enregistrement
+      partiel), …/cartes-mentales/<n>/rendu-pdf[/info] et /rendu-tex
+      (?version=eleve|corrigee&portee=partie|sequence)
 
   POST /api/v2/livret-sequence/<niveau>/<sequence>/rendu-pdf
     body JSON optionnel : {"options": {...}}
@@ -264,12 +268,75 @@ def api_cartes_mentales(niveau: str, sequence: str):
                     'modifiable': bool(sn) and sn['etat_code'] != 'valide'})
 
 
+def _partie_de(conn, sn, numero: int):
+    return conn.execute("SELECT id FROM sequence_parties WHERE sequence_par_niveau_id = ? "
+                        "AND numero = ?", (sn['id'], numero)).fetchone() if sn else None
+
+
+def _element_carte(conn, niveau: str, sequence: str, numero: int, sn) -> dict | None:
+    """v0.56.1 — Élément de l'atelier « Carte mentale » pour la partie `numero`."""
+    from services import cartes_mentales as cm
+    for p in cm.parties_de_sequence(conn, niveau, sequence):
+        if p['numero'] == numero:
+            return cm.element_atelier(p, niveau, sequence,
+                                      bool(sn) and sn['etat_code'] != 'valide')
+    return None
+
+
+def _refus_carte(niveau, sequence, numero, sn, p):
+    if p is None:
+        return jsonify({'error': 'partie_introuvable',
+                        'message': f"{niveau}/{sequence} : pas de partie {numero}"}), 404
+    if sn['etat_code'] == 'valide':
+        return jsonify({'error': 'sequence_validee',
+                        'message': "Séquence validée : la repasser en cours pour "
+                                   "modifier sa carte mentale."}), 409
+    return None
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales', methods=['POST'])
+def api_carte_mentale_creer(niveau: str, sequence: str):
+    """v0.56.1 — « + Créer » de l'atelier (AtelierEditeur.nouvelItem) : crée la
+    carte de la partie `numero` (body JSON) à partir du modèle proposé.
+    201 + élément ; 409 si la partie a déjà sa carte ou si la séquence est
+    validée ; 404 partie inconnue."""
+    from services import cartes_mentales as cm
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    body = request.get_json(silent=True) or {}
+    try:
+        numero = int(body.get('numero'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'numero_invalide', 'message': 'numéro de partie attendu'}), 400
+    with current_app.json_store._conn() as conn:
+        sn = _sn_etat(conn, niveau, sequence)
+        p = _partie_de(conn, sn, numero)
+        refus = _refus_carte(niveau, sequence, numero, sn, p)
+        if refus:
+            return refus
+        if cm.lire_partie(conn, p['id']):
+            return jsonify({'error': 'carte_existante',
+                            'message': f"La partie {numero} a déjà sa carte mentale."}), 409
+        cm.enregistrer(conn, p['id'], (body.get('titre') or '').strip(),
+                       body.get('latex') or cm.MODELE, 'en_cours')
+        conn.commit()
+        return jsonify(_element_carte(conn, niveau, sequence, numero, sn)), 201
+
+
 @bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales/<int:numero>',
-          methods=['PUT', 'DELETE'])
+          methods=['GET', 'PUT', 'PATCH', 'DELETE'])
 def api_carte_mentale(niveau: str, sequence: str, numero: int):
-    """v0.55.0 — Enregistre (PUT {titre, latex, etat_code}) ou supprime la
-    carte mentale de la partie `numero`. 409 si la séquence est validée ;
-    400 si la source est refusée (CM-CONTROLE) ; 404 partie inconnue."""
+    """v0.55.0 — Carte mentale de la partie `numero`.
+
+    v0.56.1 (atelier harmonisé, contrat d'AtelierEditeur) :
+      GET          → élément (carte, ou modèle proposé si la partie n'en a pas) ;
+      PATCH / PUT  → crée ou met à jour ; clés absentes (titre, latex, etat_code)
+                     = valeurs actuelles (« Valider » n'envoie que etat_code) ;
+                     renvoie l'élément + `etat` et `avertissements` ;
+      DELETE       → supprime.
+    409 si la séquence est validée ; 400 si la source est refusée (CM-CONTROLE) ;
+    404 partie inconnue."""
     from services import cartes_mentales as cm
     erreur = _valider_niveau_sequence(niveau, sequence)
     if erreur:
@@ -277,28 +344,107 @@ def api_carte_mentale(niveau: str, sequence: str, numero: int):
     body = request.get_json(silent=True) or {}
     with current_app.json_store._conn() as conn:
         sn = _sn_etat(conn, niveau, sequence)
-        p = conn.execute("SELECT id FROM sequence_parties WHERE sequence_par_niveau_id = ? "
-                         "AND numero = ?", (sn['id'], numero)).fetchone() if sn else None
-        if p is None:
-            return jsonify({'error': 'partie_introuvable',
-                            'message': f"{niveau}/{sequence} : pas de partie {numero}"}), 404
-        if sn['etat_code'] == 'valide':
-            return jsonify({'error': 'sequence_validee',
-                            'message': "Séquence validée : la repasser en cours pour "
-                                       "modifier sa carte mentale."}), 409
+        p = _partie_de(conn, sn, numero)
+        if request.method == 'GET':
+            if p is None:
+                return jsonify({'error': 'partie_introuvable',
+                                'message': f"{niveau}/{sequence} : pas de partie {numero}"}), 404
+            return jsonify(_element_carte(conn, niveau, sequence, numero, sn))
+        refus = _refus_carte(niveau, sequence, numero, sn, p)
+        if refus:
+            return refus
         if request.method == 'DELETE':
             ok = cm.supprimer(conn, p['id'])
             conn.commit()
             return jsonify({'supprimee': ok})
+        actuelle = cm.lire_partie(conn, p['id']) or {}
+        titre = body['titre'] if 'titre' in body else actuelle.get('titre', '')
+        latex = body['latex'] if 'latex' in body else actuelle.get('latex', '')
         try:
-            cid, etat = cm.enregistrer(conn, p['id'], body.get('titre') or '',
-                                       body.get('latex') or '', body.get('etat_code') or None,
-                                       forcer_valide=True)
+            _, etat = cm.enregistrer(conn, p['id'], titre or '', latex or '',
+                                     body.get('etat_code') or None, forcer_valide=True)
         except cm.CarteMentaleErreur as e:
             return jsonify({'error': e.code, 'message': str(e)}), 400
         conn.commit()
-        _, avert = cm.controler_latex(body.get('latex') or '')
-    return jsonify({'id': cid, 'etat': etat, 'avertissements': avert})
+        _, avert = cm.controler_latex(latex or '')
+        element = _element_carte(conn, niveau, sequence, numero, sn)
+    element.update({'etat': etat, 'avertissements': avert})
+    return jsonify(element)
+
+
+# ── v0.56.1 — Rendu d'une carte mentale (onglet « Rendu PDF » de l'atelier) ──
+#
+# Même générateur que le document « Cartes mentales » de la séquence
+# (services.cartes_mentales.generer_cartes_mentales_6e) et même compilation /
+# même cache que le livret (_reponse_compilation) : ?version=eleve|corrigee,
+# ?portee=partie (défaut) ou sequence (toutes les cartes de la séquence).
+
+def _tex_carte_mentale(conn, niveau: str, sequence: str, numero: int, config) -> str:
+    from services.cartes_mentales import generer_cartes_mentales_6e
+    portee = request.args.get('portee') or 'partie'
+    return generer_cartes_mentales_6e(
+        conn, niveau, sequence,
+        options={'version': request.args.get('version') or 'eleve',
+                 'partie': '' if portee == 'sequence' else str(numero)},
+        tikz_libraries=config.tikz_libraries(),
+        tblr_libraries=config.tblr_libraries())
+
+
+def _refus_tex(e: Exception):
+    """Pas de carte (partie sans carte) ou option invalide : 400 au format des
+    erreurs de compilation, affiché par l'onglet Rendu PDF."""
+    return jsonify({'error': 'options_invalides', 'message': str(e),
+                    'erreurs': [{'ligne': None, 'message': str(e), 'contexte': ''}]}), 400
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales/<int:numero>/rendu-pdf/info',
+          methods=['GET'])
+def api_carte_mentale_rendu_info(niveau: str, sequence: str, numero: int):
+    """v0.56.1 — PDF déjà en cache ? (même contrat que /api/atomes/<type>/<id>/rendu-pdf/info)."""
+    from services.compilateur_pdf import chemin_pdf_cache, hash_tex
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    try:
+        with current_app.json_store._conn() as conn:
+            tex = _tex_carte_mentale(conn, niveau, sequence, numero, _configuration())
+    except Exception as e:                      # route d'introspection : robuste
+        return jsonify({'cache_valide': False, 'raison': 'tex_indisponible',
+                        'message': str(e)}), 200
+    return jsonify({'cache_valide': chemin_pdf_cache(_cache_dir(), hash_tex(tex)).is_file()})
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales/<int:numero>/rendu-pdf',
+          methods=['POST'])
+def api_carte_mentale_rendu_pdf(niveau: str, sequence: str, numero: int):
+    """v0.56.1 — Compile la carte de la partie (ou toutes celles de la séquence)."""
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    config = _configuration()
+    try:
+        with current_app.json_store._conn() as conn:
+            tex = _tex_carte_mentale(conn, niveau, sequence, numero, config)
+    except ValueError as e:
+        return _refus_tex(e)
+    except Exception as e:
+        return jsonify({'error': 'erreur_generation_tex', 'message': str(e)}), 500
+    return _reponse_compilation(tex, config)
+
+
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/cartes-mentales/<int:numero>/rendu-tex',
+          methods=['GET'])
+def api_carte_mentale_rendu_tex(niveau: str, sequence: str, numero: int):
+    """v0.56.1 — .tex de la carte (« LaTeX généré », Ctrl+L, .tex brut)."""
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    try:
+        with current_app.json_store._conn() as conn:
+            tex = _tex_carte_mentale(conn, niveau, sequence, numero, _configuration())
+    except ValueError as e:
+        return _refus_tex(e)
+    return Response(tex, mimetype='text/plain; charset=utf-8')
 
 
 # ── v0.53.1 — Route : résumé d'une séquence de mise en route ────────────────
@@ -350,8 +496,6 @@ def api_livret_sequence_pdf(niveau: str, sequence: str):
         return erreur
 
     config = _configuration()
-    racine_sources = config.chemin_sources_livrets()
-    dossier_images = Path(current_app.json_store.data_dir) / 'images'
 
     # 1. Génération du .tex (v0.52.1 : selon le gabarit, cf. _gabarit_demande)
     try:
@@ -368,7 +512,16 @@ def api_livret_sequence_pdf(niveau: str, sequence: str):
             'message': str(e),
         }), 500
 
-    # 2. Compilation (réutilise le cache de compilateur_pdf).
+    # 2. Compilation et réponse (v0.56.1 : factorisées, partagées avec le rendu
+    # d'une carte mentale de l'atelier).
+    return _reponse_compilation(tex, config)
+
+
+def _reponse_compilation(tex: str, config):
+    """Compile `tex` (cache de compilateur_pdf) : 200 PDF, 422 erreurs LaTeX,
+    503 pdflatex introuvable ou timeout."""
+    racine_sources = config.chemin_sources_livrets()
+    dossier_images = Path(current_app.json_store.data_dir) / 'images'
     # Timeout long : un livret de séquence agrège de nombreux atomes.
     # Pas autant qu'un récap annuel mais largement plus qu'un atome
     # isolé — le timeout court (~30s) ne suffit pas en pratique.

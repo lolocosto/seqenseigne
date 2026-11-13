@@ -2181,6 +2181,7 @@ document.addEventListener('keydown', (ev) => {
     'methode':           'ATELIER_METHODE',
     'fiche':             'ATELIER_FICHE',
     'carte_automatisme': 'ATELIER_CARTE',
+    'carte_mentale':     'ATELIER_CARTE_MENTALE',   // v0.56.1
     'evaluation':        'ATELIER_EVALUATION',
   };
   const panel = (typeof atelTrouverPanelVisible === 'function')
