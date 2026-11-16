@@ -8,7 +8,8 @@ Principe général :
 
 1. Détection des options du paquet seqenseigne selon les macros utilisées
    par l'atome (['geometrie'] si tkz-euclide/tikz, ['scratch'] si scratch3).
-2. Résolution du thème depuis le référentiel (couleur de la séquence).
+2. Résolution du thème (couleur de la séquence) : tables vivantes d'abord
+   (v0.58.1), instantanés des référentiels en repli, « gris » en dernier.
 3. Résolution des macros CSV-dépendantes (\seqObjectifGetNom, etc.) par
    substitution directe des valeurs depuis la BDD.
 4. Application des règles de réécriture (\seqCorrige inline, etc.).
@@ -573,15 +574,102 @@ _REF_ORDER_BY = """
 """
 
 
+# ── v0.58.1 — Lectures dans les tables vivantes ──────────────────────────────
+# Un atome (exercice, notion, méthode, fiche) est TOUJOURS un contenu vivant :
+# son rendu suit les tables vivantes (cycles / thèmes / séquences du cycle),
+# comme les livrets de séquence et les cartes d'automatisme
+# (`v2_lecture`, `render_carte_centralise.resoudre_code_couleur`). Les
+# instantanés `referentiel_*` ne servent plus qu'en repli : depuis la
+# migration des codes (v0.58.0), les séquences vivantes sont en A1… alors
+# que les référentiels figés gardent S…, et chercher un atome A1 dans les
+# instantanés le rendait en gris.
+
+def _sequence_vivante(conn: sqlite3.Connection,
+                      niveau: str, code: str) -> dict | None:
+    """Séquence du cycle du niveau (tables vivantes) avec son thème :
+    {nom, numero, theme_code, theme_nom, couleur} ; None si introuvable
+    (code inconnu, niveau inconnu, ou base sans ces tables)."""
+    if not niveau or not code:
+        return None
+    try:
+        row = conn.execute("""
+            SELECT sdc.nom, sdc.numero, t.code, t.nom, t.code_couleur
+            FROM param_niveaux pn
+            JOIN sequences_du_cycle sdc
+                 ON sdc.cycle_code = pn.cycle_code AND sdc.code = ?
+            LEFT JOIN themes t ON t.id = sdc.theme_id
+            WHERE pn.code = ?
+            LIMIT 1
+        """, (code, niveau)).fetchone()
+    except sqlite3.OperationalError:          # base ancienne / de test sans ces tables
+        return None
+    if row is None:
+        return None
+    return {'nom': row[0], 'numero': row[1], 'theme_code': row[2],
+            'theme_nom': row[3], 'couleur': row[4]}
+
+
+def _theme_vivant(conn: sqlite3.Connection,
+                  niveau: str, code_theme: str) -> str | None:
+    """Nom du thème `code_theme` du cycle du niveau (tables vivantes)."""
+    if not niveau or not code_theme:
+        return None
+    try:
+        row = conn.execute("""
+            SELECT t.nom FROM param_niveaux pn
+            JOIN themes t ON t.cycle_code = pn.cycle_code AND t.code = ?
+            WHERE pn.code = ?
+            LIMIT 1
+        """, (code_theme, niveau)).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    return row[0] if row and row[0] else None
+
+
+def _couleur_valide(valeur) -> str | None:
+    couleur = (valeur or '').strip()
+    return couleur if couleur in THEMES_VALIDES else None
+
+
 def resoudre_theme(conn: sqlite3.Connection,
                    niveau: str, sequence: str) -> str:
     """Retourne la couleur de thème pour une (niveau, sequence).
 
     Valeurs attendues : 'nombres', 'donnees', 'grandeurs', 'geometrie',
-    'algorithmique'. Retourne 'gris' en secours si la séquence est introuvable
-    ou si son thème n'a pas de couleur renseignée.
+    'algorithmique', 'proportionnalite'.
+
+    v0.58.1 — Ordre de lecture :
+      1. tables vivantes (séquence du cycle → thème → code_couleur), même
+         source que les livrets de séquence et les cartes d'automatisme ;
+      2. en repli seulement, instantanés des référentiels (une séquence qui
+         n'existe plus dans les tables vivantes, ex. S03 d'un référentiel
+         figé) ;
+      3. 'gris' si rien n'est trouvé ou si la couleur n'est pas valide.
     """
-    row = conn.execute(f"""
+    seq = _sequence_vivante(conn, niveau, sequence)
+    if seq is not None:
+        couleur = _couleur_valide(seq['couleur'])
+        if couleur:
+            return couleur
+    return _theme_depuis_referentiels(conn, niveau, sequence)
+
+
+def _theme_depuis_referentiels(conn: sqlite3.Connection,
+                               niveau: str, sequence: str) -> str:
+    """Repli (comportement d'avant v0.58.1) : couleur lue dans les
+    instantanés `referentiel_*`, 'gris' si introuvable."""
+    try:
+        row = _ligne_theme_referentiels(conn, niveau, sequence)
+    except sqlite3.OperationalError:
+        return 'gris'
+    if not row or not row[0]:
+        return 'gris'
+    return _couleur_valide(row[0]) or 'gris'
+
+
+def _ligne_theme_referentiels(conn: sqlite3.Connection,
+                              niveau: str, sequence: str):
+    return conn.execute(f"""
         SELECT rt.couleur
         FROM referentiel_sequences rs
         JOIN referentiel_niveaux rn ON rs.referentiel_id = rn.id
@@ -592,13 +680,6 @@ def resoudre_theme(conn: sqlite3.Connection,
         {_REF_ORDER_BY}
         LIMIT 1
     """, (niveau, sequence)).fetchone()
-
-    if not row or not row[0]:
-        return 'gris'
-    couleur = row[0].strip()
-    if couleur not in THEMES_VALIDES:
-        return 'gris'
-    return couleur
 
 
 # ── 3. Résolution des macros CSV-dépendantes ──────────────────────────────────
@@ -657,9 +738,15 @@ def resoudre_macros_csv(conn: sqlite3.Connection, texte: str,
             # défaut), donc ce changement ne modifie aucun rendu existant.
             return 'N'
 
+        # v0.58.1 — Séquences et thèmes : tables vivantes d'abord (l'atome est
+        # un contenu vivant, cf. resoudre_theme), instantanés des référentiels
+        # en repli (code absent des tables vivantes), placeholder sinon.
         if macro == 'seqSequenceGetNom':
             # L'argument est facultatif : si vide on prend la séquence courante
             code_seq = arg or sequence
+            seq = _sequence_vivante(conn, niveau, code_seq)
+            if seq is not None and seq['nom']:
+                return seq['nom']
             row = conn.execute(f"""
                 SELECT rs.nom FROM referentiel_sequences rs
                 JOIN referentiel_niveaux rn ON rs.referentiel_id = rn.id
@@ -671,6 +758,15 @@ def resoudre_macros_csv(conn: sqlite3.Connection, texte: str,
 
         if macro == 'seqSequenceGetNumero':
             code_seq = arg or sequence
+            seq = _sequence_vivante(conn, niveau, code_seq)
+            if seq is not None:
+                # Même règle que le titre des livrets (v0.57.0, L1) : une
+                # séquence en code de thème s'affiche « A1 », jamais « 11 ».
+                from services.codes_sequence import est_code_theme
+                if est_code_theme(code_seq):
+                    return code_seq
+                if seq['numero'] is not None:
+                    return str(seq['numero'])
             row = conn.execute(f"""
                 SELECT rs.numero FROM referentiel_sequences rs
                 JOIN referentiel_niveaux rn ON rs.referentiel_id = rn.id
@@ -682,6 +778,9 @@ def resoudre_macros_csv(conn: sqlite3.Connection, texte: str,
 
         if macro == 'seqSequenceGetTheme':
             code_seq = arg or sequence
+            seq = _sequence_vivante(conn, niveau, code_seq)
+            if seq is not None and seq['theme_code']:
+                return seq['theme_code']
             row = conn.execute(f"""
                 SELECT rs.theme_code FROM referentiel_sequences rs
                 JOIN referentiel_niveaux rn ON rs.referentiel_id = rn.id
@@ -692,6 +791,9 @@ def resoudre_macros_csv(conn: sqlite3.Connection, texte: str,
             return row[0] if row and row[0] else '[THEME]'
 
         if macro == 'seqThemeGetNom':
+            nom = _theme_vivant(conn, niveau, arg)
+            if nom:
+                return nom
             row = conn.execute(f"""
                 SELECT rt.nom FROM referentiel_themes rt
                 JOIN referentiel_niveaux rn ON rt.referentiel_id = rn.id

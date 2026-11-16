@@ -21,6 +21,14 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.58.1 — 2026-11-16 : aucune modification du paquet
+
+- Rendu d'un atome isolé : `\seqSetColorsTheme{…}` reçoit de nouveau la couleur du thème
+  de la séquence (lue dans les tables vivantes de l'appli) au lieu de `gris` pour les
+  séquences en codes A1.
+
+---
+
 ## Appli v0.58.0 — 2026-11-16 : aucune modification du paquet
 
 - Migration des codes de séquences (S03 → A1…) par l'outil de l'appli
