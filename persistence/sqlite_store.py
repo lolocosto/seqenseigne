@@ -2202,7 +2202,8 @@ class SqliteStore:
                     (_rowid(), section_id, j, corps),
                 )
 
-    def ecrire_objectifs(self, referentiel_ids: list[str] | None = None) -> dict:
+    def ecrire_objectifs(self, referentiel_ids: list[str] | None = None,
+                         seulement_sequences_du_cycle: bool = False) -> dict:
         """
         v0.14.6.b.1 — Écrit dans `objectifs` (anciennement `objectifs` v1).
 
@@ -2234,15 +2235,27 @@ class SqliteStore:
         plus migrés (remplacés en v2 par le mécanisme des précédences
         inter-parties).
 
+        v0.58.2 (P2) — `seulement_sequences_du_cycle=True` (le scanner) : un
+        objectif d'instantané dont la séquence n'existe pas dans les séquences
+        du cycle du niveau (tables vivantes `param_niveaux` →
+        `sequences_du_cycle`) est ignoré (compté dans `objectifs_ignores`) :
+        rien n'est créé ni modifié pour lui. Après la migration des codes,
+        l'instantané en S… d'un référentiel verrouillé ne recrée donc plus
+        N11/S01…S14 à côté de A1… Un cycle sans aucune séquence en base (base
+        neuve, tests) garde l'ancien comportement.
+
         Retourne un dict rapport {referentiels_traites, objectifs_crees,
-        objectifs_maj}.
+        objectifs_maj, objectifs_ignores}.
         """
         rapport = {
             "referentiels_traites": 0,
             "objectifs_crees":      0,
             "objectifs_maj":        0,
+            "objectifs_ignores":    0,
         }
         with self._conn() as conn:
+            codes_du_cycle = (self._codes_sequences_du_cycle_par_niveau(conn)
+                              if seulement_sequences_du_cycle else {})
             if referentiel_ids is None:
                 rows = conn.execute(
                     "SELECT id FROM referentiel_niveaux WHERE etat='verrouille'"
@@ -2270,6 +2283,10 @@ class SqliteStore:
                 for r in obj_rows:
                     seq_code = r["seq_code"]
                     code = r["code"]
+                    codes_niv = codes_du_cycle.get(niveau)
+                    if codes_niv and seq_code not in codes_niv:
+                        rapport["objectifs_ignores"] += 1
+                        continue
                     nom_obj = r["nom"] or ""
                     cF = r["critere_f"] or ""
                     cA = r["critere_a"] or ""
@@ -2356,6 +2373,22 @@ class SqliteStore:
                 rapport["referentiels_traites"] += 1
 
         return rapport
+
+    @staticmethod
+    def _codes_sequences_du_cycle_par_niveau(conn) -> dict:
+        """v0.58.2 — {niveau: {codes des séquences du cycle du niveau}} ;
+        niveau absent si son cycle n'a aucune séquence (ou tables absentes)."""
+        try:
+            rows = conn.execute(
+                "SELECT pn.code, sdc.code FROM param_niveaux pn "
+                "JOIN sequences_du_cycle sdc ON sdc.cycle_code = pn.cycle_code"
+            ).fetchall()
+        except sqlite3.OperationalError:
+            return {}
+        out: dict = {}
+        for niv, code in rows:
+            out.setdefault(niv, set()).add(code)
+        return out
 
     def lire_notions(self) -> list:
         with self._conn() as conn:
@@ -2564,6 +2597,94 @@ class SqliteStore:
                         )
                     # Si pas d'objectif existant : on ne crée rien (le
                     # rapport amont signalera l'orphelinat).
+
+    # ── v0.58.2 (P3) — Ajout seul (scanner) ──────────────────────────────
+    #
+    # Le scanner n'ajoute que les atomes dont le `fichier` est absent de la
+    # base. `ecrire_notions` / `ecrire_methodes` réécrivent toute la table
+    # (DELETE + INSERT) : effacement des liens `objectif_notions` (cascade),
+    # liens méthode ↔ objectif refaits d'après (niveau, séquence,
+    # num_objectif), sections recréées. Ces deux méthodes n'insèrent que les
+    # nouveaux et ne touchent à aucune ligne existante.
+
+    def ajouter_notions(self, liste: list) -> int:
+        """Insère les notions de `liste` (identifiants absents de la base) ;
+        retourne le nombre inséré. Aucune ligne existante n'est modifiée."""
+        n_ins = 0
+        with self._conn() as conn:
+            for n in liste:
+                if conn.execute("SELECT 1 FROM notions WHERE id=?", (n["id"],)).fetchone():
+                    continue
+                os_ = "ER" if n.get("ordreExRem", True) else "RE"
+                conn.execute(
+                    "INSERT INTO notions "
+                    "(id, titre, corps, ordre_sections, "
+                    " niveau, sequence, num_connaissance, fichier, etat_code) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    (n["id"], n.get("titre", ""), n.get("corps", ""), os_,
+                     n.get("niveau", ""), n.get("sequence", ""),
+                     n.get("num_connaissance", "") or "", n.get("fichier", ""),
+                     n.get("etat_code") or "en_cours"))
+                self._ecrire_sections(conn, "notion", n["id"], n.get("sections", []))
+                n_ins += 1
+        return n_ins
+
+    def ajouter_methodes(self, liste: list) -> int:
+        """Insère les méthodes de `liste` (identifiants absents de la base) ;
+        retourne le nombre inséré. Une nouvelle méthode est liée à l'objectif
+        (niveau, séquence, num_objectif) seulement si cet objectif n'a pas
+        encore de méthode ; ses critères ne sont écrits que là où l'objectif
+        n'en a pas (le scanner n'en lit aucun : rien n'est effacé)."""
+        n_ins = 0
+        with self._conn() as conn:
+            for m in liste:
+                if conn.execute("SELECT 1 FROM methodes WHERE id=?", (m["id"],)).fetchone():
+                    continue
+                os_ = "ER" if m.get("ordreExRem", True) else "RE"
+                fc = m.get("finCycle", m.get("fin_cycle", "N"))
+                niveau, sequence = m.get("niveau", ""), m.get("sequence", "")
+                num_meth = m.get("num_methode")
+                num_obj = m.get("num_objectif", "") or ""
+                conn.execute(
+                    "INSERT INTO methodes "
+                    "(id, titre, corps, fin_cycle, ordre_sections, "
+                    " niveau, sequence, num_methode, num_objectif, fichier, "
+                    " etat_code) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (m["id"], m.get("titre", ""), m.get("corps", ""), fc, os_,
+                     niveau, sequence,
+                     int(num_meth) if num_meth is not None and str(num_meth).isdigit() else None,
+                     num_obj, m.get("fichier", ""), m.get("etat_code") or "en_cours"))
+                self._ecrire_sections(conn, "methode", m["id"], m.get("sections", []))
+                for i, nid in enumerate(m.get("notions", [])):
+                    conn.execute("INSERT OR IGNORE INTO methode_notions VALUES (?,?,?)",
+                                 (m["id"], nid, i))
+                n_ins += 1
+                if not (niveau and sequence and num_obj):
+                    continue
+                obj = conn.execute(
+                    "SELECT ov2.id, ov2.critere_F, ov2.critere_A, ov2.critere_E "
+                    "FROM objectifs ov2 "
+                    "JOIN sequence_parties      p  ON p.id  = ov2.partie_id "
+                    "JOIN sequences_par_niveau  sn ON sn.id = p.sequence_par_niveau_id "
+                    "WHERE sn.niveau=? AND sn.sequence_code=? AND ov2.code=? "
+                    "AND ov2.methode_id IS NULL LIMIT 1",
+                    (niveau, sequence, num_obj)).fetchone()
+                if obj is None:
+                    continue
+                crit = m.get("criteres", {}) or {}
+                nv = {
+                    "F": crit.get("2", crit.get("F", crit.get("fondamental", ""))) or "",
+                    "A": crit.get("3", crit.get("A", crit.get("avancé", ""))) or "",
+                    "E": crit.get("4", crit.get("E", crit.get("exploration", ""))) or "",
+                }
+                conn.execute(
+                    "UPDATE objectifs SET methode_id=?, critere_F=?, critere_A=?, "
+                    "critere_E=? WHERE id=?",
+                    (m["id"],
+                     obj["critere_F"] or nv["F"], obj["critere_A"] or nv["A"],
+                     obj["critere_E"] or nv["E"], obj["id"]))
+        return n_ins
 
     def lire_exercices(self) -> list:
         with self._conn() as conn:

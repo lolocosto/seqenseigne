@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.58.1** (dernière livrée ; v0.58.0 déployée, poussée et migration appliquée le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.58.2** (dernière livrée ; v0.58.1 déployée et poussée, migration appliquée le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -288,6 +288,20 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   supprimer. Conséquence repérée non corrigée : un nouveau `.tex` en A1 scanné prend le
   titre « [à saisir] » s'il est fait de macros (CSV de départ en S…). pytest 4988 réussis
   (+14), vitest 386. Détails : `doc/redemarrage_v0_58_1.md`.
+- v0.58.2 livrée (16 novembre) : **le scanner et les données de départ après la
+  migration**. Titres-macros des `.tex` scannés lus dans les tables vivantes d'abord,
+  CSV de départ en repli rattachés au code A1 quand la séquence a le même nom (une
+  méthode A1 `\seqObjectifGetNom{06}` n'est plus « [à saisir] ») ; le scan ne recrée
+  plus N11/S01…S14 depuis l'instantané verrouillé 2025_N11b ; scan additif (avant : 26
+  liens méthode ↔ objectif des contenus reclassés cassés et 77 liens objectif ↔ notion
+  effacés à chaque scan) ; libellés de parties de 6e et critères du modèle « programme
+  du cycle » retrouvés (`objectifs_6e.json`, CSV lus sous l'ancien code). Données de
+  départ non réécrites. Q1 : l'outil de migration (0.58.2) crée, de façon idempotente
+  et journalisée, la séquence-niveau A2 (en cours, vide) des niveaux qui ont des
+  contenus A2 — absente depuis la v0.58.0, l'atelier Séquence ne pouvait pas l'ouvrir ;
+  **à relancer chez Laurent** (`--sans-fichiers`, puis `--apply`). Traces S… signalées :
+  codes S01… des référentiels externes, textes d'exemple de l'interface. pytest 5007
+  réussis (+19), vitest 386. Détails : `doc/redemarrage_v0_58_2.md`.
 - **À faire par Laurent** : la création des référentiels 2027 en codes A1 (6e :
   `marche_a_suivre_referentiels_6e_v0_58.md`) ; ne pas déverrouiller les référentiels de
   cette année.
@@ -604,6 +618,10 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   Un contenu vivant (atome, livret, carte) se rend d'après les tables vivantes
   (`sequences_du_cycle`, `themes`), jamais d'après les instantanés seuls (v0.58.1,
   `tests/test_v0_58_1_couleur_atomes.py`).
+  Le scanner résout les titres d'après les tables vivantes, CSV de départ en repli
+  (rattachés au code vivant seulement à nom de séquence égal), et n'ajoute que les
+  nouveaux atomes : il ne réécrit jamais les notions et méthodes existantes ni ne crée de
+  séquence absente du cycle (v0.58.2, `tests/test_v0_58_2_scanner_apres_migration.py`).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

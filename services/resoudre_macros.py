@@ -263,6 +263,146 @@ def construire_contexte_global(csv_store) -> Contexte:
     return ctx
 
 
+def completer_depuis_base(ctx: Contexte, conn) -> Contexte:
+    """v0.58.2 — Complète (en place) un contexte lu dans les CSV de départ
+    avec les **tables vivantes** de la base, qui ont le dernier mot.
+
+    Après la migration des codes (v0.58.0), les CSV de départ
+    (`C0X_objectifs.csv`, `C0X_connaissances.csv`…) restent en codes S… :
+    un `.tex` de la séquence A1 dont le titre est `\\seqObjectifGetNom{06}`
+    ne trouvait plus rien (« [à saisir] »). Ordre de lecture (décision P1) :
+
+      1. tables vivantes : `objectifs` (via `sequence_parties` et
+         `sequences_par_niveau`), titres des `notions` (connaissances),
+         `sequences_du_cycle` et `themes` — la même source que le rendu des
+         atomes (`latex_rendu_atome.resoudre_macros_csv`) et les livrets ;
+      2. CSV de départ, sous leur propre code (base d'avant migration, base
+         neuve) **et** sous le code vivant que leur donne la table de
+         correspondance 2027, mais seulement quand la séquence vivante porte
+         le même nom que celle du CSV (S03 « Calcul numérique » → A1) : le
+         CSV du cycle 3 décrit l'ancien découpage (S07 « Proportionnalité »
+         n'est pas la B3 « Angles ») et n'est jamais rattaché ;
+      3. sinon `[à saisir]` et un incident (comme avant).
+
+    Les CSV ne sont jamais réécrits. Sans base lisible (tests autonomes,
+    tables absentes), le contexte est rendu tel quel."""
+    if conn is None:
+        return ctx
+    try:
+        _rattacher_codes_2027(ctx, conn)
+        _superposer_tables_vivantes(ctx, conn)
+    except Exception:                     # base ancienne / partielle : CSV seuls
+        return ctx
+    return ctx
+
+
+def _requete(conn, sql: str, params=()) -> list:
+    import sqlite3
+    try:
+        return [tuple(r) for r in conn.execute(sql, params).fetchall()]
+    except sqlite3.OperationalError:
+        return []
+
+
+def _niveaux_par_cycle(ctx: Contexte, conn) -> dict:
+    out: dict = {}
+    lignes = _requete(conn, "SELECT code, cycle_code FROM param_niveaux")
+    if lignes:
+        for code, cycle in lignes:
+            out.setdefault(cycle, set()).add(code)
+        return out
+    for code, info in (ctx.param_niveaux or PARAM_NIVEAUX_FALLBACK).items():
+        out.setdefault(info[0], set()).add(code)
+    return out
+
+
+def _rattacher_codes_2027(ctx: Contexte, conn) -> None:
+    """Étape 2 : entrées des CSV (codes S…) recopiées sous le code vivant
+    (A1…) d'après `outils/correspondance_codes_2027.json`, si la séquence
+    vivante a le même nom que celle du CSV. Une clé déjà présente n'est
+    jamais remplacée."""
+    from services.codes_sequence import charger_correspondance
+    try:
+        corr = charger_correspondance()
+    except Exception:
+        return
+    vivantes = {(c, code): (nom or "").strip() for c, code, nom in _requete(
+        conn, "SELECT cycle_code, code, nom FROM sequences_du_cycle")}
+    if not vivantes:
+        return
+    niveaux = _niveaux_par_cycle(ctx, conn)
+    for cycle, seqs_csv in (ctx.sequences_par_cycle or {}).items():
+        renvois = {}
+        for ancien, info in seqs_csv.items():
+            nouveau = corr.vers_nouveau(cycle, ancien)
+            if nouveau == ancien or (cycle, ancien) in vivantes:
+                continue
+            nom_vivant = vivantes.get((cycle, nouveau))
+            if nom_vivant and nom_vivant == (info.get("Nom") or "").strip():
+                renvois[ancien] = nouveau
+        if not renvois:
+            continue
+        nivs = niveaux.get(cycle, set())
+        for table in (ctx.objectifs, ctx.connaissances):
+            for (niv, seq, code), val in list(table.items()):
+                if niv in nivs and seq in renvois:
+                    table.setdefault((niv, renvois[seq], code), val)
+
+
+def _sans_macro(texte) -> str:
+    t = (texte or "").strip()
+    if not t or FALLBACK in t or _RE_MACRO_SEQ_GET.search(t):
+        return ""
+    return t
+
+
+def _superposer_tables_vivantes(ctx: Contexte, conn) -> None:
+    """Étape 1 : les tables vivantes remplacent les valeurs des CSV."""
+    from services.codes_sequence import libelle_numero
+    themes_id = {}
+    for tid, cycle, code, nom, couleur, desc in _requete(
+            conn, "SELECT id, cycle_code, code, nom, code_couleur, description FROM themes"):
+        themes_id[tid] = code
+        ctx.themes_par_cycle.setdefault(cycle, {})[code] = {
+            "Nom": nom or "", "CodeCouleur": couleur or "", "Description": desc or ""}
+    for cycle, code, numero, nom, theme_id in _requete(
+            conn, "SELECT cycle_code, code, numero, nom, theme_id FROM sequences_du_cycle"):
+        ctx.sequences_par_cycle.setdefault(cycle, {})[code] = {
+            "Nom": nom or "",
+            # Même règle que les titres de livrets (v0.57.0, L1) : une séquence
+            # en code de thème s'affiche « A1 », jamais « 11 ».
+            "Numero": libelle_numero(code, numero) or "",
+            "Theme": themes_id.get(theme_id, "") or ""}
+    for niv, seq, code, nom, fin, cf, ca, ce in _requete(conn, """
+            SELECT sn.niveau, sn.sequence_code, o.code, o.nom, o.fin_cycle,
+                   o.critere_F, o.critere_A, o.critere_E
+            FROM objectifs o
+            JOIN sequence_parties p ON p.id = o.partie_id
+            JOIN sequences_par_niveau sn ON sn.id = p.sequence_par_niveau_id"""):
+        cle = (niv, seq, code)
+        ancien = dict(ctx.objectifs.get(cle) or {})
+        nom = _sans_macro(nom)
+        if not nom and not ancien:
+            continue
+        ctx.objectifs[cle] = {
+            "nom":         nom or ancien.get("nom", ""),
+            "fin_cycle":   (fin or "").strip() or ancien.get("fin_cycle", "N"),
+            "maitrise_tb": (ce or "").strip() or ancien.get("maitrise_tb", ""),
+            "maitrise_s":  (ca or "").strip() or ancien.get("maitrise_s", ""),
+            "maitrise_f":  (cf or "").strip() or ancien.get("maitrise_f", ""),
+        }
+    # Connaissances : premier titre vivant par (niveau, séquence, numéro).
+    vus = set()
+    for niv, seq, num, titre in _requete(conn, """
+            SELECT niveau, sequence, num_connaissance, titre FROM notions
+            WHERE num_connaissance <> '' ORDER BY rowid"""):
+        cle = (niv, seq, num)
+        titre = _sans_macro(titre)
+        if titre and cle not in vus:
+            vus.add(cle)
+            ctx.connaissances[cle] = titre
+
+
 def _lire_sequences_safe(csv_store, method_name: str) -> dict:
     """Normalise la lecture d'un CSV de séquences en dict indexé par code."""
     if not csv_store or not hasattr(csv_store, method_name):

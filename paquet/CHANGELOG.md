@@ -21,6 +21,16 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.58.2 — 2026-11-16 : aucune modification du paquet
+
+- Import des `.tex` (scanner de l'appli) : les macros nommantes des titres
+  (`\seqObjectifGetNom`, `\seqConnaissanceGetNom`, `\seqSequenceGetNom`…) sont résolues
+  d'après les tables vivantes de l'appli, puis les CSV de départ ; une séquence en code
+  A1 n'est plus importée « [à saisir] ». Les `.dbtex` (`\seqLoadData`) restent non
+  régénérés.
+
+---
+
 ## Appli v0.58.1 — 2026-11-16 : aucune modification du paquet
 
 - Rendu d'un atome isolé : `\seqSetColorsTheme{…}` reçoit de nouveau la couleur du thème

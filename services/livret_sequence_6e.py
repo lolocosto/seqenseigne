@@ -336,8 +336,22 @@ def libelles_parties(niveau: str, sequence_code: str) -> dict[int, str]:
         return {}
     if ref.get("niveau") != niveau:
         return {}
+    parties = ref.get("parties") or {}
+    # v0.58.2 (P4) — Le fichier reste en codes S… (décision M8, v0.58.0) ;
+    # après la migration, la séquence vivante s'appelle A1 : on lit sa ligne
+    # sous l'ancien code d'après la table de correspondance 2027 (cycle du
+    # fichier). Sans cela, couvertures de livrets et cartes mentales de 6e
+    # perdaient les libellés de parties (« Partie 2 » au lieu de « Partie 2
+    # --- Médiatrice »).
+    code = sequence_code
+    if code not in parties:
+        try:
+            from services.codes_sequence import charger_correspondance
+            code = charger_correspondance().vers_ancien(ref.get("cycle") or "C03", code)
+        except Exception:
+            code = sequence_code
     return {p["numero"]: (p.get("libelle") or "").strip()
-            for p in (ref.get("parties") or {}).get(sequence_code, [])}
+            for p in parties.get(code, [])}
 
 
 def titre_partie_couverture(seq: dict, p: dict) -> str:

@@ -118,6 +118,19 @@ def _objectifs_csv(data_dir: Path | None, cycle: str, niveau: str) -> dict:
     return out
 
 
+def _code_csv(cycle: str, code: str, noms_csv: dict) -> str:
+    """v0.58.2 — Code sous lequel chercher la séquence `code` dans les CSV
+    de départ : le sien s'il y est, sinon son ancien code (A1 → S03) d'après
+    la table de correspondance 2027 ; le code lui-même à défaut."""
+    if code in noms_csv:
+        return code
+    try:
+        from services.codes_sequence import charger_correspondance
+        return charger_correspondance().vers_ancien(cycle, code)
+    except Exception:
+        return code
+
+
 def _tiret(v):
     v = (v or "").strip()
     return "" if v == "-" else v
@@ -194,8 +207,14 @@ def _cycle(conn, data_dir: Path | None, niveau: str) -> dict | None:
         # (même code ET même nom) : après le remplacement du découpage du
         # cycle 3, S04 « Pré-algèbre » ne reçoit pas les objectifs de l'ancienne
         # S04 « Calcul mental et en ligne ».
-        csv_valide = noms_csv.get(s["code"], "").strip() == (s["nom"] or "").strip()
-        par_code = ({o["code"]: o for o in csv_objs.get(s["code"], [])}
+        #
+        # v0.58.2 (P5) — Après la migration des codes, les CSV restent en S… :
+        # la séquence vivante A1 lit la ligne de son ancien code (table de
+        # correspondance 2027), à la même condition de nom (S03 « Calcul
+        # numérique » → A1 ; jamais l'ancien découpage du cycle 3).
+        code_csv = _code_csv(cycle, s["code"], noms_csv)
+        csv_valide = noms_csv.get(code_csv, "").strip() == (s["nom"] or "").strip()
+        par_code = ({o["code"]: o for o in csv_objs.get(code_csv, [])}
                     if csv_valide else {})
         if parties:
             for p in parties:
@@ -210,7 +229,7 @@ def _cycle(conn, data_dir: Path | None, niveau: str) -> dict | None:
         elif par_code:
             parties = [{"libelle": "", "objectifs": [
                 {"code": o["code"], "nom": o["nom"], "nb_seances": 0.0,
-                 "criteres": o["criteres"]} for o in csv_objs[s["code"]]]}]
+                 "criteres": o["criteres"]} for o in csv_objs[code_csv]]}]
         else:
             continue                                  # séquence absente de ce niveau
         for p in parties:

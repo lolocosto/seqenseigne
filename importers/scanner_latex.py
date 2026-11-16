@@ -10,9 +10,11 @@ Le parsing LaTeX (scanner_niveau, parse_*) vient du fichier
 1. Résolution des macros nommantes (titres de notions et de méthodes)
    via `services.resoudre_macros`. Contexte chargé depuis les CSV de
    référence (param_niveaux.csv, C0X_sequences.csv, C0X_themes.csv,
-   C0X_connaissances.csv, C0X_objectifs.csv). Les macros qui pointent
-   vers une référence introuvable sont remplacées par `[à saisir]`
-   avec un incident au rapport.
+   C0X_connaissances.csv, C0X_objectifs.csv) puis, depuis v0.58.2,
+   complété par les tables vivantes de la base, qui ont le dernier mot
+   (`completer_depuis_base`). Les macros qui pointent vers une référence
+   introuvable sont remplacées par `[à saisir]` avec un incident au
+   rapport.
 
    ⚠ Seuls les champs de type « nom / libellé » (titre de notion,
    titre de méthode) sont résolus. Les champs de saisie LaTeX
@@ -48,6 +50,7 @@ from scanner_latex import (  # noqa: E402
 )
 
 from services.resoudre_macros import (  # noqa: E402
+    completer_depuis_base,
     construire_contexte_global,
     resoudre,
     contient_macro_nommante,
@@ -111,6 +114,11 @@ def scanner_vers_bdd(data: dict, json_store, csv_store=None,
             csv_store = None
 
     ctx = construire_contexte_global(csv_store) if csv_store else _contexte_vide()
+    # v0.58.2 (P1) — Tables vivantes d'abord, CSV de départ en repli (rattachés
+    # au code vivant A1 quand la séquence a le même nom) : après la migration
+    # des codes, un titre `\seqObjectifGetNom{06}` d'un `.tex` de A1 prend le
+    # nom de l'objectif 06 de A1 au lieu de « [à saisir] ».
+    _completer_contexte(ctx, json_store)
     incidents_globaux: list[dict] = []
 
     # ── 2. Résoudre les titres des notions et des méthodes ──────────────
@@ -137,12 +145,19 @@ def scanner_vers_bdd(data: dict, json_store, csv_store=None,
     #   livrets_importes
     #   peuplement v2 (lit objectifs → crée parties + objectifs + objectif_exos)
 
+    # v0.58.2 (P3) — Écriture **additive** : seules les notions et méthodes
+    # dont le `fichier` est absent de la base sont insérées. Avant, la liste
+    # complète était réécrite (DELETE + INSERT) : chaque scan effaçait les
+    # liens objectif ↔ notion (`objectif_notions`, cascade) et refaisait les
+    # liens méthode ↔ objectif d'après (niveau, séquence, num_objectif), ce
+    # qui, après la migration, détachait ou intervertissait les méthodes
+    # reclassées (liées par identifiant à leur objectif d'archive).
+
     # Notions
     notions = json_store.lire_notions()
     ids_n = {n.get("fichier", "") for n in notions if n.get("fichier")}
     nouvelles_n = [n for n in data["notions"] if n.get("fichier") not in ids_n]
-    notions.extend(nouvelles_n)
-    json_store.ecrire_notions(notions)
+    _ajouter(json_store, "notions", notions, nouvelles_n)
 
     # Objectifs — réhydratation depuis referentiel_objectifs.
     # Ce pont est indispensable : le `reset_reference` vide `objectifs`
@@ -153,8 +168,13 @@ def scanner_vers_bdd(data: dict, json_store, csv_store=None,
     # `ecrire_methodes` et `ecrire_exercices` consultent aussi
     # `objectifs` pour poser leurs liaisons, donc l'étape doit passer
     # avant.
+    #
+    # v0.58.2 (P2) — Seulement pour les séquences qui existent dans les
+    # séquences du cycle du niveau (tables vivantes) : après la migration,
+    # l'instantané d'un référentiel verrouillé en codes S… (2025_N11b) ne
+    # recrée plus N11/S01…S14 dans l'atelier.
     try:
-        json_store.ecrire_objectifs()
+        _ecrire_objectifs(json_store)
     except Exception as e:
         # Non bloquant : si la réhydratation plante, on poursuit (les
         # objectifs peuvent avoir été peuplés autrement).
@@ -164,8 +184,7 @@ def scanner_vers_bdd(data: dict, json_store, csv_store=None,
     methodes = json_store.lire_methodes()
     ids_m = {m.get("fichier", "") for m in methodes if m.get("fichier")}
     nouvelles_m = [m for m in data["methodes"] if m.get("fichier") not in ids_m]
-    methodes.extend(nouvelles_m)
-    json_store.ecrire_methodes(methodes)
+    _ajouter(json_store, "methodes", methodes, nouvelles_m)
 
     # Exercices
     exercices = json_store.lire_exercices()
@@ -228,6 +247,44 @@ def _resoudre_champ(atome: dict, champ: str, ctx, incidents_globaux: list[dict])
 
 
 # v0.14.6.b.2 — Helper `_peupler_v2` retiré. Voir docstring du module.
+
+
+def _completer_contexte(ctx, json_store) -> None:
+    """v0.58.2 — Superpose les tables vivantes de la base du magasin au
+    contexte lu dans les CSV (sans effet si le magasin n'a pas de base)."""
+    ouvrir = getattr(json_store, "_conn", None)
+    if ouvrir is None:
+        return
+    try:
+        with ouvrir() as conn:
+            completer_depuis_base(ctx, conn)
+    except Exception:
+        pass
+
+
+def _ajouter(json_store, quoi: str, existants: list, nouveaux: list) -> None:
+    """Insère les seuls nouveaux atomes (`ajouter_notions`,
+    `ajouter_methodes`). Magasin sans ces méthodes (doublures de test) :
+    ancienne réécriture complète."""
+    ajout = getattr(json_store, f"ajouter_{quoi}", None)
+    if callable(ajout):
+        ajout(nouveaux)
+        return
+    getattr(json_store, f"ecrire_{quoi}")(existants + nouveaux)
+
+
+def _ecrire_objectifs(json_store):
+    import inspect
+    f = json_store.ecrire_objectifs
+    try:
+        params = inspect.signature(f).parameters
+        accepte = ("seulement_sequences_du_cycle" in params
+                   or any(p.kind is p.VAR_KEYWORD for p in params.values()))
+    except (TypeError, ValueError):
+        accepte = False
+    if accepte:
+        return f(seulement_sequences_du_cycle=True)
+    return f()                        # doublure de test sans ce paramètre
 
 
 def _contexte_vide():

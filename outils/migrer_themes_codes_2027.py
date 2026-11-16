@@ -51,6 +51,9 @@ Modes :
 
 Idempotence : un cycle déjà en codes de thème est sauté (« rien à faire ») ;
 une base qui mêle anciens codes et codes de thème est refusée.
+v0.58.2 (Q1) : même sur un cycle déjà migré, crée (journalisée) la
+séquence-niveau des séquences en code de thème qui ont des contenus dans un
+niveau sans y en avoir (A2 en N10, N11, N12 après le reclassement).
 
 Usage (Windows, depuis `appli\`) :
     ..\outils\python\python.exe .\outils\migrer_themes_codes_2027.py
@@ -84,7 +87,7 @@ if str(RACINE_APPLI) not in sys.path:          # lancement par chemin (Windows)
 
 from services import codes_sequence as cs     # noqa: E402
 
-VERSION = "0.58.0"
+VERSION = "0.58.2"
 CORRESPONDANCE = Path(__file__).resolve().parent / "correspondance_codes_2027.json"
 RECLASSEMENT = Path(__file__).resolve().parent / "reclassement_2027.json"
 NIVEAUX = OrderedDict([("C03", ("N07", "N08", "N09")), ("C04", ("N10", "N11", "N12"))])
@@ -717,6 +720,7 @@ def migrer_cycle(conn, cycle: str, corr: dict, recl: dict, j: Journal,
     if etat == "nouveau":
         rapport.ligne(f"Cycle {cycle[-1]}", "déjà en codes de thème : rien à faire")
         _signaler_restes(conn, cycle, corr, rapport)
+        creer_sequences_niveau_manquantes(conn, cycle, j, rapport)
         return {}, []
     if etat == "vide":
         rapport.ligne(f"Cycle {cycle[-1]}", "aucune séquence du cycle dans la base : rien à faire")
@@ -731,7 +735,50 @@ def migrer_cycle(conn, cycle: str, corr: dict, recl: dict, j: Journal,
     carte = migrer_sequences(conn, cycle, corr, ids, j, rapport)
     recoder_tables_vivantes(conn, cycle, carte, j, rapport)
     mouvements = reclasser(conn, carte, recl, j, rapport, etat_avant) if cycle == "C04" else []
+    creer_sequences_niveau_manquantes(conn, cycle, j, rapport)
     return carte, mouvements
+
+
+def creer_sequences_niveau_manquantes(conn, cycle: str, j: Journal, rapport: Rapport) -> int:
+    """v0.58.2 (Q1) — Séquence-niveau des séquences en code de thème qui ont des
+    contenus dans un niveau sans y avoir de séquence-niveau.
+
+    Le reclassement range des contenus en A2 (« Nombres rationnels et
+    arithmétique ») dans N10, N11 et N12 ; la v0.58.0 ne créait pas la
+    séquence-niveau A2 (M6) et l'atelier n'a aucun moyen de la créer : les
+    atomes restaient visibles dans leurs ateliers mais l'atelier Séquence
+    répondait « introuvable » (pas de parties, d'objectifs, de liens). Création
+    en état « en cours », sans partie ni objectif, journalisée (--annuler la
+    retire tant qu'aucune partie n'y a été créée). Idempotent ; s'applique aussi
+    à une base déjà migrée (le cycle est alors « rien à faire »). Archives
+    (X…), mises en route (M…) et anciens codes : jamais."""
+    from services.codes_sequence import est_code_theme
+    if not _table(conn, "sequences_par_niveau"):
+        return 0
+    niveaux = NIVEAUX[cycle]
+    du_cycle = {c for (c,) in conn.execute(
+        "SELECT code FROM sequences_du_cycle WHERE cycle_code=?", (cycle,))}
+    existantes = {(n, c) for n, c in conn.execute(
+        "SELECT niveau, sequence_code FROM sequences_par_niveau")}
+    contenus: dict = {}
+    for t in ATOMES:
+        if not _table(conn, t):
+            continue
+        for niv, seq, n in conn.execute(
+                f"SELECT niveau, sequence, COUNT(*) FROM {t} WHERE niveau IN "
+                f"({','.join('?' * len(niveaux))}) GROUP BY niveau, sequence", niveaux):
+            if est_code_theme(seq) and seq in du_cycle and (niv, seq) not in existantes:
+                contenus.setdefault((niv, seq), []).append(f"{t} {n}")
+    for (niv, seq) in sorted(contenus):
+        ident = f"sn_{uuid.uuid4().hex[:8]}"
+        j.ins(conn, "sequences_par_niveau",
+              {"id": ident, "niveau": niv, "sequence_code": seq, "parametres": "",
+               "etat_code": "en_cours"}, {"id": ident})
+        rapport.ligne(f"Cycle {cycle[-1]} — séquences-niveaux créées",
+                      f"{niv}/{seq} (en cours, sans partie ni objectif) : contenus "
+                      + ", ".join(contenus[(niv, seq)]))
+        rapport.compter(f"sequences_par_niveau ({cycle}, créées)")
+    return len(contenus)
 
 
 def _signaler_restes(conn, cycle: str, corr: dict, rapport: Rapport) -> None:
@@ -1109,6 +1156,12 @@ def annuler_base(conn, ops: list[dict]) -> list[str]:
             if dict(zip(cols, r)) != op["ligne"]:
                 conflits.append(f"{t} {cle} : ligne créée par la migration modifiée depuis")
                 continue
+            if t == "sequences_par_niveau" and conn.execute(
+                    "SELECT 1 FROM sequence_parties WHERE sequence_par_niveau_id=? LIMIT 1",
+                    (op["ligne"]["id"],)).fetchone():
+                # v0.58.2 — la suppression emporterait (cascade) ce qui y a été créé.
+                conflits.append(f"{t} {cle} : des parties y ont été créées depuis la migration")
+                continue
             conn.execute(f'DELETE FROM "{t}" WHERE {where}', tuple(cle.values()))
     return conflits
 
@@ -1141,7 +1194,8 @@ def executer(conn, cycles: list[str], corr: dict, recl: dict, rapport: Rapport,
         rapport.ligne("Jamais touché (empreintes identiques avant et après)", f"{k} : {v[:16]}…")
     plan = plan_fichiers(racines, {n: c for n, c in cartes.items() if n.startswith("N1")}, j,
                          mouvements, rapport) if "C04" in cycles and cartes.get("N10") else None
-    return {"cartes": cartes, "plan": plan, "empreinte": avant}
+    creees = sum(1 for op in j.ops if op["op"] == "ins" and op["table"] == "sequences_par_niveau")
+    return {"cartes": cartes, "plan": plan, "empreinte": avant, "creees": creees}
 
 
 def resoudre_base(db: str | None) -> Path:
@@ -1303,7 +1357,7 @@ def main(argv=None) -> int:
         return 2
     rapport.anomalies = pre.anomalies + rapport.anomalies
     print(rapport.texte())
-    rien = not res["cartes"]
+    rien = not res["cartes"] and not res.get("creees")
     plan = res["plan"]
     if plan and plan["conflits"]:
         print("\nConflits de fichiers : rien ne sera appliqué (voir les anomalies).")
