@@ -2,6 +2,32 @@
 
 Oct 17, 2026 · @Laurent Coste
 
+## Codes de la rentrée 2027 (v0.58.0)
+
+Depuis la migration des thèmes et des codes (`outils/migrer_themes_codes_2027.py`, table
+`outils/correspondance_codes_2027.json`), la base désigne les séquences de 6e par le code
+de thème (lettre du thème + rang). Ce document garde les anciens codes ; les lots et
+`objectifs_6e.json` sont lus dans l'un ou l'autre (outils de lots, v0.57.0).
+
+| Ancien | Nouveau | Numéro | Séquence | Thème (ancien → nouveau) |
+| --- | --- | --- | --- | --- |
+| S01 | A1 | 11 | Nombres entiers et décimaux, fractions | A |
+| S02 | A2 | 12 | Comparaison de nombres | A |
+| S03 | A3 | 13 | Opérations | A |
+| S04 | A4 | 14 | Pré-algèbre | A |
+| S05 | B1 | 21 | Points, segments, droites | C → B |
+| S06 | B2 | 22 | Cercles | C → B |
+| S07 | B3 | 23 | Angles | C → B |
+| S08 | B4 | 24 | Triangles | C → B |
+| S09 | B5 | 25 | Symétrie axiale | C → B |
+| S10 | C1 | 31 | Gestion de données | D → C |
+| S11 | C2 | 32 | Probabilité | D → C |
+| S12 | D1 | 41 | Proportionnalité | E → D |
+| S13 | E1 | 51 | Pensée informatique | F → E |
+
+Mises en route : codes M01 à M07 inchangés ; thème de M03 et M04 B → F (Grandeurs et
+mesures), M05 C → B, M06 D → C, M07 E → D. Objectifs : S01-02 devient A1-02.
+
 ## Cadre
 
 Ce document propose une structure de référentiel de 6e à partir des deux référentiels de 6e présents dans la base de l'atelier pour 2026-2027, comparés au programme en vigueur. **Rien n'a été écrit dans la base** : lecture seule d'une copie de la base de l'atelier.

@@ -402,7 +402,12 @@ class Rapport:
 # étiquettes d'évaluation « N pts --- S01-02 » sont traduites.
 _CLES_CODES_LOT = ("sequence", "code", "objectif", "objectifs", "bareme")
 _RE_CODE_OBJ = re.compile(r"^(" + cs.MOTIF_ANCIEN + "|" + cs.MOTIF_THEME + r")(-\d\d)?$")
-_RE_ETIQ_LOT = re.compile(r"(---\s*)(" + cs.MOTIF_ANCIEN + "|" + cs.MOTIF_THEME + r")-(\d\d)")
+# v0.58.0 — l'étiquette est « N pts --- S01-02 » : sans « pts », un titre de
+# document (« Séquence 1 : Nombres --- S01-02, S01-03 ») est du texte libre,
+# jamais traduit (sinon, après la migration, 12 documents des lots de 6e
+# seraient « mis à jour » avec un titre à moitié traduit).
+_RE_ETIQ_LOT = re.compile(r"(\d+(?:[.,]\d+)?\s*pts?\s*---\s*)(" + cs.MOTIF_ANCIEN + "|"
+                          + cs.MOTIF_THEME + r")-(\d\d)")
 
 
 _LIBELLE_CONV = {"ancien": "anciens codes (S…)", "nouveau": "codes de thème (A1…)"}

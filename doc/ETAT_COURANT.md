@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.57.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.58.0** (dernière livrée ; v0.57.0 déployée et poussée le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -264,9 +264,21 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   la base (jamais de S01… recréé après la migration). Sorties identiques octet pour
   octet sur la base d'atelier (3 794 `.tex`, exports, instantanés). Détails :
   `doc/redemarrage_v0_57_0.md`.
-- Prochaine livraison : **v0.58.0, migration** (outil `outils/migrer_themes_codes_2027.py`,
-  données de départ, fichiers LaTeX du cycle 4, reclassement de S02, S04, S10), après 1 à
-  2 semaines d'usage de la v0.57.0.
+- v0.58.0 livrée (16 novembre) : **thèmes communs et codes A1, livraison 2 — outil de
+  migration** (feu vert du 16 novembre, 7 h 36 : pas de période d'essai de la v0.57) :
+  `outils/migrer_themes_codes_2027.py` (essai à blanc par défaut, `--apply` avec
+  sauvegarde et journal, `--annuler`, idempotent, refus d'une base de classe et d'un
+  référentiel figé non publié) ; cycle 3 (thèmes permutés, S01…S13 → A1…E1) ; cycle 4
+  (thème D « Proportionnalité, fonctions » créé, A2 créée, S02, S04, S10 → X02, X04, X10) ;
+  tables vivantes recodées ; reclassement des contenus de S02, S04, S10
+  (`outils/reclassement_2027.json`) ; fichiers LaTeX du cycle 4 renommés (aucun doublon
+  au scan). Jamais touchés, vérifiés par empreinte : instantanés, publications,
+  `_verrouille\`, référentiels externes, archives X01–X16. Correctif des outils de lots
+  (étiquettes d'évaluation seules traduites). Données de départ non réécrites (M8).
+  pytest 4974 réussis (+35), vitest 386. Détails : `doc/redemarrage_v0_58_0.md`.
+- **À faire par Laurent** : la migration elle-même (marche à suivre de la livraison :
+  sauvegardes, essai à blanc, `--apply`, contrôles), puis la création des référentiels
+  2027 en codes A1 (6e : `marche_a_suivre_referentiels_6e_v0_58.md`).
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -572,6 +584,11 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   une expression `S\d…` écrite à la main ; titre « Séquence … » par `libelle_numero` ;
   un lot ou un référentiel de 6e passe par `outils/correspondance_codes_2027.json`
   (`import_lot6e.normaliser_codes`) ; une base de cycle aux codes mêlés est refusée.
+  Depuis la migration (v0.58.0), les tables vivantes sont en codes A1 ; les instantanés
+  figés, les publications et les référentiels externes gardent leurs codes S… : ne jamais
+  les recoder. Les champs de contenu (variables xint, images) gardent l'ancien nom ; seule
+  la colonne `fichier` suit les `.tex`. Une nouvelle écriture « en masse » de codes passe
+  par un outil à journal sur le modèle de `outils/migrer_themes_codes_2027.py`.
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

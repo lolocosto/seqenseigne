@@ -398,16 +398,15 @@ cycles ; codes de séquences A1) ; plan `plan_migration_themes_codes.md` validé
 15 novembre (22 h 41), N11_v2025 et 2025_N11b figés et publiés.
 - **v0.57.0 livrée** : code tolérant aux codes A1, aucune donnée migrée
   (`doc/redemarrage_v0_57_0.md`) ; table `outils/correspondance_codes_2027.json`.
-- **Usage 1 à 2 semaines** : scanner, compilation de livrets S…, import d'un lot de 6e
-  en essai à blanc.
-- **v0.58.0 à faire** : outil `outils/migrer_themes_codes_2027.py` (essai à blanc,
-  `--apply`, `--annuler`, idempotent, sauvegarde, une transaction par cycle, refus d'une
-  base de classe et d'un référentiel figé sans `_publication/referentiel.json`) ;
-  thèmes (permutation au cycle 3, D créé au cycle 4) ; séquences recodées et archives
-  X02, X04, X10 ; tables vivantes ; reclassement des contenus de S02, S04, S10 ; fichiers
-  LaTeX du cycle 4 ; données de départ (`data/C03_*`, `data/C04_*`,
-  `N1x_sequences.yaml`, `outils/objectifs_6e.json`, `outils/ref6e_v2.md`) ; libellé de
-  `proportionnalite` ; `.dbtex`. Jamais touchés : instantanés figés, `_verrouille/`,
-  `_publication/`, référentiels externes, partie classe.
+- Usage de la v0.57.0 : écourté (feu vert du 16 novembre, 7 h 36 : livrets compilés,
+  référentiel de cette année figé, PDF disponibles).
+- **v0.58.0 livrée** (16 novembre) : outil `outils/migrer_themes_codes_2027.py` (essai à
+  blanc, `--apply`, `--annuler`, idempotent, sauvegarde, journal, empreinte de ce qui
+  n'est jamais touché), reclassement `outils/reclassement_2027.json`, fichiers LaTeX du
+  cycle 4, correctif des outils de lots (`doc/redemarrage_v0_58_0.md`). Données de
+  départ non réécrites (décision M8 : l'atelier lit ses copies de `data_atelier\`) ;
+  `.dbtex` non régénérés (lus seulement par les livrets compilés à la main).
+- **Jour de migration** (Laurent) : sauvegardes, essai à blanc, `--apply`, contrôles
+  (marche à suivre de la livraison v0.58.0).
 - Ensuite : nouveaux référentiels 2027 (5e, 4e, 6e ; 3e en 2028) saisis en codes A1,
   PDF compilés, verrouillés et publiés avant la rentrée.

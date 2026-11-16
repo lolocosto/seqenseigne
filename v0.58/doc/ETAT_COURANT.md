@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.58.0** (dernière livrée ; v0.57.0 déployée et poussée le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.58.1** (dernière livrée ; v0.58.0 déployée, poussée et migration appliquée le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -276,9 +276,21 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   `_verrouille\`, référentiels externes, archives X01–X16. Correctif des outils de lots
   (étiquettes d'évaluation seules traduites). Données de départ non réécrites (M8).
   pytest 4974 réussis (+35), vitest 386. Détails : `doc/redemarrage_v0_58_0.md`.
-- **À faire par Laurent** : la migration elle-même (marche à suivre de la livraison :
-  sauvegardes, essai à blanc, `--apply`, contrôles), puis la création des référentiels
-  2027 en codes A1 (6e : `marche_a_suivre_referentiels_6e_v0_58.md`).
+- v0.58.1 livrée (16 novembre) : **correctif — atomes compilés en gris après la
+  migration**. `resoudre_theme` (`services/latex_rendu_atome.py`) ne lisait que les
+  instantanés `referentiel_*` (S…) : une séquence A1 n'y est pas → gris. La couleur d'un
+  atome vient maintenant des tables vivantes (comme livrets et cartes), repli sur les
+  instantanés, gris en dernier ; même ordre pour `\seqSequenceGetNom/Numero/Theme` et
+  `\seqThemeGetNom` (numéro d'une séquence A1 = « A1 »). Audit : les autres lectures de
+  `referentiel_sequences` sont des instantanés voulus (inchangées). Sur la base migrée,
+  seuls les `.tex` d'atomes changent (ligne de couleur). Le commit 520eaf0 avait rangé la
+  v0.58 dans un sous-dossier `v0.58\` : fichiers remis à la racine, sous-dossier à
+  supprimer. Conséquence repérée non corrigée : un nouveau `.tex` en A1 scanné prend le
+  titre « [à saisir] » s'il est fait de macros (CSV de départ en S…). pytest 4988 réussis
+  (+14), vitest 386. Détails : `doc/redemarrage_v0_58_1.md`.
+- **À faire par Laurent** : la création des référentiels 2027 en codes A1 (6e :
+  `marche_a_suivre_referentiels_6e_v0_58.md`) ; ne pas déverrouiller les référentiels de
+  cette année.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -589,6 +601,9 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   les recoder. Les champs de contenu (variables xint, images) gardent l'ancien nom ; seule
   la colonne `fichier` suit les `.tex`. Une nouvelle écriture « en masse » de codes passe
   par un outil à journal sur le modèle de `outils/migrer_themes_codes_2027.py`.
+  Un contenu vivant (atome, livret, carte) se rend d'après les tables vivantes
+  (`sequences_du_cycle`, `themes`), jamais d'après les instantanés seuls (v0.58.1,
+  `tests/test_v0_58_1_couleur_atomes.py`).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

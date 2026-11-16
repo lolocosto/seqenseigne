@@ -21,6 +21,18 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.58.0 — 2026-11-16 : aucune modification du paquet
+
+- Migration des codes de séquences (S03 → A1…) par l'outil de l'appli
+  (`outils/migrer_themes_codes_2027.py`) : il réécrit `\seqSetCodeSequence{…}` et les
+  `\input{…}` des `.tex` du cycle 4 ; les bases d'objectifs de `seqenseigne-data` v1.1
+  sont déjà nommées par le code entier.
+- Les `.dbtex` (`\seqLoadData`) ne sont pas régénérés : seuls des livrets compilés à la
+  main hors de l'appli les lisent. À refaire avec datatooltk à partir des CSV si l'on
+  compile encore ainsi un livret en codes A1.
+
+---
+
 ## seqenseigne-data v1.1 — 2026-11-15 (appli v0.57.0)
 
 ### Corrigé
