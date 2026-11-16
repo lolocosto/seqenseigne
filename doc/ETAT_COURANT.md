@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.56.3** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.57.0** (dernière livrée). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -253,6 +253,20 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   partie choisie depuis l'atelier Séquence ; corrigés au passage : côte-à-côte de la
   Carte d'automatisme, portée posée par le lien direct. Détails :
   `doc/redemarrage_v0_56_3.md`.
+- v0.57.0 livrée (15 novembre) : **thèmes communs et codes A1, livraison 1 — code
+  tolérant, aucune donnée migrée** (plan de migration validé le 15 novembre, 22 h 41) :
+  `services/codes_sequence.py` (source unique des codes A1…F9, S…, M…, X…) utilisé par
+  les validations, le scanner, les imports, les outils, l'interface (listes lues en
+  base) et les documents (« Séquence A1 ») ; paquet `seqenseigne-data` v1.1 (bases
+  d'objectifs nommées par le code entier : A1 et B1 ne partagent plus leurs objectifs) ;
+  table `outils/correspondance_codes_2027.json` (cycles 3 et 4, ancien → nouveau,
+  thèmes) lue par les outils de lots de 6e, qui ramènent lots et référentiel aux codes de
+  la base (jamais de S01… recréé après la migration). Sorties identiques octet pour
+  octet sur la base d'atelier (3 794 `.tex`, exports, instantanés). Détails :
+  `doc/redemarrage_v0_57_0.md`.
+- Prochaine livraison : **v0.58.0, migration** (outil `outils/migrer_themes_codes_2027.py`,
+  données de départ, fichiers LaTeX du cycle 4, reclassement de S02, S04, S10), après 1 à
+  2 semaines d'usage de la v0.57.0.
 - À venir : progressions (séances des objectifs du principal, documents des
   mises en route internes dans la progression de MER, passage de M2026_N09 au
   référentiel interne) ; tuile « Matériel à réserver » du tableau de bord de classe (avec
@@ -552,6 +566,12 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   du recto ligne par ligne (`render_carte_centralise._miroir_horizontal_verso`) ;
   `\seqCartePlanche` ne réordonne rien (seul le récap est mis en miroir côté LaTeX).
   Protégé par `tests/test_v0_56_1_verso_miroir_planches.py`.
+
+- **Codes de séquences** (v0.57.0) : reconnaître, valider, chercher, afficher ou trier
+  un code de séquence par `services/codes_sequence.py` (A1…F9, S…, M…, X…), jamais par
+  une expression `S\d…` écrite à la main ; titre « Séquence … » par `libelle_numero` ;
+  un lot ou un référentiel de 6e passe par `outils/correspondance_codes_2027.json`
+  (`import_lot6e.normaliser_codes`) ; une base de cycle aux codes mêlés est refusée.
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

@@ -81,8 +81,9 @@ def niveaux_valides(conn) -> tuple:
 
 def sequence_valide(code: str) -> bool:
     """`Snn` (séquences), `Mnn` (mises en route, v0.53.0), `Xnn` (archives
-    du cycle 3, v0.52.0)."""
-    return bool(_RE_SEQUENCE.fullmatch(code or ''))
+    du cycle 3, v0.52.0) ; v0.57.0 (L1) : codes de thème `A1`…`F9`."""
+    from services.codes_sequence import est_code_theme
+    return bool(_RE_SEQUENCE.fullmatch(code or '')) or est_code_theme(code)
 
 # Ordre de traitement à l'intérieur d'une (niveau, séquence)
 # v0.18.0 — fiche et carte ajoutées (même mécanisme : generer_tex_par_type +

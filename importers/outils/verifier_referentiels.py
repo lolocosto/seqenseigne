@@ -57,7 +57,12 @@ from pathlib import Path
 # Référentiels audités par défaut (progressions 2021-22 déjà traitées).
 REFS_DEFAUT = ["N11_v2021", "N10_v2021"]
 
-_RE_SEQ = re.compile(r"S\d{2}")
+_RACINE_APPLI = Path(__file__).resolve().parents[2]
+if str(_RACINE_APPLI) not in sys.path:          # lancement par chemin (Windows)
+    sys.path.insert(0, str(_RACINE_APPLI))
+# v0.57.0 (L1) — codes de séquence lus par services.codes_sequence : ancien
+# code S<NN> ou code de thème A1…F9 (livret_sequence__N10__A1.pdf).
+from services.codes_sequence import chercher_code as _chercher_code  # noqa: E402
 
 
 def _chemin_db_par_defaut() -> Path:
@@ -173,10 +178,9 @@ def _index_archives(dossier: Path, motif_suffixe: str) -> dict[str, Path]:
     for f in dossier.rglob("*.pdf"):
         if motif_suffixe.lower() not in f.name.lower():
             continue
-        m = _RE_SEQ.search(f.name)
-        if not m:
+        seq = _chercher_code(f.name)
+        if not seq:
             continue
-        seq = m.group(0)
         if seq not in index or f.stat().st_mtime > index[seq].stat().st_mtime:
             index[seq] = f
     return index
@@ -195,8 +199,7 @@ def copier_livrets_manquants(conn, db_path: Path, ref_id: str,
 
     copies, introuvables = [], []
     for nom_cible in audit["manquants"]:
-        m = _RE_SEQ.search(nom_cible)
-        seq = m.group(0) if m else None
+        seq = _chercher_code(nom_cible)
         src = index.get(seq)
         if not src:
             introuvables.append(nom_cible)

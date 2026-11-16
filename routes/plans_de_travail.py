@@ -65,11 +65,12 @@ def _valider_niveau_sequence(niveau: str, sequence: str):
             'error': f"niveau invalide : {niveau!r}",
             'valeurs_attendues': list(_NIVEAUX_VALIDES),
         }), 400
-    if not (sequence.startswith('S') and sequence[1:].isdigit()
-            and len(sequence) <= 4):
+    # v0.57.0 (L1) — codes de thème A1…F9 acceptés (services.codes_sequence).
+    from services.codes_sequence import est_code_sequence
+    if not est_code_sequence(sequence, ancien_large=True):
         return jsonify({
             'error': f"sequence invalide : {sequence!r}",
-            'format_attendu': "S<numero> (ex. S01, S14)",
+            'format_attendu': "A1…F9 (code de thème) ou S<numero> (ex. S01, S14)",
         }), 400
     return None
 

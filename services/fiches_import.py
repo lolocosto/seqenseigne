@@ -49,6 +49,7 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass, field
+from services.codes_sequence import MOTIF_ANCIEN, MOTIF_THEME
 
 
 # Niveau dérivé du nom de fichier (Q7-a)
@@ -110,7 +111,9 @@ class RapportImport:
 
 # Regex pour les blocs structurels (compilées au module)
 # v0.11.1 — bascule sur la syntaxe `seq*` post-normalisation du paquet.
-_RE_SEQ = re.compile(r"\\seqSetCodeSequence\s*\{\s*(S\d{2})\s*\}")
+# v0.57.0 (L1) — aussi les codes de thème A1…F9 (services.codes_sequence).
+_RE_SEQ = re.compile(r"\\seqSetCodeSequence\s*\{\s*(" + MOTIF_ANCIEN + "|" + MOTIF_THEME
+                     + r")\s*\}")
 # Titre de fiche : capture le code objectif (avec ou sans préfixe "Objectif ")
 _RE_TITRE_FICHE = re.compile(
     r"\\seqBoiteTitreFlashcard\s*\{\s*(?:Objectif\s+)?(\d{2})\s*\}"

@@ -10,6 +10,10 @@ Structure attendue sous chemin_sequences/NIVEAU/ :
     notions/        N11_S01_Notion_01.tex  N11_S01_Notion_00.tex (multi-notions)
     methodes/       N11_S01_Methode_01.tex
     livrets/        N11_S01_Livret.tex
+
+v0.57.0 (L1) — les codes de thème sont reconnus comme les anciens codes :
+N10A1F01.tex, N10_A1_Notion_01.tex, N10A1_param.tex, N10_A1_Livret.tex
+(services.codes_sequence.MOTIF_FICHIER).
 """
 
 import re
@@ -18,6 +22,7 @@ from persistence.ids import (
 )
 import os
 from pathlib import Path
+from services.codes_sequence import MOTIF_FICHIER as _SEQ
 
 
 # ── Helpers de parsing LaTeX ───────────────────────────────────────────────────
@@ -583,7 +588,7 @@ def parse_livret_file(path: Path, niveau: str, seq: str) -> dict:
         rev_inputs = re.findall(r'\\input\{([^}]+)\}', rev_block.group(1))
         for inp in rev_inputs:
             # Ex : N10S01A01.tex → niveau_prev=N10, seq=S01, serie=A, num=01
-            m = re.match(r'(N\d+)(S\d+)([A-Z]+)(\d+)\.tex', inp)
+            m = re.match(r'(N\d+)(' + _SEQ + r')([A-Z]+)(\d+)\.tex', inp)
             if m:
                 niv_prev, seq_prev, serie, num = m.groups()
                 livret['prerequis']['exercices_revision'].append({
@@ -611,7 +616,7 @@ def parse_livret_file(path: Path, niveau: str, seq: str) -> dict:
         exo_inputs = re.findall(r'\\input\{([^}]+)\}', bloc_m.group(2))
         nums = []
         for inp in exo_inputs:
-            em = re.match(r'N\d+S\d+[A-Z]+(\d+)\.tex', Path(inp).name)
+            em = re.match(r'N\d+' + _SEQ + r'[A-Z]+(\d+)\.tex', Path(inp).name)
             if em:
                 nums.append(int(em.group(1)))
         livret['exercices'][serie_key] = nums
@@ -645,7 +650,7 @@ def scanner_niveau(chemin_sequences: str, niveau: str) -> dict:
     notions_dir = base / 'notions'
     if notions_dir.exists():
         for f in sorted(notions_dir.glob('*.tex')):
-            m = re.match(r'(N\d+)_(S\d+)_Notion_(\d+)\.tex', f.name)
+            m = re.match(r'(N\d+)_(' + _SEQ + r')_Notion_(\d+)\.tex', f.name)
             if not m:
                 continue
             niv, seq, num = m.groups()
@@ -659,7 +664,7 @@ def scanner_niveau(chemin_sequences: str, niveau: str) -> dict:
     methodes_dir = base / 'methodes'
     if methodes_dir.exists():
         for f in sorted(methodes_dir.glob('*.tex')):
-            m = re.match(r'(N\d+)_(S\d+)_Methode_(\d+)\.tex', f.name)
+            m = re.match(r'(N\d+)_(' + _SEQ + r')_Methode_(\d+)\.tex', f.name)
             if not m:
                 continue
             niv, seq, num = m.groups()
@@ -676,7 +681,7 @@ def scanner_niveau(chemin_sequences: str, niveau: str) -> dict:
         # Charger les _param.tex d'abord
         params = {}
         for pf in sorted(exercices_dir.glob('*_param.tex')):
-            pm = re.match(r'(N\d+)(S\d+)_param\.tex', pf.name)
+            pm = re.match(r'(N\d+)(' + _SEQ + r')_param\.tex', pf.name)
             if pm:
                 key = pm.group(1) + pm.group(2)
                 params[key] = parse_param_file(pf)
@@ -685,7 +690,7 @@ def scanner_niveau(chemin_sequences: str, niveau: str) -> dict:
             if '_param' in f.name or f.name.endswith('_enonce.tex'):
                 continue
             # Nom : N11S01F01.tex ou N11S01AE01.tex
-            m = re.match(r'(N\d+)(S\d+)(AE|[FAE])(\d+)\.tex', f.name)
+            m = re.match(r'(N\d+)(' + _SEQ + r')(AE|[FAE])(\d+)\.tex', f.name)
             if not m:
                 continue
             niv, seq, serie, num = m.groups()
@@ -705,7 +710,7 @@ def scanner_niveau(chemin_sequences: str, niveau: str) -> dict:
         livrets_dir = base / 'livrets'  # fallback
     if livrets_dir.exists():
         for f in sorted(livrets_dir.glob('*_Livret.tex')):
-            m = re.match(r'(N\d+)_(S\d+)_Livret\.tex', f.name)
+            m = re.match(r'(N\d+)_(' + _SEQ + r')_Livret\.tex', f.name)
             if not m:
                 continue
             niv, seq = m.groups()

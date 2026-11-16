@@ -72,9 +72,12 @@ def deduire_niveau(sequencesdb: Path) -> str | None:
     Déduit le niveau (N09/N10/N11/N12) depuis les fichiers N1XS*Objectifs.csv
     du dossier SequencesDB. Retourne None si aucun fichier reconnu.
     """
+    # v0.57.0 (L1) — aussi N10A1Objectifs.csv (codes de thème).
+    from services.codes_sequence import MOTIF_FICHIER
+    re_fichier = re.compile(r"(N\d{2})" + MOTIF_FICHIER + r"Objectifs\.csv")
     prefixes = set()
-    for f in sequencesdb.glob("N[01][0-9]S*Objectifs.csv"):
-        m = re.match(r"(N\d{2})S\d+Objectifs\.csv", f.name)
+    for f in sequencesdb.glob("N[01][0-9]*Objectifs.csv"):
+        m = re_fichier.match(f.name)
         if m:
             prefixes.add(m.group(1))
     if len(prefixes) == 1:
@@ -83,8 +86,8 @@ def deduire_niveau(sequencesdb: Path) -> str | None:
         # Incohérence : plusieurs niveaux dans le même SequencesDB, on prend
         # le plus fréquent
         compteur: dict[str, int] = {}
-        for f in sequencesdb.glob("N[01][0-9]S*Objectifs.csv"):
-            m = re.match(r"(N\d{2})S", f.name)
+        for f in sequencesdb.glob("N[01][0-9]*Objectifs.csv"):
+            m = re_fichier.match(f.name)
             if m:
                 compteur[m.group(1)] = compteur.get(m.group(1), 0) + 1
         return max(compteur, key=compteur.get) if compteur else None

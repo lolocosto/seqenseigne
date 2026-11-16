@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}%
 \ProvidesPackage{seqenseigne-data}%
-[2025/10/24 v1.0-dev seqenseigne data module]
+[2026/11/15 v1.1 seqenseigne data module]
 
 \RequirePackage{datatool}%
 \RequirePackage{xkeyval}%
@@ -40,12 +40,16 @@
 \DTLnewdb{seq@connaissances@anneedeux}%
 \DTLnewdb{seq@connaissances@anneetrois}%
 \DTLnewdb{seq@connaissances@sequence}%
-\newcounter{seq@tmp@i}%
-\newcommand{\seq@maxsequences}{16}%
-\setcounter{seq@tmp@i}{1}%
-\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
-\DTLnewdb{seq@objectifs@s\arabic{seq@tmp@i}}%
-\stepcounter{seq@tmp@i}%
+\def\seq@var@codesbases{}%
+\newcommand{\seq@basesequence@assure}[1]{%
+\DTLifdbexists{seq@objectifs@#1}{}{%
+\DTLgnewdb{seq@objectifs@#1}%
+\ifx\seq@var@codesbases\@empty
+\xdef\seq@var@codesbases{#1}%
+\else
+\xdef\seq@var@codesbases{\seq@var@codesbases,#1}%
+\fi
+}%
 }%
 \newcommand{\seq@seqcode@tonumber}[2]{%
 \edef\seq@tmp@stripped{\expandafter\@gobble\expandafter\@empty#2}%
@@ -561,10 +565,8 @@ rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={fon
 \ifthenelse{\equal{\seq@var@niveau}{#1}}{%cache niveau valide : rien à faire
 }{%mise à jour des bases filtrées pour le niveau
 \xdef\seq@var@niveau{#1}%
-\setcounter{seq@tmp@i}{1}%
-\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
-\DTLcleardb{seq@objectifs@s\arabic{seq@tmp@i}}%
-\stepcounter{seq@tmp@i}%
+\@for\seq@tmp@code:=\seq@var@codesbases\do{%
+\DTLcleardb{seq@objectifs@\seq@tmp@code}%
 }%
 \seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{#1}{AnneeDansCycle}%
 \DTLforeach*{seq@objectifs@\tmp@annee}{%
@@ -575,8 +577,7 @@ rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={fon
 \MaitriseS=MaitriseS,%
 \MaitriseF=MaitriseF%
 }{%
-\seq@seqcode@tonumber{\tmp@seqnum}{\CodeSequence}%
-\edef\tmp@base{seq@objectifs@s\tmp@seqnum}%
+\seq@seqcode@tobasename{\tmp@base}{\CodeSequence}%
 \dtlexpandnewvalue
 \DTLnewrow{\tmp@base}%
 \DTLnewdbentry{\tmp@base}{CodeObjectif}{\CodeObjectif}%
@@ -588,8 +589,9 @@ rows={valign=m},columns={font={\bfseries}},column{1}={font={\large}},row{1}={fon
 }%
 }%
 \newcommand{\seq@seqcode@tobasename}[2]{%
-\seq@seqcode@tonumber{\seq@tmp@n}{#2}%
-\edef#1{seq@objectifs@s\seq@tmp@n}%
+\edef\seq@tmp@code{#2}%
+\expandafter\seq@basesequence@assure\expandafter{\seq@tmp@code}%
+\edef#1{seq@objectifs@\seq@tmp@code}%
 }%
 \newcommand{\seq@prerequis@attenduscycleprecedent}[2]{%
 \ifthenelse{\equal{#1}{N10}}{%

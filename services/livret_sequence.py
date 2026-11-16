@@ -653,7 +653,10 @@ def _generer_tableau_prerequis(conn: sqlite3.Connection,
         num, nom = _lire_nom_sequence_du_cycle(conn, prec_niveau, prec_seq)
         nom_court = _lire_nom_court_latex_local(conn, prec_niveau)
         if num is not None:
-            titre = f"Séquence {num:02d} — {nom}"
+            # v0.57.0 (L1) — « Séquence A1 — … » pour un code de thème
+            # (A1 a le numéro 11) ; « Séquence 03 — … » inchangé sinon.
+            from services.codes_sequence import libelle_numero
+            titre = f"Séquence {libelle_numero(prec_seq, num, 2)} — {nom}"
         else:
             titre = f"{prec_seq} — {nom}" if nom else prec_seq
         blocs.append((titre, nom_court, objs))
@@ -1087,6 +1090,10 @@ def generer_livret_sequence(conn: sqlite3.Connection,
     #   - nom court du niveau (en forme LaTeX, via param_niveaux helper v0.13.1)
     nom_court = _lire_nom_court_latex_local(conn, niveau)
     seq_num_str = f"{seq_num:02d}" if isinstance(seq_num, int) else (str(seq_num) if seq_num else "")
+    # v0.57.0 (L1) — code de thème : « Séquence A1 » (jamais « Séquence 11 »).
+    from services.codes_sequence import est_code_theme
+    if est_code_theme(sequence_code):
+        seq_num_str = sequence_code
     L.append(r"%% Boîte de titre (faite à la main).")
     if seq_num_str:
         L.append(r"\begin{boiteTitreGen}{Séquence " + seq_num_str + "}")

@@ -716,10 +716,12 @@ def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict,
     # v0.53.1 — « Mise en route n, partie p » quand la séquence a plusieurs
     # parties (un test court par partie).
     from services.mises_en_route_6e import est_sequence_mer, sous_titre_test
+    from services.codes_sequence import libelle_numero        # v0.57.0 (L1)
     sequence_affichee = (sous_titre_test(conn, st["niveau"], st["sequence"],
                                          [o["id"] for o in st["objectifs"]])
                          if est_sequence_mer(st["sequence"])
-                         else f"Séquence {numero}" if numero else "")
+                         else f"Séquence {libelle_numero(st['sequence'], numero)}"
+                         if numero else "")
     sous_titre = " --- ".join(x for x in (
         sequence_affichee, f"Sujet {opts['sujet']}",
         _MENTION_CALCULATRICE[opts["calculatrice"]] if decoupage is None else "") if x)

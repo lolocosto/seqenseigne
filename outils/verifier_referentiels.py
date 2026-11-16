@@ -57,10 +57,22 @@ from pathlib import Path
 # Référentiels audités par défaut (progressions 2021-22 déjà traitées).
 REFS_DEFAUT = ["N11_v2021", "N10_v2021"]
 
-_RE_SEQ = re.compile(r"S\d{2}")
+_RACINE_APPLI = Path(__file__).resolve().parent.parent
+if str(_RACINE_APPLI) not in sys.path:          # lancement par chemin (Windows)
+    sys.path.insert(0, str(_RACINE_APPLI))
+# v0.57.0 (L1) — codes de séquence lus par services.codes_sequence : ancien
+# code S<NN> ou code de thème A1…F9 (livret_sequence__N10__A1.pdf).
+from services.codes_sequence import chercher_code as _chercher_code  # noqa: E402
 # Code de séquence valide (ancré) : S suivi de chiffres. Exclut les
 # pseudo-séquences de planning comme DC1/DC2/DC3 (devoirs communs) ou bilans.
 _RE_SEQ_VALIDE = re.compile(r"^S\d{1,2}$")
+
+
+def _seq_valide(code: str) -> bool:
+    """v0.57.0 (L1) — S<chiffres> comme avant, ou code de thème A1…F9
+    (DC1, DC2… restent écartés : deux lettres)."""
+    from services.codes_sequence import est_code_theme
+    return bool(_RE_SEQ_VALIDE.match(code or "")) or est_code_theme(code)
 
 
 def _chemin_db_par_defaut() -> Path:
@@ -112,7 +124,7 @@ def auditer_structure(conn, ref_id: str) -> list[str]:
         for r in conn.execute(
                 "SELECT seq_code, partie_debut FROM creneaux WHERE progression_id=?",
                 (pid,)).fetchall():
-            if not _RE_SEQ_VALIDE.match(r["seq_code"] or ""):
+            if not _seq_valide(r["seq_code"] or ""):
                 continue
             att.setdefault(r["seq_code"], set()).add(r["partie_debut"] or 1)
 
@@ -182,10 +194,9 @@ def _index_archives(dossier: Path, motif_suffixe: str) -> dict[str, Path]:
     for f in dossier.rglob("*.pdf"):
         if motif_suffixe.lower() not in f.name.lower():
             continue
-        m = _RE_SEQ.search(f.name)
-        if not m:
+        seq = _chercher_code(f.name)
+        if not seq:
             continue
-        seq = m.group(0)
         if seq not in index or f.stat().st_mtime > index[seq].stat().st_mtime:
             index[seq] = f
     return index
@@ -204,8 +215,7 @@ def copier_livrets_manquants(conn, db_path: Path, ref_id: str,
 
     copies, introuvables = [], []
     for nom_cible in audit["manquants"]:
-        m = _RE_SEQ.search(nom_cible)
-        seq = m.group(0) if m else None
+        seq = _chercher_code(nom_cible)
         src = index.get(seq)
         if not src:
             introuvables.append(nom_cible)

@@ -188,7 +188,10 @@ def couverture(conn: sqlite3.Connection) -> dict:
     }
 
 
-_RE_NIV_SEQ_FICHIER = re.compile(r'^(N\d{2})[_]?(S\d{2})')
+# v0.57.0 (L1) — aussi N10A1F01.tex, N10_A1_Notion_01.tex (codes de thème).
+from services.codes_sequence import MOTIF_ANCIEN, MOTIF_THEME  # noqa: E402
+_RE_NIV_SEQ_FICHIER = re.compile(r'^(N\d{2})[_]?(' + MOTIF_ANCIEN + '|' + MOTIF_THEME
+                                 + r'(?=[_A-Z]))')
 
 
 def _extraire_niveaux_sequences(atomes: list) -> set[tuple[str, str]]:

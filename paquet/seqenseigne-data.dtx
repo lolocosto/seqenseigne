@@ -1,9 +1,16 @@
 % \iffalse
 %<*driver>
 \ProvidesFile{seqenseigne-data.dtx}%
-[2025/10/24 v1.0-dev seqenseigne – Module data (chargement & accès aux données)]
+[2026/11/15 v1.1 seqenseigne – Module data (chargement & accès aux données)]
 %</driver>
 % \fi
+%
+% \changes{v1.1}{2026/11/15}{Bases d'objectifs par séquence nommées par le
+%   code entier de la séquence (\texttt{seq@objectifs@S03},
+%   \texttt{seq@objectifs@A1}) et créées à la demande ; borne
+%   \cs{seq@maxsequences} retirée. Corrige la collision des codes de thème
+%   (A1, B1, C1… donnaient tous la base \texttt{seq@objectifs@s1}) ;
+%   rendu inchangé pour les codes S01 à S16.}
 %
 % ============================================================================
 % seqenseigne-data.dtx
@@ -22,7 +29,7 @@
 %<*package>
 \NeedsTeXFormat{LaTeX2e}%
 \ProvidesPackage{seqenseigne-data}%
-[2025/10/24 v1.0-dev seqenseigne data module]
+[2026/11/15 v1.1 seqenseigne data module]
 
 % On suppose que le core a déjà chargé les paquets génériques
 % --- Bases de données en fichiers
@@ -50,18 +57,34 @@
 \DTLnewdb{seq@connaissances@anneedeux}%
 \DTLnewdb{seq@connaissances@anneetrois}%
 \DTLnewdb{seq@connaissances@sequence}%
-% Bases par séquence : nommées seq@objectifs@sN (N = numéro décimal).
-% Créées par boucle : ajuster seq@maxsequences pour supporter plus de séquences.
-\newcounter{seq@tmp@i}%
-\newcommand{\seq@maxsequences}{16}%
-\setcounter{seq@tmp@i}{1}%
-\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
-	\DTLnewdb{seq@objectifs@s\arabic{seq@tmp@i}}%
-	\stepcounter{seq@tmp@i}%
+% Bases par séquence (v1.1) : nommées seq@objectifs@<code>, avec le code
+% entier de la séquence (seq@objectifs@S03, seq@objectifs@A1). Elles sont
+% créées à la demande (\seq@basesequence@assure) et leurs codes sont gardés
+% dans \seq@var@codesbases (liste séparée par des virgules) : pas de borne
+% sur le nombre de séquences, et deux codes de thème de même rang (A1, B1)
+% ne partagent jamais leur base.
+\def\seq@var@codesbases{}%
+%
+% ----------------------------------------------------------------------------
+% \begin{macro}{\seq@basesequence@assure}%
+% Crée (globalement) la base d'objectifs de la séquence #1 si elle n'existe
+% pas encore, et retient son code. #1 : code de séquence développé (S03, A1).
+% Usage interne uniquement (\seq@...).
+\newcommand{\seq@basesequence@assure}[1]{%
+	\DTLifdbexists{seq@objectifs@#1}{}{%
+		\DTLgnewdb{seq@objectifs@#1}%
+		\ifx\seq@var@codesbases\@empty
+			\xdef\seq@var@codesbases{#1}%
+		\else
+			\xdef\seq@var@codesbases{\seq@var@codesbases,#1}%
+		\fi
+	}%
 }%
 %
 % ----------------------------------------------------------------------------
 % \begin{macro}{\seq@seqcode@tonumber}%
+% Obsolète depuis la v1.1 (les bases ne sont plus nommées par le numéro) ;
+% gardée pour les documents qui l'appelleraient encore.
 % Convertit un code séquence (S01, S02 … S16, S09, etc.) en son numéro décimal.
 % Supprime le préfixe "S" et les zéros non significatifs en passant par \number.
 % Résultat stocké dans la macro passée en #1.
@@ -953,12 +976,10 @@
 	\ifthenelse{\equal{\seq@var@niveau}{#1}}{%cache niveau valide : rien à faire
 	}{%mise à jour des bases filtrées pour le niveau
 		\xdef\seq@var@niveau{#1}%
-		% Vider toutes les bases par séquence en boucle
-		% (couvre S01 à S\seq@maxsequences, quel que soit le nombre réel de séquences)
-		\setcounter{seq@tmp@i}{1}%
-		\@whilenum\value{seq@tmp@i}<\numexpr\seq@maxsequences+1\relax\do{%
-			\DTLcleardb{seq@objectifs@s\arabic{seq@tmp@i}}%
-			\stepcounter{seq@tmp@i}%
+		% Vider toutes les bases par séquence déjà créées (v1.1 : liste des
+		% codes, quel que soit le nombre de séquences)
+		\@for\seq@tmp@code:=\seq@var@codesbases\do{%
+			\DTLcleardb{seq@objectifs@\seq@tmp@code}%
 		}%
 		\seqDTLfetchsave{\tmp@annee}{param_niveaux}{Code}{#1}{AnneeDansCycle}%
 		\DTLforeach*{seq@objectifs@\tmp@annee}{%
@@ -969,9 +990,9 @@
 			\MaitriseS=MaitriseS,%
 			\MaitriseF=MaitriseF%
 		}{%
-			% Calcul direct du nom de base : S01 → seq@objectifs@s1, S12 → seq@objectifs@s12
-			\seq@seqcode@tonumber{\tmp@seqnum}{\CodeSequence}%
-			\edef\tmp@base{seq@objectifs@s\tmp@seqnum}%
+			% Nom de base par le code entier (v1.1) : S01 → seq@objectifs@S01,
+			% A1 → seq@objectifs@A1 (base créée à la demande)
+			\seq@seqcode@tobasename{\tmp@base}{\CodeSequence}%
 			\dtlexpandnewvalue
 			\DTLnewrow{\tmp@base}%
 			\DTLnewdbentry{\tmp@base}{CodeObjectif}{\CodeObjectif}%
@@ -985,14 +1006,17 @@
 % ----------------------------------------------------------------------------
 % \begin{macro}{\seq@seqcode@tobasename}%
 % Remplace l'ancienne \seq@sequence@save@nombaseobjectifs.
-% Calcule le nom de la base objectifs d'une séquence à partir de son code,
-% sans cascade de comparaisons : S01 → seq@objectifs@s1, S16 → seq@objectifs@s16.
-% Fonctionne pour tout N entre 1 et \seq@maxsequences.
+% Calcule le nom de la base objectifs d'une séquence à partir de son code
+% entier (v1.1) : S01 → seq@objectifs@S01, A1 → seq@objectifs@A1. La base
+% est créée vide si elle n'existe pas encore (une séquence sans objectif
+% donne un tableau vide, comme avant). Aucune borne sur le nombre de
+% séquences.
 % #1 : macro de sauvegarde
-% #2 : code séquence (ex. S01, S12)
+% #2 : code séquence (ex. S01, A1)
 \newcommand{\seq@seqcode@tobasename}[2]{%
-	\seq@seqcode@tonumber{\seq@tmp@n}{#2}%
-	\edef#1{seq@objectifs@s\seq@tmp@n}%
+	\edef\seq@tmp@code{#2}%
+	\expandafter\seq@basesequence@assure\expandafter{\seq@tmp@code}%
+	\edef#1{seq@objectifs@\seq@tmp@code}%
 }%
 % ----------------------------------------------------------------------------
 % Récapitule les attendus de fin de cycle du cycle précédent 

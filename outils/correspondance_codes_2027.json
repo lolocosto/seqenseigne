@@ -1,0 +1,420 @@
+{
+ "version": 1,
+ "objet": "Table de correspondance des codes de séquences et des thèmes (rentrée 2027) : ancien code -> nouveau code, cycles 3 et 4. Lue par les outils de lots de 6e (outils/import_lot6e.py, outils/import_lot6e_mer.py) depuis la v0.57.0 ; servira à l'outil de migration (v0.58.0). Aucune donnée n'est migrée en v0.57.0.",
+ "sources": "col4/ref_cycle4_synthese.md (15 novembre 2026, § 5 et § 6), col4/plan_migration_themes_codes.md (§ 3), décisions 6 à 9 de col4/DECISIONS_CYCLE4.md ; réponses par défaut acceptées le 15 novembre 2026 (22 h 41) : lettre F « Grandeurs et mesures », D1 Fonctions avant D2 Proportionnalité, Cercles avant Angles en 6e",
+ "regles": {
+  "code_theme": "^[A-F][1-9]$ (lettre du thème + rang dans le thème)",
+  "numero": "10 x rang du thème + rang dans le thème ; archives Xnn : 100 + n ; mises en route Mnn : 200 + n",
+  "reserves": "S (anciens codes), M (mises en route), X (archives)"
+ },
+ "cycles": {
+  "C03": {
+   "themes": [
+    {
+     "ancien": "A",
+     "nouveau": "A",
+     "nom": "Nombres, calcul et résolution de problèmes",
+     "code_couleur": "nombres",
+     "ordre_ancien": 1,
+     "ordre_nouveau": 1
+    },
+    {
+     "ancien": "B",
+     "nouveau": "F",
+     "nom": "Grandeurs et mesures",
+     "code_couleur": "grandeurs",
+     "ordre_ancien": 2,
+     "ordre_nouveau": 6
+    },
+    {
+     "ancien": "C",
+     "nouveau": "B",
+     "nom": "Espace et géométrie",
+     "code_couleur": "geometrie",
+     "ordre_ancien": 3,
+     "ordre_nouveau": 2
+    },
+    {
+     "ancien": "D",
+     "nouveau": "C",
+     "nom": "Organisation et gestion de données, probabilités",
+     "code_couleur": "donnees",
+     "ordre_ancien": 4,
+     "ordre_nouveau": 3
+    },
+    {
+     "ancien": "E",
+     "nouveau": "D",
+     "nom": "Proportionnalité",
+     "code_couleur": "proportionnalite",
+     "ordre_ancien": 5,
+     "ordre_nouveau": 4
+    },
+    {
+     "ancien": "F",
+     "nouveau": "E",
+     "nom": "Initiation à la pensée informatique",
+     "code_couleur": "algorithmique",
+     "ordre_ancien": 6,
+     "ordre_nouveau": 5
+    }
+   ],
+   "sequences": [
+    {
+     "ancien": "S01",
+     "nouveau": "A1",
+     "numero_ancien": 1,
+     "numero_nouveau": 11,
+     "nom": "Nombres entiers et décimaux, fractions",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S02",
+     "nouveau": "A2",
+     "numero_ancien": 2,
+     "numero_nouveau": 12,
+     "nom": "Comparaison de nombres",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S03",
+     "nouveau": "A3",
+     "numero_ancien": 3,
+     "numero_nouveau": 13,
+     "nom": "Opérations",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S04",
+     "nouveau": "A4",
+     "numero_ancien": 4,
+     "numero_nouveau": 14,
+     "nom": "Pré-algèbre",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S05",
+     "nouveau": "B1",
+     "numero_ancien": 5,
+     "numero_nouveau": 21,
+     "nom": "Points, segments, droites",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S06",
+     "nouveau": "B2",
+     "numero_ancien": 6,
+     "numero_nouveau": 22,
+     "nom": "Cercles",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S07",
+     "nouveau": "B3",
+     "numero_ancien": 7,
+     "numero_nouveau": 23,
+     "nom": "Angles",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S08",
+     "nouveau": "B4",
+     "numero_ancien": 8,
+     "numero_nouveau": 24,
+     "nom": "Triangles",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S09",
+     "nouveau": "B5",
+     "numero_ancien": 9,
+     "numero_nouveau": 25,
+     "nom": "Symétrie axiale",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S10",
+     "nouveau": "C1",
+     "numero_ancien": 10,
+     "numero_nouveau": 31,
+     "nom": "Gestion de données",
+     "theme_ancien": "D",
+     "theme_nouveau": "C"
+    },
+    {
+     "ancien": "S11",
+     "nouveau": "C2",
+     "numero_ancien": 11,
+     "numero_nouveau": 32,
+     "nom": "Probabilité",
+     "theme_ancien": "D",
+     "theme_nouveau": "C"
+    },
+    {
+     "ancien": "S12",
+     "nouveau": "D1",
+     "numero_ancien": 12,
+     "numero_nouveau": 41,
+     "nom": "Proportionnalité",
+     "theme_ancien": "E",
+     "theme_nouveau": "D"
+    },
+    {
+     "ancien": "S13",
+     "nouveau": "E1",
+     "numero_ancien": 13,
+     "numero_nouveau": 51,
+     "nom": "Pensée informatique",
+     "theme_ancien": "F",
+     "theme_nouveau": "E"
+    }
+   ],
+   "mises_en_route": [
+    {
+     "code": "M01",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "code": "M02",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "code": "M03",
+     "theme_ancien": "B",
+     "theme_nouveau": "F"
+    },
+    {
+     "code": "M04",
+     "theme_ancien": "B",
+     "theme_nouveau": "F"
+    },
+    {
+     "code": "M05",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "code": "M06",
+     "theme_ancien": "D",
+     "theme_nouveau": "C"
+    },
+    {
+     "code": "M07",
+     "theme_ancien": "E",
+     "theme_nouveau": "D"
+    }
+   ],
+   "inchanges": "M01 à M07 (mises en route, seule la lettre du thème change) ; X01 à X16 et thèmes XA, XB, XC (archives de l'ancien cycle 3)"
+  },
+  "C04": {
+   "themes": [
+    {
+     "ancien": "A",
+     "nouveau": "A",
+     "nom_ancien": "Nombres et Calculs",
+     "nom": "Nombres et calculs",
+     "code_couleur": "nombres",
+     "ordre_ancien": 1,
+     "ordre_nouveau": 1
+    },
+    {
+     "ancien": "D",
+     "nouveau": "B",
+     "nom_ancien": "Espace et géométrie",
+     "nom": "Espace et géométrie",
+     "code_couleur": "geometrie",
+     "ordre_ancien": 4,
+     "ordre_nouveau": 2
+    },
+    {
+     "ancien": "B",
+     "nouveau": "C",
+     "nom_ancien": "Données et fonctions",
+     "nom": "Organisation et gestion de données et probabilités",
+     "code_couleur": "donnees",
+     "ordre_ancien": 2,
+     "ordre_nouveau": 3
+    },
+    {
+     "ancien": null,
+     "nouveau": "D",
+     "nom_ancien": null,
+     "nom": "Proportionnalité, fonctions",
+     "code_couleur": "proportionnalite",
+     "ordre_ancien": null,
+     "ordre_nouveau": 4
+    },
+    {
+     "ancien": "E",
+     "nouveau": "E",
+     "nom_ancien": "Algorithmique et programmation",
+     "nom": "La pensée informatique",
+     "code_couleur": "algorithmique",
+     "ordre_ancien": 5,
+     "ordre_nouveau": 5
+    },
+    {
+     "ancien": "C",
+     "nouveau": "F",
+     "nom_ancien": "Grandeurs et mesures",
+     "nom": "Grandeurs et mesures",
+     "code_couleur": "grandeurs",
+     "ordre_ancien": 3,
+     "ordre_nouveau": 6
+    }
+   ],
+   "sequences": [
+    {
+     "ancien": "S03",
+     "nouveau": "A1",
+     "numero_ancien": 3,
+     "numero_nouveau": 11,
+     "nom": "Calcul numérique",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S15",
+     "nouveau": "A2",
+     "numero_ancien": null,
+     "numero_nouveau": 12,
+     "nom": "Nombres rationnels et arithmétique",
+     "theme_ancien": null,
+     "theme_nouveau": "A",
+     "nouvelle": true
+    },
+    {
+     "ancien": "S01",
+     "nouveau": "A3",
+     "numero_ancien": 1,
+     "numero_nouveau": 13,
+     "nom": "Représentations d'un nombre",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S05",
+     "nouveau": "A4",
+     "numero_ancien": 5,
+     "numero_nouveau": 14,
+     "nom": "Calcul littéral",
+     "theme_ancien": "A",
+     "theme_nouveau": "A"
+    },
+    {
+     "ancien": "S11",
+     "nouveau": "B1",
+     "numero_ancien": 11,
+     "numero_nouveau": 21,
+     "nom": "Transformations géométriques",
+     "theme_ancien": "C",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S12",
+     "nouveau": "B2",
+     "numero_ancien": 12,
+     "numero_nouveau": 22,
+     "nom": "Géométrie plane",
+     "theme_ancien": "D",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S13",
+     "nouveau": "B3",
+     "numero_ancien": 13,
+     "numero_nouveau": 23,
+     "nom": "Représentation en trois dimensions",
+     "theme_ancien": "D",
+     "theme_nouveau": "B"
+    },
+    {
+     "ancien": "S06",
+     "nouveau": "C1",
+     "numero_ancien": 6,
+     "numero_nouveau": 31,
+     "nom": "Traitement, représentation et interprétation des données",
+     "theme_ancien": "B",
+     "theme_nouveau": "C"
+    },
+    {
+     "ancien": "S07",
+     "nouveau": "C2",
+     "numero_ancien": 7,
+     "numero_nouveau": 32,
+     "nom": "Probabilités",
+     "theme_ancien": "B",
+     "theme_nouveau": "C"
+    },
+    {
+     "ancien": "S09",
+     "nouveau": "D1",
+     "numero_ancien": 9,
+     "numero_nouveau": 41,
+     "nom": "Fonctions",
+     "theme_ancien": "B",
+     "theme_nouveau": "D"
+    },
+    {
+     "ancien": "S08",
+     "nouveau": "D2",
+     "numero_ancien": 8,
+     "numero_nouveau": 42,
+     "nom": "Proportionnalité",
+     "theme_ancien": "B",
+     "theme_nouveau": "D"
+    },
+    {
+     "ancien": "S14",
+     "nouveau": "E1",
+     "numero_ancien": 14,
+     "numero_nouveau": 51,
+     "nom": "Algorithmique et programmation",
+     "theme_ancien": "E",
+     "theme_nouveau": "E"
+    },
+    {
+     "ancien": "S02",
+     "nouveau": "X02",
+     "numero_ancien": 2,
+     "numero_nouveau": 102,
+     "nom": "Comparaison de nombres (archive)",
+     "theme_ancien": "A",
+     "theme_nouveau": "A",
+     "archive": true
+    },
+    {
+     "ancien": "S04",
+     "nouveau": "X04",
+     "numero_ancien": 4,
+     "numero_nouveau": 104,
+     "nom": "Divisibilité et nombres premiers (archive)",
+     "theme_ancien": "A",
+     "theme_nouveau": "A",
+     "archive": true
+    },
+    {
+     "ancien": "S10",
+     "nouveau": "X10",
+     "numero_ancien": 10,
+     "numero_nouveau": 110,
+     "nom": "Calcul de grandeurs (archive)",
+     "theme_ancien": "C",
+     "theme_nouveau": "F",
+     "archive": true
+    }
+   ]
+  }
+ }
+}

@@ -85,6 +85,16 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      majuscules ni des espaces en trop. Rien n'est bloqué : le titre sert aux
      élèves et aux collègues, et les évaluations sont repérées par leur titre
      dans le niveau.
+ 10. **v0.57.0 — codes S… ou A1** (plan de migration des thèmes et des
+     codes, livraison 1 ; décision D6, `doc/redemarrage_v0_57_0.md`) : un
+     lot, `objectifs_6e.json` et la section « Mises en route » de
+     `ref6e_v2.md` peuvent être écrits en anciens codes (S01, thème B
+     « Grandeurs et mesures ») ou en codes de thème (A1, thème F). Tout est
+     ramené aux codes **de la base** (cycle 3 en S… : avant la migration ;
+     en A1… : après) au moyen de `outils/correspondance_codes_2027.json` :
+     après la migration, un lot S01 est importé en A1 et aucune séquence
+     S01… n'est jamais recréée. Une base qui mêle les deux familles est
+     refusée. Un lot de code inconnu n'est pas importé (anomalie).
 
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
@@ -126,6 +136,7 @@ from services import fiches_resume as svc_fiches          # noqa: E402
 from services.atomes import SERIES_DOCUMENTS, _deduire_type_format  # noqa: E402
 from services import marqueurs_exercices as mq                     # noqa: E402
 from services import series_fiches as sf                         # noqa: E402  (v0.56.0)
+from services import codes_sequence as cs                         # noqa: E402  (v0.57.0)
 
 NIVEAU = "N09"
 CYCLE = "C03"
@@ -245,12 +256,14 @@ def charger_referentiel(chemin: Path = REFERENTIEL) -> dict:
 
 def charger_lots(dossier: Path) -> list[dict]:
     """Lots S01/S01.json, S02/S02.json… triés par code de séquence, puis
-    (v0.53.0) les lots de mise en route M01/M01.json… (outils/import_lot6e_mer.py)."""
+    (v0.53.0) les lots de mise en route M01/M01.json… (outils/import_lot6e_mer.py).
+    v0.57.0 : aussi les lots en codes de thème (A1/A1.json…)."""
     dossier = Path(dossier)
     lots = []
     for d in sorted((p for p in dossier.iterdir()
-                     if p.is_dir() and re.fullmatch(r"[SM]\d\d", p.name)),
-                    key=lambda p: (p.name[0] != "S", p.name)):
+                     if p.is_dir() and (re.fullmatch(r"[SM]\d\d", p.name)
+                                        or cs.est_code_theme(p.name))),
+                    key=lambda p: (cs.est_code_mer(p.name), cs.cle_tri(p.name))):
         f = d / f"{d.name}.json"
         if f.is_file():
             lot = json.loads(f.read_text(encoding="utf-8"))
@@ -380,6 +393,155 @@ class Rapport:
             L.append("== Informations ==")
             L += [f"  - {x}" for x in self.infos]
         return "\n".join(L)
+
+
+# ── 0. Codes S… ou A1 (v0.57.0, décision D6) ────────────────────────────────
+
+# Clés d'un lot dont la valeur (ou les éléments, pour une liste) est un code
+# de séquence (« S01 ») ou d'objectif (« S01-02 ») ; ailleurs, seules les
+# étiquettes d'évaluation « N pts --- S01-02 » sont traduites.
+_CLES_CODES_LOT = ("sequence", "code", "objectif", "objectifs", "bareme")
+_RE_CODE_OBJ = re.compile(r"^(" + cs.MOTIF_ANCIEN + "|" + cs.MOTIF_THEME + r")(-\d\d)?$")
+_RE_ETIQ_LOT = re.compile(r"(---\s*)(" + cs.MOTIF_ANCIEN + "|" + cs.MOTIF_THEME + r")-(\d\d)")
+
+
+_LIBELLE_CONV = {"ancien": "anciens codes (S…)", "nouveau": "codes de thème (A1…)"}
+
+
+def convention_base(conn) -> str | None:
+    """Codes des séquences principales du cycle 3 en base : 'ancien' (S01…,
+    avant la migration), 'nouveau' (A1…, après) ou None (aucune). Mnn et
+    Xnn ne comptent pas. ImportErreur si les deux familles se mêlent."""
+    try:
+        return cs.convention_codes(r[0] for r in conn.execute(
+            "SELECT code FROM sequences_du_cycle WHERE cycle_code=?", (CYCLE,)))
+    except cs.CorrespondanceErreur as e:
+        raise ImportErreur(f"base : cycle 3 en codes mêlés ({e}) — migration incomplète, "
+                           "import refusé") from e
+
+
+def _traduire_code(table, code: str, source: str, cible: str) -> str:
+    """S01 ↔ A1, S01-02 ↔ A1-02 (codes de la convention `source` seulement)."""
+    m = _RE_CODE_OBJ.match(code or "")
+    if not m or cs.convention_codes([m.group(1)]) != source:
+        return code
+    return table.vers(CYCLE, m.group(1), cible) + (m.group(2) or "")
+
+
+def traduire_lot(lot: dict, table, cible: str | None) -> dict:
+    """Copie du lot exprimée dans la convention `cible` ('ancien' ou
+    'nouveau') ; le lot lui-même si rien ne change. La convention du lot est
+    celle de son code de séquence ; un lot de mise en route garde son code
+    (seule sa lettre de thème est traduite)."""
+    seq = lot.get("sequence") or ""
+    if cs.est_code_mer(seq):
+        theme = lot.get("theme")
+        if theme and cible:
+            t = table.theme_mer(CYCLE, seq, theme, cible)
+            if t != theme:
+                return {**lot, "theme": t, "_theme_lot": theme}
+        return lot
+    source = cs.convention_codes([seq])
+    if not source or not cible or source == cible:
+        return lot
+    if table.sequence(CYCLE, seq) is None:
+        return lot                                    # code inconnu : lot non importé
+
+    def etiquettes(texte: str) -> str:
+        return _RE_ETIQ_LOT.sub(
+            lambda m: m.group(1) + _traduire_code(table, f"{m.group(2)}-{m.group(3)}",
+                                                  source, cible), texte)
+
+    def parcourir(x, cle=None):
+        if isinstance(x, dict):
+            return {k: (v if k.startswith("_") else parcourir(v, k)) for k, v in x.items()}
+        if isinstance(x, list):
+            return [parcourir(v, cle) for v in x]
+        if isinstance(x, str):
+            if cle in _CLES_CODES_LOT:
+                x = _traduire_code(table, x, source, cible)
+            return etiquettes(x)
+        return x
+
+    out = parcourir(lot)
+    out["_sequence_lot"] = seq
+    return out
+
+
+def traduire_referentiel(ref: dict, table, cible: str | None) -> dict:
+    """Copie de `objectifs_6e.json` dans la convention `cible` : codes,
+    numéros et thèmes des séquences, codes et ordre des thèmes, clés de
+    `parties`. Le référentiel lui-même si rien ne change."""
+    try:
+        source = cs.convention_codes(s["code"] for s in ref["sequences"])
+    except cs.CorrespondanceErreur as e:
+        raise ImportErreur(f"objectifs_6e.json : {e}") from e
+    if not source or not cible or source == cible:
+        return ref
+    out = dict(ref)
+    themes = []
+    for t in ref["themes"]:
+        e = table.theme(CYCLE, t["code"], source)
+        if e is None:
+            raise ImportErreur(f"objectifs_6e.json : thème {t['code']} absent de la table de "
+                               "correspondance")
+        themes.append({**t, "code": table.theme_vers(CYCLE, t["code"], source, cible),
+                       "ordre": e["ordre_nouveau"] if cible == "nouveau" else e["ordre_ancien"]})
+    out["themes"] = themes
+    seqs = []
+    for s in ref["sequences"]:
+        e = table.sequence(CYCLE, s["code"])
+        if e is None:
+            raise ImportErreur(f"objectifs_6e.json : séquence {s['code']} absente de la table "
+                               "de correspondance")
+        seqs.append({**s, "code": table.vers(CYCLE, s["code"], cible),
+                     "numero": e["numero_nouveau"] if cible == "nouveau" else e["numero_ancien"],
+                     "theme": table.theme_vers(CYCLE, s["theme"], source, cible)})
+    out["sequences"] = seqs
+    out["parties"] = {table.vers(CYCLE, k, cible): v for k, v in ref["parties"].items()}
+    out["_convention_source"] = source
+    return out
+
+
+def traduire_ref_mer(ref_mer: dict, table, cible: str | None) -> dict:
+    """Lettres de thème des mises en route (ref6e_v2.md) dans la convention
+    `cible` (M03 : B ↔ F) ; codes Mnn inchangés."""
+    if not cible:
+        return ref_mer
+    return {code: ({**r, "theme": table.theme_mer(CYCLE, code, r.get("theme") or "", cible)}
+                   if r.get("theme") else r)
+            for code, r in ref_mer.items()}
+
+
+def normaliser_codes(conn, ref: dict, lots: list[dict], ref_mer: dict,
+                     rapport: "Rapport", table=None):
+    """(ref, lots, ref_mer, convention) ramenés aux codes de la base (D6).
+    Base sans séquence principale au cycle 3 : convention du référentiel."""
+    table = table or cs.charger_correspondance()
+    base = convention_base(conn)
+    try:
+        conv_ref = cs.convention_codes(s["code"] for s in ref["sequences"])
+    except cs.CorrespondanceErreur as e:
+        raise ImportErreur(f"objectifs_6e.json : {e}") from e
+    cible = base or conv_ref
+    ref2 = traduire_referentiel(ref, table, cible)
+    if ref2 is not ref:
+        rapport.infos.append(f"objectifs_6e.json écrit en {_LIBELLE_CONV[conv_ref]}, ramené "
+                             f"aux {_LIBELLE_CONV[cible]} de la base (table de correspondance)")
+    if cible == "nouveau" and any(cs.est_code_ancien(s["code"]) for s in ref2["sequences"]):
+        raise ImportErreur("base en codes de thème : le référentiel recréerait des séquences "
+                           "S… (import refusé)")
+    lots2 = []
+    for lot in lots:
+        l2 = traduire_lot(lot, table, cible)
+        if l2 is not lot and "_sequence_lot" in l2:
+            rapport.infos.append(f"lot {lot['sequence']} lu en {l2['sequence']} (table de "
+                                 "correspondance)")
+        elif l2 is not lot and "_theme_lot" in l2:
+            rapport.infos.append(f"lot {lot['sequence']} : thème {l2['_theme_lot']} lu "
+                                 f"{l2['theme']} (table de correspondance)")
+        lots2.append(l2)
+    return ref2, lots2, traduire_ref_mer(ref_mer, table, cible), cible
 
 
 # ── 1. Archivage de l'ancien cycle 3 ─────────────────────────────────────────
@@ -1207,7 +1369,9 @@ def importer_documents(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -
 # Évaluations : `\seqExoEval{titre}{N pts --- Snn-nn}` ouvre chaque exercice.
 MARQUE_EXO_EVAL = "\\seqExoEval"
 # v0.53.0 — aussi `Mnn-nn` (tests courts des mises en route).
-RE_ETIQUETTE_EVAL = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*pts?\s*---\s*([SM]\d\d-\d\d)\s*$")
+# v0.57.0 — aussi `A1-nn` (codes de thème).
+RE_ETIQUETTE_EVAL = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*pts?\s*---\s*([SM]\d\d-\d\d|"
+                               + cs.MOTIF_THEME + r"-\d\d)\s*$")
 
 
 def decouper_evaluation(latex: str) -> list[dict]:
@@ -1770,12 +1934,15 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     if mer.migrer(conn):
         rapport.infos.append("Base complétée : colonne libelle des parties de séquence "
                              "(v0.53.1)")
+    mer_imp = _module_mer()                                           # v0.53.0
+    # v0.57.0 (D6) — référentiel, lots et mises en route ramenés aux codes de
+    # la base (S… avant la migration, A1… après) : jamais de S01… recréé.
+    ref, lots, ref_mer, _conv = normaliser_codes(conn, ref, lots, mer_imp.referentiel_mer(),
+                                                 rapport)
     if not archivage_fait(conn):
         archiver_cycle3(conn, rapport, racine)
     themes = appliquer_cycle3(conn, ref, rapport)
     figures = {}
-    mer_imp = _module_mer()                                           # v0.53.0
-    ref_mer = mer_imp.referentiel_mer()
     imp = sys.modules[__name__]
     # v0.53.1 (I-MR7) — mises en route importées avec l'ancienne structure.
     mer_imp.restructurer_anciennes_mer(conn, imp, ref_mer, rapport)

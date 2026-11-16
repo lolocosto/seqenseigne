@@ -21,6 +21,25 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## seqenseigne-data v1.1 — 2026-11-15 (appli v0.57.0)
+
+### Corrigé
+
+- Bases d'objectifs par séquence nommées par le **code entier** de la séquence
+  (`seq@objectifs@S03`, `seq@objectifs@A1`) au lieu du numéro (`seq@objectifs@s3`) :
+  avec les codes de thème de la rentrée 2027 (A1, B1, C1…), deux séquences de même rang
+  tombaient dans la même base (ou, selon le contexte, provoquaient des erreurs datatool
+  `seq@objectifs@s0A1`). Concerne `\seqSuiviAnnuelParEleve`,
+  `\seqSuiviAnnuelParSequence` et `\seqSuiviPeriodiqueParSequence` ; les livrets ne
+  passent pas par ces bases.
+
+### Modifié
+
+- Bases créées à la demande (`\seq@basesequence@assure`) ; borne `\seq@maxsequences`
+  (16) retirée : aucune limite sur le nombre de séquences. `\seq@seqcode@tonumber`
+  gardée, obsolète. Rendu identique pour les codes S01 à S16 (PDF comparés octet pour
+  octet).
+
 ## seqenseigne-style6e v0.14 — 2026-11-13
 
 ### Ajouté

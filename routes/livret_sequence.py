@@ -97,12 +97,13 @@ def _valider_niveau_sequence(niveau: str, sequence: str):
     # Format S01..S14 : on accepte un peu plus large pour ne pas avoir
     # à mettre à jour ici à chaque ajout de séquence en BDD.
     # v0.53.0 (MR5) — et M01…M07 : documents d'une séquence de mise en route.
-    from services.mises_en_route_6e import est_sequence_mer
-    if not ((sequence.startswith('S') and sequence[1:].isdigit() and len(sequence) <= 4)
-            or est_sequence_mer(sequence)):
+    # v0.57.0 (L1) — et les codes de thème A1…F9 (services.codes_sequence).
+    from services.codes_sequence import est_code_sequence
+    if not est_code_sequence(sequence, mer=True, ancien_large=True):
         return jsonify({
             'error': f"sequence invalide : {sequence!r}",
-            'format_attendu': "S<numero> (ex. S01, S14) ou M<numero> (mise en route)",
+            'format_attendu': "A1…F9 (code de thème), S<numero> (ex. S01, S14) "
+                              "ou M<numero> (mise en route)",
         }), 400
     return None
 

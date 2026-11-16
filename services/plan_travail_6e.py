@@ -52,6 +52,7 @@ from __future__ import annotations
 import re
 import sqlite3
 
+from services.codes_sequence import libelle_numero            # v0.57.0 (L1)
 from services import marqueurs_exercices as _mq
 from services.livret_sequence_6e import (
     Livret6eErreur, document, latex_fiche, lire_sequence_6e, normaliser_options,
@@ -275,7 +276,8 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
                r" --- [ \ldots{} ] : remédiation (R)"
                + (r" --- \{ \ldots{} \} : expertise (EX)" if a_E else ""))
     sous_titre = " --- ".join(x for x in (
-        f"Séquence {seq['numero']}" if seq.get("numero") else "",
+        # v0.57.0 (L1) — « Séquence A1 » pour un code de thème (numéro 11).
+        f"Séquence {libelle_numero(seq.get('code'), seq['numero'])}" if seq.get("numero") else "",
         f"{_fmt(duree)} séances" if duree else "",
         r"Livret de séquence \seqNiveauCourt") if x)      # v0.52.4 (T1)
     L = [r"\begin{center}{\Large\bfseries\color{seqSixVert}" + souligner(seq["nom"]) + r"}\\[3pt]",

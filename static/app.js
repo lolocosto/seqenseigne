@@ -5143,15 +5143,45 @@ let COMPIL_EVENTSOURCE = null;  // EventSource actif, null hors run
 let COMPIL_PREVIEW_OK  = false; // true après un aperçu réussi → bouton Lancer activé
 let COMPIL_RUN_TOTAL   = 0;     // total à traiter (pour la barre de progression)
 
-// Initialisation du sous-onglet : injection des séquences S01..S14, lecture
-// de la config courante, reset des compteurs.
+// v0.57.0 (L1) — Ordre d'une liste de codes de séquences qui peut mêler
+// anciens codes (S01…) et codes de thème (A1…F9) : même règle que
+// services/codes_sequence.cle_tri. Sans code de thème, ordre alphabétique
+// d'avant v0.57.0 (M… < S… < X…) ; les codes de thème viennent juste après
+// les anciens codes, avant les archives.
+function atelCleTriCodeSequence(code) {
+  const c = String(code || '');
+  return /^[A-F][1-9]$/.test(c) ? 'S\uffff' + c : c;
+}
+function atelComparerCodesSequence(a, b) {
+  const ka = atelCleTriCodeSequence(a), kb = atelCleTriCodeSequence(b);
+  return ka < kb ? -1 : (ka > kb ? 1 : 0);
+}
+
+// v0.57.0 (L1) — Codes des séquences principales (listes « séquence » de la
+// compilation par lot et de la recherche) : lus en base, cycles 3 et 4
+// (/api/cycles/<code>/sequences), au lieu de S01…S14 en dur. Mises en route
+// (Mnn) et archives (Xnn) écartées. Repli de atelChargerSequencesPourCycle
+// si l'API ne répond pas : S01…S14 (ATL_SEQUENCES_OPTIONS).
+async function atelCodesSequencesPrincipales() {
+  const codes = [];
+  for (const cycle of ['C03', 'C04']) {
+    const liste = await atelChargerSequencesPourCycle(cycle);
+    for (const c of (liste || [])) {
+      if (!/^[MX]\d\d$/.test(c) && !codes.includes(c)) codes.push(c);
+    }
+  }
+  return codes.sort(atelComparerCodesSequence);
+}
+
+// Initialisation du sous-onglet : injection des séquences (lues en base
+// depuis v0.57.0), lecture de la config courante, reset des compteurs.
 async function compilBatchInit() {
-  // Injecter S01..S14 dans le select séquence (seulement à la première fois).
+  // Injecter les séquences dans le select (seulement à la première fois).
   const sel = document.getElementById('rdl-filtre-sequence');
-  if (sel && sel.querySelectorAll('option').length <= 1) {
+  if (sel && sel.querySelectorAll('option').length <= 1 && !sel.dataset.seqChargees) {
+    sel.dataset.seqChargees = '1';
     const opts = [];
-    for (let i = 1; i <= 14; i++) {
-      const code = 'S' + String(i).padStart(2, '0');
+    for (const code of await atelCodesSequencesPrincipales()) {
       opts.push(`<option value="${code}">${code}</option>`);
     }
     // v0.53.0 (B1) — mises en route de 6e (M01 à M07), au modèle « Fiches ».
@@ -5174,7 +5204,7 @@ async function compilBatchInit() {
 // v0.18.1 — Outil Recherche (Outils généraux)
 //
 // Recherche transversale sur les 5 types d'atomes via GET /api/recherche.
-// - rechercheInit()   : init du panneau (injection des séquences S01..S14).
+// - rechercheInit()   : init du panneau (séquences lues en base depuis v0.57.0).
 // - rechercheLancer()  : lit les filtres, appelle l'API, affiche les résultats.
 // - rechercheRendre()  : rendu des résultats groupés par type.
 //
@@ -5192,13 +5222,14 @@ const _RECH_LABEL_TYPE = {
 const _RECH_ORDRE_TYPES = ['notion', 'methode', 'exercice', 'fiche', 'carte',
                            'carte_mentale'];   // v0.56.3
 
-// Init : injecte les séquences S01..S14 dans le filtre (une seule fois).
-function rechercheInit() {
+// Init : injecte les séquences dans le filtre (une seule fois ; lues en base
+// depuis v0.57.0, atelCodesSequencesPrincipales).
+async function rechercheInit() {
   const sel = document.getElementById('rech-filtre-sequence');
-  if (sel && sel.querySelectorAll('option').length <= 1) {
+  if (sel && sel.querySelectorAll('option').length <= 1 && !sel.dataset.seqChargees) {
+    sel.dataset.seqChargees = '1';
     const opts = [];
-    for (let i = 1; i <= 14; i++) {
-      const code = 'S' + String(i).padStart(2, '0');
+    for (const code of await atelCodesSequencesPrincipales()) {
       opts.push(`<option value="${code}">${code}</option>`);
     }
     sel.insertAdjacentHTML('beforeend', opts.join(''));

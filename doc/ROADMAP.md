@@ -357,3 +357,57 @@ But : outil « classe » sans distribution LaTeX (préalable à la mise en ligne
   mental (5 questions, score /5), corrigés et tests (/10) séparés — modèles
   fournis par l'auteur (oct. 2026). Probablement de nouveaux ateliers. Le type
   « MER » des référentiels internes est ouvert dès v0.48.3.
+
+## Ateliers atomiques — petits manques repérés (inventaire v0.56.3, 13 nov. 2026)
+
+Voir `inventaire_ateliers.md` de la livraison v0.56.3.
+- Atelier **Exercice**, mode « toutes les séquences » : la liste n'indique pas la
+  séquence de chaque exercice (les autres ateliers l'affichent).
+- **Rendu par lot** : n'inclut pas les cartes mentales (ni option « sans cache »,
+  cf. v0.56.2).
+- Atelier **Exercice** : règle CSS du mode côte-à-côte visant un identifiant
+  disparu (`#atl-exo-form`) — sans effet visible, à nettoyer.
+
+## Référentiels internes de 6e et progression 2027-2028 (13 nov. 2026)
+
+- Aucun référentiel interne de 6e dans la base de l'atelier au 13 novembre
+  (X2026_N09 externe et M2026_N09 seulement). Création par l'appli selon la
+  marche à suivre v0.54.0 mise à jour (validation des atomes, des séquences,
+  création principal + MER, documents, verrouillage, publication).
+- Ensuite : chantier « progressions » (séances par objectif, placement des
+  MER, bascule depuis M2026_N09, dépendances, tuile matériel) pour construire
+  la progression 6e 2027-2028.
+
+## Référentiel de 4e — nouveau programme (rentrée 2027), modèle Fiches (13 nov. 2026)
+
+- Programme : arrêté du 18 février 2026 (BO n° 10 du 5 mars 2026), en 4e à la
+  rentrée 2027-2028.
+- Modèle « Fiches de cours » avec **cartes d'automatisme** dans la progression
+  principale (pas de référentiel de MER séparé).
+- Méthode du référentiel de 6e : structure en séquences (créer / supprimer) →
+  parties → objectifs détaillés (`ref4e`) → réutilisation (notions, méthodes,
+  fiches de résumé → fiches de cours et cartes mentales ; exercices ; cartes
+  d'automatisme) → création (activités de découverte, activités
+  complémentaires, TP, tests courts, évaluations).
+- N11_v2025 reste intouchable (en classe cette année).
+
+## Thèmes communs et codes A1 (cycles 3 et 4) — migration en deux livraisons (15 nov. 2026)
+
+Décisions 6 à 9 du cycle 4 (thèmes = domaines du programme, A à F communs aux deux
+cycles ; codes de séquences A1) ; plan `plan_migration_themes_codes.md` validé le
+15 novembre (22 h 41), N11_v2025 et 2025_N11b figés et publiés.
+- **v0.57.0 livrée** : code tolérant aux codes A1, aucune donnée migrée
+  (`doc/redemarrage_v0_57_0.md`) ; table `outils/correspondance_codes_2027.json`.
+- **Usage 1 à 2 semaines** : scanner, compilation de livrets S…, import d'un lot de 6e
+  en essai à blanc.
+- **v0.58.0 à faire** : outil `outils/migrer_themes_codes_2027.py` (essai à blanc,
+  `--apply`, `--annuler`, idempotent, sauvegarde, une transaction par cycle, refus d'une
+  base de classe et d'un référentiel figé sans `_publication/referentiel.json`) ;
+  thèmes (permutation au cycle 3, D créé au cycle 4) ; séquences recodées et archives
+  X02, X04, X10 ; tables vivantes ; reclassement des contenus de S02, S04, S10 ; fichiers
+  LaTeX du cycle 4 ; données de départ (`data/C03_*`, `data/C04_*`,
+  `N1x_sequences.yaml`, `outils/objectifs_6e.json`, `outils/ref6e_v2.md`) ; libellé de
+  `proportionnalite` ; `.dbtex`. Jamais touchés : instantanés figés, `_verrouille/`,
+  `_publication/`, référentiels externes, partie classe.
+- Ensuite : nouveaux référentiels 2027 (5e, 4e, 6e ; 3e en 2028) saisis en codes A1,
+  PDF compilés, verrouillés et publiés avant la rentrée.

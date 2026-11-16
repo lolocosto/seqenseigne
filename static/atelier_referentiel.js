@@ -413,9 +413,12 @@ async function atelRefRendreArbre() {
 // sauf pour une mise en route (Mnn, numéro 200 + n) ou une archive (Xnn,
 // numéro 100 + n), dont le numéro n'a pas de sens pour l'utilisateur
 // (« S201 ») : leur code. Rien ne change pour les séquences Snn.
+// v0.57.0 (L1) — code de thème (A1…F9) : affiché tel quel. A1 a le numéro
+// 11 dans le cycle et ne doit jamais s'afficher « S11 ».
 function atelRefCodeSequence(s) {
   const code = (s && (s.code || s.sequence_code)) || '';
   if (/^[MX]\d\d$/.test(code)) return code;
+  if (/^[A-F][1-9]$/.test(code)) return code;
   return 'S' + String((s && s.numero) ?? '?').padStart(2, '0');
 }
 

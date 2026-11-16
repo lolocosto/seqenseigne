@@ -796,10 +796,13 @@ def _valider_precedence(precedent_niveau, precedent_seq):
             f"(attendu NXX)",
             precedent_niveau=precedent_niveau,
         )
-    if not (precedent_seq.startswith("S") and precedent_seq[1:].isdigit()):
+    # v0.57.0 (L1) — code de thème A1…F9 ou ancien code S + chiffres.
+    from services.codes_sequence import est_code_theme
+    if not ((precedent_seq.startswith("S") and precedent_seq[1:].isdigit())
+            or est_code_theme(precedent_seq)):
         raise PrecedenceInvalide(
             f"Format de séquence invalide : {precedent_seq!r} "
-            f"(attendu SXX)",
+            f"(attendu SXX ou A1…F9)",
             precedent_seq=precedent_seq,
         )
 
