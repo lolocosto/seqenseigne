@@ -2745,12 +2745,20 @@
                niveau : choisi à la création, avec sa description ; proposé
                pour un référentiel interne principal seulement. -->
           <div id="refu-c-modele-bloc" class="refu-c-modele-bloc">
-            <label for="refu-c-gabarit" class="refu-c-modele-label">Modèle du référentiel</label>
+            <!-- v0.59.3 — L'explication du modèle (texte inchangé, rempli par
+                 refuMajChoixModele) est une infobulle : bouton ⓘ, texte complet au
+                 survol et au focus clavier (aria-describedby), cadre moins haut. -->
+            <div class="refu-c-modele-tete">
+              <label for="refu-c-gabarit" class="refu-c-modele-label">Modèle du référentiel</label>
+              <button type="button" class="refu-info" id="refu-c-modele-info"
+                      aria-label="Explication du modèle choisi"
+                      aria-describedby="refu-c-modele-desc">ⓘ</button>
+              <div id="refu-c-modele-desc" class="refu-modele-desc refu-infobulle" role="tooltip"></div>
+            </div>
             <select id="refu-c-gabarit" title="Modèle du référentiel"
                     onchange="this.dataset.manuel='1'; refuAnnulerCreation(); refuMajChoixModele()">
               <option value="cycle4">Notions et méthodes</option>
               <option value="sixieme">Fiches de résumé par objectif</option></select>
-            <div id="refu-c-modele-desc" class="refu-modele-desc" aria-live="polite"></div>
             <!-- v0.59.0 (D4) — option « cartes d'automatisme » du modèle Fiches
                  (référentiel principal) : cartes rattachées aux objectifs,
                  comptées dans la validation ; choisie à la création. -->

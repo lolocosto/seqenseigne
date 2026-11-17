@@ -184,7 +184,7 @@ def contenu(conn, niveau: str, type_ref: str | None, gabarit: str | None = None,
     else:
         nc = None
     evals = evaluations_du_perimetre(conn, niveau, type_ref)
-    catalogue = gd.catalogue_type(g, type_ref)
+    catalogue = gd.catalogue_type(g, type_ref, avec_cartes)            # v0.59.1
     return {
         "niveau": niveau, "type_ref": type_ref, "libelle_type": LIBELLES_TYPES[type_ref],
         "gabarit": g, "libelle_modele": gd.LIBELLES_GABARITS.get(g, g),

@@ -29,6 +29,12 @@ API
 generer_livret_cartes_recap(conn, niveau, options=None) -> str
     Retourne le source .tex complet (documentclass + préambule + document).
 
+v0.59.1 — `perimetre='objectifs'` (référentiel principal au modèle Fiches
+avec l'option cartes) : cartes rattachées aux objectifs du principal
+(`fiches_cycle4.cartes_du_perimetre`), de la séquence `sequence` ou de tout
+le niveau ; page de garde avec la séquence et son titre court. Sans ce
+paramètre, rien ne change (cartes validées du niveau, même .tex).
+
 Préambule
 ---------
 Le préambule statique charge seqenseigne-core, seqenseigne-theme et
@@ -132,13 +138,27 @@ def _page_de_garde(niveau: str, cartes: list[dict]) -> list[str]:
     ]
 
 
+def _page_de_garde_fiches(conn, niveau: str, cartes: list[dict],
+                          sequence: str | None) -> list[str]:
+    """v0.59.1 — Page de garde du récap au modèle Fiches (séquence, titre
+    court échappé : `latex_texte.texte_latex`)."""
+    L = _page_de_garde(niveau, cartes)
+    if sequence is not None:
+        from services.livret_cartes_planches import ligne_sequence_fiches
+        L.insert(L.index(rf'{{\large {len(cartes)} cartes au total}}'),
+                 ligne_sequence_fiches(conn, niveau, sequence))
+    return L
+
+
 # ── Génération principale ────────────────────────────────────────────────────
 
 def generer_livret_cartes_recap(conn: sqlite3.Connection,
                                   niveau: str,
                                   options: dict | None = None,
                                   tikz_libraries: list[str] | None = None,
-                                  tblr_libraries: list[str] | None = None
+                                  tblr_libraries: list[str] | None = None,
+                                  sequence: str | None = None,
+                                  perimetre: str | None = None
                                   ) -> str:
     """Génère le source .tex du récap cartes pour un niveau.
 
@@ -166,7 +186,11 @@ def generer_livret_cartes_recap(conn: sqlite3.Connection,
         livrets. Ignorés ici (les cartes n'utilisent ni tikz ni tblr
         au niveau du livret englobant).
     """
-    cartes = _lire_cartes_du_niveau(conn, niveau)
+    if perimetre == 'objectifs':                                     # v0.59.1
+        from services.fiches_cycle4 import cartes_du_perimetre
+        cartes = cartes_du_perimetre(conn, niveau, sequence, valides=True)
+    else:
+        cartes = _lire_cartes_du_niveau(conn, niveau)
     preambule = _preambule_livret_cartes()
 
     nb_blocs = (len(cartes) + CARTES_PAR_BLOC - 1) // CARTES_PAR_BLOC
@@ -174,6 +198,10 @@ def generer_livret_cartes_recap(conn: sqlite3.Connection,
     L: list[str] = []
     L.append(rf"%% Récap des cartes d'automatisme — vue enseignant.")
     L.append(f'%% Niveau : {niveau}')
+    if perimetre == 'objectifs':
+        L.append('%% Cartes rattachées aux objectifs'
+                 + (f' de la séquence {sequence}' if sequence else ' du principal')
+                 + ' (modèle Fiches, option cartes)')
     L.append(f'%% {len(cartes)} cartes — grille 4 colonnes, '
              f'{CARTES_PAR_BLOC} cartes par paire de pages.')
     L.append(f'%% {nb_blocs} paire(s) de pages (1 paire = 1 page rectos + '
@@ -187,7 +215,10 @@ def generer_livret_cartes_recap(conn: sqlite3.Connection,
     L.append('')
     L.append(r'\seqInitCartes')
     L.append('')
-    L.extend(_page_de_garde(niveau, cartes))
+    if perimetre == 'objectifs':
+        L.extend(_page_de_garde_fiches(conn, niveau, cartes, sequence))
+    else:
+        L.extend(_page_de_garde(niveau, cartes))
     L.append('')
 
     if cartes:
@@ -211,6 +242,9 @@ def generer_livret_cartes_recap(conn: sqlite3.Connection,
                 idx_ligne_global += 1
             L.append(r'\end{seqCarteRecap}')
             L.append('')
+    elif perimetre == 'objectifs' and sequence is not None:
+        L.append(r'\begin{center}\textit{Aucune carte validée pour ' + niveau + '/'
+                 + sequence + r'.}\end{center}')
     else:
         L.append(r'\begin{center}\textit{Aucune carte au niveau ' + niveau + r'.}\end{center}')
 

@@ -173,7 +173,14 @@ def rendre_carte_isole(conn: sqlite3.Connection, carte: dict) -> dict:
     opts = _options_communes(carte, code_couleur=code_couleur,
                               libelle_type=libelle_type)
     if carte.get('titre'):
-        opts.append(f"nom={_echapper_valeur_option(carte['titre'])}")
+        # v0.59.1 — titre venu de la base, `& % # _` échappés hors `$…$`
+        # (`latex_texte.speciaux_latex`) : « Compléter 20 % de 120 » commentait
+        # la fin des options et cassait la carte. Seul point d'insertion d'un
+        # titre de carte (planches et récap n'en affichent pas) ; la clé `nom`
+        # n'est pas composée par le paquet, d'où pas de conversion Unicode
+        # (titres sans ces caractères : .tex identique).
+        from services.latex_texte import speciaux_latex
+        opts.append(f"nom={_echapper_valeur_option(speciaux_latex(carte['titre']))}")
     options_str = ', '.join(opts)
 
     appel = (

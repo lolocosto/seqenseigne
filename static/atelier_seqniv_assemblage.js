@@ -329,6 +329,16 @@
 
       const niveau = window.ATL_FILTRE_NIVEAU || '';
       const seq    = window.ATL_FILTRE_SEQ    || '';
+      // v0.59.3 — « — Toutes les séquences — » : liste des séquences du niveau
+      // (multisélection, actions groupées Valider / Repasser en cours).
+      if (niveau && !seq) {
+        await this._afficherListeSequences();
+        return;
+      }
+      // Une séquence est choisie : la sélection de la liste ne vaut plus.
+      this.selectionMulti.clear();
+      this.ancreSelectionId = null;
+      this.selectionMultiFermerMenu();
       if (!niveau || !seq) {
         this._afficher('<div class="asm-vide">Choisir un niveau et une séquence.</div>');
         this._afficherSidebarVide('Choisir une séquence');
@@ -2493,6 +2503,153 @@
     basculerEtatSequence() {
       if (this._etatSequence() === 'valide') return this.devaliderSequence();
       return this.validerSequence();
+    }
+
+    // ── v0.59.3 — Liste des séquences du niveau : multisélection ─────────────
+    //
+    // Demande de Laurent (17 novembre 2026, 22 h) : « sélectionner plusieurs
+    // séquences, comme ça je les repasse toutes "en cours" en une seule
+    // opération ». Sans séquence choisie (« — Toutes les séquences — »), la
+    // barre de gauche liste les séquences du niveau. Tout vient d'AtelierEditeur
+    // (aucune copie) : clic = ouvrir la séquence, Ctrl+clic, Maj+clic (plage),
+    // clic droit (menu), Échap, barre « ✓ Valider / ⟲ En cours », résumé
+    // « n validé, m déjà à jour, k ignoré (raison), j en échec : … ». L'atelier
+    // ne fournit que les crochets : chargerListe (GET …?niveau=), rendreItem,
+    // urlEtat (la route unitaire PATCH …/<id>/etat : mêmes règles, mêmes
+    // contrôles qu'une par une), raisonHorsEtat (archives Xnn), libelleItem
+    // (code de la séquence dans les refus) et avertissementEtatGroupe
+    // (confirmation avant « Repasser en cours »).
+
+    _modeListeSequences() {
+      return !!(window.ATL_FILTRE_NIVEAU || '') && !(window.ATL_FILTRE_SEQ || '');
+    }
+
+    async _afficherListeSequences() {
+      const niveau = window.ATL_FILTRE_NIVEAU || '';
+      this.data = null;
+      this.objOuvert = null;
+      this._reinitialiserOngletRendu();
+      this.basculerOnglet('edition');
+      const t = this._sidebarTitre();
+      if (t) t.textContent = 'Séquences';
+      const h = this._sidebarHint();
+      if (h) h.textContent = 'Ctrl/Maj+clic : plusieurs';
+      const sb = this._sidebarBody();
+      if (sb && !document.getElementById('liv-atl-list')) {
+        sb.innerHTML = '<div id="liv-atl-list" class="seqniv-liste-sequences"></div>';
+      }
+      // Changement de niveau : les identifiants de la sélection ne valent plus.
+      if (this._niveauListe !== niveau) {
+        this.selectionMulti.clear();
+        this.ancreSelectionId = null;
+      }
+      this._niveauListe = niveau;
+      await this.chargerListe();
+      this._majSelectionToolbar();
+      this.majToolbar();
+    }
+
+    async chargerListe() {
+      if (!this._modeListeSequences()) return;
+      const niveau = window.ATL_FILTRE_NIVEAU || '';
+      const rep = await apiJson('GET',
+        `/api/v2/sequences-par-niveau?niveau=${encodeURIComponent(niveau)}`);
+      if (!rep.ok) {
+        this.toast('Erreur chargement des séquences : HTTP ' + rep.status, 'erreur');
+      }
+      this._listeInfo = rep.ok ? rep.data : null;
+      this.liste = _PUR.elementsSequences(this._listeInfo);
+      // Sélection : seulement des séquences encore listées.
+      for (const id of Array.from(this.selectionMulti)) {
+        if (!this.liste.some(el => el.id === id)) this.selectionMulti.delete(id);
+      }
+      this.rendreSidebar();
+      this._rendreCentreListe();
+    }
+
+    filtrerListe(liste) {
+      return liste;            // ni filtre d'état d'atome, ni « non rattachés »
+    }
+
+    _htmlListeVide() {
+      return '<div class="atl-list-vide" style="padding:14px 10px;color:var(--text-muted);'
+        + 'font-size:12px;text-align:center">Aucune séquence dans ce niveau.</div>';
+    }
+
+    rendreItem(el) {
+      const tags = [];
+      const per = _PUR.LIBELLES_PERIMETRE[el.perimetre];
+      if (per) tags.push(per);
+      const refs = el.referentiels_vivants.concat(el.referentiels_figes);
+      return window.Atelier.rendreItemHtml({
+        actif: false,
+        selected: this.estSelectionne(el.id),
+        dataId: el.id,
+        onclick: `ATELIER_SEQNIV.gererClicItem(event, '${window.Atelier.escAttr(el.id)}')`,
+        oncontextmenu: `ATELIER_SEQNIV.gererClicDroitItem(event, '${window.Atelier.escAttr(el.id)}')`,
+        id: el.code,
+        titre: el.nom || el.code,
+        titleAttr: `${el.code} — ${el.nom || ''}`
+          + (refs.length ? ` (référentiels : ${refs.join(', ')})` : ''),
+        placedTags: tags,
+        etatCode: el.etat_code,
+      });
+    }
+
+    /** Clic simple : ouvre la séquence (sélecteur de séquence de la portée). */
+    async ouvrirItem(id) {
+      const el = this.liste.find(x => x.id === id);
+      const S = window.ATL_SELECTIONS;
+      if (!el || !S || !S.sequence) return;
+      S.sequence.sequence = el.code;
+      if (typeof window.atelSauverSelections === 'function') {
+        window.atelSauverSelections('sequence', S.sequence);
+      }
+      if (typeof window.atelRenderSelecteursPortee === 'function') {
+        window.atelRenderSelecteursPortee();   // → atelAppliquerSelectionsPortee
+      }
+    }
+
+    urlEtat(id) {
+      return `/api/v2/sequences-par-niveau/${encodeURIComponent(id)}/etat`;
+    }
+
+    raisonHorsEtat(el) {
+      return _PUR.raisonHorsEtatSequence(el);
+    }
+
+    libelleItem(el) {
+      return el ? el.code : '';
+    }
+
+    avertissementEtatGroupe(cible, items) {
+      if (cible !== 'en_cours') return null;
+      return _PUR.avertissementRepasserSequences(items, this._listeInfo);
+    }
+
+    /** Panneau central du mode liste : mode d'emploi et référentiels du niveau. */
+    _rendreCentreListe() {
+      const info = this._listeInfo || { sequences: [], referentiels: [] };
+      const nv = this.liste.filter(el => el.etat_code === 'valide').length;
+      const etat = { en_cours: 'en cours', valide: 'validé', verrouille: 'verrouillé',
+                     utilise: 'utilisé' };
+      const refs = (info.referentiels || []).map(r =>
+        `<li><strong>${this._esc(r.id)}</strong> — ${this._esc(r.nom)} : `
+        + `${this._esc(etat[r.etat] || r.etat)}`
+        + (r.fige ? ' (ne change pas quand on repasse ses séquences en cours)' : '')
+        + '</li>').join('');
+      this._afficher(`
+        <div class="seqniv-liste-aide" style="padding:16px 20px;font-size:13px;line-height:1.5">
+          <p><strong>${this._esc(info.niveau || window.ATL_FILTRE_NIVEAU || '')}</strong> :
+             ${this.liste.length} séquence(s), dont ${nv} validée(s).</p>
+          <p>Clic : ouvrir la séquence. <strong>Ctrl+clic</strong>, <strong>Maj+clic</strong>
+             (plage) : sélectionner plusieurs séquences ; clic droit : menu ; Échap : vider la
+             sélection. Actions groupées <strong>✓ Valider</strong> et
+             <strong>⟲ En cours</strong> : mêmes règles et mêmes contrôles qu'une par une ;
+             une séquence refusée est comptée avec sa raison.</p>
+          ${refs ? `<p style="margin-top:10px">Référentiels internes du niveau :</p>
+             <ul style="margin:4px 0 0 18px">${refs}</ul>` : ''}
+        </div>`);
     }
 
     // ── Helpers de persistance immédiate (objets FERMÉS) ─────────────────────

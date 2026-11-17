@@ -263,6 +263,69 @@
     return '?' + q.join('&');
   }
 
+  // ── v0.59.3 — Liste des séquences du niveau (multisélection) ────────────────
+  //
+  // Réponse de GET /api/v2/sequences-par-niveau?niveau=… : {niveau, sequences,
+  // referentiels}. Chaque séquence devient un élément de liste au contrat
+  // d'AtelierEditeur ({id, etat_code, …}) ; l'identifiant est l'id de la
+  // séquence-niveau (route PATCH …/<id>/etat).
+
+  const LIBELLES_PERIMETRE = { principal: '', mer: 'mise en route', archive: 'archive' };
+
+  function elementsSequences(data) {
+    return ((data && data.sequences) || []).map(s => ({
+      id: s.id, code: s.code, nom: s.nom || '', numero: s.numero || 0,
+      etat_code: s.etat_code || 'en_cours', perimetre: s.perimetre || 'principal',
+      referentiels_vivants: s.referentiels_vivants || [],
+      referentiels_figes: s.referentiels_figes || [],
+    }));
+  }
+
+  /** Archives (Xnn) : hors de tout référentiel, jamais changées en groupe. */
+  function raisonHorsEtatSequence(el) {
+    return (el && el.perimetre === 'archive') ? 'archive, hors référentiel' : null;
+  }
+
+  function _plur(n, sing, plur) { return n > 1 ? plur : sing; }
+
+  /** Message de confirmation avant « Repasser en cours » d'un groupe de
+   *  séquences : nombre et codes, référentiels validés qui retomberont « en
+   *  cours », référentiels verrouillés qui ne changent pas (rappel). */
+  function avertissementRepasserSequences(items, data) {
+    const els = (items || []).filter(Boolean);
+    const n = els.length;
+    if (!n) return null;
+    const refs = new Map(((data && data.referentiels) || []).map(r => [r.id, r]));
+    const vivants = new Set(), figes = new Set();
+    els.forEach(el => {
+      (el.referentiels_vivants || []).forEach(id => vivants.add(id));
+      (el.referentiels_figes || []).forEach(id => figes.add(id));
+    });
+    const nom = id => (refs.get(id) && refs.get(id).nom) ? `${id} (${refs.get(id).nom})` : id;
+    const valides = [...vivants].filter(id => refs.get(id) && refs.get(id).etat === 'valide');
+    const lignes = [
+      `Repasser ${n} ${_plur(n, 'séquence', 'séquences')} « en cours » : `
+        + els.map(el => el.code).join(', ') + '.',
+      `${_plur(n, 'Elle redevient modifiable', 'Elles redeviennent modifiables')} `
+        + '(import des lots, saisie) ; il faudra '
+        + `${_plur(n, 'la revalider', 'les revalider')} ensuite.`,
+    ];
+    if (valides.length) {
+      lignes.push(`${_plur(valides.length, 'Référentiel validé', 'Référentiels validés')} `
+        + `qui ${_plur(valides.length, 'repassera', 'repasseront')} « en cours » jusqu'à la `
+        + 'revalidation des séquences et la recompilation de ses documents : '
+        + valides.map(nom).join(', ') + '.');
+    }
+    lignes.push(figes.size
+      ? `${_plur(figes.size, 'Référentiel verrouillé', 'Référentiels verrouillés')} `
+        + `contenant ${_plur(n, 'cette séquence', 'ces séquences')}, qui ne `
+        + `${_plur(figes.size, 'change', 'changent')} pas (instantané et documents publiés `
+        + 'gardés ; le déverrouiller pour lui donner le nouveau contenu) : '
+        + [...figes].map(nom).join(', ') + '.'
+      : 'Les référentiels verrouillés ne changent pas (instantané et documents publiés gardés).');
+    return lignes.join('\n\n');
+  }
+
   // ── Exposition ───────────────────────────────────────────────────────────────
 
   const SeqnivPur = {
@@ -275,6 +338,8 @@
     nbTestsMer, bornerTestMer, htmlStatutToutCompiler,
     urlToutCompiler,                                                     // v0.54.2
     urlCartesMentales, requeteRenduCartes,                               // v0.55.0
+    LIBELLES_PERIMETRE, elementsSequences, raisonHorsEtatSequence,       // v0.59.3
+    avertissementRepasserSequences,
   };
 
   // Navigateur : window.SeqnivPur. (Pas d'export ES : le projet charge tout en

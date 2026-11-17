@@ -21,6 +21,16 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.59.3 — 2026-11-17 : multisélection des séquences (paquet inchangé)
+
+- Aucun changement du paquet LaTeX. Appli : atelier Séquence, « — Toutes les séquences — » :
+  liste des séquences du niveau, multisélection et actions groupées Valider / Repasser en
+  cours (avertissement avant de repasser en cours) ; atelier Référentiel : liste qui défile,
+  poignée de largeur, explication du modèle en infobulle. Détails :
+  `doc/redemarrage_v0_59_3.md`.
+
+---
+
 ## Appli v0.59.2 — 2026-11-17 : `seqenseigne-style6e` v0.15 (encarts du livret)
 
 - Environnement `seqEncartSix`[`pleine`|`demi`]{*type*}{*titre*} : « Le saviez-vous ? »

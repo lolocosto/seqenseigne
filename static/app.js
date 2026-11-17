@@ -2694,6 +2694,10 @@ function initAtelierSplitters() {
     // v0.56.2 — Atelier Carte mentale (demande de Laurent du 13 novembre) :
     // même poignée que les autres ateliers, largeur mémorisée de la même façon.
     { shell: '#atl-carte_mentale .atl-shell', cle: 'split:atl-cm:aside' },
+    // v0.59.3 — Atelier Référentiel (portée Niveau, demande de Laurent du
+    // 17 novembre, 22 h 15) : la poignée annoncée en v0.13.5.1 n'avait jamais
+    // été posée. Même mécanisme, largeur mémorisée de la même façon.
+    { shell: '#atl-referentiel .atl-shell', cle: 'split:atl-referentiel:aside' },
   ];
   for (const s of shellsSimples) {
     const shell = $(s.shell);
@@ -3631,7 +3635,10 @@ async function initLivret() {
   // `innerHTML = ''` sur le wrapper détruit irrémédiablement cette
   // structure ; les rafraîchissements ultérieurs ne trouveraient plus
   // leurs cibles.
-  if (!ATL_FILTRE_NIVEAU || !ATL_FILTRE_SEQ) {
+  // v0.59.3 — Niveau choisi sans séquence (« — Toutes les séquences — ») :
+  // l'atelier liste les séquences du niveau (multisélection) ; seul « aucun
+  // niveau » vide encore les conteneurs.
+  if (!ATL_FILTRE_NIVEAU) {
     const cEd = document.getElementById('asm-tab-edition');
     if (cEd) cEd.innerHTML = '';
     const sb = document.getElementById('liv-atl-sidebar-body');

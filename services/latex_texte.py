@@ -34,7 +34,9 @@ Deux niveaux :
     volontaire des intitulés ;
   - `texte_latex(s)` : en plus, `& % # _` échappés hors des formules
     `$…$` (texte simple : plan et dossier des mises en route, contrôle) ;
-    une commande déjà échappée (`\%`) n'est pas doublée.
+    une commande déjà échappée (`\%`) n'est pas doublée ;
+  - v0.59.1 `speciaux_latex(s)` : ces seuls caractères, sans conversion
+    Unicode (titre de carte, valeur d'option jamais composée).
 """
 
 from __future__ import annotations
@@ -94,15 +96,26 @@ def unicode_latex(s: str | None) -> str:
 _RE_SPECIAUX = re.compile(r"(?<!\\)([&%#_])")
 
 
-def texte_latex(s: str | None) -> str:
-    r"""Texte simple venu de la base → LaTeX : conversion Unicode
-    (`unicode_latex`) et `& % # _` échappés hors des formules `$…$` (une
-    formule garde ses indices `x_1`) ; un caractère déjà échappé (`\%`)
-    n'est pas doublé."""
+def speciaux_latex(s: str | None) -> str:
+    r"""v0.59.1 — Les seuls `& % # _` échappés hors des formules `$…$` (une
+    formule garde ses indices `x_1`), sans conversion Unicode ; un caractère
+    déjà échappé (`\%`) n'est pas doublé. Pour une chaîne passée en valeur
+    d'option et jamais composée (titre de carte, clé `nom` de
+    `\seqCarteAutomatisme`) : « Compléter 20 % de 120 » y commentait la fin
+    de la ligne d'options ; une chaîne sans ces caractères reste identique."""
     if not s:
         return ""
     morceaux = re.split(r"((?<!\\)\$[^$]*(?<!\\)\$)", s)
     out = []
     for i, m in enumerate(morceaux):
         out.append(m if i % 2 else _RE_SPECIAUX.sub(r"\\\1", m))
-    return unicode_latex("".join(out))
+    return "".join(out)
+
+
+def texte_latex(s: str | None) -> str:
+    r"""Texte simple venu de la base → LaTeX : conversion Unicode
+    (`unicode_latex`) et `& % # _` échappés hors des formules `$…$`
+    (`speciaux_latex`)."""
+    if not s:
+        return ""
+    return unicode_latex(speciaux_latex(s))

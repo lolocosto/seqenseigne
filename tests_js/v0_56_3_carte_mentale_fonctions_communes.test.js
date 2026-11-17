@@ -129,7 +129,7 @@ describe('v0.56.3 — 1. multisélection de la liste (briques d\'AtelierEditeur)
     expect(barre.textContent).toMatch(/⟲ En cours/);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(C.selectionMulti.size).toBe(0);
-    expect(lire('static/atelier_editeur.js')).toMatch(/'ATELIER_EXERCICE', 'ATELIER_CARTE_MENTALE'\]/);
+    expect(lire('static/atelier_editeur.js')).toMatch(/'ATELIER_EXERCICE', 'ATELIER_CARTE_MENTALE'[,\]]/);
   });
 
   it('clic droit : menu contextuel commun avec « Valider la sélection »', async () => {

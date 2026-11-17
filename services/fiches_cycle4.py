@@ -117,6 +117,87 @@ def cartes_rattachees(conn, niveau: str) -> list[dict]:
     return list(out.values())
 
 
+def cartes_du_perimetre(conn, niveau: str, sequence: str | None = None,
+                        valides: bool = True) -> list[dict]:
+    """v0.59.1 — Cartes des documents de cartes (récap, planches) d'un
+    référentiel principal au modèle Fiches **avec l'option cartes** : les
+    cartes rattachées (`objectif_cartes`) aux objectifs des séquences du
+    principal du niveau (ni archives Xnn ni mises en route Mnn) — et non les
+    cartes dont `cartes_automatisme.niveau/sequence` vaut le niveau (règle du
+    cycle 4, qui donnerait en 4e archivée les cartes de 2025, X01…).
+
+    - `sequence` donné : cartes des objectifs de cette séquence ; sinon toutes
+      (récap annuel), une carte rattachée à plusieurs séquences n'y paraissant
+      qu'une fois, à la première ;
+    - une carte reprise d'un autre niveau (`niveau_creation`, ou carte d'un
+      autre niveau rattachée par l'auteur) garde son identité (niveau,
+      séquence, numéro : couleur de son thème) ;
+    - `valides` : seulement les cartes validées (règle existante des deux
+      générateurs du cycle 4, gardée) ;
+    - ordre : séquence, objectif, ordre du lien, numéro ; une fois chacune.
+
+    Champs : ceux que lisent les générateurs (id, niveau, sequence, num,
+    type_pedago, type_tech, titre, recto, verso, variables, ordre) et
+    `etat_code`, `objectif` (« A1-02 », premier objectif rencontré)."""
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND "
+                        "name='objectif_cartes'").fetchone():
+        return []
+    sql = ("SELECT c.id, c.niveau, c.sequence, c.num, c.type_pedago, c.type_tech, c.titre, "
+           "c.recto, c.verso, c.variables, c.ordre, c.etat_code, "
+           "sn.sequence_code AS seq_obj, o.code AS code_obj "
+           "FROM objectif_cartes oc JOIN cartes_automatisme c ON c.id = oc.carte_id "
+           "JOIN objectifs o ON o.id = oc.objectif_id "
+           "JOIN sequence_parties p ON p.id = o.partie_id "
+           "JOIN sequences_par_niveau sn ON sn.id = p.sequence_par_niveau_id "
+           "WHERE sn.niveau = ?" + _filtre_principal("sn"))
+    args: list = [niveau]
+    if sequence is not None:
+        sql += " AND sn.sequence_code = ?"
+        args.append(sequence)
+    if valides:
+        sql += " AND c.etat_code = 'valide'"
+    sql += " ORDER BY sn.sequence_code, o.code, oc.ordre, CAST(c.num AS INTEGER), c.id"
+    out: dict = {}
+    for r in conn.execute(sql, args):
+        if r[0] in out:
+            continue
+        cols = ("id", "niveau", "sequence", "num", "type_pedago", "type_tech", "titre",
+                "recto", "verso", "variables", "ordre", "etat_code")
+        d = dict(zip(cols, r[:12]))
+        d["objectif"] = f"{r[12]}-{r[13]}"
+        out[r[0]] = d
+    return list(out.values())
+
+
+def sequences_avec_cartes(conn, niveau: str, valides: bool = True) -> list[str]:
+    """v0.59.1 — Séquences du principal du niveau qui ont au moins une carte
+    rattachée (validée si `valides`), dans l'ordre des codes."""
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND "
+                        "name='objectif_cartes'").fetchone():
+        return []
+    sql = ("SELECT DISTINCT sn.sequence_code FROM objectif_cartes oc "
+           "JOIN cartes_automatisme c ON c.id = oc.carte_id "
+           "JOIN objectifs o ON o.id = oc.objectif_id "
+           "JOIN sequence_parties p ON p.id = o.partie_id "
+           "JOIN sequences_par_niveau sn ON sn.id = p.sequence_par_niveau_id "
+           "WHERE sn.niveau = ?" + _filtre_principal("sn")
+           + (" AND c.etat_code = 'valide'" if valides else "")
+           + " ORDER BY sn.sequence_code")
+    return [r[0] for r in conn.execute(sql, (niveau,))]
+
+
+def perimetre_cartes_objectifs(conn, ref_id: str) -> bool:
+    """v0.59.1 — Les documents de cartes de ce référentiel suivent-ils les
+    rattachements aux objectifs ? Oui pour un référentiel **principal** au
+    modèle Fiches (`sixieme`) avec l'option cartes ; non sinon (cycle 4 :
+    règle historique, inchangée)."""
+    if not ref_id or not option_cartes(conn, ref_id):
+        return False
+    from services import gabarits_documents as gd
+    return (gd.est_modele_fiches(gd.gabarit_du_referentiel(conn, ref_id))
+            and gd.type_du_referentiel_ref(conn, ref_id) == "principal")
+
+
 def compter_cartes_rattachees(conn, niveau: str) -> dict:
     """{"total": n, "non_valides": n} des cartes rattachées du périmètre."""
     cs = cartes_rattachees(conn, niveau)

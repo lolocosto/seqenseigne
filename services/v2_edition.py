@@ -3301,3 +3301,90 @@ def changer_etat_sequence_niveau(conn, sn_id: str, nouvel_etat: str) -> dict:
     if nouvel_etat == "valide":
         return valider_sequence_niveau(conn, sn_id)
     return devalider_sequence_niveau(conn, sn_id)
+
+
+# ── v0.59.3 — Séquences d'un niveau et leur état (multisélection) ───────────
+#
+# Demande de Laurent (17 novembre 2026, 22 h) : « sélectionner plusieurs
+# séquences, comme ça je les repasse toutes "en cours" en une seule
+# opération » (l'import des lots ne touche jamais une séquence validée).
+# L'atelier Séquence (niveau), sans séquence choisie (« — Toutes les
+# séquences — »), liste les séquences du niveau avec les briques de
+# multisélection d'AtelierEditeur ; chaque changement d'état passe par la
+# route unitaire PATCH …/<sn_id>/etat (mêmes règles, mêmes contrôles).
+#
+# Cette lecture fournit, pour l'avertissement d'avant « Repasser en cours »,
+# les référentiels internes du niveau touchés par chaque séquence :
+#   - « vivants » (en_cours / valide) dont le périmètre (RI1) contient la
+#     séquence : un `valide` retombera « en cours » (maj_etat_lazy) jusqu'à
+#     la revalidation des séquences et la recompilation des documents ;
+#   - « figés » (verrouille / utilise) dont l'instantané contient le code de
+#     la séquence : ils ne changent pas (instantané `referentiel_*`, PDF
+#     publiés), tant qu'on ne les déverrouille pas.
+
+PERIMETRES_SEQUENCE = ("principal", "mer", "archive")
+
+
+def perimetre_sequence(code: str | None) -> str:
+    """v0.59.3 — 'mer' (Mnn), 'archive' (Xnn, hors de tout référentiel) ou
+    'principal'."""
+    from services.mises_en_route_6e import est_sequence_mer
+    c = (code or "").strip()
+    if est_sequence_mer(c):
+        return "mer"
+    if c.startswith("X"):
+        return "archive"
+    return "principal"
+
+
+def lister_sequences_etats(conn, niveau: str) -> dict:
+    """v0.59.3 — {niveau, sequences: [{id, code, nom, numero, etat_code,
+    perimetre, referentiels_vivants: [ids], referentiels_figes: [ids]}],
+    referentiels: [{id, nom, etat, type_ref, fige}]} — séquences du niveau
+    dans l'ordre du cycle (principal, puis mises en route, puis archives)."""
+    from services.referentiel_principal_externe import nom_calcule
+    from services.referentiels_internes import dans_perimetre
+    rows = conn.execute("""
+        SELECT sn.id, sn.sequence_code AS code, sn.etat_code,
+               sdc.numero, COALESCE(sdc.nom, '') AS nom
+          FROM sequences_par_niveau sn
+          LEFT JOIN param_niveaux pn ON pn.code = sn.niveau
+          LEFT JOIN sequences_du_cycle sdc
+            ON sdc.code = sn.sequence_code AND sdc.cycle_code = pn.cycle_code
+         WHERE sn.niveau = ?
+    """, (niveau,)).fetchall()
+    refs = [dict(r) for r in conn.execute(
+        "SELECT id, niveau, version, etat, source, COALESCE(type_ref, 'principal') AS type_ref, "
+        "annee FROM referentiel_niveaux WHERE niveau = ? AND COALESCE(source, 'interne') = "
+        "'interne' AND etat <> 'annule' ORDER BY version", (niveau,)).fetchall()]
+    codes_figes = {}
+    from services.referentiel_validation import evaluer_eligibilite_validation
+    for r in refs:
+        r["fige"] = r["etat"] in ("verrouille", "utilise")
+        if r["etat"] in ("en_cours", "valide"):
+            # État « à jour » (règle de maj_etat_lazy), calculé sans écrire :
+            # l'état stocké n'est recalculé qu'à l'ouverture du référentiel.
+            try:
+                elig = evaluer_eligibilite_validation(conn, r["id"])["eligible"]
+                r["etat"] = "valide" if elig else "en_cours"
+            except (ValueError, sqlite3.Error):
+                pass
+        if r["fige"]:
+            codes_figes[r["id"]] = {x[0] for x in conn.execute(
+                "SELECT code FROM referentiel_sequences WHERE referentiel_id = ?", (r["id"],))}
+    rang = {"principal": 0, "mer": 1, "archive": 2}
+    sequences = []
+    for s in rows:
+        per = perimetre_sequence(s["code"])
+        vivants = [] if per == "archive" else [
+            r["id"] for r in refs
+            if not r["fige"] and dans_perimetre(s["code"], r["type_ref"])]
+        figes = [r["id"] for r in refs if r["fige"] and s["code"] in codes_figes[r["id"]]]
+        sequences.append({"id": s["id"], "code": s["code"], "nom": s["nom"],
+                          "numero": s["numero"] or 0, "etat_code": s["etat_code"] or "en_cours",
+                          "perimetre": per, "referentiels_vivants": vivants,
+                          "referentiels_figes": figes})
+    sequences.sort(key=lambda x: (rang[x["perimetre"]], x["numero"], x["code"]))
+    return {"niveau": niveau, "sequences": sequences,
+            "referentiels": [{"id": r["id"], "nom": nom_calcule(r), "etat": r["etat"],
+                              "type_ref": r["type_ref"], "fige": r["fige"]} for r in refs]}

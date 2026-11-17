@@ -472,6 +472,26 @@ class AtelierEditeur extends Atelier {
   }
 
   /**
+   * v0.59.3 — Message de confirmation demandé AVANT une action groupée
+   * (null : aucune confirmation, comportement des ateliers d'atomes). Reçoit
+   * la cible et les éléments qui vont réellement changer d'état. L'atelier
+   * Séquence (niveau) avertit avant « Repasser en cours » (nombre de
+   * séquences, référentiels touchés, référentiels verrouillés inchangés).
+   */
+  avertissementEtatGroupe(_cible, _items) {
+    return null;
+  }
+
+  /**
+   * v0.59.3 — Libellé court d'un élément dans le résumé d'une action groupée
+   * ('' : résumé historique, motif du premier refus seulement). Donné, chaque
+   * refus du serveur est cité avec son élément (« A3 : … | B1 : … »).
+   */
+  libelleItem(_item) {
+    return '';
+  }
+
+  /**
    * v0.56.2 — Séquence dans laquelle « + Créer » crée l'élément : celle du
    * filtre (vide en mode « toutes les séquences » : création refusée).
    * Surchargée par l'atelier Carte mentale (séquence de la partie visée).
@@ -1174,9 +1194,17 @@ class AtelierEditeur extends Atelier {
       }
     }
 
+    // v0.59.3 — confirmation éventuelle (crochet avertissementEtatGroupe).
+    if (aTraiter.length > 0) {
+      const avert = this.avertissementEtatGroupe(
+        cible, aTraiter.map(id => this.liste.find(x => x.id === id)));
+      if (avert && !window.confirm(avert)) return;
+    }
+
     const reussis = [];
     const echoues = [];
     let premiereErreur = '';    // v0.56.3 : motif du premier refus du serveur
+    const motifs = [];          // v0.59.3 : « libellé : motif » de chaque refus
     for (const id of aTraiter) {
       try {
         // v0.13.6.14.1 — Même endpoint que basculerValidation single
@@ -1200,15 +1228,20 @@ class AtelierEditeur extends Atelier {
           }
         } else {
           echoues.push(id);
-          if (!premiereErreur) {
+          const lib = this.libelleItem(this.liste.find(x => x.id === id));
+          if (!premiereErreur || lib) {
             const d = await resp.json().catch(() => ({}));
             const raisons = Array.isArray(d.raisons) ? ' — ' + d.raisons.join(' ; ') : '';
-            premiereErreur = (d.message || d.error || `HTTP ${resp.status}`) + raisons;
+            const motif = (d.message || d.error || `HTTP ${resp.status}`) + raisons;
+            if (!premiereErreur) premiereErreur = motif;
+            if (lib) motifs.push(`${lib} : ${motif}`);
           }
         }
       } catch (e) {
         echoues.push(id);
         if (!premiereErreur) premiereErreur = e.message;
+        const lib = this.libelleItem(this.liste.find(x => x.id === id));
+        if (lib) motifs.push(`${lib} : ${e.message}`);
       }
     }
 
@@ -1219,7 +1252,8 @@ class AtelierEditeur extends Atelier {
     if (dejaCible.length > 0) parts.push(`${dejaCible.length} déjà à jour`);
     for (const [raison, n] of ignores) parts.push(`${n} ignoré${n > 1 ? 's' : ''} (${raison})`);
     if (echoues.length > 0) {
-      parts.push(`${echoues.length} en échec` + (premiereErreur ? ` : ${premiereErreur}` : ''));
+      const detail = motifs.length ? motifs.join(' | ') : premiereErreur;
+      parts.push(`${echoues.length} en échec` + (detail ? ` : ${detail}` : ''));
     }
     const msg = parts.join(', ');
     // v0.56.3 — rien de fait parce que tout était exclu : signalé comme un refus.
@@ -2250,7 +2284,9 @@ window.AtelierEditeur = AtelierEditeur;
     // Parcourir les variables ATELIER_* connues
     // v0.56.3 — + atelier Carte mentale (multisélection comme les autres).
     const noms = ['ATELIER_CARTE', 'ATELIER_NOTION', 'ATELIER_METHODE',
-                  'ATELIER_FICHE', 'ATELIER_EXERCICE', 'ATELIER_CARTE_MENTALE'];
+                  'ATELIER_FICHE', 'ATELIER_EXERCICE', 'ATELIER_CARTE_MENTALE',
+                  // v0.59.3 — liste des séquences de l'atelier Séquence (niveau).
+                  'ATELIER_SEQNIV'];
     let aQuelqueChose = false;
     for (const n of noms) {
       const at = window[n];

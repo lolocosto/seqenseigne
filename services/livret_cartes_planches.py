@@ -43,6 +43,12 @@ API
 generer_livret_cartes_planches(conn, niveau, options=None) -> str
     Retourne le source .tex complet (documentclass + préambule + document).
 
+v0.59.1 — `perimetre='objectifs'` (référentiel principal au modèle Fiches
+avec l'option cartes) : cartes **validées** rattachées aux objectifs de la
+séquence (`fiches_cycle4.cartes_du_perimetre`), y compris les cartes reprises
+d'un autre niveau ; page de garde avec le titre court de la séquence ; verso
+en miroir comme partout (v0.56.1). Sans ce paramètre, rien ne change.
+
 Préambule
 ---------
 Identique au récap : seqenseigne-core, seqenseigne-theme,
@@ -146,6 +152,21 @@ def _page_de_garde(niveau: str, cartes: list[dict],
     ]
 
 
+def ligne_sequence_fiches(conn, niveau: str, sequence: str) -> str:
+    """v0.59.1 — « Séquence A1 — <titre court> » (titre court de la
+    séquence-niveau, sinon nom du cycle ; échappé par `texte_latex`)."""
+    from services.fiches_cycle4 import titre_court
+    from services.latex_texte import texte_latex
+    titre = titre_court(conn, niveau, sequence)
+    if not titre:
+        r = conn.execute("SELECT sdc.nom FROM param_niveaux pn JOIN sequences_du_cycle sdc "
+                         "ON sdc.cycle_code = pn.cycle_code AND sdc.code = ? "
+                         "WHERE pn.code = ?", (sequence, niveau)).fetchone()
+        titre = (r[0] if r else "") or ""
+    return (rf'{{\Large Séquence {sequence}'
+            + (r' \textemdash{} ' + texte_latex(titre) if titre else '') + r'}\\[2em]')
+
+
 # ── Génération principale ────────────────────────────────────────────────────
 
 def generer_livret_cartes_planches(conn: sqlite3.Connection,
@@ -153,7 +174,8 @@ def generer_livret_cartes_planches(conn: sqlite3.Connection,
                                      options: dict | None = None,
                                      sequence: str | None = None,
                                      tikz_libraries: list[str] | None = None,
-                                     tblr_libraries: list[str] | None = None
+                                     tblr_libraries: list[str] | None = None,
+                                     perimetre: str | None = None
                                      ) -> str:
     """Génère le source .tex du livret de planches pour un niveau.
 
@@ -177,7 +199,11 @@ def generer_livret_cartes_planches(conn: sqlite3.Connection,
         Réservés pour cohérence d'API avec les autres générateurs de
         livrets. Ignorés ici.
     """
-    cartes = _lire_cartes_du_niveau(conn, niveau, sequence)
+    if perimetre == 'objectifs':                                     # v0.59.1
+        from services.fiches_cycle4 import cartes_du_perimetre
+        cartes = cartes_du_perimetre(conn, niveau, sequence, valides=True)
+    else:
+        cartes = _lire_cartes_du_niveau(conn, niveau, sequence)
     preambule = _preambule_livret_planches()
 
     L: list[str] = []
@@ -185,6 +211,8 @@ def generer_livret_cartes_planches(conn: sqlite3.Connection,
     L.append(f'%% Niveau : {niveau}')
     if sequence is not None:
         L.append(f'%% Séquence : {sequence} (découpage par séquence)')
+    if perimetre == 'objectifs':
+        L.append('%% Cartes validées rattachées aux objectifs (modèle Fiches, option cartes)')
     L.append(f'%% {len(cartes)} planches — 1 planche par carte (16 copies recto + 16 versos).')
     L.append(f'%% API paquet seqenseigne-carte-automatisme : {VERSION_API_PAQUET}')
     L.append('')
@@ -195,7 +223,11 @@ def generer_livret_cartes_planches(conn: sqlite3.Connection,
     L.append('')
     L.append(r'\seqInitCartes')
     L.append('')
-    L.extend(_page_de_garde(niveau, cartes, sequence))
+    garde = _page_de_garde(niveau, cartes, sequence)
+    if perimetre == 'objectifs' and sequence is not None:
+        garde.insert(garde.index(rf'{{\large {len(cartes)} planches au total}}'),
+                     ligne_sequence_fiches(conn, niveau, sequence))
+    L.extend(garde)
     L.append('')
 
     if cartes:

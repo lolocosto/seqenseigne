@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.59.2** (dernière livrée ; v0.59.1 livrée, v0.59.0 déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.59.3** (dernière livrée ; v0.59.2 déployée et poussée par Laurent — sur GitHub sans les 7 fichiers propres à la v0.59.1, repris dans le zip v0.59.3). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -337,6 +337,16 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   `encarts`, clé de lot `encarts`, lecture seule dans l'atelier ; format
   `lot6e/FORMAT_ENCARTS.md`) ; horodatage de l'import en UTC. Détails :
   `doc/redemarrage_v0_59_2.md`.
+- v0.59.3 livrée (17 novembre, demandes de Laurent) : **multisélection des séquences** —
+  atelier Séquence, « — Toutes les séquences — » : liste des séquences du niveau avec les
+  briques d'AtelierEditeur (Ctrl/Maj+clic, menu, barre ✓ Valider / ⟲ En cours, Échap,
+  résumé) ; route unitaire PATCH …/<id>/etat ; avertissement avant « Repasser en cours »
+  (référentiels validés qui retombent en cours, verrouillés inchangés) ; refus cités avec
+  séquence et raisons (`raisons` au premier niveau de la réponse) ; `GET
+  /api/v2/sequences-par-niveau?niveau=`. Atelier Référentiel : liste qui défile, poignée de
+  largeur (`split:atl-referentiel:aside`), explication du modèle en infobulle ⓘ. Fichiers
+  v0.59.1 absents de GitHub repris. Marche à suivre (4e, puis 6e avec déverrouillage de
+  2026_N09) : `doc/redemarrage_v0_59_3.md`.
 - **À faire par Laurent (4e)** : archiver la structure de 2025 de N11, puis importer les
   lots de 4e au fur et à mesure, puis créer « 4e — 2027-2028 — Principal » (modèle Fiches
   + cartes). Version 2 (tests courts au principal, séances d'évaluation, document de
@@ -680,6 +690,13 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   jamais l'ajouter) ; un lot qui porte `encarts` fait foi pour sa séquence, sans clé rien ne
   bouge ; un livret sans encart garde le même `.tex` ; tout `mtime` écrit par un outil est en
   UTC (`tests/test_v0_59_2_vue_encarts.py`).
+
+- **Multisélection des séquences** (v0.59.3) : aucune copie du code de sélection
+  d'AtelierEditeur (crochets seulement) ; chaque changement d'état passe par la route
+  unitaire ; un référentiel verrouillé ne change jamais quand on repasse ses séquences en
+  cours ; l'avertissement cite les référentiels validés et verrouillés touchés
+  (`tests/test_v0_59_3_multiselection_sequences.py`,
+  `tests_js/v0_59_3_multiselection_sequences.test.js`).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

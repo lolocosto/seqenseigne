@@ -4738,7 +4738,13 @@ textarea.latex-textarea {
   letter-spacing: .4px; padding: 6px 8px 2px; }
 .refu-g1 .refu-groupe-titre { padding-left: 16px; text-transform: none; font-weight: 600; }
 .refu-g2 .refu-groupe-titre { padding-left: 24px; text-transform: none; font-weight: 500; font-style: italic; }
-#atl-ref-sidebar { width: 300px; min-width: 300px; }
+/* v0.59.3 — Liste des référentiels : elle défile seule (comme .atl-list des
+   autres ateliers) ; si les filtres et le bloc de création prennent toute la
+   hauteur, c'est le panneau entier qui défile. Largeur : poignée
+   (atelierInstallerSplitter, clé « split:atl-referentiel:aside »), 300 px par
+   défaut, 200 px au moins comme ailleurs. */
+#atl-ref-sidebar { width: 300px; min-width: 200px; overflow-y: auto; }
+#atl-ref-sidebar > .atl-sidebar-body { flex: 1 0 160px; min-height: 160px; overflow-y: auto; }
 #atl-ref-sidebar .asm-item { display: block; }
 #atl-ref-sidebar .atl-item-id span { white-space: normal; }
 
@@ -4830,6 +4836,18 @@ html[data-profil="classe"] [data-profils]:not([data-profils~="classe"]) {
 .refu-modele-desc { font-size: 11.5px; line-height: 1.4; color: var(--text-secondary); }
 .refu-modele-desc p { margin: 2px 0; }
 .refu-modele-desc strong { color: var(--text-primary, inherit); }
+/* v0.59.3 — Explication du modèle en infobulle (demande de Laurent, 17 novembre,
+   22 h 22) : cachée, affichée au survol ou au focus clavier du bouton ⓘ. */
+.refu-c-modele-tete { position: relative; display: flex; align-items: center; gap: 6px; }
+.refu-info { font-size: 13px; line-height: 1; padding: 0 3px; border: none; background: none;
+  color: var(--primary, #2563eb); cursor: help; border-radius: 50%; }
+.refu-info:focus-visible { outline: 2px solid var(--primary, #2563eb); outline-offset: 1px; }
+.refu-infobulle { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  z-index: 30; padding: 6px 8px; background: var(--surface, #fff); border: 1px solid var(--border);
+  border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+.refu-info:hover + .refu-infobulle, .refu-info:focus + .refu-infobulle,
+.refu-infobulle:hover { display: block; }
+.refu-infobulle:empty { display: none !important; }
 .refu-modele-badge { display: inline-block; font-size: 10.5px; padding: 0 6px; border-radius: 8px;
   border: 1px solid var(--border); color: var(--text-secondary); margin-left: 15px; }
 .refu-modele-badge--fiches { border-color: #a5d6a7; background: #f0f7f0; color: #1b5e20; }

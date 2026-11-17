@@ -184,6 +184,12 @@ def _erreur(e: V2EditionErreur):
     payload = {"error": str(e), "code": e.code}
     if e.details:
         payload["details"] = e.details
+        # v0.59.3 — raisons d'un refus de validation aussi au premier niveau :
+        # le bouton « Valider » de l'atelier Séquence et les actions groupées
+        # (AtelierEditeur.selectionMultiAppliquerEtat) lisent `raisons`, que
+        # la route ne posait que dans `details` (toast sans motif).
+        if "raisons" in e.details:
+            payload["raisons"] = list(e.details["raisons"])
     return jsonify(payload), status
 
 
@@ -1279,3 +1285,19 @@ def api_changer_etat_sequence(sn_id: str):
     except V2EditionErreur as e:
         return _erreur(e)
     return jsonify(rep)
+
+
+# v0.59.3 — Séquences du niveau et leur état (liste de l'atelier Séquence
+# sans séquence choisie, multisélection) :
+#   GET /api/v2/sequences-par-niveau?niveau=N11
+#   → {niveau, sequences: [{id, code, nom, etat_code, perimetre,
+#      referentiels_vivants, referentiels_figes}], referentiels: [...]}
+@bp_v2_edition.route("/api/v2/sequences-par-niveau", methods=["GET"])
+def api_lister_sequences_etats():
+    from services.v2_edition import lister_sequences_etats
+    niveau = (request.args.get("niveau") or "").strip()
+    if not niveau:
+        return jsonify({"error": "Paramètre 'niveau' manquant.",
+                        "code": "niveau_manquant"}), 400
+    with _store_conn() as conn:
+        return jsonify(lister_sequences_etats(conn, niveau))
