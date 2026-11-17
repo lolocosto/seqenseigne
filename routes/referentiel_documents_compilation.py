@@ -70,6 +70,24 @@ def api_compiler(ref_id: str, doc_id: str):
         if err is not None:
             return err, code
 
+        # v0.59.0 (D1) — Référentiel figé (verrouillé, utilisé) d'un niveau dont
+        # la structure de 2025 est archivée (outils/archiver_structure_niveau.py) :
+        # ses PDF figés font foi ; une recompilation partirait de l'atelier, où
+        # ses séquences sont devenues des archives X01…X15.
+        ref = conn.execute("SELECT niveau, etat FROM referentiel_niveaux WHERE id = ?",
+                           (ref_id,)).fetchone()
+        if ref is not None and ref["etat"] in ("verrouille", "utilise"):
+            from services.fiches_cycle4 import archivage
+            a = archivage(conn, ref["niveau"])
+            if a is not None:
+                return jsonify({
+                    "error": "structure_archivee",
+                    "message": (f"Référentiel figé : la structure de 2025 de {ref['niveau']} "
+                                f"est archivée depuis le {a['fait_le']} ({a['resume']}). Ses "
+                                "PDF figés font foi ; une recompilation partirait de "
+                                "l'atelier archivé."),
+                }), 409
+
         # Pré-validations : doc actif ? pas déjà en cours ?
         row = conn.execute("""
             SELECT options, compile_en_cours

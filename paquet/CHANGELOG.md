@@ -21,6 +21,13 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.59.0 — 2026-11-16 : aucune modification du paquet
+
+- Référentiel de 4e au modèle « Fiches » : le module `seqenseigne-style6e` (v0.14) sert tel
+  quel à la 4e (niveau « 4e », couleur du thème de la séquence A à E) ; livret, corrigé,
+  fiches de cours et plan de travail du lot d'essai de 4e compilés sans changement du
+  paquet. Les cartes d'automatisme n'entrent pas dans le livret.
+
 ## Appli v0.58.2 — 2026-11-16 : aucune modification du paquet
 
 - Import des `.tex` (scanner de l'appli) : les macros nommantes des titres

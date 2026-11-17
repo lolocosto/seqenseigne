@@ -193,8 +193,16 @@ def generer_recap_cours(conn: sqlite3.Connection,
     structure = []  # liste de (theme, [(sequence, [notions], [methodes])])
     tous_textes_atomes = []  # pour la détection de paquets
 
+    # v0.59.0 (D1) — Séquences d'archive (Xnn) que le niveau n'a pas : les
+    # archives de la structure de 2025 de la 4e (X01, X03…, créées par
+    # outils/archiver_structure_niveau.py) sont des séquences du cycle, mais
+    # le livret de cours de 5e ou de 3e ne doit pas les lister. Une archive
+    # que le niveau possède (X02, X04, X10 de la migration) reste listée.
+    seqs_du_niveau = {r[0] for r in conn.execute(
+        "SELECT sequence_code FROM sequences_par_niveau WHERE niveau = ?", (niveau,))}
     for theme in themes:
-        sequences = _lire_sequences_du_theme(conn, theme['id'])
+        sequences = [s for s in _lire_sequences_du_theme(conn, theme['id'])
+                     if not s['code'].startswith('X') or s['code'] in seqs_du_niveau]
         seqs_avec_atomes = []
         for seq in sequences:
             notions_ids = _lire_notions_de_sequence(conn, niveau, seq['code'])

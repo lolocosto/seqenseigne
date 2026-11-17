@@ -28,7 +28,8 @@ function _refuItems() {
   (typeof ATL_REF_LISTE !== 'undefined' ? ATL_REF_LISTE : []).forEach(r => items.push({
     cle: 'I:' + r.id, id: r.id, source: 'interne', type: r.type_ref || 'principal',
     annee: _refuAnneeInterne(r.version), nom: r.nom || r.id, desc: r.description || '',
-    etat: r.etat, modele: r.gabarit_documents || 'cycle4' }));
+    etat: r.etat, modele: r.gabarit_documents || 'cycle4',
+    cartes: !!r.cartes_automatisme }));                       // v0.59.0 (D4)
   (typeof RPE !== 'undefined' ? RPE.liste : []).forEach(r => items.push({
     cle: 'E:' + r.id, id: r.id, source: 'externe', type: r.type_ref || 'principal',
     annee: r.annee || '', nom: r.nom, desc: r.description || '',
@@ -308,6 +309,31 @@ function refuDescriptionModele(m) {
     + l('Documents', m.documents) + l('Séries', m.series) + l('Pour valider', m.completude);
 }
 
+// v0.59.0 (D4) — Années proposées à la création d'un référentiel interne :
+// l'année scolaire en cours (bascule en août) et la suivante.
+function refuAnneesProposees(maintenant) {
+  const d = maintenant || new Date();
+  const y = d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1;
+  return [`${y}-${y + 1}`, `${y + 1}-${y + 2}`];
+}
+
+function refuRemplirAnnees() {
+  const sel = document.getElementById('refu-c-annee');
+  if (!sel || sel.options.length) return;
+  refuAnneesProposees().forEach((a, i) => {
+    const o = document.createElement('option');
+    o.value = a; o.textContent = a + (i === 0 ? ' (en cours)' : '');
+    sel.appendChild(o);
+  });
+}
+
+// L'option « cartes d'automatisme » n'a de sens qu'au modèle Fiches, pour un
+// référentiel interne principal ; l'année ne se choisit que pour un interne
+// (l'externe garde l'année active).
+function refuOptionCartesProposable(source, type, gabarit) {
+  return source === 'interne' && type === 'principal' && gabarit === 'sixieme';
+}
+
 function refuMajChoixModele() {
   const bloc = document.getElementById('refu-c-modele-bloc');
   const sel = document.getElementById('refu-c-gabarit');
@@ -316,6 +342,15 @@ function refuMajChoixModele() {
   const type = (document.getElementById('atl-ref-type') || {}).value || 'principal';
   const visible = refuModeleProposable(source, type);
   bloc.style.display = visible ? '' : 'none';
+  refuRemplirAnnees();
+  const blocA = document.getElementById('refu-c-annee-bloc');
+  if (blocA) blocA.style.display = source === 'interne' ? '' : 'none';
+  const blocC = document.getElementById('refu-c-cartes-bloc');
+  if (blocC) {
+    const ok = refuOptionCartesProposable(source, type, sel.value);
+    blocC.style.display = ok ? '' : 'none';
+    if (!ok) { const c = document.getElementById('refu-c-cartes'); if (c) c.checked = false; }
+  }
   const desc = document.getElementById('refu-c-modele-desc');
   if (desc) {
     let m = (typeof atlModele === 'function') ? atlModele(sel.value) : null;
@@ -356,6 +391,9 @@ function refuApercuCreationHtml(a) {
       <strong>${a.nb_objectifs}</strong> objectif(s)${a.nb_objectifs_cours ? ` (+ ${a.nb_objectifs_cours} « Connaître le cours »)` : ''},
       ${n(a.nb_seances)} séance(s) prévue(s).</p>
     <p><strong>Documents :</strong> ${docs}.</p>
+    ${a.annee ? `<p><strong>Année :</strong> ${_refuE(a.annee)}.</p>` : ''}
+    ${a.cartes_automatisme ? `<p><strong>Cartes d'automatisme :</strong> ${a.nb_cartes} rattachée(s) aux
+      objectifs, dont ${a.cartes_non_valides} non validée(s) (comptées dans la validation).</p>` : ''}
     <p><strong>Préparation :</strong> ${a.nb_sequences_validees} / ${a.nb_sequences} séquence(s) validée(s) ;
       ${a.atomes_non_valides} atome(s) non validé(s) sur ${a.atomes_total} ;
       ${a.evaluations_non_valides} évaluation(s) ou test(s) court(s) non validé(s) sur ${a.nb_evaluations}.</p>
@@ -366,13 +404,14 @@ function refuApercuCreationHtml(a) {
   </div>`;
 }
 
-async function refuApercuCreation(niveau, type, gabarit) {
+async function refuApercuCreation(niveau, type, gabarit, annee, cartes) {
   const q = `niveau=${encodeURIComponent(niveau)}&type_ref=${encodeURIComponent(type)}`
-    + (gabarit ? `&gabarit=${encodeURIComponent(gabarit)}` : '');
+    + (gabarit ? `&gabarit=${encodeURIComponent(gabarit)}` : '')
+    + (cartes ? '&cartes=1' : '');
   const r = await fetch('/api/referentiels/apercu-creation?' + q);
   const d = await r.json();
   if (!r.ok) throw new Error(d.error || 'Erreur');
-  REFU.creation = d.apercu;
+  REFU.creation = Object.assign({}, d.apercu, annee ? { annee } : {});   // v0.59.0
   REFU.apercu = null;
   _refuRendreDetailExterne();
 }
@@ -390,7 +429,8 @@ function _refuBadgeModele(i) {
   const lib = (typeof atlLibelleModele === 'function') ? atlLibelleModele(i.modele)
     : (i.modele === 'sixieme' ? 'Fiches de résumé par objectif' : 'Notions et méthodes');
   return `<span class="refu-modele-badge${i.modele === 'sixieme' ? ' refu-modele-badge--fiches' : ''}"
-    title="Modèle du référentiel">${_refuE(lib)}</span>`;
+    title="Modèle du référentiel">${_refuE(lib)}${i.cartes && i.modele === 'sixieme'
+      ? ' + cartes' : ''}</span>`;
 }
 
 function refuPreremplirGabarit() {
@@ -410,6 +450,12 @@ async function refuCreer(confirme) {
   // v0.52.4 — modèle envoyé seulement s'il est proposé (interne) ; sinon le
   // serveur applique la valeur par défaut du niveau.
   const gabarit = (selG && refuModeleProposable(source, type)) ? selG.value : undefined;
+  // v0.59.0 (D4) — année choisie (interne) et option « cartes d'automatisme ».
+  refuRemplirAnnees();
+  const selA = document.getElementById('refu-c-annee');
+  const annee = (source === 'interne' && selA && selA.value) ? selA.value : undefined;
+  const chk = document.getElementById('refu-c-cartes');
+  const cartes = !!(chk && chk.checked && refuOptionCartesProposable(source, type, gabarit));
   const desc = document.getElementById('refu-c-desc');
   const st = document.getElementById('refu-status');
   const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
@@ -418,7 +464,7 @@ async function refuCreer(confirme) {
     // v0.54.0 (RI10) — interne : aperçu du contenu d'abord, création après
     // « Confirmer la création ».
     if (source === 'interne' && confirme !== true) {
-      await refuApercuCreation(niveau, type, gabarit);
+      await refuApercuCreation(niveau, type, gabarit, annee, cartes);
       if (st) st.textContent = 'Vérifiez le contenu, puis confirmez la création.';
       return;
     }
@@ -426,7 +472,9 @@ async function refuCreer(confirme) {
     if (source === 'interne') {
       const r = await fetch('/api/referentiels/coquille', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ niveau, description: desc.value, type_ref: type, gabarit }) });
+        // v0.59.0 (D4) — année choisie et option « cartes d'automatisme ».
+        body: JSON.stringify(Object.assign({ niveau, description: desc.value, type_ref: type, gabarit },
+          { annee, cartes_automatisme: cartes })) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Erreur');
       await atelRefRechargerListe();

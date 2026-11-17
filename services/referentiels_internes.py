@@ -143,7 +143,8 @@ def evaluations_du_perimetre(conn, niveau: str, type_ref: str | None) -> list[di
 
 # ── Contenu (aperçu avant création, détail du référentiel) ──────────────────
 
-def contenu(conn, niveau: str, type_ref: str | None, gabarit: str | None = None) -> dict:
+def contenu(conn, niveau: str, type_ref: str | None, gabarit: str | None = None,
+            cartes: bool = False) -> dict:
     """Ce qu'un référentiel interne de ce type contiendra : séquences, parties,
     objectifs (hors objectif « Cours »), documents du catalogue, et l'état de
     préparation (séquences validées, atomes et évaluations non validés)."""
@@ -173,7 +174,15 @@ def contenu(conn, niveau: str, type_ref: str | None, gabarit: str | None = None)
         lignes.append({"code": s["code"], "nom": s["nom"], "parties": len(parties),
                        "objectifs": n_obj, "validee": s["etat_code"] == "valide"})
     from services.referentiel_validation import compter_atomes_perimetre
-    atomes = compter_atomes_perimetre(conn, niveau, g, type_ref)
+    atomes = compter_atomes_perimetre(conn, niveau, g, type_ref, cartes)
+    # v0.59.0 (D4) — option « cartes d'automatisme » du modèle Fiches : cartes
+    # rattachées aux objectifs du périmètre (comptées dans la validation).
+    avec_cartes = bool(cartes) and gd.est_modele_fiches(g) and type_ref == "principal"
+    if avec_cartes:
+        from services.fiches_cycle4 import compter_cartes_rattachees
+        nc = compter_cartes_rattachees(conn, niveau)
+    else:
+        nc = None
     evals = evaluations_du_perimetre(conn, niveau, type_ref)
     catalogue = gd.catalogue_type(g, type_ref)
     return {
@@ -188,6 +197,9 @@ def contenu(conn, niveau: str, type_ref: str | None, gabarit: str | None = None)
         "nb_evaluations": len(evals),
         "evaluations_non_valides": sum(1 for e in evals if e["etat_code"] != "valide"),
         "documents": [{"cle": t.cle, "libelle": t.libelle} for t in catalogue],
+        "cartes_automatisme": avec_cartes,                                  # v0.59.0
+        "nb_cartes": nc["total"] if nc else 0,
+        "cartes_non_valides": nc["non_valides"] if nc else 0,
     }
 
 

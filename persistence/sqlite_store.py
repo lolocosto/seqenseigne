@@ -1615,6 +1615,16 @@ class SqliteStore:
             conn.commit()
         except Exception as _e:                       # pragma: no cover
             print(f"  [cartes_mentales] migration impossible : {_e}")
+        # ── v0.59.0 — Référentiel de 4e au modèle Fiches : option « cartes
+        #    d'automatisme » du référentiel, niveau de création des cartes,
+        #    titre court des séquences-niveaux, marque d'archivage de la
+        #    structure de 2025 (valeurs neutres : rien ne change) ─
+        try:
+            from services import fiches_cycle4 as _fc4
+            _fc4.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [fiches_cycle4] migration impossible : {_e}")
 
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 

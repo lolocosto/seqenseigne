@@ -210,7 +210,17 @@ def lire_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_code: str) 
         parties.append({"numero": numero, "activites": activites, "fiches": fiches_partie,
                         "objectifs": objectifs})
     nom, numero = _nom_sequence(conn, niveau, sequence_code)
+    nom_cycle = nom
+    # v0.59.0 (D5) — titre court de la séquence-niveau (4e : « Nombres
+    # relatifs : produits et quotients ») dans tous les documents Fiches ;
+    # repli sur le nom du cycle (6e : aucun titre court, rien ne change).
+    from services.fiches_cycle4 import titre_court
+    nom = titre_court(conn, niveau, sequence_code) or nom
     libelles = libelles_parties(niveau, sequence_code)          # C1 (v0.52.5)
+    if not libelles and niveau != "N09":
+        # v0.59.0 (D6) — hors 6e, libellés écrits en base par l'import des
+        # lots (`sequence_parties.libelle`) ; la 6e garde objectifs_6e.json.
+        libelles = libelles_parties_base(conn, niveau, sequence_code)
     # v0.55.0 (CM-LIVRET) — carte mentale de la partie (None sans carte).
     from services.cartes_mentales import cartes_de_sequence
     cartes = cartes_de_sequence(conn, niveau, sequence_code)
@@ -218,6 +228,7 @@ def lire_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_code: str) 
         p["libelle"] = libelles.get(p["numero"], "")
         p["carte"] = cartes.get(p["numero"])
     return {"code": sequence_code, "nom": nom or sn.get("sequence_nom") or sequence_code,
+            "nom_cycle": nom_cycle or sn.get("sequence_nom") or sequence_code,
             "numero": numero, "niveau": niveau, "parties": parties,
             "theme_couleur": sn.get("theme_code_couleur") or ""}
 
@@ -352,6 +363,19 @@ def libelles_parties(niveau: str, sequence_code: str) -> dict[int, str]:
             code = sequence_code
     return {p["numero"]: (p.get("libelle") or "").strip()
             for p in parties.get(code, [])}
+
+
+def libelles_parties_base(conn, niveau: str, sequence_code: str) -> dict[int, str]:
+    """v0.59.0 (D6) — {numéro: libellé} des parties de la séquence-niveau,
+    d'après `sequence_parties.libelle` (vides ignorés ; {} si colonne absente)."""
+    try:
+        rows = conn.execute(
+            "SELECT p.numero, p.libelle FROM sequence_parties p JOIN sequences_par_niveau sn "
+            "ON sn.id = p.sequence_par_niveau_id WHERE sn.niveau = ? AND sn.sequence_code = ?",
+            (niveau, sequence_code)).fetchall()
+    except sqlite3.Error:
+        return {}
+    return {r[0]: (r[1] or "").strip() for r in rows if (r[1] or "").strip()}
 
 
 def titre_partie_couverture(seq: dict, p: dict) -> str:

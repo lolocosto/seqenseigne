@@ -2751,7 +2751,19 @@
               <option value="cycle4">Notions et méthodes</option>
               <option value="sixieme">Fiches de résumé par objectif</option></select>
             <div id="refu-c-modele-desc" class="refu-modele-desc" aria-live="polite"></div>
+            <!-- v0.59.0 (D4) — option « cartes d'automatisme » du modèle Fiches
+                 (référentiel principal) : cartes rattachées aux objectifs,
+                 comptées dans la validation ; choisie à la création. -->
+            <label id="refu-c-cartes-bloc" class="refu-c-cartes" style="display:none"
+                   title="Les cartes rattachées aux objectifs du référentiel comptent dans sa validation">
+              <input type="checkbox" id="refu-c-cartes" onchange="refuAnnulerCreation()">
+              Cartes d'automatisme rattachées aux objectifs</label>
           </div>
+          <!-- v0.59.0 (D4) — année scolaire du référentiel interne : en cours
+               ou suivante (un référentiel se prépare un an à l'avance). -->
+          <label id="refu-c-annee-bloc" class="refu-c-annee">Année
+            <select id="refu-c-annee" title="Année scolaire du nouveau référentiel"
+                    onchange="refuAnnulerCreation()"></select></label>
           <input id="refu-c-desc" placeholder="Description (facultative)">
           <button class="btn-prim rxa-btn-creer" id="atl-ref-btn-creer" onclick="refuCreer()"
                   title="Le nom est calculé : niveau, année, type">+ Créer</button>

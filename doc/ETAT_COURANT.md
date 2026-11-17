@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.58.2** (dernière livrée ; v0.58.1 déployée et poussée, migration appliquée le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.59.0** (dernière livrée ; v0.58.2 déployée et poussée, migration complète chez Laurent le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -302,6 +302,24 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   **à relancer chez Laurent** (`--sans-fichiers`, puis `--apply`). Traces S… signalées :
   codes S01… des référentiels externes, textes d'exemple de l'interface. pytest 5007
   réussis (+19), vitest 386. Détails : `doc/redemarrage_v0_58_2.md`.
+- v0.59.0 livrée (16 novembre) : **version 1 « 4e au modèle Fiches »**, avant le premier
+  lot de 4e (décisions du 16 novembre, point 10). Outil
+  `outils/archiver_structure_niveau.py --niveau N11` (structure de 2025 de la 4e rangée en
+  X01…X15 avec parties, objectifs, liens et contenus ; essai à blanc, `--apply`,
+  `--annuler`, idempotent ; référentiels figés vérifiés intacts) ; import des lots ouvert
+  à la 4e (`import_lot6e.py --niveau N11`, `outils/objectifs_4e.json` transcrit de
+  `outils/ref4e_v1.md`), **refusé tant que l'archivage n'est pas fait** ; cartes
+  d'automatisme des lots rattachées aux objectifs (niveau de création gardé), absentes du
+  livret ; référentiel interne : année choisie à la création (« 4e — 2027-2028 —
+  Principal »), option « cartes d'automatisme » du modèle Fiches comptée dans la
+  validation ; titre court et libellés de parties de 4e dans les documents Fiches ;
+  2025_N11b ni déverrouillable ni recompilable après l'archivage ; livret de cours de 5e
+  et de 3e sans les archives de la 4e. Lot d'essai `tests/donnees/lot4e_essai`. Détails et
+  marche à suivre : `doc/redemarrage_v0_59_0.md`.
+- **À faire par Laurent (4e)** : archiver la structure de 2025 de N11, puis importer les
+  lots de 4e au fur et à mesure, puis créer « 4e — 2027-2028 — Principal » (modèle Fiches
+  + cartes). Version 2 (tests courts au principal, séances d'évaluation, document de
+  rituels des cartes selon la progression) : v0.60.
 - **À faire par Laurent** : la création des référentiels 2027 en codes A1 (6e :
   `marche_a_suivre_referentiels_6e_v0_58.md`) ; ne pas déverrouiller les référentiels de
   cette année.
@@ -622,6 +640,12 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   (rattachés au code vivant seulement à nom de séquence égal), et n'ajoute que les
   nouveaux atomes : il ne réécrit jamais les notions et méthodes existantes ni ne crée de
   séquence absente du cycle (v0.58.2, `tests/test_v0_58_2_scanner_apres_migration.py`).
+
+- **Lots hors 6e** (v0.59.0) : l'import d'un niveau du cycle 4 exige l'archivage de sa
+  structure de 2025 (`archivages_structure`) et n'écrit jamais dans les thèmes ni les
+  séquences du cycle ; les archives de structure gardent identifiants et `fichier` ; un
+  référentiel figé d'un niveau archivé ne se déverrouille ni ne se recompile
+  (`tests/test_v0_59_0_ref4e_fiches.py`).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

@@ -16,6 +16,7 @@ Endpoints :
           référentiel, pour le tableau de bord de l'atelier (v0.13.5.1).
 """
 
+import datetime
 import sqlite3
 
 from flask import Blueprint, request, jsonify, current_app
@@ -116,7 +117,9 @@ def api_creer_coquille():
     """
     Crée une coquille de référentiel à l'état `en_cours`.
     Body JSON : { niveau: str, description?: str, type_ref?: str,
-                  gabarit?: 'cycle4' | 'sixieme' (v0.52.1) }
+                  gabarit?: 'cycle4' | 'sixieme' (v0.52.1),
+                  annee?: '2027' | '2027-2028' (v0.59.0 : année en cours ou suivante),
+                  cartes_automatisme?: bool (v0.59.0 : option du modèle Fiches) }
     Retour : 201 + { ref: {id, niveau, version, etat, ...} }
              400 si niveau manquant.
              409 si conflit unique (cas extrême : >25 référentiels même
@@ -138,14 +141,24 @@ def api_creer_coquille():
     if gabarit is not None and gabarit not in gd.GABARITS:
         return jsonify({"error": f"Gabarit de documents inconnu : {gabarit!r}"}), 400
 
+    # v0.59.0 (D4) — option « cartes d'automatisme » : modèle Fiches seulement
+    # (au modèle « Notions et méthodes », les cartes comptent déjà).
+    cartes = bool(body.get("cartes_automatisme"))
+    if cartes and not gd.est_modele_fiches(gabarit or gd.gabarit_par_defaut(niveau)):
+        return jsonify({"error": "L'option « cartes d'automatisme » ne concerne que le modèle "
+                                 "« Fiches de résumé par objectif » (au modèle « Notions et "
+                                 "méthodes », les cartes comptent déjà)."}), 400
     with store._conn() as conn:
         try:
             ref = svc.creer_coquille(conn, niveau, description,
-                                     type_ref=(body.get("type_ref") or "principal"))
+                                     type_ref=(body.get("type_ref") or "principal"),
+                                     annee=body.get("annee"))
             # v0.52.1 — gabarit de documents choisi à la création (liste
             # préremplie selon le niveau ; absent → valeur du niveau).
             ref["gabarit_documents"] = gd.poser_a_la_creation(
                 conn, ref["id"], niveau, gabarit)
+            from services import fiches_cycle4 as fc4
+            ref["cartes_automatisme"] = fc4.poser_option_cartes(conn, ref["id"], cartes)
             conn.commit()
         except ValueError as e:
             return jsonify({"error": str(e)}), 400
@@ -170,6 +183,7 @@ def api_apercu_creation():
     niveau = (request.args.get("niveau") or "").strip()
     type_ref = (request.args.get("type_ref") or "principal").strip()
     gabarit = (request.args.get("gabarit") or "").strip() or None
+    cartes = (request.args.get("cartes") or "").strip() in ("1", "true", "oui")   # v0.59.0
     if not niveau:
         return jsonify({"error": "niveau obligatoire"}), 400
     from services import referentiels_internes as ri
@@ -177,7 +191,7 @@ def api_apercu_creation():
         return jsonify({"error": f"Type de référentiel invalide : {type_ref!r}"}), 400
     store = _store()
     with store._conn() as conn:
-        return jsonify({"apercu": ri.contenu(conn, niveau, type_ref, gabarit)})
+        return jsonify({"apercu": ri.contenu(conn, niveau, type_ref, gabarit, cartes)})
 
 
 # ── v0.13.5.1 — Suppression ──────────────────────────────────────────────────
@@ -265,6 +279,29 @@ def api_verrouiller(ref_id):
     return jsonify(res), 200
 
 
+def _refus_deverrouillage_archive(conn, ref_id: str) -> str:
+    """v0.59.0 — Message de refus (vide = déverrouillage possible)."""
+    r = conn.execute("SELECT niveau, version, source FROM referentiel_niveaux WHERE id = ?",
+                     (ref_id,)).fetchone()
+    if r is None or (r["source"] or "interne") == "externe":
+        return ""
+    from services.fiches_cycle4 import archivage
+    a = archivage(conn, r["niveau"])
+    if a is None:
+        return ""
+    try:
+        an_ref = int(str(r["version"])[:4])
+        fait = datetime.date.fromisoformat(a["fait_le"][:10])
+    except (TypeError, ValueError):
+        return ""
+    if an_ref > int(svc.calculer_annee_scolaire(fait)):
+        return ""
+    return (f"Référentiel {ref_id} : la structure de 2025 de {r['niveau']} est archivée depuis "
+            f"le {a['fait_le']} ({a['resume']}). Un déverrouillage recalculerait son instantané "
+            "sur l'atelier, qui porte désormais la nouvelle structure : il reste verrouillé "
+            "(il peut être annulé s'il ne sert pas).")
+
+
 @bp.route("/api/referentiels/<ref_id>/deverrouiller", methods=["POST"])
 def api_deverrouiller(ref_id):
     """v0.15.3 — Déverrouille un référentiel `verrouille` (transition
@@ -288,6 +325,14 @@ def api_deverrouiller(ref_id):
         return jsonify({"error": "store non SQLite"}), 500
 
     with store._conn() as conn:
+        # v0.59.0 (D1, point 16 de l'inventaire de l'étape 3) — un référentiel
+        # interne d'une année antérieure ou égale à celle de l'archivage de la
+        # structure de 2025 du niveau (2025_N11b) n'est plus déverrouillable :
+        # son instantané serait recalculé sur l'atelier, où sa structure est
+        # devenue une archive (X01…X15) et a laissé la place à la nouvelle.
+        refus = _refus_deverrouillage_archive(conn, ref_id)
+        if refus:
+            return jsonify({"error": refus}), 409
         try:
             res = svc.deverrouiller(conn, ref_id)
         except ValueError as e:

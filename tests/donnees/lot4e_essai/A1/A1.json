@@ -1,0 +1,115 @@
+{
+ "sequence": "A1",
+ "titre": "Nombres relatifs : produits et quotients",
+ "theme": "A",
+ "notes": "Lot d'essai de la v0.59.0 (tests et aperçus) : une séquence, une partie, deux objectifs, quelques exercices, une fiche par objectif, une carte mentale, deux cartes d'automatisme. Ce n'est pas le vrai lot A1 de 4e (A1-04 volontairement sans contenu).",
+ "objectifs": [
+  {
+   "code": "A1-02",
+   "intitule": "Multiplier deux nombres relatifs",
+   "partie": 1,
+   "fiche_resume": {
+    "titre": "Produit de deux nombres relatifs",
+    "latex": "\\seqSectionFicheSix{1. Règle des signes}\nLe produit de deux nombres de même signe est \\seqMotCle{positif} ; le produit de deux nombres de signes contraires est \\seqMotCle{négatif}.\\par\\smallskip\n\\textbf{Exemples :} $(-3)\\times(-4)=12$ ; $(-3)\\times4=-12$.\n\\seqSectionFicheSix{2. Produit de plusieurs facteurs}\nUn produit de facteurs non nuls est positif s'il compte un nombre \\seqMotCle{pair} de facteurs négatifs, négatif sinon."
+   },
+   "exercices": [
+    {
+     "serie": "F",
+     "num": 1,
+     "titre": "Le signe d'abord",
+     "enonce": "Donne le signe de chaque produit, puis calcule-le.\n\\begin{enumerate}[label=\\alph*.]\n\\item $(-5)\\times 3$\n\\item $(-2)\\times(-7)$\n\\item $6\\times(-4)$\n\\end{enumerate}",
+     "corrige": "a. Les facteurs sont de signes contraires : le produit est négatif, $(-5)\\times3=-15$.\\par b. Les deux facteurs sont négatifs : le produit est positif, $(-2)\\times(-7)=14$.\\par c. Le produit est négatif : $6\\times(-4)=-24$.",
+     "remed_enonce": "Complète : $(-3)\\times 2 = (-3)+(-3) = \\seqTrous[1.5cm]$.",
+     "remed_corrige": "$(-3)\\times2=(-3)+(-3)=-6$ : le produit est négatif.",
+     "origine": "N11/A1/A05 (copié et adapté)"
+    },
+    {
+     "serie": "F",
+     "num": 2,
+     "titre": "Tables avec des relatifs",
+     "enonce": "Calcule : $(-6)\\times(-6)$ ; $(-9)\\times 2$ ; $8\\times(-1)$.",
+     "corrige": "$(-6)\\times(-6)=36$ ; $(-9)\\times2=-18$ ; $8\\times(-1)=-8$. Les trois produits sont calculés.",
+     "mention": "F",
+     "origine": "création"
+    },
+    {
+     "serie": "A",
+     "num": 1,
+     "titre": "Plusieurs facteurs",
+     "enonce": "Détermine le signe de $A=(-1)\\times(-2)\\times(-3)\\times 4$, puis calcule $A$.",
+     "corrige": "Il y a trois facteurs négatifs, un nombre impair : $A$ est négatif. $A=-(1\\times2\\times3\\times4)=-24$.",
+     "origine": "N11/A1/F01 (copié et adapté)"
+    },
+    {
+     "serie": "E",
+     "num": 1,
+     "titre": "Le produit mystère",
+     "enonce": "Le produit de deux nombres relatifs vaut $-12$ et leur somme vaut $1$. Quels sont ces nombres ?",
+     "corrige": "On cherche deux nombres de signes contraires : $4\\times(-3)=-12$ et $4+(-3)=1$. Les nombres sont $4$ et $-3$.",
+     "origine": "création"
+    }
+   ],
+   "cartes_automatisme": [
+    {
+     "num": 1,
+     "titre": "Signe d'un produit de relatifs",
+     "type_pedago": "procedure",
+     "type_tech": "fixe",
+     "recto": "Quel est le signe du produit de deux nombres relatifs ?",
+     "verso": "Positif si les deux nombres ont le même signe, négatif s'ils sont de signes contraires.",
+     "niveau_creation": "N11",
+     "origine": "N11/A1/CA8 (recopiée)"
+    }
+   ]
+  },
+  {
+   "code": "A1-03",
+   "intitule": "Diviser deux nombres relatifs",
+   "partie": 1,
+   "fiche_resume": {
+    "titre": "Quotient de deux nombres relatifs",
+    "latex": "\\seqSectionFicheSix{1. Même règle que pour le produit}\nLe quotient de deux nombres de même signe est \\seqMotCle{positif}, de signes contraires \\seqMotCle{négatif}.\\par\\smallskip\n\\textbf{Exemple :} $(-12)\\div(-3)=4$ ; $\\dfrac{-12}{3}=-4$."
+   },
+   "exercices": [
+    {
+     "serie": "F",
+     "num": 3,
+     "titre": "Quotients d'entiers",
+     "enonce": "Calcule : $(-20)\\div 5$ ; $(-18)\\div(-6)$ ; $35\\div(-7)$.",
+     "corrige": "$(-20)\\div5=-4$ ; $(-18)\\div(-6)=3$ ; $35\\div(-7)=-5$. Les trois quotients sont calculés.",
+     "remed_enonce": "Complète : $(-4)\\times\\seqTrous[1cm]=-20$, donc $(-20)\\div(-4)=\\seqTrous[1cm]$.",
+     "remed_corrige": "$(-4)\\times5=-20$, donc $(-20)\\div(-4)=5$.",
+     "origine": "N11/A1/F03 (copié et adapté)"
+    },
+    {
+     "serie": "A",
+     "num": 2,
+     "titre": "Écriture fractionnaire",
+     "enonce": "Écris sans signe « $-$ » au dénominateur : $\\dfrac{7}{-2}$ ; $\\dfrac{-5}{-8}$.",
+     "corrige": "$\\dfrac{7}{-2}=-\\dfrac72$ et $\\dfrac{-5}{-8}=\\dfrac58$. Les deux écritures sont simplifiées.",
+     "origine": "création"
+    }
+   ],
+   "cartes_automatisme": [
+    {
+     "num": 2,
+     "titre": "Multiplications à trou",
+     "type_pedago": "calcul",
+     "type_tech": "parametree",
+     "recto": "Complète : $\\xinttheiiexpr N11A1C02_a\\relax\\times\\ldots=\\xinttheiiexpr N11A1C02_a*N11A1C02_b\\relax$",
+     "verso": "$\\xinttheiiexpr N11A1C02_b\\relax$",
+     "variables": "\\xintdefiivar N11A1C02_a := randrange(2,10);\n\\xintdefiivar N11A1C02_b := randrange(2,10);",
+     "niveau_creation": "N10",
+     "origine": "à créer en 5e (A05)"
+    }
+   ]
+  }
+ ],
+ "cartes_mentales": [
+  {
+   "partie": 1,
+   "titre": "Produits et quotients de relatifs",
+   "latex": "\\begin{seqCarteMentaleSix}[Partie 1]{Produits et quotients de relatifs}\n\\seqCMBranche{Règle des signes}{%\nMême signe : \\seqACompleter{positif}.\\par\nSignes contraires : \\seqACompleter{négatif}.}\n\\seqCMBranche{Produit de plusieurs facteurs}{%\nNombre pair de facteurs négatifs : positif.}\n\\seqCMBranche{Quotient}{%\n$\\dfrac{-a}{b}=\\dfrac{a}{-b}=-\\dfrac ab$}\n\\end{seqCarteMentaleSix}"
+  }
+ ]
+}

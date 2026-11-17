@@ -390,6 +390,30 @@ Voir `inventaire_ateliers.md` de la livraison v0.56.3.
   d'automatisme) → création (activités de découverte, activités
   complémentaires, TP, tests courts, évaluations).
 - N11_v2025 reste intouchable (en classe cette année).
+- **Version 1 livrée (v0.59.0, 16 novembre)** : archivage de la structure de 2025 de N11,
+  import des lots de 4e (`--niveau N11`), cartes rattachées aux objectifs (niveau de
+  création gardé), année et option « cartes » du référentiel interne, titres courts
+  (`doc/redemarrage_v0_59_0.md`). Ensuite : les 12 lots de 4e (un par séquence), écrits
+  d'après `col4/ref4e_v1.md` et l'inventaire de l'étape 3, importés et validés.
+- **Version 2 — v0.60 (avant la rentrée 2027, avec le chantier des progressions)** :
+  - **document de rituels / planches d'automatismes organisé selon la progression**
+    (décision du 16 novembre) : à chaque séance de la progression, les cartes nouvelles
+    (celles des objectifs de la partie qui vient de se terminer, en rituel juste après) et
+    les cartes à revoir (rappels espacés jusqu'en juin) ; l'année suivante, réactivation en
+    début des séquences qui en ont besoin, puis même cycle de rappels. Données déjà en base
+    depuis la v0.59.0 : objectif (`objectif_cartes`), partie (par l'objectif), niveau de
+    création (`cartes_automatisme.niveau_creation`) ;
+  - tests courts au principal (E6 : type d'évaluation, clé `tests_courts` des lots, un par
+    partie, sujets A et B sur 10, sur les cartes de la partie) ;
+  - durée et séance d'évaluation (E7 : 10 min par objectif, 50 min et 5 objectifs au plus
+    par séance) et séances d'évaluation dans la progression (E8 : toutes les deux
+    semaines, jour fixe, au moins une semaine après la partie, dernière séquence non
+    évaluée) ;
+  - cartes de la partie dans le plan de travail Fiches (E9) ; saisie du titre court dans
+    l'atelier ; avertissement « objectif sans carte » à la validation de séquence (sauf
+    A3-04, B2-04, C1-05, E1-05) ;
+  - archivage de la structure de 2025 de N10 et N12 (même outil) au moment des
+    référentiels de 5e et de 3e.
 
 ## Thèmes communs et codes A1 (cycles 3 et 4) — migration en deux livraisons (15 nov. 2026)
 

@@ -85,15 +85,27 @@ def _filtre_perimetre_sql(type_ref: str) -> str:
 
 def compter_atomes_perimetre(conn: sqlite3.Connection, niveau: str,
                              gabarit: str = 'cycle4',
-                             type_ref: str = 'principal') -> dict:
+                             type_ref: str = 'principal',
+                             cartes: bool = False) -> dict:
     """{"non_valides": {table: n}, "total": {table: n}} des atomes du
     périmètre du référentiel (RI1) ; modèle « Fiches » : notions, méthodes et
-    cartes ne comptent pas (M3)."""
+    cartes ne comptent pas (M3).
+
+    v0.59.0 (D4) — `cartes` (option « cartes d'automatisme » du modèle
+    Fiches, principal) : les cartes **rattachées à un objectif du périmètre**
+    (`objectif_cartes`) comptent, et elles seules — pas les cartes d'archive
+    ni celles qu'aucun objectif ne vise."""
     from services.gabarits_documents import est_modele_fiches
     fiches = est_modele_fiches(gabarit)
     non_valides: dict[str, int] = {}
     total: dict[str, int] = {}
     for t in _TABLES_ATOMES:
+        if fiches and cartes and t == 'cartes_automatisme' \
+                and (type_ref or 'principal') == 'principal':
+            from services.fiches_cycle4 import compter_cartes_rattachees
+            c = compter_cartes_rattachees(conn, niveau)
+            total[t], non_valides[t] = c["total"], c["non_valides"]
+            continue
         if fiches and t in _TABLES_HORS_MODELE_FICHES:
             non_valides[t] = total[t] = 0
             continue
@@ -114,7 +126,8 @@ def compter_atomes_perimetre(conn: sqlite3.Connection, niveau: str,
 def _compter_atomes_non_valides(conn: sqlite3.Connection,
                                   niveau: str,
                                   gabarit: str = 'cycle4',
-                                  type_ref: str = 'principal') -> dict[str, int]:
+                                  type_ref: str = 'principal',
+                                  cartes: bool = False) -> dict[str, int]:
     """Pour chaque table d'atomes, compte ceux du niveau dont
     `etat_code != 'valide'`. Retourne un dict {table: count} (count=0
     si table absente / niveau vide).
@@ -126,7 +139,7 @@ def _compter_atomes_non_valides(conn: sqlite3.Connection,
         cartes d'automatisme ne sont pas comptées (0).
     v0.53.0 (MR7) — ni les mises en route Mnn ; v0.54.0 (RI1) — un
     référentiel de mise en route ne compte que ses `Mnn`."""
-    return compter_atomes_perimetre(conn, niveau, gabarit, type_ref)["non_valides"]
+    return compter_atomes_perimetre(conn, niveau, gabarit, type_ref, cartes)["non_valides"]
 
 
 def _compter_evaluations_non_valides(conn: sqlite3.Connection,
@@ -249,7 +262,9 @@ def evaluer_eligibilite_validation(conn: sqlite3.Connection,
     from services.referentiels_internes import type_du_referentiel
     gabarit = gabarit_du_referentiel(conn, ref_id)
     type_ref = type_du_referentiel(conn, ref_id)
-    atomes = _compter_atomes_non_valides(conn, niveau, gabarit, type_ref)
+    from services.fiches_cycle4 import option_cartes                 # v0.59.0 (D4)
+    cartes = option_cartes(conn, ref_id)
+    atomes = _compter_atomes_non_valides(conn, niveau, gabarit, type_ref, cartes)
     # v0.54.0 (RI1) — évaluations du périmètre : les tests courts des mises
     # en route ne bloquent plus le principal (et inversement).
     evals = _compter_evaluations_non_valides(conn, niveau, type_ref)
@@ -295,6 +310,7 @@ def evaluer_eligibilite_validation(conn: sqlite3.Connection,
             'sequences_non_validees':  seq_nv,                 # v0.54.0 (RI5)
         },
         'type_ref':     type_ref,                              # v0.54.0
+        'cartes_automatisme': cartes,                          # v0.59.0 (D4)
         'gabarit':      gabarit,
         'etat_courant': etat,
         'niveau':       niveau,

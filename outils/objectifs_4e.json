@@ -1,0 +1,624 @@
+{
+ "source": "outils/ref4e_v1.md (copie de col4/ref4e_v1.md du 16 novembre 2026, codes A1), transcrit par la v0.59.0 ; objectif « Cours » : intitulé et critères de objectifs_6e.json ; critère E commun « Utilise ce savoir-faire pour résoudre un problème. ». Thèmes et séquences du cycle 4 : en base (migration v0.58) ; l'import ne les écrit jamais, il vérifie seulement qu'ils existent.",
+ "niveau": "N11",
+ "cycle": "C04",
+ "themes": [
+  {
+   "code": "A",
+   "nom": "Nombres et calculs",
+   "ordre": 1
+  },
+  {
+   "code": "B",
+   "nom": "Espace et géométrie",
+   "ordre": 2
+  },
+  {
+   "code": "C",
+   "nom": "Organisation et gestion de données et probabilités",
+   "ordre": 3
+  },
+  {
+   "code": "D",
+   "nom": "Proportionnalité, fonctions",
+   "ordre": 4
+  },
+  {
+   "code": "E",
+   "nom": "La pensée informatique",
+   "ordre": 5
+  }
+ ],
+ "sequences": [
+  {
+   "code": "A1",
+   "numero": 11,
+   "nom": "Calcul numérique",
+   "theme": "A",
+   "titre_court": "Nombres relatifs : produits et quotients"
+  },
+  {
+   "code": "A2",
+   "numero": 12,
+   "nom": "Nombres rationnels et arithmétique",
+   "theme": "A",
+   "titre_court": "Nombres rationnels"
+  },
+  {
+   "code": "A3",
+   "numero": 13,
+   "nom": "Représentations d'un nombre",
+   "theme": "A",
+   "titre_court": "Puissances et racine carrée"
+  },
+  {
+   "code": "A4",
+   "numero": 14,
+   "nom": "Calcul littéral",
+   "theme": "A",
+   "titre_court": "Calcul littéral et équations"
+  },
+  {
+   "code": "B1",
+   "numero": 21,
+   "nom": "Transformations géométriques",
+   "theme": "B",
+   "titre_court": "Translations et parallélogrammes"
+  },
+  {
+   "code": "B2",
+   "numero": 22,
+   "nom": "Géométrie plane",
+   "theme": "B",
+   "titre_court": "Triangles"
+  },
+  {
+   "code": "B3",
+   "numero": 23,
+   "nom": "Représentation en trois dimensions",
+   "theme": "B",
+   "titre_court": "Représentation de l'espace"
+  },
+  {
+   "code": "C1",
+   "numero": 31,
+   "nom": "Traitement, représentation et interprétation des données",
+   "theme": "C",
+   "titre_court": "Statistiques"
+  },
+  {
+   "code": "C2",
+   "numero": 32,
+   "nom": "Probabilités",
+   "theme": "C",
+   "titre_court": "Probabilités"
+  },
+  {
+   "code": "D1",
+   "numero": 41,
+   "nom": "Fonctions",
+   "theme": "D",
+   "titre_court": "Fonctions et programmes de calcul"
+  },
+  {
+   "code": "D2",
+   "numero": 42,
+   "nom": "Proportionnalité",
+   "theme": "D",
+   "titre_court": "Proportionnalité, ratios et pourcentages"
+  },
+  {
+   "code": "E1",
+   "numero": 51,
+   "nom": "Algorithmique et programmation",
+   "theme": "E",
+   "titre_court": "Algorithmique et programmation"
+  }
+ ],
+ "objectif_cours": {
+  "nom": "Connaître le cours",
+  "critere_F": "A noté la trace écrite en classe",
+  "critere_A": "A complété les fiches de résumé.",
+  "critere_E": "Sait résumer le cours à l'oral."
+ },
+ "parties": {
+  "A1": [
+   {
+    "numero": 1,
+    "libelle": "Produits et quotients de relatifs",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Multiplier deux nombres relatifs",
+      "critere_F": "Calcule le produit de deux relatifs dont un seul est négatif.",
+      "critere_A": "Calcule un produit de plusieurs relatifs en déterminant d'abord son signe.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Diviser deux nombres relatifs",
+      "critere_F": "Calcule le quotient de deux entiers relatifs.",
+      "critere_A": "Détermine le signe d'un quotient en écriture fractionnaire et le relie au produit.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Calculer un enchaînement d'opérations avec des relatifs",
+      "critere_F": "Calcule une expression à deux opérations avec des relatifs en respectant les priorités.",
+      "critere_A": "Calcule une expression avec parenthèses et nomme sa nature (somme, différence, produit, quotient) ; traduit un programme de calcul en une expression.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "A2": [
+   {
+    "numero": 1,
+    "libelle": "Fractions, nombres rationnels et quotients",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Simplifier une fraction",
+      "critere_F": "Simplifie une fraction dont les deux termes sont dans une même table.",
+      "critere_A": "Simplifie une fraction en plusieurs étapes ou en une seule à l'aide d'un diviseur commun.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Écrire un nombre rationnel et son opposé",
+      "critere_F": "Reconnaît qu'un quotient d'entiers relatifs est un nombre rationnel et écrit −a/b = a/(−b) = −(a/b).",
+      "critere_A": "Classe des nombres en entiers, décimaux, rationnels non décimaux.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Multiplier des fractions",
+      "critere_F": "Calcule le produit de deux fractions et la fraction d'un nombre.",
+      "critere_A": "Calcule et représente la fraction d'une fraction, d'une quantité.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Diviser des fractions",
+      "critere_F": "Donne l'inverse d'un nombre et d'une fraction avec la notation 1/a.",
+      "critere_A": "Divise une fraction par une fraction en multipliant par l'inverse et simplifie le résultat.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Calculs et problèmes avec des fractions",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Calculer une expression avec des fractions",
+      "critere_F": "Calcule une expression à deux opérations sur des fractions.",
+      "critere_A": "Calcule une expression avec parenthèses et priorités sur des fractions.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Résoudre un problème avec des fractions",
+      "critere_F": "Résout un problème à une étape avec une opération sur des fractions.",
+      "critere_A": "Résout un problème à plusieurs étapes (fraction d'un reste, partage), avec un schéma en barres si besoin.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "A3": [
+   {
+    "numero": 1,
+    "libelle": "Puissances et racine carrée",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Calculer une puissance d'exposant positif",
+      "critere_F": "Écrit un produit de facteurs égaux sous forme de puissance et calcule a^n pour de petits n.",
+      "critere_A": "Calcule une puissance d'un relatif ou d'une fraction et utilise a⁰ = 1.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Multiplier des puissances",
+      "critere_F": "Calcule a^m × a^n sur des exemples et l'écrit a^(m+n).",
+      "critere_A": "Utilise a^m × a^n = a^(m+n) et (ab)^n = a^n b^n pour simplifier un calcul.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Résoudre un problème avec des puissances",
+      "critere_F": "Résout un problème de comptage d'une situation répétée.",
+      "critere_A": "Résout un problème à plusieurs étapes (grains de riz, doublements).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Déterminer la racine carrée d'un nombre positif",
+      "critere_F": "Donne la racine carrée d'un carré parfait jusqu'à 144 et le côté d'un carré d'aire donnée.",
+      "critere_A": "Utilise la calculatrice pour une valeur exacte ou approchée et l'emploie dans une situation géométrique.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "06",
+      "nom": "Encadrer la racine carrée d'un entier",
+      "critere_F": "Encadre la racine carrée d'un entier inférieur à 144 par deux entiers consécutifs.",
+      "critere_A": "Encadre le côté d'un carré d'aire donnée et contrôle avec la calculatrice.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "A4": [
+   {
+    "numero": 1,
+    "libelle": "Expressions littérales",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Produire une formule et tester sa vraisemblance",
+      "critere_F": "Écrit une formule d'aire ou de périmètre d'une figure simple et la teste sur une valeur.",
+      "critere_A": "Écrit un nombre pair 2n, impair 2n + 1, et une formule pour un motif ; réfute une formule par un contre-exemple.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Développer, factoriser et réduire une expression",
+      "critere_F": "Développe k(a + b) et réduit une expression du type 2x² − 3x + x².",
+      "critere_A": "Factorise une somme, développe −(4x − 2) et réduit une expression avec parenthèses.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Démontrer avec le calcul littéral",
+      "critere_F": "Démontre que deux programmes de calcul donnent le même résultat.",
+      "critere_A": "Démontre une propriété générale (somme de trois entiers consécutifs, multiple de 3).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Équations",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Résoudre une équation du type ax + b = c",
+      "critere_F": "Résout ax + b = c avec des entiers positifs et vérifie la solution.",
+      "critere_A": "Résout ax + b = c avec des relatifs et verbalise les étapes.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Mettre un problème en équation et le résoudre",
+      "critere_F": "Met en équation un problème qui conduit à ax + b = c et le résout.",
+      "critere_A": "Met en équation et résout un problème du type ax + b = cx + d, puis contrôle le résultat.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "14",
+      "nom": "Résoudre une équation avec un tableur ou un algorithme",
+      "critere_F": "Teste des valeurs au tableur pour approcher une solution.",
+      "critere_A": "Encadre une solution par balayage (tableur ou programme) et formule une conjecture.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "B1": [
+   {
+    "numero": 1,
+    "libelle": "Translation",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Transformer une figure par une translation",
+      "critere_F": "Construit l'image d'une figure par une translation sur quadrillage.",
+      "critere_A": "Construit l'image sur papier blanc ou avec un logiciel, et identifie une translation dans une frise ou un pavage.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Relier translation et parallélogramme",
+      "critere_F": "Reconnaît le parallélogramme formé par un point, son image et un autre point et son image.",
+      "critere_A": "Utilise la translation pour justifier un parallélisme ou une égalité d'angles.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Utiliser les propriétés de conservation de la translation",
+      "critere_F": "Utilise la conservation des longueurs et des angles pour compléter une figure.",
+      "critere_A": "Justifie une longueur ou un angle par la conservation.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "B2": [
+   {
+    "numero": 1,
+    "libelle": "Droite des milieux et triangle rectangle",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Utiliser les théorèmes de la droite des milieux",
+      "critere_F": "Utilise le théorème des milieux pour justifier un parallélisme.",
+      "critere_A": "Utilise les trois théorèmes pour calculer une longueur ou montrer qu'un point est un milieu.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Caractériser un triangle rectangle par son cercle circonscrit",
+      "critere_F": "Trouve le centre du cercle circonscrit à un triangle rectangle.",
+      "critere_A": "Démontre qu'un triangle inscrit dans un demi-cercle est rectangle.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Construire un rectangle sans équerre",
+      "critere_F": "Construit un rectangle au compas en suivant un programme.",
+      "critere_A": "Justifie sa construction par les diagonales ou le cercle circonscrit.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Théorème de Pythagore",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Calculer une longueur avec le théorème de Pythagore",
+      "critere_F": "Calcule l'hypoténuse d'un triangle rectangle.",
+      "critere_A": "Calcule un côté de l'angle droit, valeur exacte ou arrondie.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Démontrer qu'un triangle est rectangle ou non",
+      "critere_F": "Utilise la réciproque pour prouver qu'un triangle est rectangle.",
+      "critere_A": "Rédige une preuve par la contraposée, en employant le mot, et distingue réciproque et contraposée.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "B3": [
+   {
+    "numero": 1,
+    "libelle": "Pyramides et cônes",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Reconnaître une pyramide et un cône de révolution",
+      "critere_F": "Reconnaît pyramides et cônes parmi des solides et nomme leurs éléments.",
+      "critere_A": "Décrit le cône comme obtenu par rotation d'un triangle rectangle.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Relier perspective cavalière et patron d'un solide",
+      "critere_F": "Associe un patron et une perspective de pyramide ou de cône.",
+      "critere_A": "Construit le patron d'une pyramide (avec Pythagore) ou d'un cône (angle proportionnel au périmètre).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Calculer le volume d'une pyramide et d'un cône",
+      "critere_F": "Calcule le volume d'une pyramide ou d'un cône avec V = aire de base × hauteur ÷ 3.",
+      "critere_A": "Retrouve une dimension à partir du volume et relie les formules du pavé et de la pyramide.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "C1": [
+   {
+    "numero": 1,
+    "libelle": "Indicateurs d'une série",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Calculer une moyenne pondérée",
+      "critere_F": "Calcule une moyenne pondérée à partir d'un tableau d'effectifs.",
+      "critere_A": "Construit le tableau d'effectifs à partir de données brutes ou d'un diagramme en barres, puis calcule la moyenne.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Déterminer une médiane et une étendue",
+      "critere_F": "Détermine la médiane et l'étendue d'une petite série donnée en liste.",
+      "critere_A": "Les interprète, l'étendue étant lue sur un tableau ou un diagramme (en barres, circulaire).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Prévoir l'effet d'une valeur extrême",
+      "critere_F": "Recalcule moyenne et médiane après l'ajout d'une valeur.",
+      "critere_A": "Explique sans calcul pourquoi la moyenne change plus que la médiane.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Résoudre un problème avec des indicateurs",
+      "critere_F": "Compare deux séries à l'aide d'un indicateur donné.",
+      "critere_A": "Compare deux séries présentées différemment ; complète une série soumise à des contraintes.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "06",
+      "nom": "Calculer des indicateurs avec un tableur",
+      "critere_F": "Utilise les fonctions SOMME, MOYENNE, MAX, MIN du tableur.",
+      "critere_A": "Utilise MEDIANE et NB et interprète les résultats.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "C2": [
+   {
+    "numero": 1,
+    "libelle": "Évènements et expériences",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Décrire des évènements avec les notations ensemblistes",
+      "critere_F": "Écrit l'univers et un évènement sous forme d'ensemble d'issues.",
+      "critere_A": "Détermine complémentaire, réunion, intersection et évènement impossible, et les verbalise.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Calculer la probabilité d'un évènement et de son contraire",
+      "critere_F": "Calcule une probabilité comme somme des probabilités des issues.",
+      "critere_A": "Calcule la probabilité de l'évènement contraire, d'une réunion ou d'une intersection simple.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Calculer des probabilités dans une expérience à deux épreuves",
+      "critere_F": "Liste les issues d'une expérience à deux épreuves dans un tableau.",
+      "critere_A": "Utilise un tableau ou un arbre, justifie l'équiprobabilité et calcule des probabilités.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Comparer fréquences observées et probabilité",
+      "critere_F": "Observe la fluctuation des fréquences sur des séries de même taille.",
+      "critere_A": "Compare un diagramme de fréquences et un diagramme de probabilités, avec une simulation.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "D1": [
+   {
+    "numero": 1,
+    "libelle": "Programmes de calcul et dépendance",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Appliquer un programme de calcul",
+      "critere_F": "Applique un programme de calcul à deux étapes à un nombre.",
+      "critere_A": "L'applique à une variable x et écrit l'expression obtenue.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Retrouver le nombre de départ d'un programme de calcul",
+      "critere_F": "Remonte un programme simple en effectuant les opérations inverses.",
+      "critere_A": "Retrouve le nombre de départ par une équation.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Exprimer une grandeur en fonction d'une autre",
+      "critere_F": "Écrit une formule simple (périmètre, prix) en fonction d'une variable.",
+      "critere_A": "Écrit une formule pour une situation géométrique (aire restante d'un rectangle découpé).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Représenter et interpréter la dépendance de deux grandeurs",
+      "critere_F": "Construit le graphique à partir d'un tableau de valeurs.",
+      "critere_A": "Passe d'une représentation à l'autre (formule, tableau, graphique) et interprète.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "D2": [
+   {
+    "numero": 1,
+    "libelle": "Rapports, ratios et grandeurs quotients",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Calculer avec des grandeurs quotients",
+      "critere_F": "Calcule une vitesse, un prix unitaire ou une consommation avec son unité.",
+      "critere_A": "Convertit une grandeur quotient (km/h en m/s) et lui donne du sens.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Comparer deux grandeurs avec un rapport ou un ratio",
+      "critere_F": "Compare deux quantités par leur rapport et écrit un ratio a : b.",
+      "critere_A": "Traduit « a, b, c sont proportionnels à 2, 3, 7 » par des rapports égaux ou le ratio 2 : 3 : 7.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Déterminer une quatrième proportionnelle",
+      "critere_F": "Calcule une quatrième proportionnelle par la procédure de son choix.",
+      "critere_A": "Utilise a/b = c/d ⇔ ad = bc à bon escient.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Partager une quantité proportionnellement",
+      "critere_F": "Partage une quantité en deux parts selon un ratio, avec un schéma en barres.",
+      "critere_A": "Partage en trois parts ou retrouve les parts connaissant l'une d'elles.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   },
+   {
+    "numero": 2,
+    "libelle": "Pourcentages",
+    "objectifs": [
+     {
+      "code": "12",
+      "nom": "Calculer avec des pourcentages",
+      "critere_F": "Applique un pourcentage et calcule un pourcentage dans un groupe.",
+      "critere_A": "Calcule le pourcentage d'un caractère dans la réunion de deux groupes.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "13",
+      "nom": "Utiliser un coefficient multiplicateur",
+      "critere_F": "Multiplie par 1,15 pour augmenter de 15 % et par 0,8 pour diminuer de 20 %.",
+      "critere_A": "Retrouve le pourcentage d'évolution à partir du coefficient et enchaîne deux évolutions.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ],
+  "E1": [
+   {
+    "numero": 1,
+    "libelle": "Conditions, variables et programmes",
+    "objectifs": [
+     {
+      "code": "02",
+      "nom": "Écrire une instruction conditionnelle",
+      "critere_F": "Écrit une condition simple avec <, > ou = et l'utilise dans un « si … alors ».",
+      "critere_A": "Utilise « si … alors … sinon » pour afficher un message selon la valeur saisie.",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "03",
+      "nom": "Utiliser une variable dans un programme",
+      "critere_F": "Crée une variable, lui donne une valeur et l'affiche.",
+      "critere_A": "Utilise une variable pour accumuler dans une boucle (compter les 6 sur 1 000 lancers).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "04",
+      "nom": "Écrire un programme pour résoudre un problème",
+      "critere_F": "Écrit un programme court à partir d'un algorithme donné.",
+      "critere_A": "Écrit en autonomie un programme qui répond à un objectif (tracé, calcul, jeu).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     },
+     {
+      "code": "05",
+      "nom": "Modifier un programme pour changer son comportement",
+      "critere_F": "Ajoute une instruction simple à un programme donné.",
+      "critere_A": "Ajoute une condition ou une boucle pour modifier un programme (tracé de polygones).",
+      "critere_E": "Utilise ce savoir-faire pour résoudre un problème."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -123,6 +123,9 @@ def lister_par_niveau(store, niveau: str) -> list[dict]:
             "nom":         _nom(r),
             # v0.52.1 — gabarit de documents (services/gabarits_documents.py).
             "gabarit_documents": r.get("gabarit_documents") or "cycle4",
+            # v0.59.0 (D4) — option « cartes d'automatisme » (clé présente
+            # seulement si posée : listes existantes inchangées).
+            **({"cartes_automatisme": True} if r.get("cartes_automatisme") else {}),
         }
         for r in refs
     ]
@@ -213,8 +216,35 @@ def calculer_suffixe_disponible(conn: sqlite3.Connection,
     )
 
 
+def normaliser_annee_choisie(annee, maintenant: datetime.date | None = None) -> str | None:
+    """v0.59.0 (D4) — Année scolaire choisie à la création d'un référentiel :
+    '2027' ou '2027-2028' → '2027'. Vide/None → None (année en cours). Seules
+    l'année en cours et les deux suivantes sont acceptées (un référentiel se
+    prépare à l'avance ; ValueError sinon)."""
+    if annee is None or str(annee).strip() == '':
+        return None
+    v = str(annee).strip()
+    import re as _re
+    m = _re.fullmatch(r"(\d{4})(?:\s*[-/]\s*(\d{4}))?", v)
+    if not m or (m.group(2) and int(m.group(2)) != int(m.group(1)) + 1):
+        raise ValueError(f"Année scolaire invalide : {annee!r} (attendu 2027 ou 2027-2028).")
+    courante = int(calculer_annee_scolaire(maintenant))
+    if not courante <= int(m.group(1)) <= courante + 1:
+        raise ValueError(f"Année scolaire {m.group(1)}-{int(m.group(1)) + 1} : choisir l'année "
+                         f"en cours ({courante}-{courante + 1}) ou la suivante "
+                         f"({courante + 1}-{courante + 2}).")
+    return m.group(1)
+
+
+def annees_proposees(maintenant: datetime.date | None = None) -> list[str]:
+    """v0.59.0 (D4) — Années proposées à la création : en cours, puis suivante."""
+    y = int(calculer_annee_scolaire(maintenant))
+    return [f"{y}-{y + 1}", f"{y + 1}-{y + 2}"]
+
+
 def calculer_nom_auto(conn: sqlite3.Connection, niveau: str,
-                       maintenant: datetime.date | None = None) -> dict:
+                       maintenant: datetime.date | None = None,
+                       annee: str | None = None) -> dict:
     """
     Calcule le nom et la version d'un nouveau référentiel pour le niveau
     donné, en se basant sur l'année scolaire courante et le premier
@@ -226,7 +256,9 @@ def calculer_nom_auto(conn: sqlite3.Connection, niveau: str,
       - annee   = `<annee>` seule (4 chiffres)
       - suffixe = '' ou 'b'/'c'/…
     """
-    annee = calculer_annee_scolaire(maintenant)
+    # v0.59.0 (D4) — année choisie à la création (« 4e — 2027-2028 —
+    # Principal » créé en novembre 2026), sinon l'année scolaire en cours.
+    annee = normaliser_annee_choisie(annee, maintenant) or calculer_annee_scolaire(maintenant)
     suffixe = calculer_suffixe_disponible(conn, niveau, annee)
     version = f"{annee}{suffixe}"
     ref_id = f"{annee}_{niveau}{suffixe}"
@@ -242,7 +274,8 @@ def calculer_nom_auto(conn: sqlite3.Connection, niveau: str,
 def creer_coquille(conn: sqlite3.Connection, niveau: str,
                     description: str = '',
                     maintenant: datetime.date | None = None,
-                    type_ref: str = 'principal') -> dict:
+                    type_ref: str = 'principal',
+                    annee: str | None = None) -> dict:
     """
     Crée un nouveau référentiel à l'état `en_cours`, sous forme de
     coquille (uniquement la ligne dans `referentiel_niveaux`, aucune
@@ -259,7 +292,7 @@ def creer_coquille(conn: sqlite3.Connection, niveau: str,
         raise ValueError("Le niveau est obligatoire pour créer un référentiel.")
     niveau = niveau.strip()
 
-    nom = calculer_nom_auto(conn, niveau, maintenant)
+    nom = calculer_nom_auto(conn, niveau, maintenant, annee)   # v0.59.0 : année choisie
     # v0.48.4 — Type du référentiel : principal (progression principale) ou
     # MER (progression de mise en route seulement).
     if type_ref not in ('principal', 'mer'):

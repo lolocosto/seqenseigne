@@ -96,6 +96,22 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      S01… n'est jamais recréée. Une base qui mêle les deux familles est
      refusée. Un lot de code inconnu n'est pas importé (anomalie).
 
+ 11. **v0.59.0 — autres niveaux au modèle Fiches** (décisions D2 et D3,
+     `doc/redemarrage_v0_59_0.md`) : `--niveau N11` importe les lots de 4e
+     (`..\reference\lot4e\A1\A1.json`…) d'après `outils/objectifs_4e.json`
+     (transcription de `outils/ref4e_v1.md`, codes A1). Hors 6e : ni
+     archivage du cycle 3, ni écriture dans les thèmes et séquences du cycle
+     (ceux de la base font foi ; séquence absente : lot non importé), ni
+     mises en route ; l'import **refuse** de s'appliquer tant que la
+     structure de 2025 du niveau n'est pas archivée
+     (`outils/archiver_structure_niveau.py --niveau N11 --apply`). Le
+     libellé de chaque partie est écrit dans `sequence_parties.libelle`, le
+     titre court de la séquence dans `sequences_par_niveau.titre_court`.
+     Clé `cartes_automatisme` d'un objectif (tous niveaux) : cartes créées ou
+     mises à jour par (niveau, séquence, num), rattachées à l'objectif
+     (`objectif_cartes`), niveau de création gardé (`niveau_creation`) ;
+     carte validée jamais réécrite.
+
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
 évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
@@ -106,7 +122,9 @@ Usage (Windows, depuis `appli\`) :
     ..\outils\python\python.exe .\outils\import_lot6e.py                 # essai à blanc
     ..\outils\python\python.exe .\outils\import_lot6e.py --apply         # applique (confirmation)
     ..\outils\python\python.exe .\outils\import_lot6e.py --apply --yes   # sans confirmation
-Options : --db CHEMIN (base), --lots DOSSIER (défaut ..\reference\lot6e).
+    ..\outils\python\python.exe .\outils\import_lot6e.py --niveau N11    # 4e (v0.59.0)
+Options : --db CHEMIN (base), --lots DOSSIER (défaut ..\reference\lot6e ;
+..\reference\lot4e pour N11), --niveau N09 | N11 (défaut N09).
 v0.52.2 : --sortie et --documents-seulement retirés (les documents vont en
 base ; décision O1, doc/redemarrage_v0_52_2.md).
 
@@ -152,6 +170,17 @@ SERIE_TEXTE = {"F": "fondamental", "A": "avancé", "E": "exploration", "AE": "ap
 DOCUMENTS_LOT = (("travaux_personnels", "TP", "travail personnel"),
                  ("activites_complementaires", "AC", "activité complémentaire"),
                  ("seances_atelier", "AT", "séance d'atelier"))
+# v0.59.0 (D2) — niveaux dont les lots s'importent au modèle Fiches : cycle,
+# référentiel transcrit, dossier des lots par défaut. Les fonctions lisent les
+# globaux NIVEAU, CYCLE, REFERENTIEL, LOTS_DEFAUT, posés par `niveau_actif`.
+NIVEAUX_LOTS = {
+    "N09": {"cycle": "C03", "referentiel": Path(__file__).resolve().parent / "objectifs_6e.json",
+            "lots": RACINE_APPLI.parent / "reference" / "lot6e"},
+    "N11": {"cycle": "C04", "referentiel": Path(__file__).resolve().parent / "objectifs_4e.json",
+            "lots": RACINE_APPLI.parent / "reference" / "lot4e"},
+}
+COMMANDE_ARCHIVAGE = ("..\\outils\\python\\python.exe .\\outils\\archiver_structure_niveau.py "
+                      "--niveau {niveau} --apply")
 RE_GRAPHIQUE = re.compile(r"\\includegraphics\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}")
 RE_LOC = re.compile(r"\\(seqLoc[A-Za-z]+)")
 # v0.52.8 (I2) — macros du module de 6e appelées par le lot (\seqAstuceSix…).
@@ -160,6 +189,42 @@ RE_SIX = re.compile(r"\\(seq[A-Za-z]*Six)(?![A-Za-z])")
 
 class ImportErreur(Exception):
     pass
+
+
+class niveau_actif:
+    """v0.59.0 (D2) — Pose les globaux du module (NIVEAU, CYCLE, REFERENTIEL,
+    LOTS_DEFAUT) pour un niveau de `NIVEAUX_LOTS` le temps d'un bloc `with`,
+    puis les remet (tests, appels successifs). Niveau inconnu : ImportErreur."""
+
+    def __init__(self, niveau: str | None):
+        self.niveau = (niveau or "N09").strip().upper()
+        if self.niveau not in NIVEAUX_LOTS:
+            raise ImportErreur(f"niveau {self.niveau} : lots non pris en charge (niveaux : "
+                               f"{', '.join(NIVEAUX_LOTS)})")
+
+    def __enter__(self):
+        g = globals()
+        self._avant = {k: g[k] for k in ("NIVEAU", "CYCLE", "REFERENTIEL", "LOTS_DEFAUT")}
+        c = NIVEAUX_LOTS[self.niveau]
+        g.update(NIVEAU=self.niveau, CYCLE=c["cycle"], REFERENTIEL=c["referentiel"],
+                 LOTS_DEFAUT=c["lots"])
+        return self
+
+    def __exit__(self, *exc):
+        globals().update(self._avant)
+        return False
+
+
+def est_sixieme() -> bool:
+    """Niveau actif = 6e (archivage du cycle 3, cycle 3 écrit, mises en route)."""
+    return NIVEAU == "N09"
+
+
+def message_archivage_manquant(niveau: str) -> str:
+    return (f"structure de 2025 de {niveau} non archivée : l'import des lots de {niveau} "
+            "réécrirait les objectifs et les exercices de 2025 (mêmes codes A1-02, F01…). "
+            "Archivez-la d'abord, depuis appli\\ : "
+            + COMMANDE_ARCHIVAGE.format(niveau=niveau) + " — puis relancez l'import.")
 
 
 def _module_mer():
@@ -246,7 +311,9 @@ def _sha(p: Path) -> str:
 
 # ── Chargement des entrées ───────────────────────────────────────────────────
 
-def charger_referentiel(chemin: Path = REFERENTIEL) -> dict:
+def charger_referentiel(chemin: Path | None = None) -> dict:
+    """`objectifs_6e.json` (ou, v0.59.0, celui du niveau actif)."""
+    chemin = chemin or REFERENTIEL
     ref = json.loads(Path(chemin).read_text(encoding="utf-8"))
     for cle in ("themes", "sequences", "parties", "objectif_cours"):
         if cle not in ref:
@@ -293,6 +360,9 @@ class Rapport:
         # Découpage de la géométrie : séquences dont le code a changé de sens
         # alors qu'un contenu de l'ancien sens existe (lot non importé).
         self.sequences_bloquees: set = set()
+        self.cartes_automatisme: "OrderedDict[str, dict]" = OrderedDict()  # v0.59.0
+        self.niveau = NIVEAU                                   # v0.59.0 (en-tête)
+        self.archivage_niveau: dict | None = None              # v0.59.0 (hors 6e)
 
     def seq(self, code: str) -> dict:
         return self.sequences.setdefault(code, {"lignes": [], "objectifs": OrderedDict(),
@@ -348,15 +418,36 @@ class Rapport:
                  + (", ".join(f"{e} {n}" for e, n in tot.items()) or "aucune"))
         return L
 
+    def texte_cartes(self) -> list[str]:
+        """v0.59.0 (D3) — cartes d'automatisme des lots, par séquence et état."""
+        L = ["== Cartes d'automatisme rattachées aux objectifs (v0.59.0) =="]
+        if not self.cartes_automatisme:
+            return L + ["  aucune"]
+        tot: dict = {}
+        for seq, c in self.cartes_automatisme.items():
+            L.append(f"  {seq} : " + ", ".join(f"{e} {n}" for e, n in c.items()))
+            for e, n in c.items():
+                tot[e] = tot.get(e, 0) + n
+        L.append("  total : " + ", ".join(f"{e} {n}" for e, n in tot.items()))
+        return L
+
     def texte(self) -> str:
         L = []
-        L.append("== Archivage de l'ancien cycle 3 (réversible) ==")
-        if not self.archivage:
-            L.append("  déjà fait lors d'une exécution précédente : rien à archiver")
-        for k, v in self.archivage.items():
-            L.append(f"  {k} : {v} archivé(s)")
-        L.append("")
-        L.append("== Cycle 3 : thèmes et séquences ==")
+        if self.niveau == "N09":
+            L.append("== Archivage de l'ancien cycle 3 (réversible) ==")
+            if not self.archivage:
+                L.append("  déjà fait lors d'une exécution précédente : rien à archiver")
+            for k, v in self.archivage.items():
+                L.append(f"  {k} : {v} archivé(s)")
+            L.append("")
+            L.append("== Cycle 3 : thèmes et séquences ==")
+        else:                                                    # v0.59.0 (D2)
+            a = self.archivage_niveau
+            L.append(f"== Structure de 2025 de {self.niveau} ==")
+            L.append(f"  archivée le {a['fait_le']} ({a['resume'] or 'aucune séquence'})" if a
+                     else "  NON archivée : import refusé")
+            L.append("")
+            L.append("== Séquences du cycle (lues en base, jamais écrites) ==")
         L += [f"  {x}" for x in self.cycle]
         for code, s in self.sequences.items():
             L.append("")
@@ -385,6 +476,8 @@ class Rapport:
             L += [f"  {x}" for x in self.documents]
         L.append("")
         L += self.texte_resume()                                     # v0.55.0
+        L.append("")
+        L += self.texte_cartes()                                     # v0.59.0
         L.append("")
         L.append(f"== Anomalies ({len(self.anomalies)}) ==")
         L += [f"  - {x}" for x in self.anomalies] or ["  aucune"]
@@ -773,32 +866,59 @@ def _seq_niveau(conn, seq: str, rapport: Rapport) -> sqlite3.Row | None:
     if r is None:
         conn.execute("INSERT INTO sequences_par_niveau (id, niveau, sequence_code, parametres, "
                      "etat_code) VALUES (?,?,?,'','en_cours')", (_nid("sn"), NIVEAU, seq))
-        rapport.seq(seq)["lignes"].append("séquence-niveau N09 : créée")
+        rapport.seq(seq)["lignes"].append(f"séquence-niveau {NIVEAU} : créée")
         return conn.execute("SELECT * FROM sequences_par_niveau WHERE niveau=? AND "
                             "sequence_code=?", (NIVEAU, seq)).fetchone()
     if r["etat_code"] == "valide":
-        rapport.anomalie(f"{seq} : séquence-niveau N09 validée dans l'atelier, non modifiée "
+        rapport.anomalie(f"{seq} : séquence-niveau {NIVEAU} validée dans l'atelier, non modifiée "
                          "(la repasser « en cours » pour importer)")
         return None
-    rapport.seq(seq)["lignes"].append("séquence-niveau N09 : existante")
+    rapport.seq(seq)["lignes"].append(f"séquence-niveau {NIVEAU} : existante")
     return r
 
 
-def _partie(conn, sn_id: str, numero: int, seq: str, rapport: Rapport) -> str:
+def _partie(conn, sn_id: str, numero: int, seq: str, rapport: Rapport,
+           libelle: str | None = None) -> str:
+    """v0.59.0 (D6) — `libelle` (hors 6e) : écrit dans `sequence_parties.libelle`
+    (le livret Fiches hors 6e le lit) ; None = colonne non touchée (6e : les
+    libellés viennent d'objectifs_6e.json)."""
     r = conn.execute("SELECT id FROM sequence_parties WHERE sequence_par_niveau_id=? AND "
                      "numero=?", (sn_id, numero)).fetchone()
     if r:
+        if libelle is not None:
+            avant = conn.execute("SELECT libelle FROM sequence_parties WHERE id=?",
+                                 (r["id"],)).fetchone()[0] or ""
+            if avant != libelle:
+                conn.execute("UPDATE sequence_parties SET libelle=? WHERE id=?",
+                             (libelle, r["id"]))
+                rapport.seq(seq)["lignes"].append(f"partie {numero} : libellé « {libelle} » "
+                                                  "écrit")
         return r["id"]
     pid = _nid("pt")
     conn.execute("INSERT INTO sequence_parties (id, sequence_par_niveau_id, numero, "
                  "nb_seances_R_AE) VALUES (?,?,?,0)", (pid, sn_id, numero))
-    rapport.seq(seq)["lignes"].append(f"partie {numero} : créée")
+    if libelle is not None:
+        conn.execute("UPDATE sequence_parties SET libelle=? WHERE id=?", (libelle, pid))
+    rapport.seq(seq)["lignes"].append(f"partie {numero} : créée"
+                                      + (f" (« {libelle} »)" if libelle else ""))
     return pid
+
+
+def _titre_court(conn, sn_id: str, seq: str, titre: str, rapport: Rapport) -> None:
+    """v0.59.0 (D5) — titre court de la séquence-niveau (hors 6e)."""
+    from services import fiches_cycle4 as fc4
+    fc4.migrer(conn)
+    avant = conn.execute("SELECT titre_court FROM sequences_par_niveau WHERE id=?",
+                         (sn_id,)).fetchone()[0] or ""
+    if avant != titre:
+        conn.execute("UPDATE sequences_par_niveau SET titre_court=? WHERE id=?", (titre, sn_id))
+        rapport.seq(seq)["lignes"].append(f"titre court « {titre} » : "
+                                          + ("écrit" if not avant else f"remplace « {avant} »"))
 
 
 def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict,
               rapport: "Rapport | None" = None, etiquette: str = "",
-              source: str = "objectifs_6e.json") -> tuple[str, str]:
+              source: str | None = None) -> tuple[str, str]:
     """(id, état) de l'objectif (niveau, séquence, code).
 
     v0.52.8 (O1) — Un objectif existant (séquence non validée : une séquence
@@ -809,6 +929,7 @@ def _objectif(conn, sn_id: str, partie_id: str, code: str, d: dict,
         "SELECT o.* FROM objectifs o JOIN sequence_parties p ON p.id = o.partie_id "
         "WHERE p.sequence_par_niveau_id=? AND o.code=?", (sn_id, code)).fetchone()
     vals = (d["nom"], d["critere_F"], d["critere_A"], d["critere_E"])
+    source = source or Path(REFERENTIEL).name                   # v0.59.0
     if r is None:
         oid = _nid("ob")
         conn.execute("INSERT INTO objectifs (id, partie_id, code, nom, critere_F, critere_A, "
@@ -1013,7 +1134,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
     s_ref = next((s for s in ref["sequences"] if s["code"] == seq), None)
     parties_ref = ref["parties"].get(seq)
     if s_ref is None or not parties_ref:
-        rapport.anomalie(f"{seq} : séquence absente de objectifs_6e.json, lot non importé")
+        rapport.anomalie(f"{seq} : séquence absente de {Path(REFERENTIEL).name}, lot non importé")
         return figures
     if seq in rapport.sequences_bloquees:          # anomalie déjà signalée (cycle 3)
         rapport.seq(seq)["lignes"].append("lot non importé : la séquence a changé de sens "
@@ -1024,11 +1145,14 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
     sn = _seq_niveau(conn, seq, rapport)
     if sn is None:
         return figures
+    if not est_sixieme() and s_ref.get("titre_court"):            # v0.59.0 (D5)
+        _titre_court(conn, sn["id"], seq, s_ref["titre_court"], rapport)
     objs_ref = {f"{seq}-{o['code']}": (p["numero"], o) for p in parties_ref for o in p["objectifs"]}
     cours = ref["objectif_cours"]
     parties, cours_ids = {}, {}
     for p in parties_ref:
-        pid = _partie(conn, sn["id"], p["numero"], seq, rapport)
+        pid = _partie(conn, sn["id"], p["numero"], seq, rapport,
+                      None if est_sixieme() else (p.get("libelle") or "").strip())
         parties[p["numero"]] = pid
         code_c = f"{p['numero'] - 1}1"
         oid, etat = _objectif(conn, sn["id"], pid, code_c, cours, rapport, f"{seq}-{code_c}")
@@ -1037,12 +1161,13 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
 
     approche: dict[int, list] = {n: [] for n in parties}
     vus: dict = {}
+    cartes_vues: dict = {}                      # num de carte → objectif (v0.59.0)
     objectifs_ids: dict[str, str] = {}          # « S01-02 » → id (v0.52.2)
     for o in lot.get("objectifs", []):
         code = o.get("code", "")
         if code not in objs_ref:
-            rapport.anomalie(f"{seq} : objectif inconnu {code!r} (absent de objectifs_6e.json), "
-                             "ignoré avec ses exercices")
+            rapport.anomalie(f"{seq} : objectif inconnu {code!r} (absent de "
+                             f"{Path(REFERENTIEL).name}), ignoré avec ses exercices")
             continue
         numero, d = objs_ref[code]
         if o.get("partie") not in (None, numero):
@@ -1112,6 +1237,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
             n = _ordonner(conn, "objectif_exos", {"objectif_id": oid, "serie": "AE"}, act_obj)
             Rapport.compter(ro, "liens activité-objectif", "créés", n)
         objectifs_ids[code] = oid
+        importer_cartes_objectif(conn, seq, code, oid, o, rapport, cartes_vues)  # v0.59.0
         if o.get("fiche_resume"):
             fid, etat_f = _fiche(conn, seq, oid, cours_ids[numero], o["fiche_resume"])
             Rapport.compter(ro, "fiche", etat_f)
@@ -1205,6 +1331,145 @@ def importer_cartes_mentales(conn, lot: dict, parties: dict, rapport: Rapport) -
     if compte:
         rapport.cartes_mentales[seq] = compte
     return figures
+
+
+# ── v0.59.0 — Cartes d'automatisme d'un objectif (clé `cartes_automatisme`) ──
+
+NIVEAUX_CREATION = ("N09", "N10", "N11", "N12")
+_CHAMPS_CARTE = ("titre", "type_pedago", "type_tech", "recto", "verso", "variables",
+                 "niveau_creation")
+
+
+def _valeurs_carte(src: dict, quoi: str, rapport: Rapport) -> dict | None:
+    """Valeurs d'une carte du lot, contrôlées ; None = carte refusée (signalée)."""
+    from services.cartes_automatisme import TYPES_PEDAGO, TYPES_TECH
+    try:
+        num = int(src.get("num"))
+    except (TypeError, ValueError):
+        rapport.anomalie(f"{quoi} : numéro {src.get('num')!r} invalide, carte ignorée")
+        return None
+    if not 0 < num < 100:
+        rapport.anomalie(f"{quoi} : numéro {num} hors de 1 à 99, carte ignorée")
+        return None
+    v = {"num": num,
+         "titre": (src.get("titre") or "").strip(),
+         "type_pedago": src.get("type_pedago") or "definition",
+         "type_tech": src.get("type_tech") or "fixe",
+         "recto": src.get("recto") or "", "verso": src.get("verso") or "",
+         "variables": src.get("variables") or "",
+         "niveau_creation": (src.get("niveau_creation") or NIVEAU).strip().upper()}
+    if v["type_pedago"] not in TYPES_PEDAGO:
+        rapport.anomalie(f"{quoi} : type pédagogique {v['type_pedago']!r} inconnu (attendu "
+                         f"{', '.join(TYPES_PEDAGO)}), carte ignorée")
+        return None
+    if v["type_tech"] not in TYPES_TECH:
+        rapport.anomalie(f"{quoi} : type technique {v['type_tech']!r} inconnu (attendu "
+                         f"{', '.join(TYPES_TECH)}), carte ignorée")
+        return None
+    if v["niveau_creation"] not in NIVEAUX_CREATION:
+        rapport.anomalie(f"{quoi} : niveau de création {v['niveau_creation']!r} inconnu "
+                         f"(attendu {', '.join(NIVEAUX_CREATION)}), lu {NIVEAU}")
+        v["niveau_creation"] = NIVEAU
+    # Mêmes règles que la validation d'une carte (services/cartes_automatisme) :
+    # signalées dès l'import, la carte est gardée « en cours ».
+    if not v["recto"].strip() or not v["verso"].strip():
+        rapport.anomalie(f"{quoi} : recto ou verso vide (la carte ne pourra pas être validée)")
+    if v["type_tech"] == "parametree" and not v["variables"].strip():
+        rapport.anomalie(f"{quoi} : carte paramétrée sans variables (la carte ne pourra pas "
+                         "être validée)")
+    return v
+
+
+def importer_cartes_objectif(conn, seq: str, code: str, objectif_id: str, o: dict,
+                             rapport: Rapport, vues: dict) -> None:
+    """v0.59.0 (D3) — Clé facultative `cartes_automatisme` d'un objectif du lot :
+    `[{"num": 1, "titre": "…", "type_pedago": "calcul", "type_tech": "fixe",
+    "recto": "…", "verso": "…", "variables": "", "niveau_creation": "N11",
+    "origine": "N11/A1/CA8"}]`.
+
+    Carte repérée par (niveau, séquence, num) : créée « en cours », mise à jour
+    si elle a changé (jamais une carte validée : signalé), rattachée à
+    l'objectif par `objectif_cartes` (en tête, dans l'ordre du lot ; les liens
+    de l'auteur restent). `niveau_creation` : niveau où la notion est un
+    objectif (N11 : carte de 4e ; N10 : automatisme de 5e écrit en 4e) ; la
+    partie se déduit de l'objectif. Aucune carte n'entre dans le livret de
+    séquence (décision du 16 novembre) ; le document de rituels viendra en
+    v0.60. `origine` : rapportée dans le journal."""
+    entrees = o.get("cartes_automatisme") or []
+    if not entrees:
+        return
+    from services import fiches_cycle4 as fc4
+    fc4.migrer(conn)
+    compte = rapport.cartes_automatisme.setdefault(seq, OrderedDict())
+    ids = []
+    for k, src in enumerate(entrees, start=1):
+        quoi = f"{seq} carte d'automatisme n°{src.get('num', k)} ({code})"
+        v = _valeurs_carte(src, quoi, rapport)
+        if v is None:
+            continue
+        if v["num"] in vues:
+            rapport.anomalie(f"{NIVEAU}/{seq}/CA{v['num']} en double ({vues[v['num']]} et "
+                             f"{code}), seconde ignorée")
+            continue
+        vues[v["num"]] = code
+        r = conn.execute("SELECT * FROM cartes_automatisme WHERE niveau=? AND sequence=? AND "
+                         "num=?", (NIVEAU, seq, v["num"])).fetchone()
+        vals = {c: v[c] for c in _CHAMPS_CARTE}
+        if r is None:
+            cid = f"ca_{uuid.uuid4().hex[:12]}"
+            conn.execute("INSERT INTO cartes_automatisme (id, niveau, sequence, num, type_pedago, "
+                         "type_tech, titre, recto, verso, variables, niveau_creation, etat_code, "
+                         "ordre, mtime) VALUES (?,?,?,?,?,?,?,?,?,?,?,'en_cours',?,?)",
+                         (cid, NIVEAU, seq, v["num"], v["type_pedago"], v["type_tech"],
+                          v["titre"], v["recto"], v["verso"], v["variables"],
+                          v["niveau_creation"], v["num"], _maintenant()))
+            etat = "créée"
+        else:
+            cid = r["id"]
+            if all((r[c] or "") == (vals[c] or "") for c in _CHAMPS_CARTE):
+                etat = "inchangée"
+            elif r["etat_code"] == "valide":
+                etat = "validée, non modifiée"
+                rapport.anomalie(f"{NIVEAU}/{seq}/CA{v['num']} validée dans l'atelier : contenu "
+                                 "du lot non appliqué")
+            else:
+                conn.execute("UPDATE cartes_automatisme SET type_pedago=?, type_tech=?, titre=?, "
+                             "recto=?, verso=?, variables=?, niveau_creation=?, mtime=? "
+                             "WHERE id=?", (v["type_pedago"], v["type_tech"], v["titre"],
+                                            v["recto"], v["verso"], v["variables"],
+                                            v["niveau_creation"], _maintenant(), cid))
+                etat = "mise à jour"
+        compte[etat] = compte.get(etat, 0) + 1
+        ids.append(cid)
+        rapport.journal["import"].append({"cle": f"{NIVEAU}/{seq}/CA{v['num']}", "id": cid,
+                                          "objectif": code, "carte": True,
+                                          "niveau_creation": v["niveau_creation"],
+                                          "origine": src.get("origine", "")})
+    if ids:
+        n = _lier_cartes(conn, objectif_id, ids)
+        ro = rapport.obj(seq, code)
+        Rapport.compter(ro, "cartes d'automatisme", "liées", len(ids))
+        if n:
+            Rapport.compter(ro, "liens objectif-carte", "créés", n)
+
+
+def _lier_cartes(conn, objectif_id: str, ids: list[str]) -> int:
+    """Liens objectif_cartes : cartes du lot en tête (ordre du lot), celles de
+    l'auteur ensuite. Retourne le nombre de liens créés."""
+    actuels = [r[0] for r in conn.execute("SELECT carte_id FROM objectif_cartes WHERE "
+                                          "objectif_id=? ORDER BY ordre, carte_id",
+                                          (objectif_id,))]
+    voulu = ids + [i for i in actuels if i not in ids]
+    crees = 0
+    for k, cid in enumerate(voulu, start=1):
+        if cid in actuels:
+            conn.execute("UPDATE objectif_cartes SET ordre=? WHERE objectif_id=? AND carte_id=? "
+                         "AND ordre<>?", (k, objectif_id, cid, k))
+        else:
+            conn.execute("INSERT INTO objectif_cartes (objectif_id, carte_id, ordre) "
+                         "VALUES (?,?,?)", (objectif_id, cid, k))
+            crees += 1
+    return crees
 
 
 def copier_figures(lots: list[dict], noms_par_seq: dict, images: Path, rapport: Rapport,
@@ -1902,7 +2167,43 @@ def retirer_evaluations(conn, lot: dict, voulu_par_num: dict, rapport: Rapport) 
 
 def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
              ecrire_fichiers: bool, racine: Path = RACINE_APPLI,
-             data_dir: Path | None = None) -> None:
+             data_dir: Path | None = None, niveau: str | None = None) -> None:
+    """v0.59.0 — `niveau` donné : exécution sous `niveau_actif(niveau)`."""
+    if niveau is not None:
+        with niveau_actif(niveau):
+            rapport.niveau = NIVEAU
+            return executer(conn, lots, ref, rapport, images, ecrire_fichiers, racine,
+                            data_dir)
+    return _executer(conn, lots, ref, rapport, images, ecrire_fichiers, racine, data_dir)
+
+
+def verifier_sequences_cycle(conn, ref: dict, rapport: Rapport) -> None:
+    """v0.59.0 (D2) — Hors 6e, les thèmes et séquences du cycle sont ceux de la
+    base (migration v0.58) : rien n'est écrit. Une séquence du référentiel
+    absente du cycle bloque son lot ; un nom ou un numéro différent est signalé."""
+    for s in ref["sequences"]:
+        r = conn.execute("SELECT numero, nom FROM sequences_du_cycle WHERE cycle_code=? AND "
+                         "code=?", (CYCLE, s["code"])).fetchone()
+        if r is None:
+            rapport.sequences_bloquees.add(s["code"])
+            rapport.anomalie(f"séquence {s['code']} « {s['nom']} » absente du cycle {CYCLE} en "
+                             "base : lot non importé (appliquer d'abord la migration des codes)")
+            rapport.cycle.append(f"séquence {s['code']} : absente (lot non importé)")
+            continue
+        ecarts = [x for x, a, b in (("numéro", r["numero"], s.get("numero")),
+                                     ("nom", r["nom"], s.get("nom"))) if b is not None and a != b]
+        if ecarts:
+            rapport.infos.append(f"séquence {s['code']} : {', '.join(ecarts)} du référentiel "
+                                 f"différent(s) de la base (« {r['nom']} », n° {r['numero']}) — "
+                                 "la base fait foi")
+        rapport.cycle.append(f"séquence {s['code']} {r['nom']} (n° {r['numero']})"
+                             + (f" — titre court « {s['titre_court']} »"
+                                if s.get("titre_court") else ""))
+
+
+def _executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
+              ecrire_fichiers: bool, racine: Path = RACINE_APPLI,
+              data_dir: Path | None = None) -> None:
     """Toutes les opérations de base, dans la transaction de `conn` (le
     commit est fait par l'appelant).
 
@@ -1912,6 +2213,7 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     fait à son démarrage en v0.52.0, et sans elle aucun lien vers un objectif
     nouvellement créé ne passe."""
     conn.row_factory = sqlite3.Row
+    rapport.niveau = NIVEAU                                            # v0.59.0
     from services import retraits
     rep = retraits.rediriger_objectifs_v2(conn, data_dir)
     if rep:
@@ -1940,25 +2242,47 @@ def executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.infos.append("Base complétée : colonne libelle des parties de séquence "
                              "(v0.53.1)")
     mer_imp = _module_mer()                                           # v0.53.0
+    from services import fiches_cycle4 as fc4                          # v0.59.0
+    fc4.migrer(conn)
+    if not est_sixieme():
+        # v0.59.0 (D1, D2) — refus net tant que la structure de 2025 du niveau
+        # n'est pas archivée (sinon l'import réécrit A1-02, F01… de 2025).
+        rapport.archivage_niveau = fc4.archivage(conn, NIVEAU)
+        if rapport.archivage_niveau is None:
+            raise ImportErreur(message_archivage_manquant(NIVEAU))
+        if ref.get("niveau") not in (None, NIVEAU):
+            raise ImportErreur(f"{Path(REFERENTIEL).name} décrit le niveau {ref.get('niveau')}, "
+                               f"pas {NIVEAU}")
     # v0.57.0 (D6) — référentiel, lots et mises en route ramenés aux codes de
     # la base (S… avant la migration, A1… après) : jamais de S01… recréé.
-    ref, lots, ref_mer, _conv = normaliser_codes(conn, ref, lots, mer_imp.referentiel_mer(),
-                                                 rapport)
-    if not archivage_fait(conn):
-        archiver_cycle3(conn, rapport, racine)
-    themes = appliquer_cycle3(conn, ref, rapport)
+    ref, lots, ref_mer, _conv = normaliser_codes(
+        conn, ref, lots, mer_imp.referentiel_mer() if est_sixieme() else {}, rapport)
+    if est_sixieme():
+        if not archivage_fait(conn):
+            archiver_cycle3(conn, rapport, racine)
+        themes = appliquer_cycle3(conn, ref, rapport)
+    else:
+        verifier_sequences_cycle(conn, ref, rapport)
+        themes = {}
     figures = {}
     imp = sys.modules[__name__]
     # v0.53.1 (I-MR7) — mises en route importées avec l'ancienne structure.
-    mer_imp.restructurer_anciennes_mer(conn, imp, ref_mer, rapport)
+    if est_sixieme():
+        mer_imp.restructurer_anciennes_mer(conn, imp, ref_mer, rapport)
     for lot in lots:
-        if mer_imp.est_lot_mer(lot):
+        if mer_imp.est_lot_mer(lot) and not est_sixieme():
+            rapport.anomalie(f"lot {lot['sequence']} : mise en route hors 6e (au modèle Fiches "
+                             f"de {NIVEAU}, les cartes d'automatisme sont rattachées aux "
+                             "objectifs du principal) — lot ignoré")
+            figures[lot["sequence"]] = set()
+        elif mer_imp.est_lot_mer(lot):
             figures[lot["sequence"]] = mer_imp.importer_lot_mer(conn, imp, lot, themes,
                                                                 ref_mer, rapport)
         else:
             figures[lot["sequence"]] = importer_lot(conn, lot, ref, rapport)
     copier_figures(lots, figures, images, rapport, ecrire_fichiers)
-    signaler_cycle4(conn, rapport)
+    if est_sixieme():
+        signaler_cycle4(conn, rapport)
     from services.style6e import MACROS as MACROS_STYLE6E, VERSION as VERSION_STYLE6E
     for seq, ms in macros_locales(lots).items():
         if ms:
@@ -2041,20 +2365,31 @@ def essai_a_blanc(db: Path, lots, ref, images: Path) -> Rapport:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Import des séquences de 6e dans l'atelier "
-                                             "(v0.52.2)")
+    ap = argparse.ArgumentParser(description="Import des lots au modèle Fiches dans l'atelier "
+                                             "(6e ; 4e depuis v0.59.0)")
     ap.add_argument("--apply", action="store_true", help="applique (sinon essai à blanc)")
     ap.add_argument("--yes", action="store_true", help="sans confirmation")
     ap.add_argument("--db", help="chemin de la base (défaut : base du profil atelier)")
-    ap.add_argument("--lots", default=str(LOTS_DEFAUT), help="dossier des lots S01, S02…")
+    ap.add_argument("--lots", default=None, help="dossier des lots (défaut : ..\\reference\\"
+                                                 "lot6e, ou lot4e pour N11)")
+    ap.add_argument("--niveau", default="N09", help="N09 (6e, défaut) ou N11 (4e)")
     args = ap.parse_args(argv)
     for flux in (sys.stdout, sys.stderr):
         try:
             flux.reconfigure(encoding="utf-8")
         except Exception:
             pass
+    try:
+        contexte = niveau_actif(args.niveau)
+    except ImportErreur as e:
+        print(str(e))
+        return 2
+    with contexte:
+        return _main(args)
 
-    lots_dir = Path(args.lots)
+
+def _main(args) -> int:
+    lots_dir = Path(args.lots or LOTS_DEFAUT)
     if not lots_dir.is_dir():
         print(f"Dossier des lots introuvable : {lots_dir}")
         return 2
@@ -2078,9 +2413,14 @@ def main(argv=None) -> int:
         return 2
     images = db.parent / "images"
     print(f"Base : {db}" + (f" (rôle {role})" if role else ""))
+    print(f"Niveau : {NIVEAU} — référentiel {Path(REFERENTIEL).name}")
     print(f"Lots : {', '.join(l['sequence'] for l in lots)} ({lots_dir})\n")
 
-    rapport = essai_a_blanc(db, lots, ref, images)
+    try:
+        rapport = essai_a_blanc(db, lots, ref, images)
+    except ImportErreur as e:                                          # v0.59.0
+        print(f"Import refusé : {e}")
+        return 2
     print(rapport.texte())
     if not args.apply:
         print("\n(essai à blanc : rien n'a été écrit — relancer avec --apply pour appliquer)")
