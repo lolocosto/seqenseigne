@@ -259,6 +259,12 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
     if type_document in TYPES_MER:                      # v0.54.0 (RI6)
         return _cibles_mer(conn, niveau, type_document)
 
+    if type_document in ('livret_cartes_recap', 'livret_cartes_planches'):
+        from services.fiches_cycle4 import perimetre_cartes_objectifs
+        if perimetre_cartes_objectifs(conn, ref_id):                 # v0.59.1
+            return _cibles_cartes_fiches(niveau, type_document,
+                                         _sequences_cartes_fiches(conn, niveau))
+
     if type_document == 'livret_cartes_planches':
         # v0.15.2.5 — uniquement des cibles par séquence.
         #
@@ -307,6 +313,10 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
             })
         return cibles
 
+    if type_document == 'vue_ensemble':                   # v0.59.2 (V1)
+        return [{'cible_id': 'unique', 'libelle': "Vue d'ensemble",
+                 'nom_fichier': 'vue_ensemble.pdf', 'niveau': niveau}]
+
     # Types unitaires
     return [{
         'cible_id':    'unique',
@@ -314,6 +324,39 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
         'nom_fichier': f"{type_document}.pdf",
         'niveau':      niveau,
     }]
+
+
+def _sequences_cartes_fiches(conn: sqlite3.Connection, niveau: str) -> list[str]:
+    from services.fiches_cycle4 import sequences_avec_cartes
+    return sequences_avec_cartes(conn, niveau, valides=True)
+
+
+def _cibles_cartes_fiches(niveau: str, type_document: str, sequences: list[str]) -> list[dict]:
+    """v0.59.1 — Cibles du récap et des planches d'un référentiel principal
+    au modèle Fiches avec l'option cartes. Comme au cycle 4 : planches **par
+    séquence** (une cible par séquence qui a des cartes validées), récap
+    **annuel** (cible `unique`) — et, en plus, un récap par séquence (document
+    enseignant de la séquence, aussi compilé par « Tout compiler »). Les cartes
+    sont celles rattachées aux objectifs de la séquence
+    (`fiches_cycle4.cartes_du_perimetre`), validées seulement (règle
+    existante). La cible porte `perimetre='objectifs'`, que lisent les
+    producteurs ; noms de fichiers des cibles du cycle 4."""
+    racine = 'Récap' if type_document == 'livret_cartes_recap' else 'Planches'
+    cibles = []
+    if type_document == 'livret_cartes_recap' and sequences:
+        cibles.append({'cible_id': 'unique', 'libelle': 'Récap des cartes (annuel)',
+                       'nom_fichier': 'livret_cartes_recap.pdf', 'niveau': niveau,
+                       'perimetre': 'objectifs'})
+    for seq in sequences:
+        cibles.append({
+            'cible_id':    f"{niveau}/{seq}",
+            'libelle':     f"{racine} {niveau}/{seq}",
+            'nom_fichier': f"{type_document}__{niveau}__{seq}.pdf",
+            'niveau':      niveau,
+            'sequence':    seq,
+            'perimetre':   'objectifs',
+        })
+    return cibles
 
 
 def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,

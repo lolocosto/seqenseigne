@@ -116,7 +116,7 @@ def test_initialisation_insere_9_documents(sqlite_store):
             "SELECT COUNT(*) FROM referentiel_documents WHERE referentiel_id = ?",
             (ref_id,),
         ).fetchone()[0]
-    assert n == 9
+    assert n == 10  # v0.59.2 (V1) : 9 types du cycle 4 + vue d'ensemble
 
 
 def test_initialisation_idempotente(sqlite_store):
@@ -129,7 +129,7 @@ def test_initialisation_idempotente(sqlite_store):
             "SELECT COUNT(*) FROM referentiel_documents WHERE referentiel_id = ?",
             (ref_id,),
         ).fetchone()[0]
-    assert n == 9
+    assert n == 10  # v0.59.2 (V1) : 9 types du cycle 4 + vue d'ensemble
 
 
 def test_initialisation_options_actif_false(sqlite_store):
@@ -158,9 +158,9 @@ def test_lister_auto_initialise_si_vide(sqlite_store):
         ref_id = _creer_referentiel_minimal(conn)
         # Pas d'init manuelle : on appelle directement lister
         docs = svc.lister_documents(conn, ref_id)
-    assert len(docs) == 9
+    assert len(docs) == 10  # v0.59.2 (V1) : 9 types du cycle 4 + vue d'ensemble
     types = {d['type_document'] for d in docs}
-    assert types == set(svc.TYPES_DOCUMENT)
+    assert types == set(svc.TYPES_DOCUMENT) | {'vue_ensemble'}   # v0.59.2 (V1)
 
 
 def test_lister_renvoie_options_fusionnees(sqlite_store):
@@ -184,7 +184,8 @@ def test_lister_tri_par_ordre(sqlite_store):
     ordres = [d['ordre'] for d in docs]
     assert ordres == sorted(ordres)
     # Premier = livret_sequence (ORDRE_AFFICHAGE[0])
-    assert docs[0]['type_document'] == 'livret_sequence'
+    # v0.59.2 (V1) : la vue d'ensemble est en tête (ordre 0), puis l'ordre historique.
+    assert [d['type_document'] for d in docs[:2]] == ['vue_ensemble', 'livret_sequence']
 
 
 def test_lister_isolation_par_referentiel(sqlite_store):
@@ -333,7 +334,7 @@ def test_cascade_suppression_referentiel(sqlite_store):
             "WHERE referentiel_id = ?",
             (ref_id,),
         ).fetchone()[0]
-        assert n_avant == 9
+        assert n_avant == 10  # v0.59.2 (V1) : 9 types du cycle 4 + vue d'ensemble
 
         conn.execute("DELETE FROM referentiel_niveaux WHERE id = ?",
                      (ref_id,))
@@ -358,7 +359,7 @@ def test_route_get_documents(client, sqlite_store):
     assert resp.status_code == 200
     data = resp.get_json()
     assert 'documents' in data
-    assert len(data['documents']) == 9
+    assert len(data['documents']) == 10  # v0.59.2 (V1) : 9 types du cycle 4 + vue d'ensemble
     # Tous démarrent inactifs
     assert all(d['options']['actif'] is False for d in data['documents'])
 

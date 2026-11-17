@@ -55,7 +55,7 @@ import argparse
 import json
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 RACINE_APPLI = Path(__file__).resolve().parent.parent
@@ -184,7 +184,7 @@ def appliquer(conn, plan: dict) -> int:
     """Écrit le plan (transaction ouverte par l'appelant). Retourne le nombre
     d'exercices réparés."""
     avec_mtime = "mtime" in _cols(conn, "exercices")
-    maintenant = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    maintenant = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")  # v0.59.2 : UTC (mtime)
     for r in plan["reparations"]:
         if avec_mtime:
             conn.execute("UPDATE exercices SET serie=?, serie_code=?, num=?, mtime=? WHERE id=?",

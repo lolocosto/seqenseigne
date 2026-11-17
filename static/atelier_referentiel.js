@@ -1448,8 +1448,26 @@ function atelRefRendreDocuments() {
         configure leurs options.
       </div>
       ${atelRefGabaritHtml()}
+      ${atelRefVueEnsembleHtml()}
     </div>
     ${cadres}`;
+}
+
+
+// v0.59.2 (V5) — Vue d'ensemble du référentiel calculée à la volée (tout
+// état : un référentiel figé la calcule depuis son instantané, sans rien
+// changer à ses documents figés). Le document « Vue d'ensemble » de la liste
+// la publie avec les autres (référentiel modifiable).
+function atelRefVueEnsembleHtml() {
+  if (!ATL_REF_SELECTION || !ATL_REF_SELECTION.id) return '';
+  const url = `/api/v2/referentiel/${encodeURIComponent(ATL_REF_SELECTION.id)}/vue-ensemble/rendu-pdf`;
+  return `
+      <div style="padding:2px 8px 8px;font-size:12px">
+        <a class="btn-sm" href="${url}" target="_blank" rel="noopener"
+           title="Par domaine : séquences, parties (semaines : 3 séances = 1 semaine), objectifs et séances">
+          📋 Vue d'ensemble (PDF)</a>
+        <span style="color:var(--text-muted)">calculée à la volée, sans rien enregistrer</span>
+      </div>`;
 }
 
 

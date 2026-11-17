@@ -227,6 +227,17 @@ def lire_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_code: str) 
     for p in parties:
         p["libelle"] = libelles.get(p["numero"], "")
         p["carte"] = cartes.get(p["numero"])
+    # v0.59.2 (E3) — encarts (« Le saviez-vous ? »…) : clés ajoutées seulement
+    # quand la séquence en a (sinon structure et .tex inchangés).
+    from services.encarts import encarts_de_sequence, repartir
+    rep = repartir(encarts_de_sequence(conn, niveau, sequence_code))
+    for p in parties:
+        if rep["partie"].get(p["numero"]):
+            p["encarts_fin"] = rep["partie"][p["numero"]]
+        for o in p["objectifs"]:
+            d = rep["objectif"].get((p["numero"], o["code"]))
+            if d:
+                o["encarts"] = d
     return {"code": sequence_code, "nom": nom or sn.get("sequence_nom") or sequence_code,
             "nom_cycle": nom_cycle or sn.get("sequence_nom") or sequence_code,
             "numero": numero, "niveau": niveau, "parties": parties,
@@ -474,12 +485,16 @@ def corps_livret(seq: dict, opts: dict, numeros: "_Numeros | None" = None) -> li
                 L.append(r"\needspace{15\baselineskip}")
             premier = False
             L.append(r"\seqBandeauCapacite{%s-%s}{%s}" % (seq["code"], o["code"], o["nom"]))
+            enc = o.get("encarts") or {}                              # v0.59.2 (E3)
             if opts["inclure_activites"]:
                 for ex in o["activites"]:
                     _emettre_activite(L, ex)
                     N.noter_activite(ex)
+            if enc.get("apres_activite"):
+                emettre_encarts(L, enc["apres_activite"])
             for f in o["fiches"]:
                 _emettre_fiche(L, f)
+            apres_exo = list(enc.get("apres_exercice") or [])
             for serie, titre in TITRES_SERIES:
                 if serie == "E" and not opts["inclure_serie_E"]:
                     continue
@@ -494,6 +509,18 @@ def corps_livret(seq: dict, opts: dict, numeros: "_Numeros | None" = None) -> li
                     if ((ex.get("remed_enonce") or "").strip()
                             and opts["remediations"] == "apres_exercice"):
                         N.noter_remediation(ex)
+                    if apres_exo:
+                        ici = [e for e in apres_exo if _encart_apres(e, ex)]
+                        if ici:
+                            emettre_encarts(L, ici)
+                            apres_exo = [e for e in apres_exo if e not in ici]
+            # Exercice de référence absent du livret (série E non incluse…) :
+            # l'encart passe en fin d'objectif.
+            fin_obj = apres_exo + list(enc.get("fin_objectif") or [])
+            if fin_obj:
+                emettre_encarts(L, fin_obj)
+        if p.get("encarts_fin"):                                      # v0.59.2 (E3)
+            emettre_encarts(L, p["encarts_fin"])
         # v0.55.0 (CM-LIVRET) — carte mentale en fin de partie, après les
         # exercices, sur une nouvelle page (à compléter dans le livret élève,
         # complète dans le livret corrigé : \seqVersionCorrigee) ; une partie
@@ -508,6 +535,22 @@ def corps_livret(seq: dict, opts: dict, numeros: "_Numeros | None" = None) -> li
             _emettre_remediation(L, ex)
             N.noter_remediation(ex)
     return L
+
+
+def _encart_apres(encart: dict, ex: dict) -> bool:
+    """v0.59.2 — l'encart suit-il cet exercice ? (identifiant résolu à
+    l'import, sinon code du lot « F03 » = série interne + numéro)."""
+    if encart.get("exercice_id"):
+        return encart["exercice_id"] == ex.get("id")
+    try:
+        return encart.get("exercice") == f"{ex.get('serie_code')}{int(ex.get('num')):02d}"
+    except (TypeError, ValueError):
+        return False
+
+
+def emettre_encarts(L: list, encarts: list) -> None:
+    from services.encarts import emettre
+    emettre(L, encarts)
 
 
 def numeros_livret(seq: dict, opts: dict) -> _Numeros:

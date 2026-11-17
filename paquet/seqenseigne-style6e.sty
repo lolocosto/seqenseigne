@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/11/13 v0.14 seqenseigne : style des documents de 6e]
+    [2026/11/17 v0.15 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -1252,6 +1252,61 @@
 \cs_new:Npn \__seqsix_cm_virgule:n #1 { #1 , }
 \cs_generate_variant:Nn \__seqsix_cm_colonne:nnnn { x }
 \ExplSyntaxOff
+\newcommand{\seq@picto@savoir}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt]{%
+  \draw (0.42,0.36) circle[radius=0.36];
+  \node[inner sep=0pt, font=\bfseries\scriptsize] at (0.42,0.36) {?};}}
+\newcommand{\seq@picto@histoire}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt, line join=round]{%
+  \draw (0.12,0.72) -- (0.68,0.72) (0.12,0.0) -- (0.68,0.0);
+  \draw (0.18,0.72) -- (0.36,0.40) -- (0.36,0.32) -- (0.18,0.0)
+        (0.62,0.72) -- (0.44,0.40) -- (0.44,0.32) -- (0.62,0.0);
+  \fill (0.24,0.04) -- (0.56,0.04) -- (0.40,0.22) -- cycle;}}
+\newcommand{\seq@picto@vraievie}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt, line join=round]{%
+  \draw (0.04,0.38) -- (0.42,0.74) -- (0.80,0.38);
+  \draw (0.14,0.46) -- (0.14,0.0) -- (0.70,0.0) -- (0.70,0.46);
+  \draw (0.34,0.0) -- (0.34,0.24) -- (0.50,0.24) -- (0.50,0.0);}}
+\newcommand{\seq@picto@defi}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt, line join=round]{%
+  \draw (0.42,0.74) -- (0.51,0.47) -- (0.80,0.47) -- (0.57,0.30)
+        -- (0.65,0.02) -- (0.42,0.19) -- (0.19,0.02) -- (0.27,0.30)
+        -- (0.04,0.47) -- (0.33,0.47) -- cycle;}}
+\newcommand{\seqPictoEncartSix}[1]{%
+  \ifcsname seq@picto@#1\endcsname\csname seq@picto@#1\endcsname
+  \else\seq@encart@inconnu{#1}\fi}
+\definecolor{seqSixEncartSavoir}{HTML}{1F5FA8}
+\definecolor{seqSixEncartHistoire}{HTML}{8B5A2B}
+\definecolor{seqSixEncartVraievie}{HTML}{2E8B3A}
+\definecolor{seqSixEncartDefi}{HTML}{E07B00}
+\newcommand{\seq@encart@nom@savoir}{Le saviez-vous ?}
+\newcommand{\seq@encart@nom@histoire}{Point histoire}
+\newcommand{\seq@encart@nom@vraievie}{Les maths dans la vraie vie}
+\newcommand{\seq@encart@nom@defi}{Défi}
+\newcommand{\seq@encart@couleur@savoir}{seqSixEncartSavoir}
+\newcommand{\seq@encart@couleur@histoire}{seqSixEncartHistoire}
+\newcommand{\seq@encart@couleur@vraievie}{seqSixEncartVraievie}
+\newcommand{\seq@encart@couleur@defi}{seqSixEncartDefi}
+\newcommand{\seq@encart@inconnu}[1]{%
+  \PackageError{seqenseigne-style6e}{Type d'encart inconnu : #1}%
+    {Types permis : savoir, histoire, vraievie, defi.}}
+\tcbset{seq@encart@pleine/.style={before skip=6pt, after skip=6pt},
+  seq@encart@demi/.style={width=0.485\linewidth, nobeforeafter, box align=top}}
+\NewDocumentEnvironment{seqEncartSix}{O{pleine} m m}{%
+  \ifcsname seq@encart@nom@#2\endcsname\else\seq@encart@inconnu{#2}\fi
+  \edef\seq@encart@coul{\csname seq@encart@couleur@#2\endcsname}%
+  \begin{tcolorbox}[enhanced, unbreakable, colback=\seq@encart@coul!5,
+      colframe=\seq@encart@coul, boxrule=0.6pt, arc=2pt,
+      left=5pt, right=5pt, top=3pt, bottom=3pt, seq@encart@#1,
+      fontupper=\small,
+      title={\textcolor{\seq@encart@coul}{\seqPictoEncartSix{#2}}\ %
+        \textcolor{\seq@encart@coul}{\bfseries\csname seq@encart@nom@#2\endcsname}%
+        \if\relax\detokenize{#3}\relax\else\ --- {\bfseries #3}\fi},
+      coltitle=black, colbacktitle=\seq@encart@coul!14,
+      titlerule=0pt, toptitle=1pt, bottomtitle=1pt]}{%
+  \end{tcolorbox}}
+\newcommand{\seqSolutionDefiSix}[1]{%
+  \ifseq@corrige\par\smallskip{\color{seqSixRouge}\textbf{Solution :} #1}\par\fi}
 \endinput
 %%
 %% End of file `seqenseigne-style6e.sty'.

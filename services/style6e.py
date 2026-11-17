@@ -1,4 +1,4 @@
-"""services/style6e.py — v0.52.0 (correctif 2), v0.52.5, v0.52.8, v0.53.3, v0.54.3, v0.55.0, v0.56.0
+"""services/style6e.py — v0.52.0 (correctif 2), v0.52.5, v0.52.8, v0.53.3, v0.54.3, v0.55.0, v0.56.0, v0.59.2
 
 Module LaTeX `seqenseigne-style6e` (documents de 6e, option `sixieme` du
 paquet) : chargé **en entier** par `\\usepackage{seqenseigne-style6e}` dès
@@ -30,7 +30,8 @@ publique : la forme sans argument optionnel est inchangée ; v0.13, v0.55.0 : ca
 mentale de partie, environnement seqCarteMentaleSix et \\seqCMBranche ; v0.14, v0.56.0 :
 page de garde avec suivi par objectif \\seqSuiviObjectifsSix, \\seqPartieSuiviSix, trait
 entre deux colonnes d'un énoncé \\seqSepColonnesSix ; carte à sa taille naturelle, fiche de
-résumé insécable, sans nouvelle macro) ; un test la
+résumé insécable, sans nouvelle macro ; v0.15, v0.59.2 : encarts du livret, environnement
+seqEncartSix (savoir, histoire, vraievie, defi), \\seqSolutionDefiSix, \\seqPictoEncartSix) ; un test la
 compare au .dtx du dossier `paquet/` quand il est présent. Le dossier du
 paquet (`reference\\paquet` par défaut) est ajouté au TEXINPUTS par
 services/compilateur_pdf.py pour que pdflatex trouve le .sty.
@@ -44,10 +45,13 @@ NOM_PAQUET = "seqenseigne-style6e"
 # v0.55.0 — v0.13 : carte mentale de partie (seqCarteMentaleSix, \seqCMBranche).
 # v0.56.0 — v0.14 : suivi par objectif (page de garde), \seqSepColonnesSix,
 #           carte non étirée, fiche de résumé insécable.
-VERSION = "v0.14"
+# v0.59.2 — v0.15 : encarts du livret (seqEncartSix, \seqSolutionDefiSix,
+#           \seqPictoEncartSix).
+VERSION = "v0.15"
 
 ENVIRONNEMENTS = (
     "seqActiviteSix", "seqBande", "seqCalculMental", "seqCarteMentaleSix", "seqCopies",
+    "seqEncartSix",                                                        # v0.15 (v0.59.2)
     "seqEncadreDefSix", "seqEncadreIntroSix", "seqExoSix", "seqFicheResumeSix",
     "seqPlancheFiches",
 )
@@ -70,6 +74,7 @@ MACROS = (
     "seqTableauConversionSix", "seqLigneConversionSix",                    # v0.11 (v0.53.3)
     "seqCMBranche",                                                        # v0.13 (v0.55.0)
     "seqSuiviObjectifsSix", "seqPartieSuiviSix", "seqSepColonnesSix",      # v0.14 (v0.56.0)
+    "seqSolutionDefiSix", "seqPictoEncartSix",                             # v0.15 (v0.59.2)
     "seqReponse", "seqScore", "seqSectionFicheSix", "seqTitreCM",
     "seqTitreComplementSix", "seqTitreEvalSix", "seqTitreFicheSix",
     "seqTitreTravailSix", "seqTrous", "seqVersionACompleter",

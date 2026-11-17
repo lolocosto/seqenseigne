@@ -78,7 +78,7 @@ import sqlite3
 import sys
 import uuid
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 RACINE_APPLI = Path(__file__).resolve().parent.parent
@@ -607,7 +607,7 @@ def reclasser(conn, carte: dict, recl: dict, j: Journal, rapport: Rapport,
     des fichiers) : {niveau, ancien, nouveau, copie}."""
     sec = "Cycle 4 — reclassement de S02, S04, S10"
     mouvements = []
-    maintenant = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    maintenant = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")  # v0.59.2 : UTC (mtime)
     for cle, d in recl["sequences"].items():
         niv, ancien = cle.split("/")
         arch = d["archive"]

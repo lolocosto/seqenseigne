@@ -112,6 +112,28 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      (`objectif_cartes`), niveau de création gardé (`niveau_creation`) ;
      carte validée jamais réécrite.
 
+ 12. **v0.59.1 — alignement des rattachements de cartes** : le lot fait foi
+     pour les cartes qu'il cite ; une carte citée sous un objectif perd ses
+     liens vers les autres objectifs de la même séquence (sauf carte validée
+     ou séquence validée : signalé) ; liens vers d'autres séquences et cartes
+     non citées intouchés. L'essai à blanc liste les liens retirés.
+ 13. **v0.59.2 — séances et encarts** (`doc/redemarrage_v0_59_2.md`) :
+     - clé facultative `seances` d'un objectif (nombre de séances, ≥ 0) et
+       `seances_cours` du lot (séances de l'objectif « Cours » : un nombre pour
+       chaque partie, ou `{"1": 1, "2": 1}`) → `objectifs.nb_seances`, que lit
+       le référentiel (vue d'ensemble, durée des parties). Clé absente : valeur
+       en base gardée (saisie dans l'atelier) ; valeur invalide : anomalie,
+       ignorée. Idempotent ;
+     - clé facultative `encarts` (`lot6e/FORMAT_ENCARTS.md`) d'un objectif
+       (positions `apres_activite`, `apres_exercice` + `exercice`,
+       `fin_objectif`) et du lot (encarts de partie : `partie`, position
+       `fin_partie`) → table `encarts` (services/encarts.py). Dès qu'un lot
+       porte une clé `encarts`, il fait foi pour les encarts de sa séquence
+       (créés, mis à jour, retirés ; retraits dans le journal) ; un lot sans
+       la clé ne touche à rien. Encart refusé (type, position, exercice
+       inconnus…) : anomalie, non importé. Jamais sur une séquence validée
+       (lot non importé).
+
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
 évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
@@ -143,7 +165,7 @@ import sqlite3
 import sys
 import uuid
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 RACINE_APPLI = Path(__file__).resolve().parent.parent
@@ -254,7 +276,12 @@ def _cols(conn, table: str) -> set:
 
 
 def _maintenant() -> str:
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    """Horodatage des `mtime` écrits par l'import, en **UTC** comme le reste de
+    l'appli (`CURRENT_TIMESTAMP` de SQLite, `compile_date` des documents) :
+    `peremption_atomes` compare ces chaînes telles quelles. v0.59.2 — avant,
+    heure locale : un document compilé moins d'une heure (deux en été) après
+    un import s'affichait « périmé »."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _nid(prefixe: str) -> str:
@@ -361,8 +388,11 @@ class Rapport:
         # alors qu'un contenu de l'ancien sens existe (lot non importé).
         self.sequences_bloquees: set = set()
         self.cartes_automatisme: "OrderedDict[str, dict]" = OrderedDict()  # v0.59.0
+        self.cartes_alignement: list[str] = []                  # v0.59.1 (liens retirés)
         self.niveau = NIVEAU                                   # v0.59.0 (en-tête)
         self.archivage_niveau: dict | None = None              # v0.59.0 (hors 6e)
+        self.seances: list[str] = []                          # v0.59.2
+        self.encarts: "OrderedDict[str, dict]" = OrderedDict()  # v0.59.2
 
     def seq(self, code: str) -> dict:
         return self.sequences.setdefault(code, {"lignes": [], "objectifs": OrderedDict(),
@@ -429,6 +459,26 @@ class Rapport:
             for e, n in c.items():
                 tot[e] = tot.get(e, 0) + n
         L.append("  total : " + ", ".join(f"{e} {n}" for e, n in tot.items()))
+        # v0.59.1 — alignement sur le lot : liens vers un autre objectif de la
+        # séquence retirés (le lot fait foi pour les cartes qu'il cite).
+        L.append(f"  rattachements alignés sur le lot : {len(self.cartes_alignement)} "
+                 "lien(s) retiré(s)")
+        L += [f"    - {x}" for x in self.cartes_alignement]
+        return L
+
+    def texte_seances_encarts(self) -> list[str]:
+        """v0.59.2 — séances écrites (clés `seances`, `seances_cours`) et encarts."""
+        L = ["== Séances des objectifs (v0.59.2) =="]
+        L.append(f"  {len(self.seances)} objectif(s) dont les séances changent"
+                 + ("" if self.seances else " (clé absente ou valeurs déjà en base)"))
+        L += [f"    - {x}" for x in self.seances]
+        L.append("")
+        L.append("== Encarts du livret (v0.59.2) ==")
+        if not self.encarts:
+            L.append("  aucun lot ne porte de clé « encarts » : rien n'est touché")
+        for seq, c in self.encarts.items():
+            L.append(f"  {seq} : créés {c['crees']}, mis à jour {c['maj']}, inchangés "
+                     f"{c['inchanges']}, retirés {c['retires']}")
         return L
 
     def texte(self) -> str:
@@ -478,6 +528,8 @@ class Rapport:
         L += self.texte_resume()                                     # v0.55.0
         L.append("")
         L += self.texte_cartes()                                     # v0.59.0
+        L.append("")
+        L += self.texte_seances_encarts()                            # v0.59.2
         L.append("")
         L.append(f"== Anomalies ({len(self.anomalies)}) ==")
         L += [f"  - {x}" for x in self.anomalies] or ["  aucune"]
@@ -1157,11 +1209,14 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
         code_c = f"{p['numero'] - 1}1"
         oid, etat = _objectif(conn, sn["id"], pid, code_c, cours, rapport, f"{seq}-{code_c}")
         cours_ids[p["numero"]] = oid
+        etat = _seances(conn, oid, _seances_cours(lot, p["numero"]), etat,
+                        f"{seq}-{code_c}", rapport)                      # v0.59.2
         rapport.obj(seq, f"{seq}-{code_c}", "Cours — " + cours["nom"])["objectif"] = etat
 
     approche: dict[int, list] = {n: [] for n in parties}
     vus: dict = {}
     cartes_vues: dict = {}                      # num de carte → objectif (v0.59.0)
+    cartes_lot: dict = {}                       # id de carte → objectif du lot (v0.59.1)
     objectifs_ids: dict[str, str] = {}          # « S01-02 » → id (v0.52.2)
     for o in lot.get("objectifs", []):
         code = o.get("code", "")
@@ -1177,6 +1232,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
             rapport.infos.append(f"{code} : intitulé du lot différent du référentiel "
                                  "(référentiel retenu)")
         oid, etat = _objectif(conn, sn["id"], parties[numero], d["code"], d, rapport, code)
+        etat = _seances(conn, oid, o.get("seances"), etat, code, rapport)   # v0.59.2
         ro = rapport.obj(seq, code, d["nom"])
         ro["objectif"] = etat
         series: dict[str, list] = {"F": [], "A": [], "E": []}
@@ -1237,7 +1293,8 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
             n = _ordonner(conn, "objectif_exos", {"objectif_id": oid, "serie": "AE"}, act_obj)
             Rapport.compter(ro, "liens activité-objectif", "créés", n)
         objectifs_ids[code] = oid
-        importer_cartes_objectif(conn, seq, code, oid, o, rapport, cartes_vues)  # v0.59.0
+        importer_cartes_objectif(conn, seq, code, oid, o, rapport, cartes_vues,  # v0.59.0
+                                 cartes_lot)
         if o.get("fiche_resume"):
             fid, etat_f = _fiche(conn, seq, oid, cours_ids[numero], o["fiche_resume"])
             Rapport.compter(ro, "fiche", etat_f)
@@ -1270,6 +1327,132 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
     figures |= importer_documents(conn, lot, objectifs_ids, rapport)
     importer_evaluations(conn, lot, objectifs_ids, rapport)
     figures |= importer_cartes_mentales(conn, lot, parties, rapport)     # v0.55.0
+    aligner_rattachements_cartes(conn, seq, sn["id"], cartes_lot, rapport)  # v0.59.1
+    figures |= importer_encarts(conn, lot, sn["id"], parties,             # v0.59.2
+                                {c: (objs_ref[c][0], objectifs_ids.get(c)) for c in objs_ref},
+                                rapport)
+    return figures
+
+
+# ── v0.59.2 — Séances d'un objectif (clés `seances`, `seances_cours`) ───────
+
+_ABSENT = object()
+
+
+def _seances_cours(lot: dict, numero: int):
+    """Séances de l'objectif « Cours » de la partie `numero` d'après la clé
+    `seances_cours` du lot (nombre pour toutes les parties, ou dictionnaire
+    par numéro de partie) ; _ABSENT sans clé (ou partie non citée)."""
+    if "seances_cours" not in lot:
+        return _ABSENT
+    v = lot["seances_cours"]
+    if isinstance(v, dict):
+        return v.get(str(numero), v.get(numero, _ABSENT))
+    return v
+
+
+def _seances(conn, oid: str, valeur, etat: str, etiquette: str, rapport: "Rapport") -> str:
+    """Écrit `objectifs.nb_seances` si le lot donne une valeur (clé `seances`).
+    Clé absente (None ou _ABSENT) : rien ne change (saisie de l'atelier gardée).
+    Retourne l'état de l'objectif (« mis à jour » si les séances changent)."""
+    if valeur is None or valeur is _ABSENT:
+        return etat
+    try:
+        nb = float(str(valeur).replace(",", "."))
+        if nb < 0 or nb != nb:
+            raise ValueError
+    except (TypeError, ValueError):
+        rapport.anomalie(f"{etiquette} : séances {valeur!r} invalides (nombre ≥ 0 attendu), "
+                         "ignorées")
+        return etat
+    avant = float(conn.execute("SELECT nb_seances FROM objectifs WHERE id=?",
+                               (oid,)).fetchone()[0] or 0)
+    if avant == nb:
+        return etat
+    conn.execute("UPDATE objectifs SET nb_seances=? WHERE id=?", (nb, oid))
+    rapport.seances.append(f"{etiquette} : {_fmt_nb(avant)} → {_fmt_nb(nb)} séance(s)")
+    return "mis à jour" if etat == "inchangé" else etat
+
+
+def _fmt_nb(x: float) -> str:
+    return str(int(x)) if float(x).is_integer() else str(x).replace(".", ",")
+
+
+# ── v0.59.2 — Encarts du livret (clé `encarts`) ─────────────────────────────
+
+def importer_encarts(conn, lot: dict, sn_id: str, parties: dict, objectifs: dict,
+                     rapport: "Rapport") -> set:
+    """Clé facultative `encarts` d'un objectif et du lot (encarts de partie),
+    format `lot6e/FORMAT_ENCARTS.md`. `parties` : {numéro: partie_id} ;
+    `objectifs` : {« A1-02 »: (numéro de partie, objectif_id)}. Le lot fait
+    foi dès qu'il porte la clé quelque part (services/encarts.aligner) ; sans
+    clé, rien n'est touché. Retourne les figures utilisées (aucune attendue)."""
+    from services import encarts as enc
+    seq = lot["sequence"]
+    porte = "encarts" in lot or any("encarts" in o for o in lot.get("objectifs", []))
+    if not porte:
+        return set()
+    voulus, compte, figures = [], {}, set()
+    rangs: dict = {}
+
+    def _ajouter(src: dict, partie_id: str, objectif_id, quoi: str):
+        entree, err, av = enc.controler(src, objectif_id is not None)
+        if err:
+            rapport.anomalie(f"{quoi} non importé : {'; '.join(err)}")
+            return
+        for a in av:
+            rapport.infos.append(f"{quoi} : {a}")
+        exo_id = ""
+        if entree["position"] == "apres_exercice":
+            m = enc._RE_EXO.match(entree["exercice"])
+            r = conn.execute("SELECT id FROM exercices WHERE niveau=? AND sequence=? AND "
+                             "serie_code=? AND num=?",
+                             (NIVEAU, seq, m.group(1), int(m.group(2)))).fetchone()
+            if r is None:
+                rapport.anomalie(f"{quoi} non importé : exercice {entree['exercice']} absent "
+                                 f"de {NIVEAU}/{seq}")
+                return
+            exo_id = r["id"]
+        place = (partie_id, objectif_id or "", entree["position"], entree["exercice"])
+        rangs[place] = rangs.get(place, 0) + 1
+        voulus.append({**entree, "partie_id": partie_id, "objectif_id": objectif_id,
+                       "exercice_id": exo_id, "ordre": rangs[place]})
+        compte[entree["type"]] = compte.get(entree["type"], 0) + 1
+        figures.update(_figures(lot, {"latex": entree["texte"] + entree["solution"]}))
+
+    for o in lot.get("objectifs", []):
+        code = o.get("code", "")
+        if code not in objectifs or not o.get("encarts"):
+            continue
+        numero, oid = objectifs[code]
+        if oid is None or numero not in parties:
+            continue
+        for k, src in enumerate(o["encarts"], start=1):
+            _ajouter(src if isinstance(src, dict) else {}, parties[numero], oid,
+                     f"{code} encart n°{k}")
+    for k, src in enumerate(lot.get("encarts") or [], start=1):
+        src = src if isinstance(src, dict) else {}
+        try:
+            numero = int(src.get("partie"))
+        except (TypeError, ValueError):
+            rapport.anomalie(f"{seq} encart de partie n°{k} : partie {src.get('partie')!r} "
+                             "invalide, non importé")
+            continue
+        if numero not in parties:
+            rapport.anomalie(f"{seq} encart de partie n°{k} : partie {numero} absente du "
+                             "référentiel, non importé")
+            continue
+        _ajouter(src, parties[numero], None, f"{seq} encart de partie {numero} n°{k}")
+    res = enc.aligner(conn, sn_id, NIVEAU, seq, voulus)
+    for e in res["retires"]:
+        rapport.journal.setdefault("retraits", []).append(
+            {"quoi": "encart", "table": enc.TABLE, "ligne": e})
+    rapport.seq(seq)["lignes"].append(
+        "encarts : " + (", ".join(f"{enc.TYPES[t]} {n}" for t, n in compte.items()) or "aucun")
+        + f" — créés {res['crees']}, mis à jour {res['maj']}, inchangés {res['inchanges']}, "
+          f"retirés {len(res['retires'])}")
+    rapport.encarts[seq] = {"crees": res["crees"], "maj": res["maj"],
+                            "inchanges": res["inchanges"], "retires": len(res["retires"])}
     return figures
 
 
@@ -1381,7 +1564,8 @@ def _valeurs_carte(src: dict, quoi: str, rapport: Rapport) -> dict | None:
 
 
 def importer_cartes_objectif(conn, seq: str, code: str, objectif_id: str, o: dict,
-                             rapport: Rapport, vues: dict) -> None:
+                             rapport: Rapport, vues: dict, lot_cartes: dict | None = None
+                             ) -> None:
     """v0.59.0 (D3) — Clé facultative `cartes_automatisme` d'un objectif du lot :
     `[{"num": 1, "titre": "…", "type_pedago": "calcul", "type_tech": "fixe",
     "recto": "…", "verso": "…", "variables": "", "niveau_creation": "N11",
@@ -1394,7 +1578,10 @@ def importer_cartes_objectif(conn, seq: str, code: str, objectif_id: str, o: dic
     objectif (N11 : carte de 4e ; N10 : automatisme de 5e écrit en 4e) ; la
     partie se déduit de l'objectif. Aucune carte n'entre dans le livret de
     séquence (décision du 16 novembre) ; le document de rituels viendra en
-    v0.60. `origine` : rapportée dans le journal."""
+    v0.60. `origine` : rapportée dans le journal.
+
+    v0.59.1 — `lot_cartes` (facultatif) reçoit {id de carte: (objectif_id,
+    code)} des cartes citées, pour `aligner_rattachements_cartes`."""
     entrees = o.get("cartes_automatisme") or []
     if not entrees:
         return
@@ -1441,6 +1628,8 @@ def importer_cartes_objectif(conn, seq: str, code: str, objectif_id: str, o: dic
                 etat = "mise à jour"
         compte[etat] = compte.get(etat, 0) + 1
         ids.append(cid)
+        if lot_cartes is not None:
+            lot_cartes[cid] = (objectif_id, code)
         rapport.journal["import"].append({"cle": f"{NIVEAU}/{seq}/CA{v['num']}", "id": cid,
                                           "objectif": code, "carte": True,
                                           "niveau_creation": v["niveau_creation"],
@@ -1451,6 +1640,55 @@ def importer_cartes_objectif(conn, seq: str, code: str, objectif_id: str, o: dic
         Rapport.compter(ro, "cartes d'automatisme", "liées", len(ids))
         if n:
             Rapport.compter(ro, "liens objectif-carte", "créés", n)
+
+
+def aligner_rattachements_cartes(conn, seq: str, sn_id: str, lot_cartes: dict,
+                                 rapport: Rapport) -> None:
+    """v0.59.1 — Alignement des rattachements (signalement du 17 novembre :
+    6 cartes de coordonnées de D1 déplacées de D1-02 vers D1-05 dans le lot
+    restaient aussi sur D1-02 après réimport, `_lier_cartes` n'ajoutant que
+    des liens).
+
+    Le lot fait foi pour les cartes qu'il cite : une carte citée sous
+    l'objectif O perd son lien vers tout **autre objectif de la même
+    séquence-niveau** que le lot ne lui donne pas. Restent intouchés : les
+    liens vers des objectifs d'autres séquences, les liens des cartes que le
+    lot ne cite pas (ajoutés par l'auteur), et tout lien d'une carte validée
+    ou d'un objectif validé (séquence-niveau validée ; les objectifs n'ont pas
+    d'état propre) — signalés en anomalie. L'essai à blanc liste les retraits
+    (même code, base en mémoire) ; chaque lien retiré est copié dans
+    `rapport.journal["retraits"]` (restauration par simple INSERT)."""
+    if not lot_cartes:
+        return
+    sn_valide = (conn.execute("SELECT etat_code FROM sequences_par_niveau WHERE id = ?",
+                              (sn_id,)).fetchone() or [""])[0] == "valide"
+    for cid, (oid_lot, code_lot) in lot_cartes.items():
+        autres = conn.execute(
+            "SELECT oc.*, o.code AS code_obj, c.num AS num_carte, c.titre AS titre_carte, "
+            "c.etat_code AS etat_carte FROM objectif_cartes oc "
+            "JOIN objectifs o ON o.id = oc.objectif_id "
+            "JOIN sequence_parties p ON p.id = o.partie_id "
+            "JOIN cartes_automatisme c ON c.id = oc.carte_id "
+            "WHERE oc.carte_id = ? AND p.sequence_par_niveau_id = ? AND oc.objectif_id <> ? "
+            "ORDER BY o.code", (cid, sn_id, oid_lot)).fetchall()
+        for r in autres:
+            quoi = (f"{NIVEAU}/{seq}/CA{r['num_carte']} « {r['titre_carte']} » : lien vers "
+                    f"{seq}-{r['code_obj']}")
+            if r["etat_carte"] == "valide" or sn_valide:
+                rapport.anomalie(f"{quoi} absent du lot (carte sous {code_lot}) mais "
+                                 + ("carte validée" if r["etat_carte"] == "valide"
+                                    else "séquence validée") + " : lien gardé")
+                continue
+            ligne = {k: r[k] for k in ("objectif_id", "carte_id", "ordre", "mtime")}
+            rapport.journal.setdefault("retraits", []).append({
+                "quoi": "lien_objectif_carte", "cle": f"{NIVEAU}/{seq}/CA{r['num_carte']}",
+                "objectif": f"{seq}-{r['code_obj']}", "objectif_cartes": ligne})
+            conn.execute("DELETE FROM objectif_cartes WHERE objectif_id = ? AND carte_id = ?",
+                         (r["objectif_id"], cid))
+            rapport.cartes_alignement.append(f"{quoi} retiré (le lot la place sous "
+                                             f"{code_lot})")
+            Rapport.compter(rapport.obj(seq, f"{seq}-{r['code_obj']}"),
+                            "liens objectif-carte", "retirés (alignement sur le lot)", 1)
 
 
 def _lier_cartes(conn, objectif_id: str, ids: list[str]) -> int:
@@ -2237,6 +2475,9 @@ def _executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     from services import cartes_mentales as _cm                         # v0.55.0
     if _cm.migrer(conn):
         rapport.infos.append("Base complétée : table cartes_mentales (v0.55.0)")
+    from services import encarts as _enc                                # v0.59.2
+    if _enc.migrer(conn):
+        rapport.infos.append("Base complétée : table encarts (v0.59.2)")
     from services import mises_en_route_6e as mer                      # v0.53.1 (P1)
     if mer.migrer(conn):
         rapport.infos.append("Base complétée : colonne libelle des parties de séquence "

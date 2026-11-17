@@ -96,9 +96,14 @@ DOCUMENTS_SEQUENCE_FICHES = (
                      portee="serie"),
 )
 
+# v0.59.2 (V1) — Vue d'ensemble du référentiel, en tête de tous les catalogues :
+# un document du référentiel entier, pas d'une séquence.
+_RAISON_VUE = "document du référentiel entier (toutes les séquences), pas d'une séquence"
+
 EXCLUS_FICHES = {
     "corriges_6e": ("pour une séquence, c'est le livret corrigé (même corps, seul le "
                     "titre interne change) ; son intérêt est le recueil annuel"),
+    "vue_ensemble": _RAISON_VUE,                                     # v0.59.2
 }
 
 DOCUMENTS_SEQUENCE_NOTIONS = (
@@ -121,7 +126,22 @@ EXCLUS_NOTIONS = {
                     "« notions_methodes »)",
     "livret_corriges": "livret annuel du niveau",
     "livret_cartes_recap": "récapitulatif annuel du niveau (8 cartes par page)",
+    "vue_ensemble": _RAISON_VUE,                                     # v0.59.2
 }
+
+# v0.59.1 — Modèle Fiches avec l'option « cartes d'automatisme » (référentiel
+# de l'atelier du niveau, règle R1b) : le récap et les planches de la
+# séquence, cartes rattachées aux objectifs de la séquence (cible
+# `perimetre='objectifs'`, comme à la publication du référentiel). Le
+# catalogue Fiches avec l'option = `_CATALOGUE_SIXIEME` + ces deux types
+# (`gabarits_documents.catalogue_type`) : tous deux concernent une séquence,
+# aucune exclusion (test).
+DOCUMENTS_SEQUENCE_FICHES_CARTES = (
+    DocumentSequence("livret_cartes_recap", "cartes_recap",
+                     "Récap des cartes d'automatisme"),
+    DocumentSequence("livret_cartes_planches", "cartes_planches",
+                     "Planches de cartes d'automatisme"),
+)
 
 TABLES = {"sixieme": (DOCUMENTS_SEQUENCE_FICHES, EXCLUS_FICHES),
           "cycle4": (DOCUMENTS_SEQUENCE_NOTIONS, EXCLUS_NOTIONS)}
@@ -131,9 +151,25 @@ class SequenceToutCompilerErreur(ValueError):
     pass
 
 
-def table(gabarit: str) -> tuple:
+def table(gabarit: str, cartes: bool = False) -> tuple:
+    """v0.59.1 — `cartes` : option « cartes d'automatisme » du référentiel
+    de l'atelier (modèle Fiches seulement ; sans effet ailleurs)."""
     from services.gabarits_documents import normaliser
-    return TABLES[normaliser(gabarit)][0]
+    g = normaliser(gabarit)
+    if cartes and g == "sixieme":
+        return DOCUMENTS_SEQUENCE_FICHES + DOCUMENTS_SEQUENCE_FICHES_CARTES
+    return TABLES[g][0]
+
+
+def cartes_de_l_atelier(conn, niveau: str, gabarit: str) -> bool:
+    """v0.59.1 — Le « Tout compiler » d'une séquence de ce niveau inclut-il
+    les documents de cartes ? Oui si le modèle demandé est Fiches et que le
+    référentiel de l'atelier du niveau (R1b) a l'option cartes."""
+    from services import gabarits_documents as gd
+    from services.fiches_cycle4 import option_cartes
+    if not gd.est_modele_fiches(gabarit):
+        return False
+    return option_cartes(conn, gd.referentiel_atelier_du_niveau(conn, niveau))
 
 
 def prefixe(niveau: str, sequence: str) -> str:
@@ -143,7 +179,8 @@ def prefixe(niveau: str, sequence: str) -> str:
 
 # ── Énumération des documents d'une séquence ────────────────────────────────
 
-def _a_contenu(conn, niveau: str, sequence: str, type_document: str) -> bool:
+def _a_contenu(conn, niveau: str, sequence: str, type_document: str,
+               perimetre: str | None = None) -> bool:
     """Un document « par séquence » n'est listé que si la séquence a de quoi
     le remplir (fiches de résumé, cartes validées) ; sinon le générateur
     échouerait à coup sûr (« aucune fiche »)."""
@@ -153,6 +190,10 @@ def _a_contenu(conn, niveau: str, sequence: str, type_document: str) -> bool:
     if type_document == "cartes_mentales_6e":                       # v0.55.0
         from services.cartes_mentales import cartes_de_sequence
         return bool(cartes_de_sequence(conn, niveau, sequence))
+    if perimetre == "objectifs" and type_document in ("livret_cartes_recap",
+                                                       "livret_cartes_planches"):
+        from services.fiches_cycle4 import cartes_du_perimetre        # v0.59.1
+        return bool(cartes_du_perimetre(conn, niveau, sequence, valides=True))
     if type_document == "livret_cartes_planches":
         return conn.execute("SELECT 1 FROM cartes_automatisme WHERE niveau=? AND sequence=? "
                             "AND etat_code='valide' LIMIT 1", (niveau, sequence)).fetchone() is not None
@@ -163,13 +204,19 @@ def _titre(c: dict) -> str:
     return (c.get("titre_doc") or "").replace(" --- ", " — ")
 
 
-def _instances(conn, niveau: str, sequence: str, ligne: DocumentSequence) -> list[tuple]:
-    """[(racine du nom, libellé, cible)] d'une ligne de table pour la séquence."""
+def _instances(conn, niveau: str, sequence: str, ligne: DocumentSequence,
+               perimetre: str | None = None) -> list[tuple]:
+    """[(racine du nom, libellé, cible)] d'une ligne de table pour la séquence.
+    v0.59.1 — `perimetre='objectifs'` (Fiches avec cartes) : porté par la
+    cible des documents de cartes."""
     from services import referentiel_documents_compilation as rdc
     base = {"niveau": niveau, "sequence": sequence}
     if ligne.portee == "sequence":
-        if not _a_contenu(conn, niveau, sequence, ligne.type_document):
+        if not _a_contenu(conn, niveau, sequence, ligne.type_document, perimetre):
             return []
+        if perimetre and ligne.type_document in ("livret_cartes_recap",
+                                                 "livret_cartes_planches"):
+            return [(ligne.racine, ligne.libelle, {**base, "perimetre": perimetre})]
         return [(ligne.racine, ligne.libelle, base)]
     if ligne.portee == "evaluations":
         evals = [c for c in rdc._cibles_evaluations_6e(conn, niveau)
@@ -191,13 +238,19 @@ def _instances(conn, niveau: str, sequence: str, ligne: DocumentSequence) -> lis
     raise SequenceToutCompilerErreur(f"portée inconnue : {ligne.portee!r}")
 
 
-def documents_a_compiler(conn, niveau: str, sequence: str, gabarit: str) -> list[dict]:
+def documents_a_compiler(conn, niveau: str, sequence: str, gabarit: str,
+                         cartes: bool | None = None) -> list[dict]:
     """D-LISTE — [{nom, libelle, type_document, producteur, cible, options}]
-    de la séquence, dans l'ordre de la table du modèle."""
+    de la séquence, dans l'ordre de la table du modèle.
+    v0.59.1 — `cartes` : None = d'après le référentiel de l'atelier
+    (`cartes_de_l_atelier`)."""
+    if cartes is None:
+        cartes = cartes_de_l_atelier(conn, niveau, gabarit)
+    perimetre = "objectifs" if cartes else None
     pre = prefixe(niveau, sequence)
     out: list[dict] = []
-    for ligne in table(gabarit):
-        for racine, libelle, cible in _instances(conn, niveau, sequence, ligne):
+    for ligne in table(gabarit, cartes):
+        for racine, libelle, cible in _instances(conn, niveau, sequence, ligne, perimetre):
             for suffixe, lib_decl, options in ligne.declinaisons:
                 nom = f"{pre}_{racine}" + (f"_{suffixe}" if suffixe else "") + ".pdf"
                 out.append({"nom": nom,

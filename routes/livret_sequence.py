@@ -276,6 +276,23 @@ def api_cartes_mentales(niveau: str, sequence: str):
                     'modifiable': bool(sn) and sn['etat_code'] != 'valide'})
 
 
+@bp.route('/api/v2/livret-sequence/<niveau>/<sequence>/encarts', methods=['GET'])
+def api_encarts(niveau: str, sequence: str):
+    """v0.59.2 — Encarts de la séquence (« Le saviez-vous ? »…), en lecture
+    seule : ils viennent des lots (clé `encarts`, import_lot6e) ; l'onglet
+    « Rendu PDF » les liste, le livret les place."""
+    from services import encarts as enc
+    erreur = _valider_niveau_sequence(niveau, sequence)
+    if erreur:
+        return erreur
+    with current_app.json_store._conn() as conn:
+        lignes = enc.encarts_de_sequence(conn, niveau, sequence)
+    champs = ("partie_numero", "objectif_code", "position", "exercice", "type", "titre",
+              "texte", "solution", "largeur", "source", "ordre")
+    return jsonify({'encarts': [{k: e.get(k) for k in champs} for e in lignes],
+                    'types': enc.TYPES, 'positions': enc.LIBELLES_POSITIONS})
+
+
 @bp.route('/api/v2/livret-sequence/<niveau>/cartes-mentales', methods=['GET'])
 def api_cartes_mentales_niveau(niveau: str):
     """v0.56.2 — Atelier « Carte mentale » sans séquence choisie (comme les
@@ -599,6 +616,35 @@ def _reponse_compilation(tex: str, config):
         'log_complet': resultat.log_complet,
         'duree_ms': resultat.duree_ms,
     }), code_http
+
+
+# ── v0.59.2 (V5) — Vue d'ensemble d'un référentiel, calculée à la volée ─────
+#
+# GET /api/v2/referentiel/<ref_id>/vue-ensemble/rendu-pdf (ou rendu-tex) :
+# tout référentiel, figé compris (instantané), interne ou externe. Rien n'est
+# écrit dans le dossier du référentiel (cache du compilateur seulement) :
+# documents figés et empreintes inchangés.
+
+@bp.route('/api/v2/referentiel/<ref_id>/vue-ensemble/rendu-tex', methods=['GET'])
+def api_vue_ensemble_tex(ref_id: str):
+    from services.vue_ensemble_referentiel import VueEnsembleErreur, generer_vue_ensemble
+    try:
+        with current_app.json_store._conn() as conn:
+            tex = generer_vue_ensemble(conn, ref_id)
+    except VueEnsembleErreur as e:
+        return jsonify({'error': 'referentiel_introuvable', 'message': str(e)}), 404
+    return Response(tex, mimetype='text/plain; charset=utf-8')
+
+
+@bp.route('/api/v2/referentiel/<ref_id>/vue-ensemble/rendu-pdf', methods=['GET'])
+def api_vue_ensemble_pdf(ref_id: str):
+    from services.vue_ensemble_referentiel import VueEnsembleErreur, generer_vue_ensemble
+    try:
+        with current_app.json_store._conn() as conn:
+            tex = generer_vue_ensemble(conn, ref_id)
+    except VueEnsembleErreur as e:
+        return jsonify({'error': 'referentiel_introuvable', 'message': str(e)}), 404
+    return _reponse_compilation(tex, _configuration())
 
 
 # ── v0.53.3 (D-TOUT) — « Tout compiler » d'une séquence de mise en route ─────

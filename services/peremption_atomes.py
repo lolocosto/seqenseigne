@@ -61,9 +61,10 @@ ATOMES_PAR_TYPE_DOCUMENT: dict[str, list[str]] = {
     'livret_cartes_planches': ['cartes_automatisme'],
     # v0.52.1 — gabarit « sixieme » (services/gabarits_documents.py).
     # v0.55.0 — + cartes mentales de partie (fin de partie du livret).
-    'livret_sequence_6e':     ['exercices', 'fiches_resume', 'cartes_mentales'],
+    # v0.59.2 — + encarts du livret (services/encarts.py, table `encarts`).
+    'livret_sequence_6e':     ['exercices', 'fiches_resume', 'cartes_mentales', 'encarts'],
     'fiches_cours_6e':        ['fiches_resume'],
-    'corriges_6e':            ['exercices', 'fiches_resume', 'cartes_mentales'],
+    'corriges_6e':            ['exercices', 'fiches_resume', 'cartes_mentales', 'encarts'],
     'cartes_mentales_6e':     ['cartes_mentales'],                     # v0.55.0
     # v0.52.2
     'evaluation_6e':          ['exercices', 'evaluations'],
@@ -78,6 +79,10 @@ ATOMES_PAR_TYPE_DOCUMENT: dict[str, list[str]] = {
     'mer_tests_courts_6e':    ['exercices', 'evaluations'],
     'mer_activites_6e':       ['exercices'],
     'mer_dossiers_6e':        ['exercices', 'fiches_resume', 'evaluations'],
+    # v0.59.2 (V1) — vue d'ensemble : structure du référentiel (séquences,
+    # parties, objectifs et leurs séances), tables sans mtime → jamais périmée
+    # par les atomes (comme livret_plans) ; « Tester » la recalcule.
+    'vue_ensemble':           [],
 }
 
 

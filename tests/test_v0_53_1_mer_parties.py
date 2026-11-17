@@ -498,7 +498,7 @@ def test_module_v0_10_fournit_les_macros_des_lots_car_macros_locales_ne_sont_pas
     appli = Path(__file__).resolve().parent.parent
     dtx = (appli / "paquet" / "seqenseigne-style6e.dtx").read_text(encoding="utf-8")
     sty = (appli / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
-    assert "v0.14 seqenseigne" in dtx and "v0.14 seqenseigne" in sty   # v0.53.3 : v0.11 (tableau de conversion) ; v0.54.3 : v0.12 ; v0.56.0 : v0.14
+    assert "v0.15 seqenseigne" in dtx and "v0.15 seqenseigne" in sty   # v0.53.3 : v0.11 (tableau de conversion) ; v0.54.3 : v0.12 ; v0.56.0 : v0.14 ; v0.59.2 : v0.15
     for m in ("seqDefinirTitreCM", "seqLocItemGeo"):
         assert m in style6e.MACROS
         assert "\\DescribeMacro{\\" + m + "}" in dtx

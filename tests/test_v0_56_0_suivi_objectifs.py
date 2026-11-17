@@ -48,11 +48,12 @@ def _seq(nb_parties=2, nb_objectifs=2, nom="Opérations"):
 # ── 5. Module v0.14 et liste de l'appli ─────────────────────────────────────
 
 def test_module_v0_14_definit_les_nouvelles_macros_et_l_appli_les_connait():
-    assert style6e.VERSION == "v0.14"
+    # v0.59.2 : v0.15 (encarts) garde ces macros ; la version citée suit le .dtx.
+    assert tuple(int(x) for x in style6e.VERSION[1:].split(".")) >= (0, 14)
     assert set(NOUVELLES) <= set(style6e.MACROS)
     for f in (DTX, STY):
         src = _src(f)
-        assert "v0.14 seqenseigne" in src
+        assert style6e.VERSION + " seqenseigne" in src
         for m in NOUVELLES:
             assert "\\NewDocumentCommand{\\" + m + "}" in src, (f.name, m)
 

@@ -189,8 +189,21 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
         """, (referentiel_id,)).fetchall() if r['type_document'] in types_gabarit]
 
     rows = _lire()
-    if not rows:
+    # v0.59.2 (V1) — la vue d'ensemble est commune à tous les modèles : elle
+    # ne compte pas pour savoir si les documents du modèle sont initialisés
+    # (sinon un changement de modèle ne créerait plus les lignes du nouveau).
+    if not [r for r in rows if r['type_document'] != gd.TYPE_VUE_ENSEMBLE.cle]:
         # Initialisation auto et relecture.
+        initialiser_documents_defaut(conn, referentiel_id)
+        rows = _lire()
+    elif (_types_cartes_manquants(conn, referentiel_id, types_gabarit, rows)
+          or _vue_ensemble_manquante(conn, referentiel_id, types_gabarit, rows)):
+        # v0.59.1 — Référentiel Fiches avec l'option cartes créé en v0.59.0 :
+        # ses lignes du modèle existent déjà, seuls le récap et les planches
+        # manquent (INSERT OR IGNORE : rien d'autre ne change).
+        # v0.59.2 (V1, V5) — de même pour la vue d'ensemble d'un référentiel
+        # modifiable créé avant elle ; un référentiel figé garde sa liste (sa
+        # vue d'ensemble est calculée à la volée).
         initialiser_documents_defaut(conn, referentiel_id)
         rows = _lire()
 
@@ -227,6 +240,35 @@ def lister_documents(conn: sqlite3.Connection, referentiel_id: str,
     return out
 
 
+def _types_cartes_manquants(conn, referentiel_id: str, types_gabarit, rows) -> bool:
+    """v0.59.1 — Vrai si le catalogue du référentiel compte le récap ou les
+    planches de cartes (modèle Fiches + option cartes) sans ligne en base, et
+    que le référentiel est encore modifiable (« en_cours », « valide ») : un
+    référentiel figé garde sa liste."""
+    from services.gabarits_documents import TYPES_CARTES, ETATS_MODIFIABLES
+    from services.fiches_cycle4 import perimetre_cartes_objectifs
+    presents = {r['type_document'] for r in rows}
+    if not any(t in types_gabarit and t not in presents for t in TYPES_CARTES):
+        return False
+    if not perimetre_cartes_objectifs(conn, referentiel_id):
+        return False                    # cycle 4 : liste historique, inchangée
+    r = conn.execute("SELECT etat FROM referentiel_niveaux WHERE id = ?",
+                     (referentiel_id,)).fetchone()
+    return r is not None and r[0] in ETATS_MODIFIABLES
+
+
+def _vue_ensemble_manquante(conn, referentiel_id: str, types_gabarit, rows) -> bool:
+    """v0.59.2 — Vrai si la vue d'ensemble est au catalogue sans ligne en base
+    et que le référentiel est encore modifiable (« en_cours », « valide »)."""
+    from services.gabarits_documents import ETATS_MODIFIABLES, TYPE_VUE_ENSEMBLE
+    cle = TYPE_VUE_ENSEMBLE.cle
+    if cle not in types_gabarit or cle in {r['type_document'] for r in rows}:
+        return False
+    r = conn.execute("SELECT etat FROM referentiel_niveaux WHERE id = ?",
+                     (referentiel_id,)).fetchone()
+    return r is not None and r[0] in ETATS_MODIFIABLES
+
+
 def initialiser_documents_defaut(conn: sqlite3.Connection,
                                  referentiel_id: str) -> None:
     """Insère les entrées par défaut du gabarit de ce référentiel (les 9
@@ -236,7 +278,22 @@ def initialiser_documents_defaut(conn: sqlite3.Connection,
     Appelable en toute sécurité à plusieurs reprises.
     """
     from services import gabarits_documents as gd
-    for i, t in enumerate(gd.catalogue_du_referentiel(conn, referentiel_id), start=1):
+    # v0.59.2 (V1) — la vue d'ensemble, en tête de catalogue, prend l'ordre 0 :
+    # les autres documents gardent leurs numéros d'ordre (1, 2, …). (V5) Un
+    # référentiel figé (verrouillé, utilisé) ne la reçoit jamais en base : sa
+    # vue d'ensemble se calcule à la volée.
+    e = conn.execute("SELECT etat FROM referentiel_niveaux WHERE id = ?",
+                     (referentiel_id,)).fetchone()
+    fige = e is not None and e[0] not in gd.ETATS_MODIFIABLES
+    i = 0
+    for t in gd.catalogue_du_referentiel(conn, referentiel_id):
+        if t.cle == gd.TYPE_VUE_ENSEMBLE.cle:
+            if fige:
+                continue
+            ordre = gd.ORDRE_VUE_ENSEMBLE
+        else:
+            i += 1
+            ordre = i
         conn.execute("""
             INSERT OR IGNORE INTO referentiel_documents
                 (id, referentiel_id, type_document, options, ordre)
@@ -246,7 +303,7 @@ def initialiser_documents_defaut(conn: sqlite3.Connection,
             referentiel_id,
             t.cle,
             json.dumps(t.options_par_defaut(), ensure_ascii=False),
-            i,
+            ordre,
         ))
     conn.commit()
 

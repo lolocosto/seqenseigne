@@ -377,18 +377,66 @@ MODELE_MER = {
 }
 
 
+# ── v0.59.2 — Vue d'ensemble du référentiel (tous les catalogues) ──────────
+#
+# Demande de Laurent du 17 novembre : un document chapeau, pour l'enseignant,
+# généré automatiquement pour tous les référentiels
+# (services/vue_ensemble_referentiel.py, décisions V1 à V5). Clé nouvelle
+# (G3), ajoutée en TÊTE de chaque catalogue (ordre 0 en base : les autres
+# documents gardent leur ordre), décochée, sans option. Pas dans
+# `referentiel_documents.TYPES_DOCUMENT` (les 9 types historiques du cycle 4
+# et leur interface propre) : interface générique de l'onglet.
+TYPE_VUE_ENSEMBLE = TypeDocument(
+    cle="vue_ensemble",
+    libelle="Vue d'ensemble du référentiel",
+    description=("Pour l'enseignant : par domaine, les séquences, la durée de chaque "
+                 "partie en semaines (3 séances = 1 semaine) et ses objectifs avec "
+                 "leurs séances ; totaux par séquence, par domaine et pour l'année."),
+    options={"actif": False},
+    generateur="services.vue_ensemble_referentiel.generer_vue_ensemble",
+)
+ORDRE_VUE_ENSEMBLE = 0
+
+
+def _avec_vue(cat: tuple) -> tuple:
+    return (TYPE_VUE_ENSEMBLE,) + tuple(cat)
+
+
 def catalogue(gabarit: str) -> tuple:
-    """Types de documents du gabarit, dans l'ordre d'affichage."""
+    """Types de documents du gabarit, dans l'ordre d'affichage.
+    v0.59.2 — la vue d'ensemble en tête."""
     g = normaliser(gabarit)
-    return _catalogue_cycle4() if g == "cycle4" else _CATALOGUE_SIXIEME
+    return _avec_vue(_catalogue_cycle4() if g == "cycle4" else _CATALOGUE_SIXIEME)
 
 
-def catalogue_type(gabarit: str, type_ref: str | None) -> tuple:
+# ── v0.59.1 — Option « cartes d'automatisme » du modèle Fiches ──────────────
+#
+# Signalement du 17 novembre : un référentiel principal au modèle Fiches créé
+# avec l'option cartes (v0.59.0, `fiches_cycle4.option_cartes`) ne proposait
+# ni le récap ni les planches. Avec l'option, le catalogue Fiches reçoit, en
+# fin de liste, les deux types du cycle 4 **sous leurs clés** (G3 : mêmes
+# chaînes `type|cible` côté classe, mêmes options, mêmes producteurs) ; leurs
+# cibles et leurs cartes suivent alors les rattachements aux objectifs
+# (`referentiel_documents_compilation`, `fiches_cycle4.cartes_du_perimetre`).
+# Sans l'option, en 6e comme ailleurs, le catalogue Fiches est inchangé.
+TYPES_CARTES = ("livret_cartes_recap", "livret_cartes_planches")
+
+
+def _types_cartes() -> tuple:
+    return tuple(t for t in _catalogue_cycle4() if t.cle in TYPES_CARTES)
+
+
+def catalogue_type(gabarit: str, type_ref: str | None, cartes: bool = False) -> tuple:
     """v0.54.0 (RI6) — Catalogue d'un référentiel selon son modèle **et son
     type** : une mise en route au modèle « Fiches » publie les documents de
-    mise en route ; tout le reste est inchangé (gabarit seul)."""
-    if (type_ref or "principal") == "mer" and normaliser(gabarit) == "sixieme":
-        return _CATALOGUE_MER_FICHES
+    mise en route ; tout le reste est inchangé (gabarit seul).
+    v0.59.1 — `cartes` (option du référentiel) : un principal au modèle Fiches
+    publie en plus le récap et les planches de cartes d'automatisme."""
+    tr = type_ref or "principal"
+    if tr == "mer" and normaliser(gabarit) == "sixieme":
+        return _avec_vue(_CATALOGUE_MER_FICHES)                      # v0.59.2
+    if cartes and tr == "principal" and normaliser(gabarit) == "sixieme":
+        return _avec_vue(_CATALOGUE_SIXIEME + _types_cartes())       # v0.59.2
     return catalogue(gabarit)
 
 
@@ -418,9 +466,12 @@ def type_du_referentiel_ref(conn, ref_id: str) -> str:
 
 
 def catalogue_du_referentiel(conn, ref_id: str) -> tuple:
-    """v0.54.0 (RI6) — Catalogue du référentiel (modèle et type)."""
+    """v0.54.0 (RI6) — Catalogue du référentiel (modèle et type) ;
+    v0.59.1 : et son option « cartes d'automatisme »."""
+    from services.fiches_cycle4 import option_cartes
     return catalogue_type(gabarit_du_referentiel(conn, ref_id),
-                          type_du_referentiel_ref(conn, ref_id))
+                          type_du_referentiel_ref(conn, ref_id),
+                          option_cartes(conn, ref_id))
 
 
 def type_document(cle: str) -> TypeDocument | None:

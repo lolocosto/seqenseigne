@@ -1625,6 +1625,14 @@ class SqliteStore:
             conn.commit()
         except Exception as _e:                       # pragma: no cover
             print(f"  [fiches_cycle4] migration impossible : {_e}")
+        # ── v0.59.2 (E2) — Encarts du livret (« Le saviez-vous ? »…) : table
+        #    `encarts` (vide dans une base existante : rien ne change) ─
+        try:
+            from services import encarts as _enc
+            _enc.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [encarts] migration impossible : {_e}")
 
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 

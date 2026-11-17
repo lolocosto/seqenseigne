@@ -214,7 +214,8 @@ def test_d2_validation_figeage_et_publication_ignorent_les_documents_de_l_autre_
                             lambda conn, did, rid, t: publies.append(t) or [])
         ref = dict(c.execute("SELECT * FROM referentiel_niveaux WHERE id='R09'").fetchone())
         fmt._documents_compiles(c, ref, app_6e.json_store.data_dir, [])
-    assert publies and not set(publies) & set(gd.types("cycle4"))
+    # v0.59.2 (V1) : la vue d'ensemble est commune aux deux modèles.
+    assert publies and not set(publies) & (set(gd.types("cycle4")) - set(gd.types("sixieme")))
 
 
 # ── 4. M3 : validation du référentiel au modèle « Fiches » ──────────────────
@@ -425,7 +426,7 @@ def test_t1_module_style6e_v0_5_sans_6e_en_dur_dans_les_en_tetes():
     # v0.52.5 : module en v0.6 (macros du lot S05) ; v0.52.7 : v0.7 ; v0.52.8 : v0.8
     # (marqueurs de l'exercice) ; T1 reste en place.
     # v0.53.0 : module v0.9 (\seqLocItemCM, lot M01), qui garde tout ce qui précède.
-    assert "v0.14 seqenseigne" in dtx and "v0.14 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11 ; v0.54.3 : v0.12 ; v0.55.0 : v0.13 ; v0.56.0 : v0.14
+    assert "v0.15 seqenseigne" in dtx and "v0.15 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11 ; v0.54.3 : v0.12 ; v0.55.0 : v0.13 ; v0.56.0 : v0.14 ; v0.59.2 : v0.15
     assert r"\changes{v0.5}" in dtx
     for src in (dtx, sty):
         assert r"\newcommand{\seqNiveauCourt}{6e}" in src

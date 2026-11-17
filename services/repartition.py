@@ -57,6 +57,7 @@ TABLES_ATELIER = (
     "evaluations", "evaluation_exercices", "evaluation_objectifs", "etats_edition", "images",
     "ui_etat_atelier_sequence",
     "cartes_mentales",                                                   # v0.55.0
+    "encarts",                                                           # v0.59.2
     "archivages_structure",          # v0.59.0 : marque d'archivage de la structure de 2025
     # Mise en forme LaTeX (tables créées par l'import du paquet)
     "paquet_definitions", "paquet_requirepackage",

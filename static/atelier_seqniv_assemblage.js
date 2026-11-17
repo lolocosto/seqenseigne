@@ -271,6 +271,11 @@
                   title="Créer ou modifier les cartes dans l'atelier « Carte mentale » (portée Séquence)">✏️ Modifier dans l'atelier Carte mentale</button>
           <span id="livret-seq-cm-etat"></span>
         </div>
+        <!-- v0.59.2 — encarts du livret (« Le saviez-vous ? »…) : lecture seule, importés des lots. -->
+        <details id="livret-seq-encarts" style="display:none;font-size:12px;margin:2px 0 8px">
+          <summary id="livret-seq-encarts-titre">Encarts du livret</summary>
+          <div id="livret-seq-encarts-liste"></div>
+        </details>
         <!-- v0.53.1 (MR6 révisé) — contrôle de la séquence de mise en route, par partie. -->
         <div id="livret-seq-mer-controle" style="display:none;font-size:12px;margin:4px 0 8px"></div>
         <div class="livret-seq-rendu" id="livret-seq-rendu">
@@ -2937,6 +2942,52 @@
       const avecCartes = !this._estMer();
       if (cm) cm.style.display = avecCartes ? 'flex' : 'none';
       if (avecCartes) this.cmCharger();
+      if (avecCartes) this.encartsCharger(); else this._encartsAfficher(null);   // v0.59.2
+    }
+
+    // ── v0.59.2 — Encarts du livret (lecture seule) ──────────────────────────
+    //
+    // GET /api/v2/livret-sequence/<niveau>/<séquence>/encarts. Les encarts
+    // viennent des lots (clé « encarts », outils/import_lot6e.py) : pas
+    // d'édition dans l'atelier ; le livret (élève et corrigé) les place.
+
+    async encartsCharger() {
+      const sn = this._sn();
+      if (!sn) return this._encartsAfficher(null);
+      let rep;
+      try {
+        rep = await apiJson('GET', `/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
+          + `${encodeURIComponent(sn.sequence_code)}/encarts`);
+      } catch (_) { return this._encartsAfficher(null); }
+      this._encartsAfficher(rep && rep.ok ? rep.data : null);
+    }
+
+    _encartsAfficher(data) {
+      const bloc = document.getElementById('livret-seq-encarts');
+      if (!bloc) return;
+      const liste = (data && data.encarts) || [];
+      bloc.style.display = liste.length ? '' : 'none';
+      if (!liste.length) return;
+      const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const types = data.types || {};
+      const pos = data.positions || {};
+      const titre = document.getElementById('livret-seq-encarts-titre');
+      if (titre) titre.textContent = `Encarts du livret (${liste.length}) — lecture seule, importés des lots`;
+      const cont = document.getElementById('livret-seq-encarts-liste');
+      if (cont) cont.innerHTML = liste.map(e => {
+        const ou = e.objectif_code
+          ? `objectif ${esc(e.objectif_code)}, ${esc(pos[e.position] || e.position)}`
+            + (e.exercice ? ` ${esc(e.exercice)}` : '')
+          : `partie ${esc(e.partie_numero)}, ${esc(pos[e.position] || e.position)}`;
+        return `<div class="atl-cadre atl-cadre--compact" style="margin:4px 0">
+          <div class="atl-cadre-titre">${esc(types[e.type] || e.type)}${e.titre ? ' — ' + esc(e.titre) : ''}
+            <span class="rx-petit">(${ou}${e.largeur === 'demi' ? ', demi-largeur' : ''})</span></div>
+          <pre style="white-space:pre-wrap;margin:2px 0">${esc(e.texte)}</pre>
+          ${e.solution ? `<div><strong>Solution (corrigé) :</strong> <code>${esc(e.solution)}</code></div>` : ''}
+          ${e.source ? `<div class="rx-petit">Source : ${esc(e.source)}</div>` : ''}
+        </div>`;
+      }).join('');
     }
 
     // ── v0.55.0 — Cartes mentales de partie ──────────────────────────────────

@@ -530,7 +530,11 @@ def _produire_livret_corriges(conn, cible, options, tikz, tblr):
 
 @enregistrer_producteur('livret_cartes_recap')
 def _produire_livret_cartes_recap(conn, cible, options, tikz, tblr):
-    """Producteur du récap cartes (enseignant)."""
+    """Producteur du récap cartes (enseignant).
+
+    v0.59.1 — cible `perimetre='objectifs'` (référentiel Fiches avec l'option
+    cartes, « Tout compiler » d'une séquence de ce modèle) : cartes rattachées
+    aux objectifs, de la séquence de la cible ou de tout le principal."""
     from services.livret_cartes_recap import generer_livret_cartes_recap
     niveau = cible.get('niveau')
     if not niveau:
@@ -538,6 +542,10 @@ def _produire_livret_cartes_recap(conn, cible, options, tikz, tblr):
             f"livret_cartes_recap requiert niveau : reçu {cible!r}",
             code='cible_invalide',
         )
+    if cible.get('perimetre') == 'objectifs':                         # v0.59.1
+        return generer_livret_cartes_recap(
+            conn, niveau, options=options, tikz_libraries=tikz, tblr_libraries=tblr,
+            sequence=cible.get('sequence'), perimetre='objectifs')
     return generer_livret_cartes_recap(
         conn, niveau,
         options=options,
@@ -561,6 +569,10 @@ def _produire_livret_cartes_planches(conn, cible, options, tikz, tblr):
             f"livret_cartes_planches requiert niveau : reçu {cible!r}",
             code='cible_invalide',
         )
+    if cible.get('perimetre') == 'objectifs':                         # v0.59.1
+        return generer_livret_cartes_planches(
+            conn, niveau, options=options, sequence=cible.get('sequence'),
+            tikz_libraries=tikz, tblr_libraries=tblr, perimetre='objectifs')
     return generer_livret_cartes_planches(
         conn, niveau,
         options=options,
@@ -726,3 +738,20 @@ def _produire_document_mer(type_document: str):
 for _type_doc_mer in ('mer_fiches_cours_6e', 'mer_seances_6e', 'mer_tests_courts_6e',
                       'mer_activites_6e', 'mer_dossiers_6e'):
     enregistrer_producteur(_type_doc_mer)(_produire_document_mer(_type_doc_mer))
+
+
+# ── v0.59.2 (V1) — Vue d'ensemble du référentiel (tous les catalogues) ──────
+
+
+@enregistrer_producteur('vue_ensemble')
+def _produire_vue_ensemble(conn, cible, options, tikz, tblr):
+    """Vue d'ensemble : une cible unique, le référentiel du document."""
+    from services.vue_ensemble_referentiel import VueEnsembleErreur, generer_vue_ensemble
+    ref_id = cible.get('referentiel_id')
+    if not ref_id:
+        raise ProducteurErreur(f"vue_ensemble requiert referentiel_id : reçu {cible!r}",
+                               code='cible_invalide')
+    try:
+        return generer_vue_ensemble(conn, ref_id)
+    except VueEnsembleErreur as e:
+        raise ProducteurErreur(str(e), code='referentiel_introuvable') from e

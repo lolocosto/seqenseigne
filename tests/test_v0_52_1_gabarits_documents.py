@@ -198,9 +198,10 @@ def test_preambule_sans_marges_explicites_inchange_pour_le_cycle4():
 
 def test_catalogue_cycle4_reprend_les_9_cles_et_options_car_les_chaines_type_cible_sont_enregistrees():
     """G3 : mêmes clés, mêmes options, même ordre que referentiel_documents."""
+    # v0.59.2 (V1) : la vue d'ensemble (clé nouvelle) en tête de tous les catalogues.
     cat = gd.catalogue("cycle4")
-    assert [t.cle for t in cat] == list(rd.TYPES_DOCUMENT)
-    for t in cat:
+    assert [t.cle for t in cat] == ["vue_ensemble"] + list(rd.TYPES_DOCUMENT)
+    for t in cat[1:]:
         assert t.options == rd.OPTIONS_PAR_DEFAUT[t.cle]
     # v0.52.2 : + évaluations, travaux personnels, activités complémentaires,
     # séances d'atelier (clés nouvelles, aucune renommée).
@@ -208,7 +209,8 @@ def test_catalogue_cycle4_reprend_les_9_cles_et_options_car_les_chaines_type_cib
                                         "evaluation_6e", "travaux_personnels_6e",
                                         "activites_complementaires_6e", "seances_atelier_6e",
                                         "plans_travail_6e",   # v0.52.3
-                                        "cartes_mentales_6e"}  # v0.55.0
+                                        "cartes_mentales_6e",  # v0.55.0
+                                        "vue_ensemble"}        # v0.59.2 (V1)
     assert not set(gd.types("sixieme")) & set(rd.TYPES_DOCUMENT)
 
 
@@ -304,13 +306,14 @@ def test_onglet_documents_ne_liste_que_le_gabarit_et_garde_l_autre_en_base(app_6
         docs = rd.lister_documents(c, "R09")
         assert [d["type_document"] for d in docs] == list(gd.types("sixieme"))
         # v0.52.4 (M1) : les libellés du catalogue perdent « (6e) ».
-        assert docs[0]["libelle"] == "Livret de séquence" and docs[0]["champs"]
+        # v0.59.2 (V1) : docs[0] est la vue d'ensemble (ordre 0, commune aux modèles).
+        assert docs[1]["libelle"] == "Livret de séquence" and docs[1]["champs"]
         gd.modifier(c, "R09", "cycle4")
         assert [d["type_document"] for d in rd.lister_documents(c, "R09")] == \
-            list(rd.TYPES_DOCUMENT)
+            ["vue_ensemble"] + list(rd.TYPES_DOCUMENT)
         assert c.execute("SELECT COUNT(*) FROM referentiel_documents WHERE referentiel_id="
                          "'R09'").fetchone()[0] == 9 + len(gd.types("sixieme"))
-        assert "libelle" not in rd.lister_documents(c, "R09")[0]       # cycle 4 inchangé
+        assert "libelle" not in rd.lister_documents(c, "R09")[1]       # cycle 4 inchangé
 
 
 def test_gabarit_fige_hors_en_cours_car_il_est_fige_au_verrouillage(app_6e):

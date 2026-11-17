@@ -268,6 +268,10 @@ function _refuRendreDetailExterne() {
     ext.innerHTML = r ? `<div class="rxa-aide">Référentiel externe : séquences → parties → objectifs
       (connaissance, capacités ; critères F/A/E) ; documents par séquence, par partie, annuels.
       Une séquence commencée ne se modifie plus (libellés et ajout de documents seulement).</div>
+      <div style="margin:4px 0 8px;font-size:12px"><a class="btn-sm" target="_blank" rel="noopener"
+        href="/api/v2/referentiel/${encodeURIComponent(id)}/vue-ensemble/rendu-pdf"
+        title="Par domaine : séquences, parties (semaines : 3 séances = 1 semaine), objectifs et séances">
+        📋 Vue d'ensemble (PDF)</a></div>
       ${_rpeRef(r)}` : '';
   }
   const empty = document.getElementById('atl-ref-empty');

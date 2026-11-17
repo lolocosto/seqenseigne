@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/11/13 v0.14 seqenseigne : style des documents de 6e]
+    [2026/11/17 v0.15 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,12 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.15}{2026/11/17}{Encarts du livret d'exercices :
+%   environnement \texttt{seqEncartSix} (« Le saviez-vous ? », « Point
+%   histoire », « Les maths dans la vraie vie », « Défi »), un pictogramme et
+%   une couleur par type, pleine largeur ou demi-largeur, insécable ;
+%   \cs{seqSolutionDefiSix} (solution d'un défi, version corrigée seulement) ;
+%   pictogrammes \cs{seqPictoEncartSix}}
 % \changes{v0.14}{2026/11/13}{Carte mentale à sa taille naturelle (plus
 %   d'étirement sur la page) ; cadre de la fiche de résumé insécable ;
 %   \cs{seqSepColonnesSix}, trait entre deux colonnes d'un énoncé ; page de
@@ -521,6 +527,48 @@
 % disponible, elle est étirée en hauteur (les branches s'écartent) pour occuper toute
 % cette place. Elle ne coupe donc jamais une page ; un contenu très chargé donne
 % seulement une carte plus petite.
+%
+% \subsection{Encarts du livret (v0.15)}
+% \DescribeEnv{seqEncartSix}\DescribeMacro{\seqSolutionDefiSix}
+% Un encart est un petit cadre glissé entre deux exercices du livret, quand il a un
+% sens : une curiosité, un repère historique, une situation de la vie courante, un
+% défi. Il n'y a pas de nombre d'encarts à atteindre.
+% \begin{verbatim}
+% \begin{seqEncartSix}[demi]{histoire}{Le zéro}
+%   Les savants indiens écrivent le zéro comme un vrai nombre ...
+% \end{seqEncartSix}
+% \end{verbatim}
+% Le premier argument obligatoire est le \meta{type} :
+% \begin{center}\small
+% \begin{tabular}{lll}
+% \meta{type} & titre affiché & pictogramme et couleur\\\hline
+% \texttt{savoir} & Le saviez-vous ? & point d'interrogation, bleu\\
+% \texttt{histoire} & Point histoire & sablier, brun\\
+% \texttt{vraievie} & Les maths dans la vraie vie & maison, vert\\
+% \texttt{defi} & Défi & étoile, orange\\
+% \end{tabular}
+% \end{center}
+% Le second est le \meta{titre} de l'encart (il peut être vide). L'argument
+% optionnel règle la largeur : \texttt{pleine} (par défaut) ou \texttt{demi}
+% (48,5\,\% de la ligne). Deux encarts \texttt{demi} écrits l'un après l'autre,
+% séparés par \cs{hfill} et sans ligne vide, se placent côte à côte ; c'est ce que
+% fait l'appli. Un type inconnu est une erreur de compilation qui nomme les quatre
+% types permis.
+%
+% Le cadre est léger : filet fin et fond très clair de la couleur du type, bandeau
+% de titre avec le pictogramme et le nom du type en gras. La police est celle du
+% document : la variété vient de la forme (pictogramme, couleur, largeur), pas de la
+% police. Le pictogramme et le nom du type rendent l'encart reconnaissable imprimé
+% en noir et blanc. Un encart ne se coupe jamais entre deux pages ; il compte une
+% demi-douzaine de lignes au plus.
+%
+% \cs{seqSolutionDefiSix}\marg{texte}, dans un encart \texttt{defi}, donne la
+% solution : rien en version élève, « Solution : » suivi du texte en rouge en version
+% corrigée (\cs{seqVersionCorrigee}).
+%
+% \DescribeMacro{\seqPictoEncartSix}
+% \cs{seqPictoEncartSix}\marg{type} dessine le pictogramme seul (traits noirs ou de
+% la couleur courante, hauteur des majuscules).
 %
 % \StopEventually{}
 %
@@ -2164,6 +2212,82 @@
 \cs_new:Npn \__seqsix_cm_virgule:n #1 { #1 , }
 \cs_generate_variant:Nn \__seqsix_cm_colonne:nnnn { x }
 \ExplSyntaxOff
+%    \end{macrocode}
+% \end{macro}\end{environment}
+%
+% \subsection{Encarts du livret (v0.15)}
+% \begin{macro}{\seqPictoEncartSix}
+% \changes{v0.15}{2026/11/17}{Pictogrammes des encarts}
+% Quatre dessins au trait, à la hauteur des majuscules : point d'interrogation dans
+% un cercle (\texttt{savoir}), sablier (\texttt{histoire}), maison
+% (\texttt{vraievie}), étoile à cinq branches (\texttt{defi}). Ils suivent la
+% couleur courante.
+%    \begin{macrocode}
+\newcommand{\seq@picto@savoir}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt]{%
+  \draw (0.42,0.36) circle[radius=0.36];
+  \node[inner sep=0pt, font=\bfseries\scriptsize] at (0.42,0.36) {?};}}
+\newcommand{\seq@picto@histoire}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt, line join=round]{%
+  \draw (0.12,0.72) -- (0.68,0.72) (0.12,0.0) -- (0.68,0.0);
+  \draw (0.18,0.72) -- (0.36,0.40) -- (0.36,0.32) -- (0.18,0.0)
+        (0.62,0.72) -- (0.44,0.40) -- (0.44,0.32) -- (0.62,0.0);
+  \fill (0.24,0.04) -- (0.56,0.04) -- (0.40,0.22) -- cycle;}}
+\newcommand{\seq@picto@vraievie}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt, line join=round]{%
+  \draw (0.04,0.38) -- (0.42,0.74) -- (0.80,0.38);
+  \draw (0.14,0.46) -- (0.14,0.0) -- (0.70,0.0) -- (0.70,0.46);
+  \draw (0.34,0.0) -- (0.34,0.24) -- (0.50,0.24) -- (0.50,0.0);}}
+\newcommand{\seq@picto@defi}{\tikz[baseline=0pt, x=1em, y=1em,
+    line width=0.55pt, line join=round]{%
+  \draw (0.42,0.74) -- (0.51,0.47) -- (0.80,0.47) -- (0.57,0.30)
+        -- (0.65,0.02) -- (0.42,0.19) -- (0.19,0.02) -- (0.27,0.30)
+        -- (0.04,0.47) -- (0.33,0.47) -- cycle;}}
+\newcommand{\seqPictoEncartSix}[1]{%
+  \ifcsname seq@picto@#1\endcsname\csname seq@picto@#1\endcsname
+  \else\seq@encart@inconnu{#1}\fi}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{environment}{seqEncartSix}\begin{macro}{\seqSolutionDefiSix}
+% \changes{v0.15}{2026/11/17}{\texttt{seqEncartSix} et \cs{seqSolutionDefiSix}}
+% Couleurs propres (\texttt{seqSixEncartSavoir}, \dots) ; le nom affiché de chaque
+% type est rangé dans \cs{seq@encart@nom@}\meta{type}. L'encart est une
+% \texttt{tcolorbox} insécable ; en demi-largeur, elle ne termine pas le paragraphe
+% (\texttt{nobeforeafter}), ce qui permet d'en placer deux côte à côte.
+%    \begin{macrocode}
+\definecolor{seqSixEncartSavoir}{HTML}{1F5FA8}
+\definecolor{seqSixEncartHistoire}{HTML}{8B5A2B}
+\definecolor{seqSixEncartVraievie}{HTML}{2E8B3A}
+\definecolor{seqSixEncartDefi}{HTML}{E07B00}
+\newcommand{\seq@encart@nom@savoir}{Le saviez-vous ?}
+\newcommand{\seq@encart@nom@histoire}{Point histoire}
+\newcommand{\seq@encart@nom@vraievie}{Les maths dans la vraie vie}
+\newcommand{\seq@encart@nom@defi}{Défi}
+\newcommand{\seq@encart@couleur@savoir}{seqSixEncartSavoir}
+\newcommand{\seq@encart@couleur@histoire}{seqSixEncartHistoire}
+\newcommand{\seq@encart@couleur@vraievie}{seqSixEncartVraievie}
+\newcommand{\seq@encart@couleur@defi}{seqSixEncartDefi}
+\newcommand{\seq@encart@inconnu}[1]{%
+  \PackageError{seqenseigne-style6e}{Type d'encart inconnu : #1}%
+    {Types permis : savoir, histoire, vraievie, defi.}}
+\tcbset{seq@encart@pleine/.style={before skip=6pt, after skip=6pt},
+  seq@encart@demi/.style={width=0.485\linewidth, nobeforeafter, box align=top}}
+\NewDocumentEnvironment{seqEncartSix}{O{pleine} m m}{%
+  \ifcsname seq@encart@nom@#2\endcsname\else\seq@encart@inconnu{#2}\fi
+  \edef\seq@encart@coul{\csname seq@encart@couleur@#2\endcsname}%
+  \begin{tcolorbox}[enhanced, unbreakable, colback=\seq@encart@coul!5,
+      colframe=\seq@encart@coul, boxrule=0.6pt, arc=2pt,
+      left=5pt, right=5pt, top=3pt, bottom=3pt, seq@encart@#1,
+      fontupper=\small,
+      title={\textcolor{\seq@encart@coul}{\seqPictoEncartSix{#2}}\ %
+        \textcolor{\seq@encart@coul}{\bfseries\csname seq@encart@nom@#2\endcsname}%
+        \if\relax\detokenize{#3}\relax\else\ --- {\bfseries #3}\fi},
+      coltitle=black, colbacktitle=\seq@encart@coul!14,
+      titlerule=0pt, toptitle=1pt, bottomtitle=1pt]}{%
+  \end{tcolorbox}}
+\newcommand{\seqSolutionDefiSix}[1]{%
+  \ifseq@corrige\par\smallskip{\color{seqSixRouge}\textbf{Solution :} #1}\par\fi}
 %    \end{macrocode}
 % \end{macro}\end{environment}
 %

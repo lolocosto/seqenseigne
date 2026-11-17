@@ -21,6 +21,28 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.59.2 — 2026-11-17 : `seqenseigne-style6e` v0.15 (encarts du livret)
+
+- Environnement `seqEncartSix`[`pleine`|`demi`]{*type*}{*titre*} : « Le saviez-vous ? »
+  (`savoir`, bleu, point d'interrogation), « Point histoire » (`histoire`, brun, sablier),
+  « Les maths dans la vraie vie » (`vraievie`, vert, maison), « Défi » (`defi`, orange,
+  étoile) ; cadre léger, police du document, insécable ; demi-largeur 48,5 % (deux encarts
+  côte à côte) ; type inconnu : erreur de compilation qui nomme les types permis.
+- `\seqSolutionDefiSix{…}` : solution d'un défi, version corrigée seulement ;
+  `\seqPictoEncartSix{type}` : pictogramme seul. Couleurs `seqSixEncartSavoir`,
+  `seqSixEncartHistoire`, `seqSixEncartVraievie`, `seqSixEncartDefi`.
+- Seul `seqenseigne-style6e.sty` change à la régénération (`tex seqenseigne.ins`).
+- La vue d'ensemble du référentiel (appli) n'utilise pas le paquet (document autonome).
+
+## Appli v0.59.1 — 2026-11-17 : aucune modification du paquet
+
+- Récap et planches de cartes d'automatisme pour un référentiel au modèle « Fiches » avec
+  l'option cartes : mêmes macros (`seqCarteRecap`, `\seqCarteRecapAjouteLigneCartes`,
+  `\seqCartePlanche`) ; verso des planches toujours mis en miroir côté Python (v0.56.1).
+  Constat : la clé `nom` de `\seqCarteAutomatisme` est déclarée mais jamais composée.
+
+---
+
 ## Appli v0.59.0 — 2026-11-16 : aucune modification du paquet
 
 - Référentiel de 4e au modèle « Fiches » : le module `seqenseigne-style6e` (v0.14) sert tel

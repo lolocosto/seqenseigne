@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.59.0** (dernière livrée ; v0.58.2 déployée et poussée, migration complète chez Laurent le 16 novembre). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.59.2** (dernière livrée ; v0.59.1 livrée, v0.59.0 déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -316,6 +316,27 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   2025_N11b ni déverrouillable ni recompilable après l'archivage ; livret de cours de 5e
   et de 3e sans les archives de la 4e. Lot d'essai `tests/donnees/lot4e_essai`. Détails et
   marche à suivre : `doc/redemarrage_v0_59_0.md`.
+- v0.59.1 livrée (17 novembre, signalement de Laurent) : un principal au modèle Fiches
+  **avec l'option cartes** publie le **récap** et les **planches** de cartes d'automatisme
+  (clés du cycle 4 ; ajoutés à la première lecture au référentiel 2027_N11 déjà créé) :
+  planches par séquence, récap annuel et par séquence, cartes **validées rattachées aux
+  objectifs** (cartes de 5e reprises comprises), verso en miroir, couleur du thème ; aussi
+  dans « Tout compiler » d'une séquence. Import des lots : le lot fait foi pour les cartes
+  qu'il cite (lien vers un autre objectif de la même séquence retiré, signalé par l'essai à
+  blanc ; jamais pour une carte validée). Titre de carte : `& % # _` échappés
+  (`latex_texte.speciaux_latex`). Sans l'option, 6e, cycle 4 et référentiels figés :
+  sorties identiques (banc, 5 030 sorties). pytest 5049 réussis, 8 sautés (+18) ; vitest
+  392 (42 fichiers). Détails : `doc/redemarrage_v0_59_1.md`.
+- v0.59.2 livrée (17 novembre, demandes de Laurent) : **vue d'ensemble du référentiel**
+  (type `vue_ensemble` en tête de tous les catalogues, ordre 0 ; par domaine : séquences,
+  parties en semaines — 3 séances = 1 semaine, non-multiple signalé —, objectifs et séances ;
+  instantané pour un figé, atelier sinon ; calculée à la volée pour un figé, sans rien
+  écrire) ; clés de lot `seances` / `seances_cours` (lots de 4e complétés : 90 séances, 30
+  semaines ; 6e : séances du principal non fixées) ; **encarts** du livret (module
+  `seqenseigne-style6e` v0.15, `seqEncartSix` : savoir, histoire, vraievie, defi ; table
+  `encarts`, clé de lot `encarts`, lecture seule dans l'atelier ; format
+  `lot6e/FORMAT_ENCARTS.md`) ; horodatage de l'import en UTC. Détails :
+  `doc/redemarrage_v0_59_2.md`.
 - **À faire par Laurent (4e)** : archiver la structure de 2025 de N11, puis importer les
   lots de 4e au fur et à mesure, puis créer « 4e — 2027-2028 — Principal » (modèle Fiches
   + cartes). Version 2 (tests courts au principal, séances d'évaluation, document de
@@ -646,6 +667,19 @@ Découpage validé dans `doc/ROADMAP.md` (section « Suivi en séance »).
   séquences du cycle ; les archives de structure gardent identifiants et `fichier` ; un
   référentiel figé d'un niveau archivé ne se déverrouille ni ne se recompile
   (`tests/test_v0_59_0_ref4e_fiches.py`).
+
+- **Cartes au modèle Fiches** (v0.59.1) : avec l'option cartes, récap et planches suivent
+  les rattachements `objectif_cartes` du principal (jamais `cartes_automatisme.sequence`,
+  qui désigne en 4e archivée les cartes de 2025) ; sans l'option, catalogue Fiches
+  inchangé ; le lot fait foi pour les rattachements des cartes qu'il cite
+  (`tests/test_v0_59_1_cartes_fiches.py`).
+
+- **Vue d'ensemble et encarts** (v0.59.2) : la vue d'ensemble est commune à tous les
+  catalogues (ordre 0) et ne compte jamais pour décider d'initialiser les documents d'un
+  modèle ; `nb_seances_R_AE` d'un instantané externe ou d'une Mnn = somme des objectifs (ne
+  jamais l'ajouter) ; un lot qui porte `encarts` fait foi pour sa séquence, sans clé rien ne
+  bouge ; un livret sans encart garde le même `.tex` ; tout `mtime` écrit par un outil est en
+  UTC (`tests/test_v0_59_2_vue_encarts.py`).
 
 - **Tableaux de conversion** (v0.53.3) : toujours `\seqTableauConversionSix` du
   module (jamais de `tabular` écrit à la main dans un lot) ; une ligne d'exercice

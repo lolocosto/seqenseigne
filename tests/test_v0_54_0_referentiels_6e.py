@@ -296,7 +296,8 @@ def test_ri8_verrouiller_la_mise_en_route_n_annule_pas_le_principal_de_la_meme_a
 def test_ri6_un_referentiel_de_mises_en_route_publie_ses_documents_par_partie(db6e):
     c = _c(db6e)
     rid = _creer(c, "mer")
-    assert gd.types_du_referentiel(c, rid) == ("mer_fiches_cours_6e", "mer_seances_6e",
+    # v0.59.2 (V1) : la vue d'ensemble en tête de tous les catalogues.
+    assert gd.types_du_referentiel(c, rid) == ("vue_ensemble", "mer_fiches_cours_6e", "mer_seances_6e",
                                                "mer_tests_courts_6e", "mer_activites_6e",
                                                "mer_dossiers_6e")
     from services import referentiel_documents as rd
@@ -378,7 +379,7 @@ def test_ri10_apercu_avant_creation_dit_le_contenu_et_ne_cree_rien(db6e):
     a = r.get_json()["apercu"]
     assert r.status_code == 200 and a["nb_sequences"] == 1 and a["nb_parties"] == 4
     assert a["libelle_type"] == "Référentiel de mises en route"
-    assert [d["cle"] for d in a["documents"]][0] == "mer_fiches_cours_6e"
+    assert [d["cle"] for d in a["documents"]][:2] == ["vue_ensemble", "mer_fiches_cours_6e"]  # v0.59.2
     p = cl.get("/api/referentiels/apercu-creation?niveau=N09&type_ref=principal").get_json()["apercu"]
     assert p["nb_sequences"] == 1 and p["nb_objectifs"] == 1 and p["nb_objectifs_cours"] == 1
     assert cl.get("/api/referentiels/apercu-creation?niveau=N09&type_ref=x").status_code == 400
