@@ -45,6 +45,7 @@ BP_ATELIER = frozenset({
     "paquet", "images", "recherche",
     "publication",          # v0.51.1 — format d'échange des référentiels
     "api_client",           # v0.51.16 — client de la boîte aux lettres par API
+    "progression_rituels",  # v0.60.0 — rituels d'automatismes selon l'ordre saisi
 })
 BP_STRUCTURE = frozenset({
     "referentiels", "referentiel_principal_externe",

@@ -554,6 +554,21 @@ def _produire_livret_cartes_recap(conn, cible, options, tikz, tblr):
     )
 
 
+@enregistrer_producteur('rituels_progression')
+def _produire_rituels_progression(conn, cible, options, tikz, tblr):
+    """v0.60.0 — Rituels d'automatismes et séances d'évaluation selon l'ordre
+    des parties saisi (services/progression_rituels ; hors catalogue des
+    documents de référentiel)."""
+    from services.progression_rituels import generer_tex
+    ref_id = cible.get('referentiel_id')
+    if not ref_id:
+        raise ProducteurErreur(
+            f"rituels_progression requiert referentiel_id : reçu {cible!r}",
+            code='cible_invalide',
+        )
+    return generer_tex(conn, ref_id, options or {})
+
+
 @enregistrer_producteur('livret_cartes_planches')
 def _produire_livret_cartes_planches(conn, cible, options, tikz, tblr):
     """Producteur des planches cartes (élèves).

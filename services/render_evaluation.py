@@ -619,8 +619,9 @@ def parties_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
     `structure_evaluation_6e`, dans leur ordre — D2), `numeros`
     {exercice_id: numéro affiché} (numérotation continue, N1), `points`
     [partie 1, partie 2] hors bonus, `bonus` [partie 1, partie 2],
-    `duree_auto` (D4), `duree_reglee` (`evaluations.duree_partie1`, None =
-    automatique) et `duree` (celle du sujet)."""
+    `duree_auto` (D4 ; v0.60.0 : T3, `services/evaluations_v2`), `duree_reglee`
+    (`evaluations.duree_partie1`, None = automatique), `duree` (celle du
+    sujet) et `duree_evaluation` (v0.60.0, T2)."""
     from services import marqueurs_exercices as mq
     marques = {}
     if mq.colonnes_presentes(conn):
@@ -643,9 +644,19 @@ def parties_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
         r = conn.execute("SELECT duree_partie1 FROM evaluations WHERE id = ?",
                          (evaluation_id,)).fetchone()
         reglee = r[0] if r and r[0] not in (None, "") else None
-    auto = mq.duree_partie1_auto(points[0], st["total"])
+    # v0.60.0 (T3, correctif B8) — part de la durée de l'évaluation (10 min
+    # par objectif, ou durée réglée) qui revient aux objectifs de la partie 1 ;
+    # remplace 55 min × points de la partie 1 / total (D4).
+    from services import evaluations_v2 as ev2
+    # Objectifs évalués : ceux du barème du sujet (même liste que les colonnes
+    # du tableau de notes), qui ne dépend pas des liens evaluation_objectifs.
+    n_obj = len(st["objectifs"])
+    reg = ev2.duree_reglee(conn, evaluation_id) if ev2.colonnes_presentes(conn) else None
+    duree_ev = int(reg) if reg is not None else ev2.duree_auto(
+        conn, evaluation_id, nb_objectifs=n_obj)
+    auto = ev2.duree_partie1_par_objectifs(parties, duree_ev)
     return {"parties": parties, "numeros": numeros, "points": points, "bonus": bonus,
-            "duree_auto": auto, "duree_reglee": reglee,
+            "duree_auto": auto, "duree_reglee": reglee, "duree_evaluation": duree_ev,
             "duree": int(reglee) if reglee is not None else auto}
 
 

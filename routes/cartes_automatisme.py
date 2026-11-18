@@ -226,6 +226,22 @@ def api_modifier(carte_id):
     return jsonify(carte)
 
 
+@bp.route("/api/cartes/<carte_id>/niveau-creation", methods=["PUT"])
+def api_niveau_creation(carte_id):
+    """v0.60.0 (F3) — Body {niveau_creation: 'N10' | … | ''} ; permis sur une
+    carte validée (champ sans effet sur le rendu ni sur les documents)."""
+    data = request.get_json(silent=True) or {}
+    store = _store()
+    with store._conn() as conn:
+        try:
+            carte = svc.modifier_niveau_creation(conn, carte_id, data.get("niveau_creation"))
+        except svc.NiveauCreationInvalide as e:
+            return jsonify({"error": str(e), "code": "niveau_creation_invalide"}), 400
+        except CarteErreur as e:
+            return _erreur_metier(e)
+    return jsonify(carte)
+
+
 @bp.route("/api/cartes/<carte_id>", methods=["DELETE"])
 def api_supprimer(carte_id):
     store = _store()

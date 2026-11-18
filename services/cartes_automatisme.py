@@ -221,6 +221,10 @@ def _row_vers_dict_carte(row: sqlite3.Row) -> dict:
         'etat_code':   row['etat_code'],
         'ordre':       row['ordre'],
         'mtime':       row['mtime'],
+        # v0.60.0 (F3) — niveau où la notion est un objectif ('' = niveau de
+        # la carte) ; décide « nouvelle » ou « réactivée » dans les rituels.
+        'niveau_creation': (row['niveau_creation'] or '')
+                           if 'niveau_creation' in row.keys() else '',
         # v0.13.6.13 : la clé `objectif_ids` est ajoutée par lire_carte/
         # lister_cartes via _enrichir_objectif_ids. Pas dans _row_vers_dict_carte
         # pour ne pas faire de requête à chaque ligne d'un SELECT * lourd.
@@ -890,3 +894,31 @@ def modifier_config(conn: sqlite3.Connection, cle: str, valeur: str) -> None:
         (cle, str(valeur)),
     )
     conn.commit()
+
+
+# ── v0.60.0 (F3) — Niveau de création, corrigeable même sur une carte validée ──
+
+NIVEAUX_CREATION = ("N09", "N10", "N11", "N12")
+
+
+class NiveauCreationInvalide(ValueError):
+    pass
+
+
+def modifier_niveau_creation(conn: sqlite3.Connection, carte_id: str, valeur: str) -> dict:
+    """Pose `niveau_creation` ('' = niveau de la carte, ou N09 à N12), y compris
+    sur une carte **validée** : le champ ne change ni le recto, ni le verso, ni
+    les documents (mtime gardé, aucun document périmé) ; il décide seulement si
+    la carte est « nouvelle » ou « réactivée » dans le document de rituels
+    (services/progression_rituels, P2 et P4)."""
+    from services import fiches_cycle4 as fc4
+    fc4.migrer(conn)
+    v = (valeur or "").strip().upper()
+    if v and v not in NIVEAUX_CREATION:
+        raise NiveauCreationInvalide(f"niveau de création inconnu : {valeur!r} "
+                                     f"(attendu {', '.join(NIVEAUX_CREATION)} ou vide)")
+    if _carte_par_id(conn, carte_id) is None:
+        raise CarteIntrouvable(carte_id)
+    conn.execute("UPDATE cartes_automatisme SET niveau_creation = ? WHERE id = ?",
+                 (v, carte_id))
+    return lire_carte(conn, carte_id)

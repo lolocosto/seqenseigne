@@ -477,6 +477,23 @@ class AtelierEvaluation extends AtelierAssemblage {
       avert.textContent = msg;
       avert.style.display = msg ? '' : 'none';
     }
+    // v0.60.0 (T1, T2) — type et durée de l'évaluation (vide = automatique :
+    // 10 min par objectif évalué, test court 10 min ; rappel à côté).
+    const blocType = document.getElementById('atl-eval-type-bloc');
+    if (blocType) blocType.style.display = est6e ? 'flex' : 'none';
+    const selType = document.getElementById('atl-eval-type');
+    if (selType) selType.value = (ev && ev.type_evaluation) || 'evaluation';
+    const elDuree = document.getElementById('atl-eval-duree');
+    if (elDuree) {
+      const v = ev && ev.duree;
+      elDuree.value = (v === null || v === undefined) ? '' : String(v);
+      elDuree.placeholder = (ev && ev.duree_auto) ? String(ev.duree_auto) : '';
+    }
+    const indicDuree = document.getElementById('atl-eval-duree-indic');
+    if (indicDuree) {
+      indicDuree.textContent = (ev && ev.duree_auto)
+        ? `(automatique : ${ev.duree_auto} min)` : '';
+    }
     // v0.52.9 (D1, D4) — sujet en deux parties : indication et durée de la
     // partie 1 (vide = calcul automatique, rappelé en indication du champ).
     const deux = document.getElementById('atl-eval-deux-parties');
@@ -1053,6 +1070,13 @@ class AtelierEvaluation extends AtelierAssemblage {
     // v0.52.9 (D4) — durée de la partie 1 ('' : calcul automatique).
     const elD = document.getElementById('atl-eval-duree-partie1');
     if (elD) champs.duree_partie1 = elD.value.trim();
+    // v0.60.0 (T1, T2) — type et durée ('' : automatique), modèle Fiches.
+    if (this._estEval6e()) {
+      const elTy = document.getElementById('atl-eval-type');
+      if (elTy) champs.type_evaluation = elTy.value || 'evaluation';
+      const elDu = document.getElementById('atl-eval-duree');
+      if (elDu) champs.duree = elDu.value.trim();
+    }
     return champs;
   }
 

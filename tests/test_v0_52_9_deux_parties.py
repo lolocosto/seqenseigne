@@ -174,7 +174,8 @@ def test_d3_partie_2_sur_une_nouvelle_feuille_recto_avec_identification_et_rappe
     assert "Page laissée blanche" in SAUT_FEUILLE_PARTIE2
     p1, p2 = tex.split(SAUT_FEUILLE_PARTIE2)
     assert p1.count(r"\seqIdentEleve") == 1 and p2.count(r"\seqIdentEleve") == 1
-    assert "Partie 1 --- sans calculatrice --- à rendre au bout de 20 min" in p1
+    assert "Partie 1 --- sans calculatrice --- à rendre au bout de 10 min" in p1
+  # v0.60.0 (T3, correctif B8) : 2 objectifs = 20 min, un seul en partie 1 → 10 min (D4 : 20)
     assert "Partie 2 --- calculatrice autorisée" in p2
     assert "--- partie 1 -- page" in p1 and "--- partie 2 -- page" in p2
 
@@ -206,13 +207,14 @@ def test_d4_duree_reglee_dans_l_atelier_prime_et_vide_revient_au_calcul(app_6e):
     _marquer(app_6e, ev1="autorisee", ev2="interdite")
     cl = app_6e.test_client()
     ev = cl.get("/api/evaluations/E6").get_json()["evaluation"]
-    assert (ev["deux_parties"], ev["duree_partie1"], ev["duree_partie1_auto"]) == (True, None, 20)
+  # v0.60.0 (T3, correctif B8) : 2 objectifs = 20 min, un seul en partie 1 → 10 min (D4 : 20)
+    assert (ev["deux_parties"], ev["duree_partie1"], ev["duree_partie1_auto"]) == (True, None, 10)
     ev = cl.patch("/api/evaluations/E6", json={"duree_partie1": "25"}).get_json()["evaluation"]
     assert ev["duree_partie1"] == 25
     assert "à rendre au bout de 25 min" in _tex(app_6e)
     ev = cl.patch("/api/evaluations/E6", json={"duree_partie1": ""}).get_json()["evaluation"]
     assert ev["duree_partie1"] is None
-    assert "à rendre au bout de 20 min" in _tex(app_6e)
+    assert "à rendre au bout de 10 min" in _tex(app_6e)
 
 
 @pytest.mark.parametrize("valeur", ("x", "12.5", 0, 500, True))
@@ -277,7 +279,8 @@ def test_d4_plan_de_travail_annonce_le_sujet_en_deux_parties(app_6e):
     _marquer(app_6e, ev1="autorisee", ev2="interdite")
     with app_6e.json_store._conn() as c:
         tex = generer_plan_travail_6e(c, "N09", "S01")
-    assert "en deux parties~: sans calculatrice, ramassée au bout de 20~min" in tex
+  # v0.60.0 (T3, correctif B8) : 2 objectifs = 20 min, un seul en partie 1 → 10 min (D4 : 20)
+    assert "en deux parties~: sans calculatrice, ramassée au bout de 10~min" in tex
 
 
 # ── C3 revu : pas d'avertissement à tort ─────────────────────────────────────
@@ -345,8 +348,11 @@ def _essai(db, lots):
 def test_i3_import_marque_chaque_exercice_et_l_essai_annonce_le_decoupage(base, tmp_path):
     lots = _lot(tmp_path, "a", "autorisee", {"1": "interdite"})
     texte = _essai(base, lots)
-    assert ("en deux parties : partie 1 sans calculatrice ex. 1 (6 pts, 20 min), "
-            "partie 2 calculatrice autorisée ex. 2 et 3 (12 pts + bonus)") in texte
+    # v0.60.0 (T3, correctif B8) : durée de l'évaluation annoncée (10 min par objectif ;
+    # un seul objectif dans ce lot) et répartie entre les deux parties, partie 1 au moins
+    # 10 min (D4 : partie 1 de 20 min, sans durée totale).
+    assert ("en deux parties (10 min) : partie 1 sans calculatrice ex. 1 (6 pts, 10 min), "
+            "partie 2 calculatrice autorisée ex. 2 et 3 (12 pts + bonus, 0 min)") in texte
     _appliquer(base, lots)
     # I3 : réglage '' (les mentions viennent de D2), exercices marqués un à un.
     assert _etat(base) == ("", ["interdite", "autorisee", "autorisee"])

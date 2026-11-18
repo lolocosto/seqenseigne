@@ -21,6 +21,17 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.60.0 — 2026-11-18 : version 2 du modèle Fiches avec cartes, correctifs d'import (paquet inchangé)
+
+- Aucun changement du paquet LaTeX (le document de rituels utilise
+  `seqenseigne-carte-automatisme` tel quel). Appli : ordre des parties de la progression
+  saisi dans l'atelier Référentiel et document « Rituels d'automatismes » (cartes nouvelles,
+  rappels espacés, réactivation, séances d'évaluation) ; type « test court » et durée des
+  évaluations ; import : clé `tests_courts`, activités sous « Cours », clé `variables`,
+  avertissements (bonus, un test court par partie) ; durée de la partie sans calculatrice
+  calculée sur la durée de l'évaluation (10 min par objectif) ; outil
+  `outils/migrer_ae_cours.py`. Détails : `doc/redemarrage_v0_60_0.md`.
+
 ## Appli v0.59.3 — 2026-11-17 : multisélection des séquences (paquet inchangé)
 
 - Aucun changement du paquet LaTeX. Appli : atelier Séquence, « — Toutes les séquences — » :

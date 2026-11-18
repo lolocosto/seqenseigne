@@ -2180,6 +2180,30 @@
                       style="font-size:12px;color:var(--text-muted)"></span>
               </label>
             </div>
+            <!-- v0.60.0 (T1, T2) — Type (évaluation / test court) et durée de
+                 l'évaluation (vide = 10 min par objectif évalué ; test court :
+                 10 min). Modèle Fiches seulement, comme la calculatrice. -->
+            <div id="atl-eval-type-bloc"
+                 style="display:none;margin-top:6px;gap:12px;align-items:center;
+                        font-size:13px;flex-wrap:wrap">
+              <label style="display:inline-flex;gap:6px;align-items:center">
+                Type :
+                <select id="atl-eval-type" style="font-size:13px"
+                        oninput="atelEvalMarquerModifie()">
+                  <option value="evaluation">évaluation</option>
+                  <option value="test_court">test court</option>
+                </select>
+              </label>
+              <label style="display:inline-flex;gap:6px;align-items:center">
+                Durée :
+                <input type="number" id="atl-eval-duree" min="1" max="240" step="1"
+                       style="width:60px;font-size:13px"
+                       oninput="atelEvalMarquerModifie()">
+                min
+                <span id="atl-eval-duree-indic"
+                      style="font-size:12px;color:var(--text-muted)"></span>
+              </label>
+            </div>
             <div id="atl-eval-calculatrice-avert"
                  style="display:none;margin-top:6px;padding:6px 10px;
                         background:#fff7e6;border:1px solid #f0c36d;
@@ -2187,8 +2211,9 @@
             <!-- v0.52.9 (D1, D4) — Sujet en deux parties, façon DNB : affiché
                  quand des exercices EV interdisent la calculatrice et d'autres
                  l'autorisent. Durée de la partie 1 modifiable ; champ vide =
-                 calcul automatique (55 min × points de la partie 1 / total,
-                 arrondi aux 5 min, au moins 10 min). -->
+                 calcul automatique (v0.60.0 : part de la durée de l'évaluation
+                 qui revient aux objectifs de la partie 1, arrondie aux 5 min,
+                 au moins 10 min). -->
             <div id="atl-eval-deux-parties"
                  style="display:none;margin-top:6px;padding:6px 10px;
                         background:#eef5ff;border:1px solid #9cc0f0;
@@ -2467,6 +2492,21 @@
                       style="width:auto;font-size:13px">
                 <option value="fixe">Fixe (identique pour tous)</option>
                 <option value="parametree">Paramétrée (16 variantes / feuille)</option>
+              </select>
+
+              <!-- v0.60.0 (F3) — Niveau de création : enregistré tout de suite,
+                   même sur une carte validée (sans effet sur le rendu ; décide
+                   « nouvelle » ou « réactivée » dans le document de rituels). -->
+              <label for="atl-carte-niveau_creation"
+                     title="Niveau où la notion est un objectif : une carte créée à un niveau inférieur est réactivée, jamais nouvelle, dans les rituels">Niveau de création&nbsp;:</label>
+              <select id="atl-carte-niveau_creation" data-verrou-exempt
+                      onchange="ATELIER_CARTE.changerNiveauCreation(this.value)"
+                      style="width:auto;font-size:13px">
+                <option value="">celui de la carte</option>
+                <option value="N09">6e (N09)</option>
+                <option value="N10">5e (N10)</option>
+                <option value="N11">4e (N11)</option>
+                <option value="N12">3e (N12)</option>
               </select>
             </div>
           </div>

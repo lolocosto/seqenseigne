@@ -110,6 +110,25 @@ class DureePartie1Invalide(EvaluationErreur):
         )
 
 
+class TypeEvaluationInvalide(EvaluationErreur):
+    """v0.60.0 (T1) — type hors {evaluation, test_court}."""
+    def __init__(self, valeur):
+        super().__init__(
+            f"Type d'évaluation invalide : {valeur!r} (evaluation ou test_court).",
+            "type_evaluation_invalide", valeur=valeur,
+        )
+
+
+class DureeEvaluationInvalide(EvaluationErreur):
+    """v0.60.0 (T2) — durée hors {vide, 1 à 240 min entières}."""
+    def __init__(self, valeur):
+        super().__init__(
+            f"Durée de l'évaluation invalide : {valeur!r} (minutes entières, 1 à 240 ; "
+            "vide = 10 min par objectif évalué).",
+            "duree_evaluation_invalide", valeur=valeur,
+        )
+
+
 class ItemLangueFrancaiseInvalide(EvaluationErreur):
     """item_langue_francaise n'est pas un JSON {points: int} valide."""
     def __init__(self, raison="Format invalide"):
@@ -313,6 +332,12 @@ def avec_deux_parties(conn: sqlite3.Connection, d: dict | None) -> dict | None:
     `_evaluation_par_id`, que la structure du sujet appelle elle-même."""
     if d is None:
         return d
+    # v0.60.0 (T1, T2) — type et durée de l'évaluation (module Évaluations).
+    try:
+        from services import evaluations_v2 as ev2
+        d.update(ev2.resume(conn, d["id"]))
+    except sqlite3.OperationalError:
+        pass
     d["deux_parties"] = False
     d["duree_partie1_auto"] = None
     try:
@@ -529,6 +554,8 @@ def modifier_evaluation(
     etat_code: str | None = None,
     calculatrice: str | None = None,
     duree_partie1: Any = "__no_change__",
+    type_evaluation: str | None = None,
+    duree: Any = "__no_change__",
 ) -> dict:
     """Modification partielle d'une évaluation (PATCH-like).
 
@@ -588,6 +615,26 @@ def modifier_evaluation(
             mq.migrer_duree_partie1(conn)
         sets.append("duree_partie1 = ?")
         args.append(duree)
+    if type_evaluation is not None or duree != "__no_change__":
+        # v0.60.0 (T1, T2) — type (évaluation / test court) et durée de
+        # l'évaluation en minutes (None / '' = automatique).
+        from services import evaluations_v2 as ev2
+        if not ev2.colonnes_presentes(conn):
+            ev2.migrer(conn)
+        if type_evaluation is not None:
+            try:
+                ev2.valider_type(type_evaluation)
+            except ev2.TypeEvaluationInvalide:
+                raise TypeEvaluationInvalide(type_evaluation) from None
+            sets.append("type_evaluation = ?")
+            args.append(type_evaluation)
+        if duree != "__no_change__":
+            try:
+                d = ev2.valider_duree(duree)
+            except ev2.DureeInvalide:
+                raise DureeEvaluationInvalide(duree) from None
+            sets.append("duree = ?")
+            args.append(d)
 
     if sets:
         # Toujours rafraîchir le mtime

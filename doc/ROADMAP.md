@@ -395,25 +395,38 @@ Voir `inventaire_ateliers.md` de la livraison v0.56.3.
   création gardé), année et option « cartes » du référentiel interne, titres courts
   (`doc/redemarrage_v0_59_0.md`). Ensuite : les 12 lots de 4e (un par séquence), écrits
   d'après `col4/ref4e_v1.md` et l'inventaire de l'étape 3, importés et validés.
-- **Version 2 — v0.60 (avant la rentrée 2027, avec le chantier des progressions)** :
-  - **document de rituels / planches d'automatismes organisé selon la progression**
-    (décision du 16 novembre) : à chaque séance de la progression, les cartes nouvelles
-    (celles des objectifs de la partie qui vient de se terminer, en rituel juste après) et
-    les cartes à revoir (rappels espacés jusqu'en juin) ; l'année suivante, réactivation en
-    début des séquences qui en ont besoin, puis même cycle de rappels. Données déjà en base
-    depuis la v0.59.0 : objectif (`objectif_cartes`), partie (par l'objectif), niveau de
-    création (`cartes_automatisme.niveau_creation`) ;
-  - tests courts au principal (E6 : type d'évaluation, clé `tests_courts` des lots, un par
-    partie, sujets A et B sur 10, sur les cartes de la partie) ;
-  - durée et séance d'évaluation (E7 : 10 min par objectif, 50 min et 5 objectifs au plus
-    par séance) et séances d'évaluation dans la progression (E8 : toutes les deux
-    semaines, jour fixe, au moins une semaine après la partie, dernière séquence non
-    évaluée) ;
-  - cartes de la partie dans le plan de travail Fiches (E9) ; saisie du titre court dans
-    l'atelier ; avertissement « objectif sans carte » à la validation de séquence (sauf
-    A3-04, B2-04, C1-05, E1-05) ;
+- **Version 2 — v0.60 (avant la rentrée 2027, avec le chantier des progressions)** —
+  découpée en deux livraisons :
+  - **v0.60.0 livrée (18 novembre)** (`doc/redemarrage_v0_60_0.md`) : document de rituels
+    d'automatismes et séances d'évaluation calculé depuis un **ordre des parties saisi**
+    dans l'atelier Référentiel (aucune progression ordonnée n'existe dans l'atelier ;
+    décisions P0 à P7 : cartes nouvelles la semaine qui suit la partie, rappels à 1 et
+    4 semaines puis toutes les 6 semaines, réactivation des cartes des années précédentes
+    au début de la partie, séance d'évaluation toutes les deux semaines, 50 min et
+    5 objectifs au plus, au moins une semaine après la partie, dernière séquence non
+    évaluée) ; type d'évaluation « test court » (clé `tests_courts` des lots, tests courts
+    déjà importés reconnus par leur titre) ; durée d'une évaluation (10 min par objectif) ;
+    correctifs d'import B6 à B10 (activités sous « Cours » + outil de migration, variables,
+    durée de la partie sans calculatrice, titres échappés, bonus de 1 point) ; essai de
+    l'archivage de N10 ; ajoutés (étape 3 de la 5e) : import `--niveau N10` (F1),
+    avertissement de l'archivage pour les référentiels non figés (F2), niveau de création
+    des cartes corrigible dans l'atelier et par l'import (F3) ;
+  - **v0.60.1 (reste)** : cartes de la partie dans le plan de travail Fiches (E9) ; saisie
+    du titre court dans l'atelier ; avertissement « objectif sans carte » à la validation
+    de séquence, exceptions sous forme d'une propriété de l'objectif lue dans les lots
+    (« sans carte voulue » ; F4 : en 5e, A3-04… désignent d'autres objectifs) ; document
+    « séance d'évaluation » qui
+    assemble les sujets d'une séance et document « Tests courts » au catalogue du principal
+    (E6, E7) ; durée affichée sur le sujet ; atelier Exercice (séquence en mode « toutes
+    les séquences », règle `#atl-exo-form`), rendu par lot avec cartes mentales et « sans
+    cache » ; traces S… (numérotation d'un référentiel externe, textes « S01 » de
+    l'interface, route `/api/admin/cycle/importer`) ;
+  - plus tard, avec le chantier des progressions côté classe : progression ordonnée par
+    semaines dans l'appli de classe (le document de rituels pourra la lire au lieu de
+    l'ordre saisi), cartes de la partie au début de séance (rappel Leitner) ;
   - archivage de la structure de 2025 de N10 et N12 (même outil) au moment des
-    référentiels de 5e et de 3e.
+    référentiels de 5e et de 3e : outil essayé sur N10 en v0.60.0 (copie de la base) ;
+    `outils/objectifs_5e.json` viendra avec le référentiel de 5e.
 
 ## Thèmes communs et codes A1 (cycles 3 et 4) — migration en deux livraisons (15 nov. 2026)
 

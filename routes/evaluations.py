@@ -197,7 +197,9 @@ def api_modifier(eval_id):
     """Modifie une évaluation. Body JSON : champs à modifier
     (titre, mode_notation, afficher_bareme_dans_exos,
      item_langue_francaise, etat_code ; v0.52.8 calculatrice ; v0.52.9
-     duree_partie1 : minutes, null ou '' = calcul automatique D4).
+     duree_partie1 : minutes, null ou '' = calcul automatique D4 ; v0.60.0
+     type_evaluation : evaluation | test_court, duree : minutes, null ou ''
+     = 10 min par objectif évalué).
 
     Note : `etat_code` peut être modifié librement ici (héritage
     compatibilité). Les transitions contrôlées passent par les endpoints
@@ -209,7 +211,8 @@ def api_modifier(eval_id):
     for champ in ("titre", "mode_notation", "afficher_bareme_dans_exos",
                   "item_langue_francaise", "etat_code",
                   "calculatrice",                        # v0.52.8 (C1, C3)
-                  "duree_partie1"):                      # v0.52.9 (D4)
+                  "duree_partie1",                       # v0.52.9 (D4)
+                  "type_evaluation", "duree"):           # v0.60.0 (T1, T2)
         if champ in body:
             kwargs[champ] = body[champ]
 

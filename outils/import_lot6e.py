@@ -134,6 +134,24 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
        inconnus…) : anomalie, non importé. Jamais sur une séquence validée
        (lot non importé).
 
+ 14. **v0.60.0 — version 2 du modèle Fiches** (`doc/redemarrage_v0_60_0.md`) :
+     - clé `tests_courts` du lot (même format que `evaluations`) et titres
+       « Test court --- … » : `evaluations.type_evaluation = 'test_court'`
+       (décision T1) ; contrôles non bloquants (section « Avertissements ») :
+       un test court par partie, test court sur 10 avec bonus de 1, bonus de
+       1 point des évaluations (B10) ;
+     - activités de découverte sous l'objectif « Cours » d'une partie
+       (`"code": "A1-01"`, ou `"code": "Cours", "partie": 1`) : rattachées à
+       la partie et au « Cours », elles ouvrent la partie dans le livret (B6) ;
+     - clé facultative `variables` des exercices, activités et documents TP,
+       AC, AT (bloc xint ; absente : valeur en base gardée) ; deux exercices
+       qui déclarent la même variable sont signalés (B7) ;
+     - durée de la partie sans calculatrice annoncée d'après la durée de
+       l'évaluation (10 min par objectif ; décision T3, correctif B8).
+     - `--niveau N10` : lots de 5e (`outils/objectifs_5e.json`, F1) ;
+     - `niveau_creation` d'une carte **validée** corrigé quand c'est le seul
+       champ qui change (avertissement, mtime gardé : rendu inchangé ; F3).
+
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
 évaluations par (niveau, titre). Une deuxième exécution ne crée rien ; un
@@ -146,7 +164,8 @@ Usage (Windows, depuis `appli\`) :
     ..\outils\python\python.exe .\outils\import_lot6e.py --apply --yes   # sans confirmation
     ..\outils\python\python.exe .\outils\import_lot6e.py --niveau N11    # 4e (v0.59.0)
 Options : --db CHEMIN (base), --lots DOSSIER (défaut ..\reference\lot6e ;
-..\reference\lot4e pour N11), --niveau N09 | N11 (défaut N09).
+..\reference\lot4e pour N11, ..\reference\lot5e pour N10), --niveau N09 | N10 | N11
+(défaut N09 ; N10 depuis la v0.60.0).
 v0.52.2 : --sortie et --documents-seulement retirés (les documents vont en
 base ; décision O1, doc/redemarrage_v0_52_2.md).
 
@@ -198,6 +217,9 @@ DOCUMENTS_LOT = (("travaux_personnels", "TP", "travail personnel"),
 NIVEAUX_LOTS = {
     "N09": {"cycle": "C03", "referentiel": Path(__file__).resolve().parent / "objectifs_6e.json",
             "lots": RACINE_APPLI.parent / "reference" / "lot6e"},
+    # v0.60.0 (F1) — 5e : référentiel transcrit de col4/5e/ref5e_v1.md.
+    "N10": {"cycle": "C04", "referentiel": Path(__file__).resolve().parent / "objectifs_5e.json",
+            "lots": RACINE_APPLI.parent / "reference" / "lot5e"},
     "N11": {"cycle": "C04", "referentiel": Path(__file__).resolve().parent / "objectifs_4e.json",
             "lots": RACINE_APPLI.parent / "reference" / "lot4e"},
 }
@@ -393,6 +415,7 @@ class Rapport:
         self.archivage_niveau: dict | None = None              # v0.59.0 (hors 6e)
         self.seances: list[str] = []                          # v0.59.2
         self.encarts: "OrderedDict[str, dict]" = OrderedDict()  # v0.59.2
+        self.avertissements: list[str] = []                   # v0.60.0 (non bloquants)
 
     def seq(self, code: str) -> dict:
         return self.sequences.setdefault(code, {"lignes": [], "objectifs": OrderedDict(),
@@ -533,6 +556,10 @@ class Rapport:
         L.append("")
         L.append(f"== Anomalies ({len(self.anomalies)}) ==")
         L += [f"  - {x}" for x in self.anomalies] or ["  aucune"]
+        if self.avertissements:                                      # v0.60.0
+            L.append("")
+            L.append(f"== Avertissements ({len(self.avertissements)}, non bloquants) ==")
+            L += [f"  - {x}" for x in self.avertissements]
         if self.infos:
             L.append("")
             L.append("== Informations ==")
@@ -1072,6 +1099,11 @@ def _exercice(conn, seq: str, serie_code: str, num: int, src: dict,
             "corrige": src.get("corrige", "") or "",
             "remed_enonce": src.get("remed_enonce", "") or "",
             "remed_corrige": src.get("remed_corrige", "") or ""}
+    if "variables" in src:
+        # v0.60.0 (B7) — clé facultative `variables` (bloc xint, comme les
+        # exercices paramétrés de la base) ; clé absente : valeur en base
+        # gardée (saisie dans l'atelier).
+        vals["variables"] = src.get("variables") or ""
     if mq.colonnes_presentes(conn):
         vals.update({c: (marques or {}).get(c, "") or "" for c in mq.CHAMPS})
     if mention is not None and sf.colonne_presente(conn):
@@ -1218,8 +1250,14 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
     cartes_vues: dict = {}                      # num de carte → objectif (v0.59.0)
     cartes_lot: dict = {}                       # id de carte → objectif du lot (v0.59.1)
     objectifs_ids: dict[str, str] = {}          # « S01-02 » → id (v0.52.2)
+    codes_cours = {f"{seq}-{p['numero'] - 1}1": p["numero"] for p in parties_ref}
     for o in lot.get("objectifs", []):
         code = o.get("code", "")
+        n_cours = numero_partie_cours(o, codes_cours)                 # v0.60.0 (B6)
+        if n_cours is not None:
+            importer_activites_cours(conn, lot, seq, o, n_cours, cours_ids[n_cours], vus,
+                                     approche, rapport, figures)
+            continue
         if code not in objs_ref:
             rapport.anomalie(f"{seq} : objectif inconnu {code!r} (absent de "
                              f"{Path(REFERENTIEL).name}), ignoré avec ses exercices")
@@ -1332,6 +1370,108 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
                                 {c: (objs_ref[c][0], objectifs_ids.get(c)) for c in objs_ref},
                                 rapport)
     return figures
+
+
+# ── v0.60.0 (B6) — Activités de découverte sous l'objectif « Cours » ───────
+
+def numero_partie_cours(o: dict, codes_cours: dict):
+    """Numéro de partie si l'entrée d'objectif du lot désigne l'objectif
+    « Cours » d'une partie : son code (« A1-01 », « A2-11 ») ou
+    `"code": "Cours"` avec `"partie": n` ; None sinon."""
+    code = (o.get("code") or "").strip()
+    if code in codes_cours:
+        return codes_cours[code]
+    if code.lower() == "cours":
+        try:
+            n = int(o.get("partie"))
+        except (TypeError, ValueError):
+            return None
+        return n if n in codes_cours.values() else None
+    return None
+
+
+def importer_activites_cours(conn, lot: dict, seq: str, o: dict, numero: int, cours_id: str,
+                             vus: dict, approche: dict, rapport: "Rapport",
+                             figures: set) -> None:
+    """v0.60.0 (B6) — Activités de découverte (AE) rangées sous l'objectif
+    « Cours » de la partie : rattachées à la partie (EA) et à l'objectif
+    « Cours » (objectif_exos, série AE) ; le livret les place en ouverture de
+    partie, avant le premier objectif (L1 : une activité qui n'est sous
+    aucun objectif de capacité ouvre la partie). Seules les activités sont
+    reçues sous « Cours » : exercices, fiche, cartes y sont signalés et
+    ignorés."""
+    code_c = f"{seq}-{numero - 1}1"
+    for cle in ("exercices", "fiche_resume", "cartes_automatisme", "encarts"):
+        if o.get(cle):
+            rapport.anomalie(f"{code_c} (Cours) : clé « {cle} » ignorée (seules les activités "
+                             "de découverte vont sous l'objectif « Cours »)")
+    ro = rapport.obj(seq, code_c)
+    act = []
+    for a in o.get("activites", []) or []:
+        cle = ("AE", int(a["num"]))
+        if cle in vus:
+            rapport.anomalie(f"{seq} AE{cle[1]:02d} en double, second ignoré")
+            continue
+        vus[cle] = code_c
+        marques = marqueurs_lot(a, f"{seq} AE{cle[1]:02d}", rapport)
+        _compter_marqueurs(rapport, seq, marques)
+        eid, etat_a = _exercice(conn, seq, "AE", cle[1], a, marques)
+        approche[numero].append(eid)
+        act.append(eid)
+        Rapport.compter(ro, "activités AE", etat_a)
+        figures |= _figures(lot, a)
+        rapport.journal["import"].append({"cle": f"{NIVEAU}/{seq}/AE{cle[1]:02d}", "id": eid,
+                                          "objectif": code_c, "origine": a.get("origine", "")})
+    if act:
+        n = _ordonner(conn, "objectif_exos", {"objectif_id": cours_id, "serie": "AE"}, act)
+        Rapport.compter(ro, "liens activité-Cours", "créés", n)
+        # Une activité passée sous « Cours » quitte les objectifs de capacité
+        # de la partie (sinon le livret l'afficherait encore sous leur bandeau).
+        # Le contenu ne change pas : `mtime` rafraîchi pour que livret et
+        # corrigés deviennent « périmés » (la péremption suit les atomes).
+        for eid in act:
+            cur = conn.execute("DELETE FROM objectif_exos WHERE exercice_id = ? AND serie = 'AE' "
+                               "AND objectif_id <> ? AND objectif_id IN (SELECT o.id FROM "
+                               "objectifs o WHERE o.partie_id = (SELECT partie_id FROM "
+                               "objectifs WHERE id = ?))", (eid, cours_id, cours_id))
+            if cur.rowcount and "mtime" in _cols(conn, "exercices"):
+                conn.execute("UPDATE exercices SET mtime = ? WHERE id = ?", (_maintenant(), eid))
+                Rapport.compter(ro, "activités passées sous « Cours »", "déplacées", 1)
+
+
+# ── v0.60.0 (B7) — Variables des exercices paramétrés (clé `variables`) ─────
+
+RE_VARIABLE_XINT = re.compile(r"\\xintdef(?:ii|float)?var\s*([A-Za-z_][A-Za-z0-9_]*)")
+
+
+def controler_variables(lots: list[dict], rapport: "Rapport") -> None:
+    """Variables xint déclarées par deux exercices des lots (même nom) :
+    avertissement (les blocs sont émis avant chaque exercice ; un nom commun
+    écraserait le tirage d'un autre exercice dans les corrigés). Un bloc
+    `variables` sans déclaration xint est signalé aussi."""
+    vus: dict = {}
+    for lot in lots:
+        seq = lot.get("sequence", "?")
+        elements = []
+        for o in lot.get("objectifs", []) or []:
+            for e in (o.get("exercices", []) or []) + (o.get("activites", []) or []):
+                elements.append((f"{seq} {e.get('serie', 'AE')}{int(e.get('num', 0)):02d}", e))
+        for cle_lot, serie, _ in DOCUMENTS_LOT:
+            for k, d in enumerate(lot.get(cle_lot, []) or [], start=1):
+                elements.append((f"{seq} {serie}{k:02d}", d))
+        for quoi, e in elements:
+            v = e.get("variables") or ""
+            if not v.strip():
+                continue
+            noms = RE_VARIABLE_XINT.findall(v)
+            if not noms:
+                rapport.avertissements.append(f"{quoi} : bloc « variables » sans déclaration "
+                                              "\\xintdef…var")
+            for nom in dict.fromkeys(noms):
+                if nom in vus and vus[nom] != quoi:
+                    rapport.avertissements.append(f"{quoi} : variable {nom} déjà déclarée par "
+                                                  f"{vus[nom]}")
+                vus.setdefault(nom, quoi)
 
 
 # ── v0.59.2 — Séances d'un objectif (clés `seances`, `seances_cours`) ───────
@@ -1616,9 +1756,25 @@ def importer_cartes_objectif(conn, seq: str, code: str, objectif_id: str, o: dic
             if all((r[c] or "") == (vals[c] or "") for c in _CHAMPS_CARTE):
                 etat = "inchangée"
             elif r["etat_code"] == "valide":
-                etat = "validée, non modifiée"
-                rapport.anomalie(f"{NIVEAU}/{seq}/CA{v['num']} validée dans l'atelier : contenu "
-                                 "du lot non appliqué")
+                autres = [c for c in _CHAMPS_CARTE if c != "niveau_creation"
+                          and (r[c] or "") != (vals[c] or "")]
+                if (r["niveau_creation"] or "") != v["niveau_creation"]:
+                    # v0.60.0 (F3) — le niveau de création se corrige même sur une
+                    # carte validée : il ne change pas le rendu de la carte (mtime
+                    # gardé, aucun document périmé) mais décide « nouvelle » ou
+                    # « réactivée » dans le document de rituels.
+                    conn.execute("UPDATE cartes_automatisme SET niveau_creation=? WHERE id=?",
+                                 (v["niveau_creation"], cid))
+                    rapport.avertissements.append(
+                        f"{NIVEAU}/{seq}/CA{v['num']} (validée) : niveau de création corrigé "
+                        f"{r['niveau_creation'] or '(vide)'} → {v['niveau_creation']}")
+                    etat = "niveau de création corrigé"
+                else:
+                    etat = "validée, non modifiée"
+                if autres:
+                    etat = "validée, non modifiée"
+                    rapport.anomalie(f"{NIVEAU}/{seq}/CA{v['num']} validée dans l'atelier : contenu "
+                                     "du lot non appliqué")
             else:
                 conn.execute("UPDATE cartes_automatisme SET type_pedago=?, type_tech=?, titre=?, "
                              "recto=?, verso=?, variables=?, niveau_creation=?, mtime=? "
@@ -1763,7 +1919,7 @@ def titres_documents_en_double(lots: list[dict]) -> list[str]:
             for k, src in enumerate(lot.get(cle_lot, []) or [], start=1):
                 vus.setdefault(_cle_titre(src.get("titre", "")), []).append(
                     (seq, f"{serie}{k:02d}", src.get("titre", "")))
-        for ev in lot.get("evaluations", []) or []:
+        for ev in (lot.get("evaluations", []) or []) + (lot.get("tests_courts", []) or []):
             sujet = (ev.get("sujet") or "").strip().upper()
             vus.setdefault(_cle_titre(ev.get("titre", "")), []).append(
                 (seq, f"évaluation{' sujet ' + sujet if sujet else ''}", ev.get("titre", "")))
@@ -1846,10 +2002,11 @@ def importer_documents(conn, lot: dict, objectifs_ids: dict, rapport: Rapport) -
             code = f"{serie}{k:02d}"
             marques = marqueurs_lot(src, f"{seq} {code}", rapport)
             _compter_marqueurs(rapport, seq, marques)
-            eid, etat = _exercice(conn, seq, serie, k, {"titre": src.get("titre", ""),
-                                                        "enonce": src.get("latex", ""),
-                                                        "corrige": src.get("corrige", "")},
-                                  marques)
+            contenu = {"titre": src.get("titre", ""), "enonce": src.get("latex", ""),
+                       "corrige": src.get("corrige", "")}
+            if "variables" in src:                                   # v0.60.0 (B7)
+                contenu["variables"] = src.get("variables") or ""
+            eid, etat = _exercice(conn, seq, serie, k, contenu, marques)
             if etat == "validé, non modifié":
                 rapport.anomalie(f"{NIVEAU}/{seq}/{code} validé dans l'atelier : contenu du lot "
                                  "non appliqué")
@@ -1926,11 +2083,77 @@ def _est_bonus(exo: dict) -> bool:
 
 
 def paires_evaluations(lot: dict) -> "OrderedDict[str, dict]":
-    """{titre: {"A": évaluation, "B": évaluation}} dans l'ordre du lot."""
+    """{titre: {"A": évaluation, "B": évaluation}} dans l'ordre du lot.
+
+    v0.60.0 (E6) — aussi les entrées de la clé `tests_courts` (même format
+    que `evaluations`), après les évaluations."""
     out: "OrderedDict[str, dict]" = OrderedDict()
-    for ev in lot.get("evaluations", []) or []:
-        out.setdefault(ev.get("titre", ""), {})[(ev.get("sujet") or "A").upper()] = ev
+    for cle in ("evaluations", "tests_courts"):
+        for ev in lot.get(cle, []) or []:
+            out.setdefault(ev.get("titre", ""), {})[(ev.get("sujet") or "A").upper()] = ev
     return out
+
+
+def type_evaluation_lot(lot: dict, titre: str) -> str:
+    """v0.60.0 (E6, décision T1) — 'test_court' pour une entrée de la clé
+    `tests_courts` ou une évaluation dont le titre commence par « Test
+    court » ; 'evaluation' sinon."""
+    from services.evaluations_v2 import est_titre_test_court
+    if any(ev.get("titre", "") == titre for ev in lot.get("tests_courts", []) or []):
+        return "test_court"
+    return "test_court" if est_titre_test_court(titre) else "evaluation"
+
+
+def controler_evaluation(seq: str, titre: str, type_ev: str, exos: list[dict],
+                         rapport: "Rapport") -> None:
+    """v0.60.0 — Règles du barème, avertissements seulement (B10, E6) :
+    bonus de 1 point hors 6e (une évaluation qui a un bonus d'un autre
+    montant est signalée) ; test court sur 10 avec un bonus de 1."""
+    bonus = sum(x["points"] for x in exos if x["bonus"])
+    total = sum(x["points"] for x in exos if not x["bonus"])
+    quoi = f"{seq} {'test court' if type_ev == 'test_court' else 'évaluation'} « {titre} »"
+    if type_ev == "test_court":
+        if total != 10:
+            rapport.avertissements.append(f"{quoi} : sur {total:g} (un test court est sur 10)")
+        if bonus != 1:
+            rapport.avertissements.append(f"{quoi} : bonus de {bonus:g} pt (règle : 1 pt)")
+    elif bonus and bonus != 1 and not est_sixieme():
+        # B10b — hors 6e : les 18 évaluations des lots de 6e ont un bonus de
+        # 2 points (convention de l'équipe de 6e, à confirmer) ; la règle
+        # « bonus 1 pt » est celle des lots de 4e.
+        rapport.avertissements.append(f"{quoi} : bonus de {bonus:g} pts (règle : 1 pt)")
+
+
+def controler_tests_courts_parties(conn, seq: str, sn_id: str | None, lot: dict,
+                                   plan: list, rapport: "Rapport") -> None:
+    """v0.60.0 (E6) — Un test court par partie : avertissement pour une
+    partie sans test court ou qui en a plusieurs (seulement quand le lot
+    porte au moins un test court ; la partie d'un test court est celle de ses
+    objectifs)."""
+    tests = [(t, exos) for t, _, exos in plan if type_evaluation_lot(lot, t) == "test_court"]
+    if not tests or sn_id is None:
+        return
+    num_partie = {}
+    for code, numero in conn.execute(
+            "SELECT o.code, p.numero FROM objectifs o JOIN sequence_parties p ON "
+            "p.id = o.partie_id WHERE p.sequence_par_niveau_id = ?", (sn_id,)):
+        num_partie[f"{seq}-{code}"] = numero
+    par_partie: dict = {}
+    for t, exos in tests:
+        nums = sorted({num_partie.get(x["objectif"]) for x in exos if not x["bonus"]}
+                      - {None})
+        if len(nums) > 1:
+            rapport.avertissements.append(f"{seq} test court « {t} » : objectifs de plusieurs "
+                                          f"parties ({', '.join(map(str, nums))})")
+        for n in nums[:1]:
+            par_partie.setdefault(n, []).append(t)
+    for (n,) in conn.execute("SELECT numero FROM sequence_parties WHERE "
+                             "sequence_par_niveau_id = ? ORDER BY numero", (sn_id,)):
+        if n not in par_partie:
+            rapport.avertissements.append(f"{seq} partie {n} : pas de test court dans le lot")
+        elif len(par_partie[n]) > 1:
+            rapport.avertissements.append(f"{seq} partie {n} : {len(par_partie[n])} tests "
+                                          "courts (un par partie)")
 
 
 def preparer_evaluation(titre: str, paire: dict) -> list[dict]:
@@ -2061,8 +2284,19 @@ def _resume_deux_parties(conn, ev_id: str | None, exos: list[dict],
             bonus[i] = True
         else:
             points[i] += x["points"]
-    total = points[0] + points[1]
-    duree = mq.duree_partie1_auto(points[0], total)
+    # v0.60.0 (T3, correctif B8) — part de la durée de l'évaluation (10 min
+    # par objectif, ou durée réglée) des objectifs de la partie 1.
+    from services import evaluations_v2 as ev2
+    par = [[], []]
+    for x, m in zip(exos, marques):
+        par[mq.partie_de(m) - 1].append({"objectif": "" if x["bonus"] else x["objectif"],
+                                         "points": x["points"]})
+    n_obj = len({x["objectif"] for x in exos if not x["bonus"]})
+    duree_ev = ev2.DUREE_PAR_OBJECTIF * max(1, n_obj)
+    if ev_id is not None and ev2.colonnes_presentes(conn) and \
+            ev2.duree_reglee(conn, ev_id) is not None:
+        duree_ev = int(ev2.duree_reglee(conn, ev_id))
+    duree = ev2.duree_partie1_par_objectifs(par, duree_ev)
     reglee = None
     if ev_id is not None and mq.colonne_duree_presente(conn):
         r = conn.execute("SELECT duree_partie1 FROM evaluations WHERE id = ?",
@@ -2075,8 +2309,9 @@ def _resume_deux_parties(conn, ev_id: str | None, exos: list[dict],
         return f"{points[i]:g} pts" + (" + bonus" if bonus[i] else "")
     d = (f"{reglee} min réglée(s) dans l'atelier, calcul {duree} min" if reglee is not None
          else f"{duree} min")
-    return (f"en deux parties : partie 1 sans calculatrice {ex(parties[0])} ({pts(0)}, {d}), "
-            f"partie 2 calculatrice autorisée {ex(parties[1])} ({pts(1)})")
+    return (f"en deux parties ({duree_ev} min) : partie 1 sans calculatrice {ex(parties[0])} "
+            f"({pts(0)}, {d}), partie 2 calculatrice autorisée {ex(parties[1])} ({pts(1)}, "
+            f"{max(0, duree_ev - (reglee if reglee is not None else duree))} min)")
 
 
 def _poser_exercices_evaluation(conn, ev_id: str, voulus: list[tuple]) -> int:
@@ -2218,6 +2453,8 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
     nums_pris: set = set()
     liens: "OrderedDict[tuple, list]" = OrderedDict()
     for titre, paire, exos in plan:
+        type_ev = type_evaluation_lot(lot, titre)                    # v0.60.0 (E6)
+        controler_evaluation(seq, titre, type_ev, exos, rapport)     # v0.60.0 (B10)
         avant = conn.execute("SELECT id, etat_code FROM evaluations WHERE niveau = ? AND "
                              "titre = ? ORDER BY numero LIMIT 1", (NIVEAU, titre)).fetchone()
         if avant is not None and avant["etat_code"] == "valide":
@@ -2280,6 +2517,7 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
         n_obj = 0
         if etat_ev != "validée, non modifiée":
             change = _poser_exercices_evaluation(conn, ev_id, voulus)
+            change += _poser_type_evaluation(conn, ev_id, type_ev)   # v0.60.0 (E6)
             # v0.52.9 (I3) — sujet coupé en deux (D1) : réglage '' (les deux
             # mentions sont imposées par D2, aucun avertissement C3).
             change += _poser_calculatrice(conn, ev_id,
@@ -2307,6 +2545,26 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
     n = _lier_objectifs(conn, liens)
     if n:
         rapport.seq(seq)["lignes"].append(f"évaluations : {n} lien(s) exercice EV-objectif créé(s)")
+    sn = conn.execute("SELECT id FROM sequences_par_niveau WHERE niveau = ? AND "
+                      "sequence_code = ?", (NIVEAU, seq)).fetchone()
+    controler_tests_courts_parties(conn, seq, sn[0] if sn else None, lot, plan,
+                                   rapport)                          # v0.60.0 (E6)
+
+
+def _poser_type_evaluation(conn, ev_id: str, type_ev: str) -> int:
+    """v0.60.0 (E6) — `evaluations.type_evaluation` d'après le lot
+    (évaluation non validée : l'appelant l'a vérifié). Retourne 1 si la
+    valeur change."""
+    from services import evaluations_v2 as ev2
+    if not ev2.colonnes_presentes(conn):
+        ev2.migrer(conn)
+    avant = conn.execute("SELECT type_evaluation FROM evaluations WHERE id = ?",
+                         (ev_id,)).fetchone()[0]
+    if avant == type_ev:
+        return 0
+    conn.execute("UPDATE evaluations SET type_evaluation = ?, mtime = CURRENT_TIMESTAMP "
+                 "WHERE id = ?", (type_ev, ev_id))
+    return 1
 
 
 # ── 5. Retrait d'évaluations (v0.52.6) ──────────────────────────────────────
@@ -2485,6 +2743,9 @@ def _executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
     mer_imp = _module_mer()                                           # v0.53.0
     from services import fiches_cycle4 as fc4                          # v0.59.0
     fc4.migrer(conn)
+    from services import evaluations_v2 as ev2                         # v0.60.0
+    for x in ev2.migrer(conn):
+        rapport.infos.append(f"Base complétée (v0.60.0) : {x}")
     if not est_sixieme():
         # v0.59.0 (D1, D2) — refus net tant que la structure de 2025 du niveau
         # n'est pas archivée (sinon l'import réécrit A1-02, F01… de 2025).
@@ -2539,6 +2800,7 @@ def _executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
         rapport.anomalie(f"{x} : \\foreach sans accolades autour de son corps dans un corrigé "
                          "(rendu en argument de \\seqLocExplication : compilation impossible) — "
                          "écrire \\foreach \\x in {…} {…} dans le lot")
+    controler_variables(lots, rapport)                               # v0.60.0 (B7)
     for x in titres_documents_en_double(lots):                       # v0.54.1 (D-DOUBLON)
         rapport.anomalie(f"titre de document en double {x} — renommer l'un des documents "
                          "dans son lot (risque de confusion pour les élèves et les collègues)")
@@ -2612,8 +2874,9 @@ def main(argv=None) -> int:
     ap.add_argument("--yes", action="store_true", help="sans confirmation")
     ap.add_argument("--db", help="chemin de la base (défaut : base du profil atelier)")
     ap.add_argument("--lots", default=None, help="dossier des lots (défaut : ..\\reference\\"
-                                                 "lot6e, ou lot4e pour N11)")
-    ap.add_argument("--niveau", default="N09", help="N09 (6e, défaut) ou N11 (4e)")
+                                                 "lot6e, lot5e pour N10, lot4e pour N11)")
+    ap.add_argument("--niveau", default="N09",
+                    help="N09 (6e, défaut), N10 (5e, v0.60.0) ou N11 (4e)")
     args = ap.parse_args(argv)
     for flux in (sys.stdout, sys.stderr):
         try:
@@ -2713,7 +2976,7 @@ def _figures_du_journal(lot: dict) -> set:
     for cle, _, _ in DOCUMENTS_LOT:
         for d in lot.get(cle, []) or []:
             noms |= _figures(lot, d)
-    for ev in lot.get("evaluations", []) or []:
+    for ev in (lot.get("evaluations", []) or []) + (lot.get("tests_courts", []) or []):
         noms |= _figures(lot, ev)
     return noms
 

@@ -1633,6 +1633,18 @@ class SqliteStore:
             conn.commit()
         except Exception as _e:                       # pragma: no cover
             print(f"  [encarts] migration impossible : {_e}")
+        # ── v0.60.0 — Version 2 du modèle Fiches : type et durée des
+        #    évaluations (tests courts reconnus par leur titre une seule fois,
+        #    sans toucher mtime), ordre des parties de la progression des
+        #    rituels (table vide : rien ne change) ─
+        try:
+            from services import evaluations_v2 as _ev2
+            _ev2.migrer(conn)
+            from services import progression_rituels as _pr
+            _pr.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [version 2 Fiches] migration impossible : {_e}")
 
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 

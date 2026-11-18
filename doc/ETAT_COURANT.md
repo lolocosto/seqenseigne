@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.59.3** (dernière livrée ; v0.59.2 déployée et poussée par Laurent — sur GitHub sans les 7 fichiers propres à la v0.59.1, repris dans le zip v0.59.3). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.60.0** (dernière livrée, delta par rapport à 2846878 « v0.59.3 », déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -347,10 +347,23 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   largeur (`split:atl-referentiel:aside`), explication du modèle en infobulle ⓘ. Fichiers
   v0.59.1 absents de GitHub repris. Marche à suivre (4e, puis 6e avec déverrouillage de
   2026_N09) : `doc/redemarrage_v0_59_3.md`.
-- **À faire par Laurent (4e)** : archiver la structure de 2025 de N11, puis importer les
-  lots de 4e au fur et à mesure, puis créer « 4e — 2027-2028 — Principal » (modèle Fiches
-  + cartes). Version 2 (tests courts au principal, séances d'évaluation, document de
-  rituels des cartes selon la progression) : v0.60.
+- v0.60.0 livrée (18 novembre) : **version 2 du modèle Fiches**, première moitié —
+  ordre des parties de la progression saisi dans l'atelier Référentiel (table
+  `progression_rituels`, une ligne par référentiel ; aucune progression ordonnée dans
+  l'atelier) et document « Rituels d'automatismes » hors catalogue (cartes nouvelles,
+  rappels espacés, réactivation, séances d'évaluation ; décisions P0 à P7,
+  `services/progression_rituels.py`) ; `evaluations.type_evaluation` (test court) et
+  `evaluations.duree` (10 min par objectif) — `services/evaluations_v2.py` ; import : clé
+  `tests_courts`, activités sous « Cours », clé `variables`, avertissements non bloquants ;
+  durée de la partie sans calculatrice sur la durée de l'évaluation (B8) ; outil
+  `outils/migrer_ae_cours.py` ; 5e : import `--niveau N10`, avertissement de l'archivage
+  (référentiels non figés), niveau de création des cartes corrigible. Reste en v0.60.1 (E9, titre court, avertissement objectif
+  sans carte, documents « séance d'évaluation » et « Tests courts », petits manques des
+  ateliers, traces S…) : `doc/ROADMAP.md`. Détails : `doc/redemarrage_v0_60_0.md`.
+- **À faire par Laurent (4e)** : saisir l'ordre des parties de 2027_N11 (atelier
+  Référentiel › Documents à publier) pour obtenir le document de rituels ; ranger les
+  activités de découverte sous « Cours » (`outils/migrer_ae_cours.py`, séquences repassées
+  en cours).
 - **À faire par Laurent** : la création des référentiels 2027 en codes A1 (6e :
   `marche_a_suivre_referentiels_6e_v0_58.md`) ; ne pas déverrouiller les référentiels de
   cette année.

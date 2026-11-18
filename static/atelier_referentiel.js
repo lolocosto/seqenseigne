@@ -1450,7 +1450,141 @@ function atelRefRendreDocuments() {
       ${atelRefGabaritHtml()}
       ${atelRefVueEnsembleHtml()}
     </div>
+    ${atelRefRituelsCadreHtml()}
     ${cadres}`;
+  atelRefRituelsCharger();
+}
+
+
+// v0.60.0 (P0 à P7) — Ordre des parties de la progression et document de
+// rituels d'automatismes / séances d'évaluation (services/progression_rituels).
+// Hors catalogue des documents : ne change ni la validation ni la publication
+// du référentiel. Référentiel principal au modèle Fiches seulement.
+function atelRefRituelsVisible() {
+  return !!(ATL_REF_SELECTION && ATL_REF_SELECTION.id
+            && (ATL_REF_SELECTION.type_ref || 'principal') === 'principal'
+            && (ATL_REF_SELECTION.gabarit_documents || 'cycle4') === 'sixieme');
+}
+
+function atelRefRituelsCadreHtml() {
+  if (!atelRefRituelsVisible()) return '';
+  return `
+    <div class="atl-cadre" id="atl-ref-rituels" style="margin-bottom:10px">
+      <div class="atl-cadre-titre">Rituels d'automatismes et séances d'évaluation (progression)</div>
+      <div style="padding:6px 8px;font-size:12px;color:var(--text-muted)">
+        Ordre des parties dans l'année, une par ligne (<code>A1-P1</code>, ou
+        <code>A1-P1 2</code> pour imposer 2 semaines ; sinon séances ÷ 3).
+        Cartes nouvelles la semaine qui suit la partie, rappels à 1 et 4 semaines
+        puis toutes les 6 semaines ; cartes des années précédentes réactivées au
+        début de la partie ; une séance d'évaluation toutes les deux semaines
+        (50 min, 5 objectifs au plus), la dernière séquence n'est pas évaluée.
+      </div>
+      <div style="padding:0 8px 8px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+        <textarea id="atl-ref-rituels-ordre" rows="8" style="width:180px;font-family:monospace;
+                  font-size:12px" placeholder="A1-P1&#10;B1-P1&#10;A2-P1"></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+          <label>Jour d'évaluation :
+            <input id="atl-ref-rituels-jour" type="text" style="width:90px;font-size:12px"></label>
+          <label>Cartes dans le document :
+            <select id="atl-ref-rituels-cartes" style="font-size:12px">
+              <option value="nouvelles">nouvelles et réactivées</option>
+              <option value="toutes">toutes (rappels compris)</option>
+              <option value="aucune">aucune (listes seulement)</option>
+            </select></label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn-sm" onclick="atelRefRituelsEnregistrer()">Enregistrer l'ordre</button>
+            <button class="btn-sm" onclick="atelRefRituelsCompiler()">Compiler le PDF</button>
+            <a class="btn-sm" id="atl-ref-rituels-tex" target="_blank" rel="noopener">.tex</a>
+          </div>
+        </div>
+      </div>
+      <div id="atl-ref-rituels-resultat" style="padding:0 8px 8px;font-size:12px"></div>
+    </div>`;
+}
+
+function atelRefRituelsUrl(suffixe) {
+  return `/api/progression-rituels/${encodeURIComponent(ATL_REF_SELECTION.id)}${suffixe || ''}`;
+}
+
+async function atelRefRituelsCharger() {
+  if (!atelRefRituelsVisible() || !document.getElementById('atl-ref-rituels')) return;
+  try {
+    const rep = await fetch(atelRefRituelsUrl());
+    const d = await rep.json();
+    if (!rep.ok) { atelRefRituelsAfficher(null, [d.error || rep.status]); return; }
+    document.getElementById('atl-ref-rituels-ordre').value = d.texte || '';
+    document.getElementById('atl-ref-rituels-jour').value = d.parametres.jour_evaluation || '';
+    document.getElementById('atl-ref-rituels-cartes').value = d.parametres.cartes_document || 'nouvelles';
+    const tex = document.getElementById('atl-ref-rituels-tex');
+    if (tex) tex.href = atelRefRituelsUrl('/tex');
+    if (d.ordre && d.ordre.length) atelRefRituelsCalendrier();
+    else atelRefRituelsAfficher(null, [], d.parties);
+  } catch (e) {
+    atelRefRituelsAfficher(null, ['Erreur réseau.']);
+  }
+}
+
+async function atelRefRituelsEnregistrer() {
+  const corps = {
+    texte: document.getElementById('atl-ref-rituels-ordre').value,
+    parametres: {
+      jour_evaluation: document.getElementById('atl-ref-rituels-jour').value,
+      cartes_document: document.getElementById('atl-ref-rituels-cartes').value,
+    },
+  };
+  const rep = await fetch(atelRefRituelsUrl(), {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+  const d = await rep.json().catch(() => ({}));
+  if (!rep.ok) { atelRefRituelsAfficher(null, d.erreurs || [d.error || rep.status]); return; }
+  atelRefRituelsCalendrier(d.avertissements || []);
+}
+
+async function atelRefRituelsCalendrier(avertSaisie) {
+  const rep = await fetch(atelRefRituelsUrl('/calendrier'));
+  const d = await rep.json().catch(() => ({}));
+  if (!rep.ok) { atelRefRituelsAfficher(null, [d.error || rep.status]); return; }
+  atelRefRituelsAfficher(d, [], null, avertSaisie || []);
+}
+
+async function atelRefRituelsCompiler() {
+  const res = document.getElementById('atl-ref-rituels-resultat');
+  if (res) res.insertAdjacentHTML('afterbegin', '<p>Compilation en cours…</p>');
+  const mode = document.getElementById('atl-ref-rituels-cartes').value;
+  const rep = await fetch(atelRefRituelsUrl(`/compiler?cartes=${encodeURIComponent(mode)}`),
+                          { method: 'POST' });
+  const d = await rep.json().catch(() => ({}));
+  if (d.ok && d.pdf) { window.open(d.pdf, '_blank'); atelRefRituelsCalendrier(); return; }
+  atelRefRituelsAfficher(null, ['Compilation en échec : '
+    + ((d.erreurs || []).join(' ; ') || d.type_echec || rep.status)]);
+}
+
+function atelRefRituelsAfficher(cal, erreurs, parties, avertSaisie) {
+  const res = document.getElementById('atl-ref-rituels-resultat');
+  if (!res) return;
+  const E = atelRefEscape;
+  let h = '';
+  if (erreurs && erreurs.length) {
+    h += `<div style="color:#8b1a1a">${erreurs.map(E).join('<br>')}</div>`;
+  }
+  if (parties && parties.length && !cal) {
+    h += `<p style="color:var(--text-muted)">Parties du référentiel : `
+      + parties.map(p => E(p.code)).join(', ') + '</p>';
+  }
+  if (cal) {
+    const av = (avertSaisie || []).concat(cal.avertissements || []);
+    if (av.length) h += `<div style="color:#7a4b00">${av.map(E).join('<br>')}</div>`;
+    const lignes = cal.semaines.filter(s => s.parties.length || s.nouvelles.length
+      || s.reactivation.length || s.evaluations.length).map(s => `<tr>
+        <td>${s.numero}</td><td>${E(s.parties.join(', '))}</td>
+        <td>${s.nouvelles.length || ''}</td><td>${s.reactivation.length || ''}</td>
+        <td>${s.rappels.length || ''}</td>
+        <td>${s.seance_evaluation ? E(s.evaluations.map(e => `${e.titre} (${e.duree} min)`).join(' ; ') || '—') : ''}</td>
+      </tr>`).join('');
+    h += `<table class="atl-table" style="font-size:12px;margin-top:6px">
+      <thead><tr><th>Sem.</th><th>Parties</th><th>Nouvelles</th><th>Réactivées</th>
+      <th>À revoir</th><th>Séance d'évaluation</th></tr></thead><tbody>${lignes}</tbody></table>`;
+  }
+  res.innerHTML = h;
 }
 
 

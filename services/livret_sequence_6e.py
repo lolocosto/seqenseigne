@@ -277,8 +277,13 @@ def _titre_exo(ex: dict, prefixe: str = "") -> str:
     calculatrice autorisée ou interdite) et le code. Exercice non marqué :
     titre inchangé. La remédiation suit le marquage de l'exercice (M1)."""
     from services.marqueurs_exercices import latex_6e
+    from services.latex_texte import speciaux_latex
     marques = latex_6e(ex)
-    return (prefixe + (ex.get("titre") or "")
+    # v0.60.0 (B9) — échappement commun des titres venus de la base
+    # (`latex_texte.speciaux_latex` : `& % # _` hors `$…$`, `\%` non doublé) :
+    # « Passer par 10 % » commentait la fin de la ligne. Titre sans ces
+    # caractères : .tex identique.
+    return (prefixe + speciaux_latex(ex.get("titre") or "")
             + r"\hfill" + (marques + r"\quad" if marques else "")
             + r"{\footnotesize\color{seqSixGrisTexte}" + ex["code"] + "}")
 

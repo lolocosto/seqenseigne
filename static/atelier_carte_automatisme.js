@@ -203,6 +203,10 @@ class AtelierCarte extends AtelierEditeur {
     this.$('recto').value       = c.recto       || '';
     this.$('verso').value       = c.verso       || '';
     this.$('variables').value   = c.variables   || '';
+    // v0.60.0 (F3) — niveau de création (hors snapshot « modifié » : il est
+    // enregistré tout de suite par changerNiveauCreation, même carte validée).
+    const nc = this.$('niveau_creation');
+    if (nc) nc.value = c.niveau_creation || '';
     this._afficherCadreVariables();
     // v0.13.6.14 — Bouton « ⤵ reprendre titre objectif » injecté ici,
     // visible si la carte a exactement 1 lien obj avec un nom non vide
@@ -226,6 +230,26 @@ class AtelierCarte extends AtelierEditeur {
   changerTypeTech() {
     this._afficherCadreVariables();
     this.marquerModifie();
+  }
+
+  /**
+   * v0.60.0 (F3) — Enregistre le niveau de création de la carte active
+   * (PUT dédié, permis sur une carte validée ; aucun document périmé).
+   */
+  async changerNiveauCreation(valeur) {
+    if (!this.itemActif || !this.itemActif.id) return;
+    const rep = await fetch(`/api/cartes/${encodeURIComponent(this.itemActif.id)}/niveau-creation`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ niveau_creation: valeur || '' }) });
+    const d = await rep.json().catch(() => ({}));
+    if (!rep.ok) {
+      this.toast(d.error || 'Niveau de création non enregistré', 'erreur');
+      const nc = this.$('niveau_creation');
+      if (nc) nc.value = this.itemActif.niveau_creation || '';
+      return;
+    }
+    this.itemActif.niveau_creation = d.niveau_creation || '';
+    this.toast('Niveau de création enregistré');
   }
 
   /** Handler explicite : tout changement de formulaire marque dirty. */

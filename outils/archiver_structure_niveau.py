@@ -150,6 +150,7 @@ class Rapport:
         self.jamais: list[str] = []
         self.anomalies: list[str] = []
         self.infos: list[str] = []
+        self.avertissements: list[str] = []          # v0.60.0 (F2)
 
     def texte(self) -> str:
         L = [f"Archivage de la structure de 2025 — {self.niveau} — seqenseigne {VERSION}", ""]
@@ -170,6 +171,10 @@ class Rapport:
         if self.infos:
             L.append("== Informations")
             L += [f"  - {x}" for x in self.infos]
+            L.append("")
+        if self.avertissements:                                      # v0.60.0 (F2)
+            L.append("== Avertissements (non bloquants)")
+            L += [f"  ⚠ {x}" for x in self.avertissements]
             L.append("")
         L.append("== Anomalies" + ("" if self.anomalies else " : aucune"))
         L += [f"  ! {x}" for x in self.anomalies]
@@ -263,6 +268,28 @@ def precontroles(conn, niveau: str) -> list[str]:
         refus.append("cycle 4 encore en anciens codes (S…) : appliquer d'abord la migration "
                      "des codes (outils\\migrer_themes_codes_2027.py --apply)")
     return refus
+
+
+def referentiels_non_figes(conn, niveau: str) -> list[tuple[str, str]]:
+    """v0.60.0 (F2) — Référentiels internes du niveau qui lisent la structure
+    vivante de l'atelier (ni verrouillés, ni utilisés, ni annulés : aucun
+    instantané) : [(id, état)]. Après l'archivage, ils afficheraient le
+    nouveau contenu (archives exclues), au fil des imports de lots."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(referentiel_niveaux)")}
+    if not cols:
+        return []
+    filtre = " AND COALESCE(source, 'interne') = 'interne'" if "source" in cols else ""
+    return [(r[0], r[1]) for r in conn.execute(
+        "SELECT id, etat FROM referentiel_niveaux WHERE niveau = ? AND etat IN "
+        "('en_cours', 'valide')" + filtre + " ORDER BY id", (niveau,))]
+
+
+def avertir_referentiels_non_figes(conn, niveau: str, rapport: Rapport) -> None:
+    for rid, etat in referentiels_non_figes(conn, niveau):
+        rapport.avertissements.append(
+            f"référentiel {rid} « {etat} », sans instantané : il lit la structure vivante de "
+            f"{niveau} et montrera le nouveau contenu après l'archivage — le valider puis le "
+            "verrouiller avant (il garde alors la structure de 2025), ou l'annuler")
 
 
 def archiver(conn, niveau: str, j, rapport: Rapport, codes: dict | None = None) -> dict:
@@ -368,6 +395,7 @@ def executer(conn, niveau: str, rapport: Rapport, data_dir: Path | None, j) -> d
     changé (sinon ArchivageErreur : l'appelant annule)."""
     conn.row_factory = None
     fc4.migrer(conn)
+    avertir_referentiels_non_figes(conn, niveau, rapport)            # v0.60.0 (F2)
     avant_e = empreinte_hors_tables_touchees(conn, data_dir)
     avant_l = lignes_touchables(conn)
     carte = archiver(conn, niveau, j, rapport)

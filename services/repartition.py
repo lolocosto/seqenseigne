@@ -59,6 +59,7 @@ TABLES_ATELIER = (
     "cartes_mentales",                                                   # v0.55.0
     "encarts",                                                           # v0.59.2
     "archivages_structure",          # v0.59.0 : marque d'archivage de la structure de 2025
+    "progression_rituels",           # v0.60.0 : ordre des parties saisi (rituels, atelier)
     # Mise en forme LaTeX (tables créées par l'import du paquet)
     "paquet_definitions", "paquet_requirepackage",
     # Échanges propres à l'atelier
