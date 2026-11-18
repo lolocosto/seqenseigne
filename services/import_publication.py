@@ -317,6 +317,13 @@ def _appliquer(conn, data_dir: Path, rid: str, doc: dict, z: zipfile.ZipFile,
             "PRAGMA table_info(referentiel_niveaux)")}:
         conn.execute("UPDATE referentiel_niveaux SET gabarit_documents=? WHERE id=?",
                      (_gd.normaliser(ref.get("gabarit_documents")), rid))
+    # v0.60.1 (D18d, format 1.7) — mode de mise en route du principal ;
+    # absent → non renseigné.
+    from services import mise_en_route_referentiel as _mer
+    _mer.migrer(conn)
+    mer = ref.get("mise_en_route") or {}
+    conn.execute("UPDATE referentiel_niveaux SET mise_en_route=?, mer_referentiel=? WHERE id=?",
+                 (mer.get("mode") or "", mer.get("mer") or "", rid))
     for t in st["themes"]:
         conn.execute("INSERT INTO referentiel_themes (referentiel_id, code, nom, couleur, "
                      "ordre) VALUES (?,?,?,?,?)",

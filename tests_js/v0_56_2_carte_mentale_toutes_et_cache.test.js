@@ -251,7 +251,7 @@ describe('v0.56.2 — 3. « Recompiler sans cache »', () => {
     expect(appels.at(-1).url).not.toMatch(/sans_cache/);
   });
 
-  it('atelier Séquence : case « Sans cache » appliquée à Compiler, au plan, aux cartes et à « Tout compiler »', async () => {
+  it('atelier Séquence : case « Sans cache » appliquée à Compiler, au plan et à « Tout compiler »', async () => {
     const A = globalThis.window.ATELIER_SEQNIV;
     A.data = { sequence_par_niveau: { niveau: 'N09', sequence_code: 'S01' }, modele: { gabarit: 'sixieme' } };
     A._chargerResumeMer = () => {}; A.cmCharger = () => {};
@@ -265,7 +265,8 @@ describe('v0.56.2 — 3. « Recompiler sans cache »', () => {
       .toBe('/api/v2/livret-sequence/N09/S01/tout-compiler?sans_cache=1');
     const src = lire('static/atelier_seqniv_assemblage.js');
     expect(src).toMatch(/this\._urlCache\(P\.urlToutCompiler\(/);
-    expect((src.match(/this\._urlCache\(`/g) || []).length).toBe(3);   // livret, plan, cartes mentales
+    // v0.60.1 (D19) : livret et plan (le bloc « Carte mentale » est retiré).
+    expect((src.match(/this\._urlCache\(`/g) || []).length).toBe(2);
   });
 
   it('Administration › Base de données : « Vider le cache des rendus PDF » avec confirmation et nombre de fichiers', async () => {

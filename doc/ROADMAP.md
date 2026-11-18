@@ -411,16 +411,22 @@ Voir `inventaire_ateliers.md` de la livraison v0.56.3.
     l'archivage de N10 ; ajoutés (étape 3 de la 5e) : import `--niveau N10` (F1),
     avertissement de l'archivage pour les référentiels non figés (F2), niveau de création
     des cartes corrigible dans l'atelier et par l'import (F3) ;
-  - **v0.60.1 (reste)** : cartes de la partie dans le plan de travail Fiches (E9) ; saisie
-    du titre court dans l'atelier ; avertissement « objectif sans carte » à la validation
-    de séquence, exceptions sous forme d'une propriété de l'objectif lue dans les lots
-    (« sans carte voulue » ; F4 : en 5e, A3-04… désignent d'autres objectifs) ; document
-    « séance d'évaluation » qui
-    assemble les sujets d'une séance et document « Tests courts » au catalogue du principal
-    (E6, E7) ; durée affichée sur le sujet ; atelier Exercice (séquence en mode « toutes
-    les séquences », règle `#atl-exo-form`), rendu par lot avec cartes mentales et « sans
-    cache » ; traces S… (numérotation d'un référentiel externe, textes « S01 » de
-    l'interface, route `/api/admin/cycle/importer`) ;
+  - **v0.60.1 livrée (18 novembre)** (`doc/redemarrage_v0_60_1.md`) : cartes de la partie
+    dans le plan de travail Fiches (E9) ; titre court saisi dans l'atelier ; avertissement
+    « objectif sans carte » (propriété `sans_carte` lue dans les lots) ; document « Tests
+    courts » (option cartes, cartes évaluées dans le corrigé) et document « séance
+    d'évaluation » ; tests courts placés dans les séances au choix de l'enseignant ; mode
+    de mise en route du référentiel principal (décision 18, format d'échange 1.7) ; bonus
+    1 pt sur le cycle 4 ; bloc « Carte mentale » retiré du Rendu PDF de l'assemblage ;
+    atelier Exercice (séquence en « toutes les séquences », `#atl-exercice-form`) ; rendu
+    par lot avec cartes mentales et « Sans cache » ; traces S… (externe documenté en S01…,
+    exemples « A1 », `/api/admin/cycle/importer` protégé) ; réimport sûr des évaluations
+    et tests courts (R5 à R7), multisélection du module Évaluations, accord « pt » ;
+  - restent : durée affichée sur chaque sujet (aujourd'hui : en-tête de la séance
+    d'évaluation et module Évaluations) ; planches de cartes par partie ; tests courts
+    retirés du document « Évaluations » quand le document « Tests courts » est publié (à
+    trancher) ; saisie du mode de mise en route dans l'éditeur d'un référentiel externe
+    (aujourd'hui : création et barre du référentiel choisi) ;
   - plus tard, avec le chantier des progressions côté classe : progression ordonnée par
     semaines dans l'appli de classe (le document de rituels pourra la lire au lieu de
     l'ordre saisi), cartes de la partie au début de séance (rappel Leitner) ;

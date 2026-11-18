@@ -2286,7 +2286,9 @@ window.AtelierEditeur = AtelierEditeur;
     const noms = ['ATELIER_CARTE', 'ATELIER_NOTION', 'ATELIER_METHODE',
                   'ATELIER_FICHE', 'ATELIER_EXERCICE', 'ATELIER_CARTE_MENTALE',
                   // v0.59.3 — liste des séquences de l'atelier Séquence (niveau).
-                  'ATELIER_SEQNIV'];
+                  'ATELIER_SEQNIV',
+                  // v0.60.1 — module Évaluations (multisélection).
+                  'ATELIER_EVALUATION'];
     let aQuelqueChose = false;
     for (const n of noms) {
       const at = window[n];

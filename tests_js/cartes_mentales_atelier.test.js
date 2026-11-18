@@ -58,25 +58,23 @@ describe('v0.55.0 — cartes mentales dans l\'atelier', () => {
     A._assurerOngletRendu();
   }
 
-  it('Rendu PDF : bloc de compilation pour toute séquence principale (tous modèles), pas pour une mise en route', () => {
-    ongletPour('S01', 'sixieme');
-    expect(document.getElementById('livret-seq-cm').style.display).toBe('flex');
-    ongletPour('S01', 'cycle4');
-    expect(document.getElementById('livret-seq-cm').style.display).toBe('flex');
-    ongletPour('M02', 'sixieme');
-    expect(document.getElementById('livret-seq-cm').style.display).toBe('none');
+  // v0.60.1 (D19, décision du 18 novembre) — le bloc « Carte mentale » de l'onglet
+  // Rendu PDF est retiré : les cartes mentales se compilent dans leur atelier,
+  // comme les autres atomes (ces deux tests supposaient le bloc de la v0.55.0).
+  it('D19 — Rendu PDF : plus de bloc « Carte mentale », quel que soit le modèle', () => {
+    for (const [seq, gab] of [['S01', 'sixieme'], ['S01', 'cycle4'], ['M02', 'sixieme']]) {
+      ongletPour(seq, gab);
+      expect(document.getElementById('livret-seq-cm')).toBe(null);
+      expect(document.getElementById('livret-seq-cm-btn-pdf')).toBe(null);
+    }
   });
 
-  it("Rendu PDF : plus d'éditeur, un lien vers l'atelier Carte mentale", async () => {
+  it("D19 — ni éditeur ni sélecteurs de carte mentale dans l'assemblage (l'atelier Carte mentale reste)", () => {
     ongletPour('S01', 'sixieme');
     expect(document.getElementById('livret-seq-cm-editeur')).toBe(null);
-    expect(document.getElementById('livret-seq-cm-latex')).toBe(null);
-    let ouvert = null;
-    globalThis.window.atelSwitch = p => { ouvert = p; };
-    A.cmOuvrirAtelier();
-    expect(ouvert).toBe('carte_mentale');
-    await A.cmCharger();
-    expect(document.getElementById('livret-seq-cm-etat').textContent).toBe('1 carte(s) sur 2 partie(s)');
+    expect(document.getElementById('livret-seq-cm-partie')).toBe(null);
+    expect(A.cmCompiler).toBe(undefined);
+    expect(A.cmOuvrirAtelier).toBe(undefined);
   });
 });
 

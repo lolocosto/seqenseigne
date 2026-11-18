@@ -210,10 +210,11 @@
                   onclick="ATELIER_SEQNIV.livretSeqVoirTex()">
             LaTeX généré
           </button>
-          <!-- v0.56.2 — option « sans cache » : livret, plan de travail, cartes
-               mentales et « Tout compiler » ignorent et remplacent leurs PDF en cache. -->
+          <!-- v0.56.2 — option « sans cache » : livret, plan de travail et « Tout
+               compiler » ignorent et remplacent leurs PDF en cache (v0.60.1 : plus de
+               bloc « Carte mentale » ici). -->
           <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px"
-                 title="Ignorer les PDF en cache et recompiler (par exemple après la modification d'une macro de mise en forme). S'applique à « Compiler », aux cartes mentales et à « Tout compiler ».">
+                 title="Ignorer les PDF en cache et recompiler (par exemple après la modification d'une macro de mise en forme). S'applique à « Compiler » et à « Tout compiler ».">
             <input type="checkbox" id="livret-seq-sans-cache"> Sans cache</label>
         </div>
         <div class="livret-seq-actions" id="livret-seq-mer" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
@@ -257,20 +258,9 @@
           <span id="livret-seq-mer-tout-etat"></span>
         </div>
         <ul id="livret-seq-mer-tout-liste" style="display:none;font-size:12px;margin:2px 0 8px 18px;max-height:14em;overflow:auto"></ul>
-        <!-- v0.55.0 — cartes mentales de partie : rendu seul ; édition dans l'atelier « Carte mentale ». -->
-        <div class="livret-seq-actions" id="livret-seq-cm" style="display:none;flex-wrap:wrap;gap:8px;font-size:12px">
-          <label>Carte mentale
-            <select id="livret-seq-cm-partie" onchange="ATELIER_SEQNIV.cmMajEtat()"><option value="">toutes les parties</option></select></label>
-          <label>Version
-            <select id="livret-seq-cm-version">
-              <option value="eleve">à compléter</option><option value="corrigee">complète</option>
-            </select></label>
-          <button class="btn-prim" id="livret-seq-cm-btn-pdf" onclick="ATELIER_SEQNIV.cmCompiler()"
-                  title="Compile la carte mentale de la partie choisie (ou toutes les cartes de la séquence, une par page)">🧠 Compiler les cartes mentales</button>
-          <button class="btn-sec" id="livret-seq-cm-btn-atelier" onclick="ATELIER_SEQNIV.cmOuvrirAtelier()"
-                  title="Créer ou modifier les cartes dans l'atelier « Carte mentale » (portée Séquence)">✏️ Modifier dans l'atelier Carte mentale</button>
-          <span id="livret-seq-cm-etat"></span>
-        </div>
+        <!-- v0.60.1 (D19) — le bloc « Carte mentale » (v0.55.0) est retiré : les cartes
+             mentales se compilent dans leur atelier, comme les autres atomes (« Tout
+             compiler » les garde : c'est un document de la séquence). -->
         <!-- v0.59.2 — encarts du livret (« Le saviez-vous ? »…) : lecture seule, importés des lots. -->
         <details id="livret-seq-encarts" style="display:none;font-size:12px;margin:2px 0 8px">
           <summary id="livret-seq-encarts-titre">Encarts du livret</summary>
@@ -463,6 +453,7 @@
           <span class="asm-header-nom">${this._esc(sn.sequence_nom || '')}</span>
           ${themeBadge}
         </div>
+        ${this._rendreTitreCourt(sn)}
         ${this._rendreBlocPrecedences(precs)}
         <div class="asm-parties" id="asm-parties-list">
           ${parties.length === 0
@@ -484,6 +475,44 @@
 
     _couleurTheme(code) {
       return _PUR.couleurTheme(code);
+    }
+
+    // ── v0.60.1 (TC) — Titre court de la séquence au niveau ──────────────────
+    //
+    // Titre propre au niveau dans les documents du modèle Fiches (couverture,
+    // page de garde par partie, plan de travail) ; vide = nom du cycle.
+    // Séquences du principal seulement (ni mises en route Mnn ni archives
+    // Xnn) ; séquence validée : lecture seule (le serveur refuse aussi).
+    _rendreTitreCourt(sn) {
+      if (!sn || /^[MX]\d\d$/.test(sn.sequence_code || '')) return '';
+      const valide = sn.etat_code === 'valide';
+      const v = this._escAttr(sn.titre_court || '');
+      return `
+        <div class="atl-cadre atl-cadre--compact asm-titre-court" style="font-size:12px;
+             display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label for="asm-titre-court" title="Titre de la séquence propre au niveau dans les documents du modèle Fiches (couverture, page de garde, plan de travail). Vide : nom du cycle.">Titre court (documents)&nbsp;:</label>
+          <input type="text" id="asm-titre-court" maxlength="120" value="${v}"
+                 placeholder="${this._escAttr(sn.sequence_nom || '')}" style="flex:1;min-width:14em"
+                 ${valide ? 'disabled title="Séquence validée : repasser en cours pour modifier"' : ''}>
+          ${valide ? '<span style="color:var(--text-muted)">(séquence validée)</span>'
+                   : '<button class="btn-sm" onclick="ATELIER_SEQNIV.enregistrerTitreCourt()">Enregistrer</button>'}
+        </div>`;
+    }
+
+    async enregistrerTitreCourt() {
+      const sn = this._sn();
+      const champ = document.getElementById('asm-titre-court');
+      if (!sn || !champ) return;
+      const rep = await apiJson('PUT',
+        `/api/v2/sequences-par-niveau/${encodeURIComponent(sn.id)}/titre-court`,
+        {titre_court: champ.value});
+      if (!rep.ok) {
+        this._status(`Titre court non enregistré : ${(rep.data && rep.data.error) || rep.status}`, true);
+        return;
+      }
+      sn.titre_court = rep.data.titre_court;
+      champ.value = rep.data.titre_court;
+      this._status('Titre court enregistré.', false);
     }
 
     // ── v0.10.2 — Bloc Précédences ───────────────────────────────────────────
@@ -3093,13 +3122,8 @@
       const ctl = document.getElementById('livret-seq-mer-controle');
       if (ctl && !this._estMer()) ctl.style.display = 'none';
       if (this._estMer()) this._chargerResumeMer();          // v0.53.1
-      // v0.55.0 — cartes mentales : séquence principale, tout modèle (Fiches et
-      // Notions et méthodes) ; l'édition est dans l'atelier « Carte mentale ».
-      const cm = document.getElementById('livret-seq-cm');
-      const avecCartes = !this._estMer();
-      if (cm) cm.style.display = avecCartes ? 'flex' : 'none';
-      if (avecCartes) this.cmCharger();
-      if (avecCartes) this.encartsCharger(); else this._encartsAfficher(null);   // v0.59.2
+      // v0.60.1 (D19) — plus de bloc « Carte mentale » ici (atelier Carte mentale).
+      if (!this._estMer()) this.encartsCharger(); else this._encartsAfficher(null);   // v0.59.2
     }
 
     // ── v0.59.2 — Encarts du livret (lecture seule) ──────────────────────────
@@ -3147,88 +3171,9 @@
       }).join('');
     }
 
-    // ── v0.55.0 — Cartes mentales de partie ──────────────────────────────────
-    //
-    // GET/PUT/DELETE /api/v2/livret-sequence/<niveau>/<séquence>/cartes-mentales[/<n>] ;
-    // le PDF passe par la route du livret (?document=cartes_mentales).
-
-    async cmCharger() {
-      const sn = this._sn();
-      if (!sn) return;
-      let rep;
-      try {
-        rep = await apiJson('GET', _PUR.urlCartesMentales(sn.niveau, sn.sequence_code));
-      } catch (_) { return; }
-      if (!rep || !rep.ok || !rep.data) return;
-      this._cartesMentales = rep.data;
-      const sel = document.getElementById('livret-seq-cm-partie');
-      if (sel) {
-        const avant = sel.value;
-        sel.innerHTML = `<option value="">toutes les parties</option>`
-          + (rep.data.parties || []).map(p => `<option value="${p.numero}">Partie ${p.numero}`
-            + (p.carte ? '' : ' (sans carte)') + `</option>`).join('');
-        if (avant && (rep.data.parties || []).some(p => String(p.numero) === avant)) sel.value = avant;
-      }
-      this.cmMajEtat();
-    }
-
-    _cmPartie() {
-      const sel = document.getElementById('livret-seq-cm-partie');
-      const n = sel ? sel.value : '';
-      const parties = (this._cartesMentales && this._cartesMentales.parties) || [];
-      return n ? parties.find(p => String(p.numero) === n) || null : null;
-    }
-
-    cmMajEtat() {
-      const parties = (this._cartesMentales && this._cartesMentales.parties) || [];
-      const avec = parties.filter(p => p.carte).length;
-      const etat = document.getElementById('livret-seq-cm-etat');
-      if (etat) etat.textContent = `${avec} carte(s) sur ${parties.length} partie(s)`;
-    }
-
-    // Ouvre l'atelier « Carte mentale » (même niveau et même séquence : filtres de portée).
-    // v0.56.3 — partie choisie : elle est ouverte dans l'atelier, par le même
-    // mécanisme que les liens des autres atomes (compilBatchOuvrirAtelier).
-    cmOuvrirAtelier() {
-      const sn = this._sn();
-      const p = this._cmPartie();
-      if (sn && p && typeof window.compilBatchOuvrirAtelier === 'function') {
-        window.compilBatchOuvrirAtelier('carte_mentale', String(p.numero),
-                                        sn.niveau, sn.sequence_code);
-        return;
-      }
-      if (typeof window.atelSwitch === 'function') window.atelSwitch('carte_mentale');
-    }
-
-    async cmCompiler() {
-      const sn = this._sn();
-      if (!sn) return;
-      const p = this._cmPartie();
-      const v = (document.getElementById('livret-seq-cm-version') || {}).value || 'eleve';
-      const url = this._urlCache(`/api/v2/livret-sequence/${encodeURIComponent(sn.niveau)}/`
-                + `${encodeURIComponent(sn.sequence_code)}/rendu-pdf`
-                + _PUR.requeteRenduCartes(v, p ? p.numero : ''));
-      this._livretSeqAfficherLoader();
-      try {
-        const r = await fetch(url, { method: 'POST' });
-        if (!r.ok) {
-          const data = await r.json().catch(() => null);
-          let m = (data && (data.message || data.error)) || `Erreur HTTP ${r.status}.`;
-          if (data && Array.isArray(data.erreurs) && data.erreurs.length > 0) {
-            m += '\n\nDétail :\n' + data.erreurs.slice(0, 3).map(er =>
-              `  • Ligne ${er.ligne || '?'} : ${er.message}`).join('\n');
-          }
-          this._livretSeqAfficherErreur(m, data && data.log_complet);
-          return;
-        }
-        this._livretSeqLiberer();
-        const blob = await r.blob();
-        this._livretBlobUrl = URL.createObjectURL(blob);
-        this._livretSeqAfficherPdf(this._livretBlobUrl);
-      } catch (err) {
-        this._livretSeqAfficherErreur(`Erreur réseau : ${err.message || err}`);
-      }
-    }
+    // v0.60.1 (D19) — Le bloc « Carte mentale » de l'onglet Rendu PDF (v0.55.0 :
+    // cmCharger, cmMajEtat, cmOuvrirAtelier, cmCompiler) est retiré : les cartes
+    // mentales se compilent dans leur atelier, comme les autres atomes.
 
     // v0.53.1 (MR5, MR6 révisés) — Parties de la séquence de mise en route
     // (choix de la partie du document) et contrôle MR6 par partie, lus sur

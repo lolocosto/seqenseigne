@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.60.0** (dernière livrée, delta par rapport à 2846878 « v0.59.3 », déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.60.1** (dernière livrée, delta par rapport à 7c47dc1 « v0.60 » ; v0.60.0 déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -360,6 +360,23 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   (référentiels non figés), niveau de création des cartes corrigible. Reste en v0.60.1 (E9, titre court, avertissement objectif
   sans carte, documents « séance d'évaluation » et « Tests courts », petits manques des
   ateliers, traces S…) : `doc/ROADMAP.md`. Détails : `doc/redemarrage_v0_60_0.md`.
+- v0.60.1 livrée (18 novembre) : **version 2 du modèle Fiches**, seconde moitié, et
+  décisions 15 à 19 du 18 novembre — mode de mise en route du référentiel principal
+  (`referentiel_niveaux.mise_en_route`, `mer_referentiel` ; déduit une fois : 2027_N11 →
+  cartes, 2026_N09 → progression 2026_N09b ; saisie à la création et dans l'onglet,
+  lecture seule quand figé ; vue d'ensemble, rituels ; format d'échange 1.7 si renseigné) ;
+  document « Tests courts » (option cartes ; corrigé : cartes évaluées) et tests courts
+  placés dans les séances d'évaluation au choix ; document « séance d'évaluation » ; cartes
+  de la partie dans le plan de travail Fiches (E9) ; titre court saisi dans l'atelier ;
+  avertissement « objectif sans carte » (propriété `sans_carte` des lots) ; bonus 1 pt sur
+  le cycle 4 (absent compris), rien en 6e ; bloc « Carte mentale » retiré du Rendu PDF de
+  l'assemblage ; rendu par lot avec cartes mentales et « Sans cache » ; petits manques et
+  traces S… ; réimport sûr des évaluations et tests courts (contenu du lot qui fait foi,
+  orphelins retirés, section « À repasser en cours » de l'essai à blanc), multisélection
+  du module Évaluations, « 1 pt » accordé. Détails : `doc/redemarrage_v0_60_1.md`.
+- **À faire par Laurent (4e, v0.60.1)** : réimporter les 12 lots refaits (tests courts en
+  `tests_courts`, bonus 1 pt) selon la marche à suivre de `doc/redemarrage_v0_60_1.md` ;
+  `"sans_carte": true` sur A3-04, B2-04, C1-05, E1-05.
 - **À faire par Laurent (4e)** : saisir l'ordre des parties de 2027_N11 (atelier
   Référentiel › Documents à publier) pour obtenir le document de rituels ; ranger les
   activités de découverte sous « Cours » (`outils/migrer_ae_cours.py`, séquences repassées

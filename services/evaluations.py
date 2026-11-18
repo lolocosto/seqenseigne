@@ -1279,6 +1279,7 @@ def valider_evaluation(conn: sqlite3.Connection,
         "WHERE id = ?",
         (evaluation_id,),
     )
+    basculer_exercices_propres(conn, evaluation_id, "valide")        # v0.60.1 (R5)
 
     return lire_evaluation(conn, evaluation_id)
 
@@ -1310,8 +1311,41 @@ def devalider_evaluation(conn: sqlite3.Connection,
         "WHERE id = ?",
         (evaluation_id,),
     )
+    basculer_exercices_propres(conn, evaluation_id, "en_cours")      # v0.60.1 (R5)
 
     return lire_evaluation(conn, evaluation_id)
+
+
+def exercices_propres(conn: sqlite3.Connection, evaluation_id: str) -> list[str]:
+    """v0.60.1 (R5) — Exercices de la série EV de l'évaluation qui
+    n'appartiennent qu'à elle (utilisés par aucune autre évaluation) : ce sont
+    les sujets A/B écrits pour elle, qui suivent son état."""
+    return [r[0] for r in conn.execute(
+        "SELECT ee.exercice_id FROM evaluation_exercices ee JOIN exercices x "
+        "ON x.id = ee.exercice_id WHERE ee.evaluation_id = ? AND x.serie_code = 'EV' "
+        "AND NOT EXISTS (SELECT 1 FROM evaluation_exercices autre WHERE "
+        "autre.exercice_id = ee.exercice_id AND autre.evaluation_id <> ee.evaluation_id) "
+        "ORDER BY ee.ordre", (evaluation_id,))]
+
+
+def basculer_exercices_propres(conn: sqlite3.Connection, evaluation_id: str,
+                               etat: str) -> int:
+    """v0.60.1 (R5) — Repasser une évaluation en cours (ou la valider) fait de
+    même pour ses exercices EV propres : un réimport de lot peut alors réécrire
+    l'évaluation entière, sans repasser ses exercices un à un dans l'atelier
+    Exercice. `mtime` des exercices non touché (leur contenu ne change pas).
+    Retourne le nombre d'exercices changés d'état."""
+    try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(exercices)")}
+    except sqlite3.Error:
+        return 0
+    if "etat_code" not in cols:
+        return 0
+    n = 0
+    for eid in exercices_propres(conn, evaluation_id):
+        n += conn.execute("UPDATE exercices SET etat_code = ? WHERE id = ? AND "
+                          "etat_code <> ?", (etat, eid, etat)).rowcount
+    return n
 
 
 # ── Calcul de couverture (matrice objectifs × exos) ──────────────────────────

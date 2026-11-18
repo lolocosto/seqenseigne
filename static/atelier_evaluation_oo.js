@@ -325,16 +325,63 @@ class AtelierEvaluation extends AtelierAssemblage {
       const badge = etat === 'valide'
         ? `<span class="atl-list-item-etat atome-etat--valide">Validé</span>`
         : '';
-      const cls = 'atl-item' + (actif ? ' active' : '');
+      // v0.60.1 — multisélection (Ctrl+clic, Maj+clic, clic droit), comme
+      // les ateliers d'atomes : « ✓ Valider » / « ⟲ En cours » groupés.
+      const cls = 'atl-item' + (actif ? ' active' : '')
+        + (this.estSelectionne(ev.id) ? ' selected' : '');
       const numero = ev.numero != null
         ? `<span class="atl-item-id">#${ev.numero}</span>` : '';
-      return `<div class="${cls}" onclick="atelEvalSelectionner('${this._esc(ev.id)}')">
+      return `<div class="${cls}" data-id="${this._esc(ev.id)}"
+          onclick="ATELIER_EVALUATION.clicListe(event, '${this._esc(ev.id)}')"
+          oncontextmenu="ATELIER_EVALUATION.gererClicDroitItem(event, '${this._esc(ev.id)}')">
         ${numero}
         <span class="atl-item-titre" style="flex:1;min-width:0;overflow:hidden;
               text-overflow:ellipsis;white-space:nowrap">${this._esc(titre)}</span>
         ${badge}
       </div>`;
     }).join('');
+  }
+
+  // ── v0.60.1 — Multisélection (briques d'AtelierEditeur) ─────────────────
+  //
+  // Demande du coordinateur (réimport des tests courts de 4e) : repasser en
+  // cours, puis revalider, toutes les évaluations d'un niveau en une
+  // opération. Clic simple : ouvre l'évaluation (comportement d'avant) ;
+  // Ctrl+clic, Maj+clic, clic droit : sélection. Chaque changement d'état
+  // passe par PATCH /api/evaluations/<id>/etat (mêmes contrôles que le bouton
+  // « Valider » ; les exercices EV propres suivent l'évaluation, R5).
+
+  clicListe(ev, id) {
+    if (ev && (ev.ctrlKey || ev.metaKey || ev.shiftKey)) {
+      this.gererClicItem(ev, id);
+      return;
+    }
+    this.selectionMultiEffacer();
+    this.ancreSelectionId = id;
+    return this.selectionner(id);
+  }
+
+  rendreSidebar() {
+    this._rendreSidebar();
+  }
+
+  /** Ordre et filtre d'état de la liste affichée (plage du Maj+clic). */
+  filtrerListe(liste) {
+    return (liste || []).filter(ev => !this.filtreEtat
+      || (ev.etat_code || 'en_cours') === this.filtreEtat);
+  }
+
+  urlEtat(id) {
+    return `/api/evaluations/${encodeURIComponent(id)}/etat`;
+  }
+
+  libelleItem(item) {
+    return item ? (item.titre || `#${item.numero}`) : '';
+  }
+
+  async chargerListe() {
+    await this._rechargerListe();
+    this._rendreSidebar();
   }
 
   filtrerEtat(btn, etat) {

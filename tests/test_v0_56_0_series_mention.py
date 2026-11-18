@@ -166,7 +166,8 @@ def test_format_1_6_seulement_avec_un_facultatif_empreinte_inchangee_sinon(app_6
         c.execute("UPDATE exercices SET mention='O' WHERE id='e1'")
         retour = fr.construire(c, "R09", None)
     assert avant["format_version"] != "1.6" and retour["empreinte"] == avant["empreinte"]
-    assert apres["format_version"] == fr.FORMAT_VERSION == "1.6"
+    # v0.60.1 : 1.7 = mode de mise en route ; 1.6 reste la version des facultatifs.
+    assert apres["format_version"] == fr.FORMAT_VERSION_FACULTATIFS == "1.6"
     fac = [x for s in apres["sequences"] for p in s["parties"] for x in p.get("facultatifs", [])]
     assert fac == [{"objectif": "02", "serie": "E", "exercice": "E01", "titre": "Défi"}]
     assert fr.valider(apres) == []

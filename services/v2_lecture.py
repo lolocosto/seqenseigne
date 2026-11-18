@@ -164,7 +164,15 @@ def _charger_sequence_par_niveau(conn, niveau, sequence_code):
         "theme_code":         row["theme_code"],
         "theme_nom":          row["theme_nom"],
         "theme_code_couleur": row["theme_code_couleur"],
+        # v0.60.1 (TC) — titre court de la séquence au niveau (documents du
+        # modèle Fiches ; '' : nom du cycle), saisi dans l'onglet Édition.
+        "titre_court":        _titre_court(conn, row["niveau"], row["sequence_code"]),
     }
+
+
+def _titre_court(conn, niveau: str, sequence_code: str) -> str:
+    from services.fiches_cycle4 import titre_court
+    return titre_court(conn, niveau, sequence_code)
 
 
 def _charger_parties(conn, sequence_par_niveau_id,

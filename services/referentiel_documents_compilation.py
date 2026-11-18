@@ -253,6 +253,9 @@ def lister_cibles_document(conn: sqlite3.Connection, doc_id: str,
         return _cibles_6e(conn, doc_id, niveau, type_document)
     if type_document == 'evaluation_6e':
         return _cibles_evaluations_6e(conn, niveau)
+    if type_document == 'tests_courts_6e':                       # v0.60.1 (D17a)
+        from services.documents_evaluation_v2 import cibles_tests_courts
+        return cibles_tests_courts(conn, niveau)
     if type_document in ('travaux_personnels_6e', 'activites_complementaires_6e',
                          'seances_atelier_6e'):
         return _cibles_documents_6e(conn, niveau, type_document)

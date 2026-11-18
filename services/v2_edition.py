@@ -3275,7 +3275,11 @@ def avertissements_validation(conn, sn_id: str) -> list[str]:
     if not est_modele_fiches(gabarit_atelier_du_niveau(conn, row[0])):
         return []
     from services.cartes_mentales import parties_sans_carte
-    return [f"La partie {n} n'a pas de carte mentale." for n in parties_sans_carte(conn, sn_id)]
+    out = [f"La partie {n} n'a pas de carte mentale." for n in parties_sans_carte(conn, sn_id)]
+    # v0.60.1 (F4b) — objectif sans carte d'automatisme (principal Fiches avec
+    # l'option cartes ; propriété `objectifs.sans_carte` lue dans les lots).
+    from services.cartes_partie import avertissements_validation as _avert_cartes
+    return out + _avert_cartes(conn, sn_id, row[0])
 
 
 def devalider_sequence_niveau(conn, sn_id: str) -> dict:

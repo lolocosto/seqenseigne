@@ -224,6 +224,33 @@ def api_creer_partie(sn_id: str):
     return jsonify(partie), 201
 
 
+@bp_v2_edition.route("/api/v2/sequences-par-niveau/<sn_id>/titre-court", methods=["PUT"])
+def api_titre_court(sn_id: str):
+    """v0.60.1 (TC) — Titre court de la séquence au niveau (documents du modèle
+    Fiches : couverture, page de garde, plan de travail ; vide = nom du
+    cycle). Body : {"titre_court": "…"} (120 caractères au plus). Séquence
+    validée : 409 (lecture seule, comme toute la structure)."""
+    payload = request.get_json(silent=True) or {}
+    titre = payload.get("titre_court")
+    if not isinstance(titre, str) or len(titre.strip()) > 120:
+        return jsonify({"error": "titre_court : texte de 120 caractères au plus attendu.",
+                        "code": "titre_court_invalide"}), 400
+    titre = " ".join(titre.split())
+    try:
+        with _store_conn() as conn:
+            assert_sequence_modifiable(conn, sn_id)
+            from services import fiches_cycle4 as fc4
+            fc4.migrer(conn)
+            n = conn.execute("UPDATE sequences_par_niveau SET titre_court = ? WHERE id = ?",
+                             (titre, sn_id)).rowcount
+    except V2EditionErreur as e:
+        return _erreur(e)
+    if not n:
+        return jsonify({"error": f"Séquence introuvable : {sn_id}",
+                        "code": "sequence_introuvable"}), 404
+    return jsonify({"id": sn_id, "titre_court": titre})
+
+
 @bp_v2_edition.route("/api/v2/parties/<partie_id>", methods=["PATCH"])
 def api_renumeroter_partie(partie_id: str):
     """Renuméroter une partie.

@@ -22,6 +22,17 @@ from services.cycle_import import (
 bp_cycle = Blueprint("cycle", __name__)
 
 
+def cycle_migre_codes_theme(conn, cycle_code: str) -> bool:
+    """v0.60.1 (C12c) — Le cycle a-t-il des séquences en codes de thème (A1…) ?"""
+    from services.codes_sequence import est_code_theme
+    try:
+        codes = [r[0] for r in conn.execute(
+            "SELECT code FROM sequences_du_cycle WHERE cycle_code = ?", (cycle_code,))]
+    except Exception:
+        return False
+    return any(est_code_theme(c) for c in codes)
+
+
 # ── Lecture ──────────────────────────────────────────────────────────────────
 
 @bp_cycle.route("/api/cycles", methods=["GET"])
@@ -94,6 +105,19 @@ def api_admin_importer_cycle():
 
     store = current_app.json_store
     data_dir = Path(store.db_path).parent
+
+    # v0.60.1 (C12c) — un cycle déjà migré aux codes de thème (A1…, outil
+    # migrer_themes_codes_2027, v0.58.0) n'est jamais réimporté : les CSV de
+    # départ (codes S…, anciens thèmes) réécriraient ses thèmes et ses
+    # séquences. Un cycle absent, ou encore en codes S…, s'importe comme avant.
+    with store._conn() as conn:
+        if cycle_migre_codes_theme(conn, cycle_code):
+            return jsonify({
+                "error": (f"Le cycle {cycle_code} est migré aux codes de thème (A1…) : "
+                          "le réimporter depuis les CSV de départ (codes S…) réécrirait "
+                          "ses thèmes et ses séquences. Import refusé."),
+                "code": "cycle_migre",
+            }), 409
 
     def _resoudre(chemin: str | None, defaut_nom: str) -> Path:
         if chemin:

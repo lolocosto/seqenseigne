@@ -298,21 +298,12 @@ describe('v0.56.3 — 4. lien direct, Recherche, lien depuis l\'atelier Séquenc
     expect(filtre.slice(0, filtre.indexOf('</select>'))).toMatch(/<option value="carte_mentale">Cartes mentales<\/option>/);
   });
 
-  it('atelier Séquence : « Modifier dans l\'atelier » ouvre la partie choisie (même mécanisme que les autres atomes)', () => {
-    const A = globalThis.window.ATELIER_SEQNIV;
-    A.data = { sequence_par_niveau: { niveau: 'N09', sequence_code: 'S03' }, modele: { gabarit: 'sixieme' } };
-    A._cartesMentales = { parties: [{ numero: 1 }, { numero: 2 }] };
-    document.body.innerHTML = '<select id="livret-seq-cm-partie"><option value=""></option><option value="2">2</option></select>';
-    document.getElementById('livret-seq-cm-partie').value = '2';
-    const vus = [];
-    globalThis.window.compilBatchOuvrirAtelier = (...a) => vus.push(a);
-    A.cmOuvrirAtelier();
-    expect(vus).toEqual([['carte_mentale', '2', 'N09', 'S03']]);
-    // Aucune partie choisie : l'atelier s'ouvre simplement (comportement d'avant).
-    document.getElementById('livret-seq-cm-partie').value = '';
-    const sw = []; globalThis.window.atelSwitch = (x) => sw.push(x);
-    A.cmOuvrirAtelier();
-    expect(sw).toEqual(['carte_mentale']);
-    expect(vus.length).toBe(1);
+  // v0.60.1 (D19) — « Modifier dans l'atelier Carte mentale » vivait dans le bloc
+  // « Carte mentale » de l'onglet Rendu PDF de l'assemblage, retiré : on passe par
+  // l'atelier Carte mentale (lien direct et Recherche ci-dessus, inchangés).
+  it('D19 — atelier Séquence : plus de bouton « Modifier dans l\'atelier Carte mentale » dans le Rendu PDF', () => {
+    const src = lire('static/atelier_seqniv_assemblage.js');
+    expect(src).not.toMatch(/livret-seq-cm-btn-atelier/);
+    expect(src).not.toMatch(/cmOuvrirAtelier\(\)\s*\{/);
   });
 });

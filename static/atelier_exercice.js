@@ -175,9 +175,12 @@ class AtelierExercice extends AtelierEditeur {
     // niveau/sequence viennent des filtres globaux.
     // v0.56.0 — code affiché (EN06, AP05, EX02 au modèle Fiches ; interne inchangé).
     const niveauListe = window.ATL_FILTRE_NIVEAU || '';
+    // v0.60.1 (C11) — mode « toutes les séquences » : la séquence de chaque
+    // exercice (clé `sequence` du contrat de liste) entre dans l'identifiant
+    // (N11/A3/EN01), comme dans les autres ateliers.
     const idExo = [
       niveauListe,
-      window.ATL_FILTRE_SEQ || '',
+      window.ATL_FILTRE_SEQ || ex.sequence || '',
       AtelierExercice.codeAffiche(ex.code || '', niveauListe),
     ].filter(Boolean).join('/');
 

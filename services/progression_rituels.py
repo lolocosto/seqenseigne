@@ -73,7 +73,14 @@ PARAMETRES_DEFAUT = {
     "seance_evaluation_objectifs": 5,   # E7
     "derniere_sequence_non_evaluee": True,  # P6
     "cartes_document": "nouvelles",     # aucune | nouvelles | toutes
+    # v0.60.1 (D17b) — tests courts (un par partie, sur ses cartes) : non placés
+    # (défaut : cartes travaillées en Leitner, évaluées à l'oral) ou placés dans
+    # les séances d'évaluation, `delai_test_court` semaines après le rituel des
+    # cartes de la partie (« 6 séances pour les connaître »).
+    "tests_courts": "non_places",       # non_places | seances
+    "delai_test_court": 2,
 }
+VALEURS_TESTS_COURTS = ("non_places", "seances")
 
 RE_LIGNE = re.compile(r"^\s*([A-Z]\d{1,2})\s*-\s*P?\s*(\d+)\s*(?:[:;,]?\s*(\d+)\s*(?:sem\w*)?)?\s*$",
                       re.IGNORECASE)
@@ -207,6 +214,8 @@ def _valider_parametres(p: dict) -> dict:
             v = str(v or "").strip()
             if k == "cartes_document" and v not in ("aucune", "nouvelles", "toutes"):
                 raise ProgressionErreur(f"{k} : aucune, nouvelles ou toutes")
+            if k == "tests_courts" and v not in VALEURS_TESTS_COURTS:
+                raise ProgressionErreur(f"{k} : non_places ou seances")
             out[k] = v
     return out
 
@@ -296,6 +305,54 @@ def evaluations_par_partie(conn, niveau: str) -> dict:
         out.setdefault(parts[-1][0], []).append({"id": eid, "titre": titre or "",
                                                  "duree": duree, "objectifs": n_obj})
     return out
+
+
+def tests_courts_par_partie(conn, niveau: str) -> dict:
+    """v0.60.1 (D17b) — {partie_id: [{id, titre, duree, objectifs: 0,
+    test_court: True}]} : tests courts du niveau (séquences du principal),
+    rattachés à la partie de leurs objectifs (liens `evaluation_objectifs`,
+    sinon objectifs des exercices EV) ; un test court porte sur des cartes :
+    il compte sa durée (10 min) et aucun objectif dans la séance."""
+    from services import evaluations_v2 as ev2
+    from services.mises_en_route_6e import hors_principal
+    out: dict = {}
+    for (eid, titre) in conn.execute("SELECT id, titre FROM evaluations WHERE niveau = ? "
+                                     "ORDER BY ordre, numero", (niveau,)).fetchall():
+        if ev2.type_evaluation(conn, eid) != "test_court":
+            continue
+        pid = partie_d_evaluation(conn, eid)
+        if pid is None:
+            continue
+        seq = conn.execute("SELECT sn.sequence_code FROM sequence_parties p JOIN "
+                           "sequences_par_niveau sn ON sn.id = p.sequence_par_niveau_id "
+                           "WHERE p.id = ?", (pid,)).fetchone()
+        if seq is None or hors_principal(seq[0]):
+            continue
+        out.setdefault(pid, []).append({"id": eid, "titre": titre or "",
+                                        "duree": ev2.duree(conn, eid, "test_court"),
+                                        "objectifs": 0, "test_court": True})
+    return out
+
+
+def partie_d_evaluation(conn, evaluation_id: str) -> str | None:
+    """Partie (id) des objectifs d'une évaluation — la dernière s'ils sont sur
+    plusieurs parties : liens `evaluation_objectifs`, sinon objectifs reliés
+    aux exercices EV du barème."""
+    r = conn.execute(
+        "SELECT p.id FROM evaluation_objectifs eo JOIN objectifs o ON o.id = eo.objectif_id "
+        "JOIN sequence_parties p ON p.id = o.partie_id WHERE eo.evaluation_id = ? "
+        "ORDER BY p.numero DESC LIMIT 1", (evaluation_id,)).fetchone()
+    if r is None:
+        try:
+            r = conn.execute(
+                "SELECT p.id FROM evaluation_exercices ee JOIN objectif_exos oe "
+                "ON oe.exercice_id = ee.exercice_id AND oe.serie = 'EV' JOIN objectifs o "
+                "ON o.id = oe.objectif_id JOIN sequence_parties p ON p.id = o.partie_id "
+                "WHERE ee.evaluation_id = ? ORDER BY p.numero DESC LIMIT 1",
+                (evaluation_id,)).fetchone()
+        except sqlite3.Error:
+            r = None
+    return r[0] if r else None
 
 
 # ── Calendrier ──────────────────────────────────────────────────────────────
@@ -397,37 +454,46 @@ def calendrier(conn, ref_id: str, ordre: list | None = None,
     evals = evaluations_par_partie(conn, niveau)
     derniere_seq = deroule[-1]["sequence"] if deroule else None
     non_evaluees = []
+    # v0.60.1 (D17b) — tests courts placés, si l'enseignant le choisit : au plus
+    # tôt `delai_test_court` semaines après le rituel des cartes (fin + 1).
+    tests = (tests_courts_par_partie(conn, niveau) if P["tests_courts"] == "seances"
+             else {})
+    a_placer = []
     for d in deroule:
         for ev in evals.get(d["partie_id"], []):
-            if P["derniere_sequence_non_evaluee"] and d["sequence"] == derniere_seq:
-                non_evaluees.append(ev["titre"])
+            a_placer.append((d, ev, d["fin"] + P["delai_evaluation"]))
+        for ev in tests.get(d["partie_id"], []):
+            a_placer.append((d, ev, d["fin"] + 1 + P["delai_test_court"]))
+    for d, ev, plus_tot in a_placer:
+        if P["derniere_sequence_non_evaluee"] and d["sequence"] == derniere_seq:
+            non_evaluees.append(ev["titre"])
+            continue
+        place = None
+        for w in seances:
+            if w < plus_tot:
                 continue
-            place = None
-            for w in seances:
-                if w < d["fin"] + P["delai_evaluation"]:
-                    continue
-                c = charge[w]
-                vide = c["minutes"] == 0
-                tient = (c["minutes"] + ev["duree"] <= P["seance_evaluation_minutes"]
-                         and c["objectifs"] + ev["objectifs"] <= P["seance_evaluation_objectifs"])
-                if tient or (vide and (ev["duree"] > P["seance_evaluation_minutes"]
-                                       or ev["objectifs"] > P["seance_evaluation_objectifs"])):
-                    place = w
-                    break
-            item = {**ev, "partie": d["code"]}
-            if place is None:
-                hors_annee["evaluations"].append(item)
-                continue
-            if ev["duree"] > P["seance_evaluation_minutes"] or \
-                    ev["objectifs"] > P["seance_evaluation_objectifs"]:
-                avert.append(f"« {ev['titre']} » : {ev['duree']} min, {ev['objectifs']} "
-                             f"objectifs — dépasse une séance d'évaluation "
-                             f"({P['seance_evaluation_minutes']} min, "
-                             f"{P['seance_evaluation_objectifs']} objectifs), seule en semaine "
-                             f"{place}")
-            charge[place]["minutes"] += ev["duree"]
-            charge[place]["objectifs"] += ev["objectifs"]
-            semaines[place]["evaluations"].append(item)
+            c = charge[w]
+            vide = c["minutes"] == 0
+            tient = (c["minutes"] + ev["duree"] <= P["seance_evaluation_minutes"]
+                     and c["objectifs"] + ev["objectifs"] <= P["seance_evaluation_objectifs"])
+            if tient or (vide and (ev["duree"] > P["seance_evaluation_minutes"]
+                                   or ev["objectifs"] > P["seance_evaluation_objectifs"])):
+                place = w
+                break
+        item = {**ev, "partie": d["code"]}
+        if place is None:
+            hors_annee["evaluations"].append(item)
+            continue
+        if ev["duree"] > P["seance_evaluation_minutes"] or \
+                ev["objectifs"] > P["seance_evaluation_objectifs"]:
+            avert.append(f"« {ev['titre']} » : {ev['duree']} min, {ev['objectifs']} "
+                         f"objectifs — dépasse une séance d'évaluation "
+                         f"({P['seance_evaluation_minutes']} min, "
+                         f"{P['seance_evaluation_objectifs']} objectifs), seule en semaine "
+                         f"{place}")
+        charge[place]["minutes"] += ev["duree"]
+        charge[place]["objectifs"] += ev["objectifs"]
+        semaines[place]["evaluations"].append(item)
     for k in ("nouvelles", "reactivation"):
         if hors_annee[k]:
             avert.append(f"{len(hors_annee[k])} carte(s) {'nouvelle(s)' if k == 'nouvelles' else 'à réactiver'} "
@@ -480,6 +546,12 @@ def generer_tex(conn, ref_id: str, options: dict | None = None) -> str:
          rf"{{\large Référentiel {texte_latex(ref_id)} --- "
          rf"{len(cal['parties'])} parties, {P['semaines_annee']} semaines}}",
          r"\end{center}", r"\bigskip"]
+    # v0.60.1 (D18c) — mode de mise en route du référentiel (s'il est renseigné).
+    from services.mise_en_route_referentiel import lire as _lire_mer
+    _mer = _lire_mer(conn, ref_id)
+    if _mer["mode"]:
+        L[-1:-1] = [r"\begin{center}Mise en route : " + texte_latex(_mer["libelle"])
+                    + r"\end{center}"]
     if not cal["parties"]:
         L += [r"\textit{Aucune partie dans l'ordre de la progression : saisir l'ordre des "
               r"parties dans l'atelier.}", r"\end{document}"]
@@ -522,7 +594,8 @@ def generer_tex(conn, ref_id: str, options: dict | None = None) -> str:
                 ch = s.get("charge_evaluation") or {}
                 L.append(rf"\textbf{{Séance d'évaluation ({texte_latex(P['jour_evaluation'])}, "
                          rf"{ch.get('minutes', 0)} min, {ch.get('objectifs', 0)} objectifs) :}} "
-                         + " ; ".join(rf"{texte_latex(e['titre'])} ({e['duree']} min)"
+                         + " ; ".join(rf"{texte_latex(e['titre'])} ({e['duree']} min"
+                                      + (", test court" if e.get("test_court") else "") + ")"
                                       for e in s["evaluations"]) + r"\par")
             else:
                 L.append(r"\textit{Séance d'évaluation : aucune évaluation à placer.}\par")

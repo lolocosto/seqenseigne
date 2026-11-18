@@ -1491,10 +1491,23 @@ function atelRefRituelsCadreHtml() {
               <option value="toutes">toutes (rappels compris)</option>
               <option value="aucune">aucune (listes seulement)</option>
             </select></label>
+          <label title="v0.60.1 (D17b) — tests courts sur les cartes de la partie : choix de la progression (Leitner à l'oral, ou évaluation écrite)">Tests courts :
+            <select id="atl-ref-rituels-tests" style="font-size:12px">
+              <option value="non_places">non placés (cartes en Leitner)</option>
+              <option value="seances">dans les séances d'évaluation</option>
+            </select></label>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn-sm" onclick="atelRefRituelsEnregistrer()">Enregistrer l'ordre</button>
             <button class="btn-sm" onclick="atelRefRituelsCompiler()">Compiler le PDF</button>
             <a class="btn-sm" id="atl-ref-rituels-tex" target="_blank" rel="noopener">.tex</a>
+          </div>
+          <!-- v0.60.1 (D-SE) — document « séance d'évaluation » d'une semaine. -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <label>Séance d'évaluation, semaine
+              <input id="atl-ref-seance-semaine" type="number" min="1" max="60" style="width:4em;font-size:12px"></label>
+            <select id="atl-ref-seance-sujet" style="font-size:12px"><option value="A">sujet A</option><option value="B">sujet B</option></select>
+            <select id="atl-ref-seance-version" style="font-size:12px"><option value="eleve">élève</option><option value="corrigee">corrigé</option></select>
+            <button class="btn-sm" onclick="atelRefSeanceCompiler()">Compiler la séance</button>
           </div>
         </div>
       </div>
@@ -1515,6 +1528,8 @@ async function atelRefRituelsCharger() {
     document.getElementById('atl-ref-rituels-ordre').value = d.texte || '';
     document.getElementById('atl-ref-rituels-jour').value = d.parametres.jour_evaluation || '';
     document.getElementById('atl-ref-rituels-cartes').value = d.parametres.cartes_document || 'nouvelles';
+    const tc = document.getElementById('atl-ref-rituels-tests');                   // v0.60.1
+    if (tc) tc.value = d.parametres.tests_courts || 'non_places';
     const tex = document.getElementById('atl-ref-rituels-tex');
     if (tex) tex.href = atelRefRituelsUrl('/tex');
     if (d.ordre && d.ordre.length) atelRefRituelsCalendrier();
@@ -1530,6 +1545,7 @@ async function atelRefRituelsEnregistrer() {
     parametres: {
       jour_evaluation: document.getElementById('atl-ref-rituels-jour').value,
       cartes_document: document.getElementById('atl-ref-rituels-cartes').value,
+      tests_courts: (document.getElementById('atl-ref-rituels-tests') || {}).value || 'non_places',
     },
   };
   const rep = await fetch(atelRefRituelsUrl(), {
@@ -1556,6 +1572,22 @@ async function atelRefRituelsCompiler() {
   if (d.ok && d.pdf) { window.open(d.pdf, '_blank'); atelRefRituelsCalendrier(); return; }
   atelRefRituelsAfficher(null, ['Compilation en échec : '
     + ((d.erreurs || []).join(' ; ') || d.type_echec || rep.status)]);
+}
+
+// v0.60.1 (D-SE) — Compile la séance d'évaluation de la semaine choisie (sujets
+// assemblés, durée totale) ; refus du serveur au-delà de 50 min ou de 5 objectifs.
+async function atelRefSeanceCompiler() {
+  const n = parseInt((document.getElementById('atl-ref-seance-semaine') || {}).value || '0', 10);
+  const res = document.getElementById('atl-ref-rituels-resultat');
+  if (!n) { atelRefRituelsAfficher(null, ["Indiquer la semaine de la séance d'évaluation."]); return; }
+  const q = `sujet=${encodeURIComponent(document.getElementById('atl-ref-seance-sujet').value)}`
+    + `&version=${encodeURIComponent(document.getElementById('atl-ref-seance-version').value)}`;
+  if (res) res.insertAdjacentHTML('afterbegin', '<p>Compilation de la séance en cours…</p>');
+  const rep = await fetch(atelRefRituelsUrl(`/seance/${n}/compiler?${q}`), { method: 'POST' });
+  const d = await rep.json().catch(() => ({}));
+  if (d.ok && d.pdf) { window.open(d.pdf, '_blank'); atelRefRituelsCalendrier(); return; }
+  atelRefRituelsAfficher(null, ['Séance non compilée : '
+    + ((d.erreurs || []).join(' ; ') || d.error || d.type_echec || rep.status)]);
 }
 
 function atelRefRituelsAfficher(cal, erreurs, parties, avertSaisie) {

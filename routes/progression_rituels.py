@@ -115,3 +115,87 @@ def api_pdf(ref_id):
     if not p.is_file():
         return jsonify({"error": "Aucun PDF compilé."}), 404
     return send_file(p, mimetype="application/pdf", download_name=f"rituels_{ref_id}.pdf")
+
+
+# ── v0.60.1 (D-SE) — Document « séance d'évaluation » d'une semaine ─────────
+#
+#   GET  /api/progression-rituels/<ref_id>/seance/<semaine>          contenu (JSON)
+#   GET  /api/progression-rituels/<ref_id>/seance/<semaine>/tex      source .tex
+#   POST /api/progression-rituels/<ref_id>/seance/<semaine>/compiler compile → PDF
+#   GET  /api/progression-rituels/<ref_id>/seance/<semaine>/pdf      dernier PDF
+# Query : sujet=A|B, version=eleve|corrigee. 400 : pas de séance cette semaine,
+# séance vide, ou trop chargée (plus de 50 min ou de 5 objectifs, sauf une
+# évaluation seule).
+
+def _options_seance():
+    return {k: request.args[k] for k in ("sujet", "version") if request.args.get(k)}
+
+
+def _cle_seance(semaine: int) -> str:
+    o = _options_seance()
+    return f"seance_s{semaine:02d}_{o.get('sujet', 'A')}_{o.get('version', 'eleve')}"
+
+
+@bp.route("/api/progression-rituels/<ref_id>/seance/<int:semaine>", methods=["GET"])
+def api_seance(ref_id, semaine):
+    from services import documents_evaluation_v2 as dev
+    with _store()._conn() as conn:
+        if _introuvable(conn, ref_id):
+            return jsonify({"error": f"Référentiel introuvable : {ref_id}"}), 404
+        try:
+            se = dev.seance(conn, ref_id, semaine)
+        except dev.DocumentEvaluationErreur as e:
+            return jsonify({"error": str(e)}), 400
+    return jsonify({**se, "refus": dev.controler_seance(se)})
+
+
+@bp.route("/api/progression-rituels/<ref_id>/seance/<int:semaine>/tex", methods=["GET"])
+def api_seance_tex(ref_id, semaine):
+    from services import documents_evaluation_v2 as dev
+    with _store()._conn() as conn:
+        if _introuvable(conn, ref_id):
+            return jsonify({"error": f"Référentiel introuvable : {ref_id}"}), 404
+        try:
+            tex = dev.generer_seance_evaluation(conn, ref_id, semaine, _options_seance())
+        except (dev.DocumentEvaluationErreur, ValueError) as e:
+            return jsonify({"error": str(e)}), 400
+    return Response(tex, mimetype="text/plain; charset=utf-8")
+
+
+@bp.route("/api/progression-rituels/<ref_id>/seance/<int:semaine>/compiler", methods=["POST"])
+def api_seance_compiler(ref_id, semaine):
+    from services import documents_evaluation_v2 as dev
+    from services import orchestrateur_compilation as orch
+    from routes.referentiel_documents_compilation import _configuration
+    with _store()._conn() as conn:
+        if _introuvable(conn, ref_id):
+            return jsonify({"error": f"Référentiel introuvable : {ref_id}"}), 404
+        try:                                   # refus explicites avant LaTeX
+            dev.generer_seance_evaluation(conn, ref_id, semaine, _options_seance())
+        except (dev.DocumentEvaluationErreur, ValueError) as e:
+            return jsonify({"ok": False, "error": str(e), "erreurs": [str(e)]}), 400
+        config = _configuration()
+        cle = _cle_seance(semaine)
+        res = orch.compiler(conn, "seance_evaluation",
+                            {"referentiel_id": ref_id, "semaine": semaine},
+                            _options_seance(), dossier_artefacts=_dossier(ref_id),
+                            cible_key=cle, racine_sources=config.chemin_sources_livrets(),
+                            dossier_images=Path(_store().data_dir) / "images",
+                            racine_appli=Path(current_app.root_path), timeout=600,
+                            tikz_libraries=config.tikz_libraries(),
+                            tblr_libraries=config.tblr_libraries())
+    q = "&".join(f"{k}={v}" for k, v in _options_seance().items())
+    return jsonify({"ok": bool(res.ok), "type_echec": res.type_echec,
+                    "erreurs": [getattr(x, "message", str(x)) for x in (res.erreurs or [])][:20],
+                    "pdf": (f"/api/progression-rituels/{ref_id}/seance/{semaine}/pdf"
+                            + (f"?{q}" if q else "")) if res.ok else None})
+
+
+@bp.route("/api/progression-rituels/<ref_id>/seance/<int:semaine>/pdf", methods=["GET"])
+def api_seance_pdf(ref_id, semaine):
+    p = (Path(_store().data_dir) / "referentiels" / ref_id / "_rituels"
+         / f"{_cle_seance(semaine)}.pdf")
+    if not p.is_file():
+        return jsonify({"error": "Aucun PDF compilé."}), 404
+    return send_file(p, mimetype="application/pdf",
+                     download_name=f"seance_evaluation_{ref_id}_s{semaine:02d}.pdf")

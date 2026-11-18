@@ -40,13 +40,15 @@ from pathlib import Path
 from services.texte_latex import vers_texte
 
 FORMAT = "seqenseigne.referentiel"
-FORMAT_VERSION = "1.6"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
+FORMAT_VERSION = "1.7"   # v0.52.1 : + referentiel.gabarit_documents (facultatif)
 #                          v0.52.4 : + partie.fiches (modèle « Fiches de résumé »)
 #                          v0.52.7 : + partie.materiel (exercices marqués)
 #                          v0.54.0 : documents compilés rattachés à une partie
 #                                    (référentiel interne de mises en route)
 #                          v0.55.0 : + partie.carte_mentale (facultatif)
 #                          v0.56.0 : + partie.facultatifs (exercices de mention F)
+#                          v0.60.1 : + referentiel.mise_en_route (facultatif, D18)
+FORMAT_VERSION_FACULTATIFS = "1.6"
 FORMAT_VERSION_CARTES = "1.5"
 FORMAT_VERSION_DOCS_PARTIE = "1.4"
 FORMAT_VERSION_MATERIEL = "1.3"
@@ -486,6 +488,12 @@ def construire(conn, rid: str, data_dir: Path | None = None,
     from services.gabarits_documents import normaliser as _gabarit
     entete["gabarit_documents"] = _gabarit(ref.get("gabarit_documents"))
     modele_fiches = entete["gabarit_documents"] == "sixieme"          # v0.52.4
+    # v0.60.1 (D18d, format 1.7) — mode de mise en route d'un principal ;
+    # absent quand il n'est pas renseigné (document et empreinte inchangés).
+    from services.mise_en_route_referentiel import pour_echange as _mise_en_route
+    mise_en_route = _mise_en_route(conn, rid)
+    if mise_en_route:
+        entete["mise_en_route"] = mise_en_route
     structure = _structure(conn, ref)
     compiles = _documents_compiles(conn, ref, data_dir, omis)
     cols_obj = _colonnes(conn, "referentiel_objectifs")
@@ -601,7 +609,8 @@ def construire(conn, rid: str, data_dir: Path | None = None,
                            for p in s["parties"] for d in p["documents"])
     avec_cartes = any("carte_mentale" in p for s in sequences for p in s["parties"])
     avec_facultatifs = any("facultatifs" in p for s in sequences for p in s["parties"])
-    version = (FORMAT_VERSION if avec_facultatifs else
+    version = (FORMAT_VERSION if mise_en_route else
+               FORMAT_VERSION_FACULTATIFS if avec_facultatifs else
                FORMAT_VERSION_CARTES if avec_cartes else
                FORMAT_VERSION_DOCS_PARTIE if avec_docs_partie else
                FORMAT_VERSION_MATERIEL if avec_materiel else

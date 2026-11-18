@@ -28,7 +28,14 @@
         "etat": { "enum": ["en_cours", "valide", "verrouille", "utilise", "annule"] },
         "description": { "type": "string" },
         "mode_seances": { "type": "string" },
-        "gabarit_documents": { "enum": ["cycle4", "sixieme"] }
+        "gabarit_documents": { "enum": ["cycle4", "sixieme"] },
+        "mise_en_route": {
+          "type": "object", "additionalProperties": false, "required": ["mode"],
+          "properties": {
+            "mode": { "enum": ["aucune", "cartes", "progression"] },
+            "mer": { "type": "string" }
+          }
+        }
       }
     },
     "structure": {

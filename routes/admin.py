@@ -425,6 +425,9 @@ def api_compilation_atomes_run():
 
     cache_dir = Path(js.data_dir) / "cache_rendus"
     racine_appli = Path(current_app.root_path)
+    # v0.60.1 (C11) — « Sans cache » (?sans_cache=1) : chaque PDF est recompilé.
+    from services.cache_rendus import sans_cache_demande
+    sans_cache = sans_cache_demande(request.args)
 
     # v0.8.3 — Dossier de conservation des fichiers d'échec (.tex + .log).
     # Le service `iter_compilation` purge ce dossier au début du run et y
@@ -458,6 +461,7 @@ def api_compilation_atomes_run():
                 dossier_echecs=dossier_echecs,
                 tikz_libraries=tikz_libraries,
                 tblr_libraries=tblr_libraries,
+                ignorer_cache=sans_cache,                  # v0.60.1 (C11)
             ):
                 evenements.append(ev)
                 yield evenement_vers_sse(ev)

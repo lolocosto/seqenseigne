@@ -114,6 +114,7 @@ def test_recherche_sans_table_des_cartes_mentales_et_rendu_par_lot_inchange(tmp_
     st = SqliteStore(tmp_path)
     r = rechercher(st)
     assert r["carte_mentale"] == [] and r["total"] == 0
-    # Le rendu par lot garde ses 5 types : la Recherche ajoute le sien après.
-    assert ORDRE_TYPES == ("notion", "methode", "exercice", "fiche", "carte")
-    assert TYPES_RECHERCHE == ORDRE_TYPES + ("carte_mentale",)
+    # v0.60.1 (C11) : le rendu par lot compile aussi les cartes mentales, au
+    # même rang que la Recherche (qui les avait depuis la v0.56.3).
+    assert ORDRE_TYPES == ("notion", "methode", "exercice", "fiche", "carte", "carte_mentale")
+    assert TYPES_RECHERCHE == ORDRE_TYPES

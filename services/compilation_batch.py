@@ -55,7 +55,9 @@ from services.cartes_automatisme import lister_cartes
 
 # ── Constantes ────────────────────────────────────────────────────────────────
 
-TYPES_VALIDES = ('notion', 'methode', 'exercice', 'fiche', 'carte')
+# v0.60.1 (C11) — cartes mentales de partie (une par partie, version élève comme
+# l'onglet Rendu PDF de leur atelier).
+TYPES_VALIDES = ('notion', 'methode', 'exercice', 'fiche', 'carte', 'carte_mentale')
 
 # v0.53.0 (B1) — Niveaux et séquences acceptés par le filtre. Avant :
 # ('N10', 'N11', 'N12') et `S` + deux chiffres, d'où l'erreur « niveau
@@ -88,7 +90,7 @@ def sequence_valide(code: str) -> bool:
 # Ordre de traitement à l'intérieur d'une (niveau, séquence)
 # v0.18.0 — fiche et carte ajoutées (même mécanisme : generer_tex_par_type +
 # compiler_atome avec cache). Cours d'abord, puis fiches, puis cartes.
-ORDRE_TYPES = ('notion', 'methode', 'exercice', 'fiche', 'carte')
+ORDRE_TYPES = ('notion', 'methode', 'exercice', 'fiche', 'carte', 'carte_mentale')
 
 # Statuts retournés par iter_compilation pour chaque atome
 STATUT_SUCCES = 'succes'
@@ -321,6 +323,37 @@ def recenser_atomes(store, filtre: Filtre | None = None) -> list[Atome]:
                 data=data,
             ))
 
+    # Cartes mentales de partie (v0.60.1, C11) : une par partie qui en a une.
+    if not f.type or f.type == 'carte_mentale':
+        from services.cartes_mentales import TABLE as _TABLE_CM, table_presente
+        with store._conn() as conn:
+            if table_presente(conn):
+                sql = (f"SELECT c.id, c.titre, p.numero, sn.niveau, sn.sequence_code "
+                       f"FROM {_TABLE_CM} c JOIN sequence_parties p ON p.id = c.partie_id "
+                       "JOIN sequences_par_niveau sn ON sn.id = p.sequence_par_niveau_id")
+                params = []
+                where = []
+                if f.niveau:
+                    where.append("sn.niveau = ?"); params.append(f.niveau)
+                if f.sequence:
+                    where.append("sn.sequence_code = ?"); params.append(f.sequence)
+                if where:
+                    sql += " WHERE " + " AND ".join(where)
+                rows = conn.execute(sql + " ORDER BY sn.niveau, sn.sequence_code, p.numero",
+                                    params).fetchall()
+            else:
+                rows = []
+        for r in rows:
+            data = {'id': r[0], 'titre': r[1] or '', 'num': int(r[2]),
+                    'niveau': r[3] or '', 'sequence': r[4] or ''}
+            # id = numéro de la partie : identifiant d'une carte mentale dans son
+            # atelier et dans la Recherche (ouverture depuis le rapport).
+            atomes.append(Atome(
+                type='carte_mentale', id=str(data['num']), niveau=data['niveau'],
+                sequence=data['sequence'],
+                identifiant=f"{data['niveau']}/{data['sequence']}/CM partie {data['num']}",
+                titre=data['titre'], data=data))
+
     # Tri global : (niveau_zzz, sequence_zzz, ordre_type, num)
     # Les chaînes vides triées en fin via remplacement par '\uffff' (max str).
     def cle(a: Atome):
@@ -340,7 +373,7 @@ def recenser_atomes(store, filtre: Filtre | None = None) -> list[Atome]:
         if a.type == 'fiche':
             num = a.data.get('num_fiche') or 0
             return (niv, seq, ordre_type, 0, num)
-        if a.type == 'carte':
+        if a.type in ('carte', 'carte_mentale'):
             num = a.data.get('num') or 0
             return (niv, seq, ordre_type, 0, num)
         # notion
@@ -368,8 +401,14 @@ def compiler_un_atome(
     timeout: int,
     tikz_libraries: list[str] | None = None,
     tblr_libraries: list[str] | None = None,
+    ignorer_cache: bool = False,
 ) -> dict:
     """Compile un atome unique et retourne le dict d'événement à émettre.
+
+    v0.60.1 (C11) — `ignorer_cache` : PDF recompilé et remis en cache (option
+    « Sans cache », comme les ateliers depuis la v0.56.2) ; type
+    `carte_mentale` : générateur du document « Cartes mentales » pour la
+    partie (version élève, comme l'onglet Rendu PDF de l'atelier).
 
     Distingue les 5 statuts. Les exceptions Python (BDD inaccessible, etc.)
     sont attrapées et reclassées en `echec_infra`.
@@ -431,9 +470,16 @@ def compiler_un_atome(
 
     # 2. Génération du .tex.
     try:
-        tex = generer_tex_par_type(conn, atome.type, atome.id, racine_sources,
-                                   tikz_libraries=tikz_libraries,
-                                   tblr_libraries=tblr_libraries)
+        if atome.type == 'carte_mentale':                          # v0.60.1 (C11)
+            from services.cartes_mentales import generer_cartes_mentales_6e
+            tex = generer_cartes_mentales_6e(
+                conn, atome.niveau, atome.sequence,
+                options={'version': 'eleve', 'partie': str(atome.data.get('num') or '')},
+                tikz_libraries=tikz_libraries, tblr_libraries=tblr_libraries)
+        else:
+            tex = generer_tex_par_type(conn, atome.type, atome.id, racine_sources,
+                                       tikz_libraries=tikz_libraries,
+                                       tblr_libraries=tblr_libraries)
     except (LookupError, ValueError) as e:
         return {**base, 'statut': STATUT_ECHEC_VIDE,
                 'message': f"Données incomplètes : {e}", 'duree_ms': 0}
@@ -457,6 +503,7 @@ def compiler_un_atome(
             racine_appli=racine_appli,
             timeout=timeout,
             dossier_images=dossier_images,
+            **({'ignorer_cache': True} if ignorer_cache else {}),   # v0.60.1 (C11)
         )
     except Exception as e:
         return {
@@ -520,6 +567,7 @@ def iter_compilation(
     dossier_echecs: Path | None = None,
     tikz_libraries: list[str] | None = None,
     tblr_libraries: list[str] | None = None,
+    ignorer_cache: bool = False,
 ) -> Iterator[dict]:
     """Itère sur tous les atomes filtrés et yield un événement par compilation.
 
@@ -587,6 +635,7 @@ def iter_compilation(
                 timeout=timeout,
                 tikz_libraries=tikz_libraries,
                 tblr_libraries=tblr_libraries,
+                **({'ignorer_cache': True} if ignorer_cache else {}),   # v0.60.1
             )
             ev['kind'] = 'atome'
             ev['index'] = index + 1

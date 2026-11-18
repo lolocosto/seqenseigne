@@ -141,6 +141,11 @@ DOCUMENTS_SEQUENCE_FICHES_CARTES = (
                      "Récap des cartes d'automatisme"),
     DocumentSequence("livret_cartes_planches", "cartes_planches",
                      "Planches de cartes d'automatisme"),
+    # v0.60.1 (D17a) — un corrigé par test court de la séquence (cartes évaluées) ;
+    # les sujets élève A et B sont déjà dans la ligne « Évaluation ».
+    DocumentSequence("tests_courts_6e", "test_court_p{partie}", "Test court",
+                     (("corrige", "corrigé (cartes évaluées)", {"version": "corrigee"}),),
+                     portee="tests_courts"),
 )
 
 TABLES = {"sixieme": (DOCUMENTS_SEQUENCE_FICHES, EXCLUS_FICHES),
@@ -225,6 +230,18 @@ def _instances(conn, niveau: str, sequence: str, ligne: DocumentSequence,
                  f"{ligne.libelle} {rang} : {_titre(c)}".rstrip(" :"),
                  {**base, "eval_id": c["eval_id"]})
                 for rang, c in enumerate(evals, start=1)]
+    if ligne.portee == "tests_courts":                            # v0.60.1 (D17a)
+        from services.documents_evaluation_v2 import cibles_tests_courts
+        out = []
+        for c in cibles_tests_courts(conn, niveau):
+            if c["sequence"] != sequence:
+                continue
+            fin = c["cible_id"].rsplit("/", 1)[-1]            # « T2 » au-delà du 1er
+            out.append((ligne.racine.format(partie=c["partie"])
+                        + (f"_{fin}" if fin.startswith("T") else ""),
+                        f"{ligne.libelle} partie {c['partie']} : {_titre(c)}".rstrip(" :"),
+                        {**base, "eval_id": c["eval_id"]}))
+        return out
     if ligne.portee == "serie":
         out = []
         for c in rdc._cibles_documents_6e(conn, niveau, ligne.type_document):

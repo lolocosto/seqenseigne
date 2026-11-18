@@ -136,7 +136,7 @@ def _corps_evaluation(conn, ex: dict, opts: dict) -> tuple[list[str], str]:
         for k, e in rev.exercices_affiches_6e(st, rev.parties_evaluation_6e(conn, ev[0], st)):
             if e["exercice_id"] == ex["id"]:
                 rang = k
-                tag = f"{rev._points(e['points'])} pts --- {e['objectif'] or 'bonus'}"
+                tag = f"{rev.libelle_points(e['points'])} --- {e['objectif'] or 'bonus'}"
                 break
     if not tag:
         o = conn.execute("SELECT o.code, sp.sequence_code FROM objectif_exos oe "

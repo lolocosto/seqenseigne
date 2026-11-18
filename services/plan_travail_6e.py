@@ -320,6 +320,14 @@ def corps_plan(seq: dict, N, docs: list[dict], evals: list[dict], duree: float,
             L.append(r"\end{tcolorbox}")
 
     for p in seq["parties"]:
+        # v0.60.1 (E9) — cartes d'automatisme de la partie (principal Fiches avec
+        # l'option cartes : `opts["_cartes"]` = (conn, niveau) posé par
+        # generer_plan_travail_6e ; absent : plan inchangé).
+        if opts.get("_cartes"):
+            from services.cartes_partie import lignes_plan_partie
+            conn_c, niveau_c = opts["_cartes"]
+            L.extend(lignes_plan_partie(conn_c, niveau_c, seq["code"], p["numero"],
+                                        len(seq["parties"])))
         for ex in p["activites"]:
             activite(ex)
         for f in p["fiches"]:
@@ -405,6 +413,9 @@ def generer_plan_travail_6e(conn: sqlite3.Connection, niveau: str, sequence_code
     if not seq["parties"]:
         raise Livret6eErreur(f"{niveau}/{sequence_code} : aucune partie assemblée.")
     N = numeros_livret(seq, normaliser_options(options_livret(conn, niveau, referentiel_id)))
+    from services.cartes_partie import option_cartes_active          # v0.60.1 (E9)
+    if option_cartes_active(conn, niveau, referentiel_id):
+        opts = {**opts, "_cartes": (conn, niveau)}
     corps = corps_plan(seq, N, _documents(conn, niveau, sequence_code),
                        _evaluations(conn, niveau, sequence_code),
                        _duree(conn, niveau, sequence_code), opts)

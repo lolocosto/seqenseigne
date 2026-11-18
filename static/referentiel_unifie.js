@@ -202,7 +202,55 @@ function refuRendrePublication() {
   z.innerHTML = `<div class="refu-pub"><span class="refu-pub-titre">Format d'échange</span>
     <a class="btn-sm" href="${url}.json" download>Exporter (JSON)</a>
     <button type="button" class="btn-sm" onclick="refuVerifierPublication()">Vérifier</button>
-    <span id="refu-pub-res" class="refu-pub-info" role="status" aria-live="polite"></span></div>`;
+    <span id="refu-pub-res" class="refu-pub-info" role="status" aria-live="polite"></span></div>
+    <div id="refu-mer" class="refu-pub" style="display:none"></div>`;
+  refuMerCharger(id);                                          // v0.60.1 (D18b)
+}
+
+// v0.60.1 (D18b) — Mode de mise en route d'un référentiel principal (interne ou
+// externe) : modifiable tant que le référentiel n'est pas figé (verrouillé,
+// utilisé : lecture seule). Affiché dans la vue d'ensemble et les rituels.
+async function refuMerCharger(id) {
+  const z = document.getElementById('refu-mer');
+  if (!z) return;
+  let d;
+  try {
+    const r = await fetch(`/api/referentiels/${encodeURIComponent(id)}/mise-en-route`);
+    if (!r.ok) { z.style.display = 'none'; return; }
+    d = await r.json();
+  } catch (e) { z.style.display = 'none'; return; }
+  if (d.type_ref !== 'principal') { z.style.display = 'none'; return; }
+  z.style.display = '';
+  z.innerHTML = refuMerHtml(d);
+}
+
+function refuMerHtml(d) {
+  const modes = [['', 'non renseigné'], ['aucune', 'aucune MER'],
+                 ['cartes', "cartes d'automatisme"], ['progression', 'progression de MER']];
+  const dis = d.modifiable ? '' : ' disabled';
+  const optM = modes.map(([v, l]) => `<option value="${v}"${v === (d.mode || '') ? ' selected' : ''}>${_refuE(l)}</option>`).join('');
+  const optR = (d.mers || []).map(m => `<option value="${_refuE(m.id)}"${m.id === d.mer ? ' selected' : ''}>${_refuE(m.id)}</option>`).join('');
+  return `<span class="refu-pub-titre">Mise en route</span>
+    <select id="refu-mer-mode"${dis} onchange="document.getElementById('refu-mer-ref').style.display = this.value === 'progression' ? '' : 'none'">${optM}</select>
+    <select id="refu-mer-ref"${dis} style="${d.mode === 'progression' ? '' : 'display:none'}">${optR || '<option value="">aucun référentiel de MER</option>'}</select>
+    ${d.modifiable ? '<button type="button" class="btn-sm" onclick="refuMerEnregistrer()">Enregistrer</button>'
+                   : '<span class="refu-pub-info">(référentiel figé : lecture seule)</span>'}
+    <span id="refu-mer-res" class="refu-pub-info" role="status" aria-live="polite"></span>`;
+}
+
+async function refuMerEnregistrer() {
+  if (!REFU.sel) return;
+  const id = REFU.sel.slice(2);
+  const mode = (document.getElementById('refu-mer-mode') || {}).value || '';
+  const mer = (document.getElementById('refu-mer-ref') || {}).value || '';
+  const res = document.getElementById('refu-mer-res');
+  try {
+    const r = await fetch(`/api/referentiels/${encodeURIComponent(id)}/mise-en-route`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode, mer: mode === 'progression' ? mer : '' }) });
+    const d = await r.json().catch(() => ({}));
+    if (res) res.textContent = r.ok ? `Enregistré : ${d.libelle}.` : (d.error || `Erreur ${r.status}`);
+  } catch (e) { if (res) res.textContent = 'Erreur réseau.'; }
 }
 
 async function refuVerifierPublication() {
@@ -349,6 +397,9 @@ function refuMajChoixModele() {
   refuRemplirAnnees();
   const blocA = document.getElementById('refu-c-annee-bloc');
   if (blocA) blocA.style.display = source === 'interne' ? '' : 'none';
+  // v0.60.1 (D18b) — mode de mise en route : référentiel principal seulement.
+  const blocM = document.getElementById('refu-c-mer-bloc');
+  if (blocM) blocM.style.display = type === 'principal' ? '' : 'none';
   const blocC = document.getElementById('refu-c-cartes-bloc');
   if (blocC) {
     const ok = refuOptionCartesProposable(source, type, sel.value);
@@ -446,6 +497,34 @@ function refuPreremplirGabarit() {
   sel.value = refuGabaritParDefaut(niveau);
 }
 
+// v0.60.1 (D18b) — Mode de mise en route choisi à la création (principal).
+// « progression de MER » : liste des référentiels de MER du niveau.
+async function refuMajChoixMer() {
+  const mode = (document.getElementById('refu-c-mer-mode') || {}).value || '';
+  const sel = document.getElementById('refu-c-mer-ref');
+  if (!sel) return;
+  sel.style.display = mode === 'progression' ? '' : 'none';
+  if (mode !== 'progression') return;
+  const niveau = (typeof ATL_FILTRE_NIVEAU !== 'undefined' && ATL_FILTRE_NIVEAU) || '';
+  let mers = [];
+  try {
+    const r = await fetch(`/api/referentiels/mises-en-route?niveau=${encodeURIComponent(niveau)}`);
+    mers = ((await r.json()) || {}).mers || [];
+  } catch (e) { mers = []; }
+  sel.innerHTML = mers.length
+    ? mers.map(m => `<option value="${_refuE(m.id)}">${_refuE(m.id)}</option>`).join('')
+    : '<option value="">aucun référentiel de MER</option>';
+}
+
+function refuChoixMer(type) {
+  if (type !== 'principal') return {};
+  const mode = (document.getElementById('refu-c-mer-mode') || {}).value || '';
+  if (!mode) return {};
+  const mer = (document.getElementById('refu-c-mer-ref') || {}).value || '';
+  return mode === 'progression' ? { mise_en_route: mode, mer_referentiel: mer }
+                                : { mise_en_route: mode };
+}
+
 async function refuCreer(confirme) {
   const source = document.getElementById('refu-c-source').value;
   refuPreremplirGabarit();
@@ -476,17 +555,19 @@ async function refuCreer(confirme) {
     if (source === 'interne') {
       const r = await fetch('/api/referentiels/coquille', { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // v0.59.0 (D4) — année choisie et option « cartes d'automatisme ».
+        // v0.59.0 (D4) — année choisie et option « cartes d'automatisme » ;
+        // v0.60.1 (D18b) — mode de mise en route (principal).
         body: JSON.stringify(Object.assign({ niveau, description: desc.value, type_ref: type, gabarit },
-          { annee, cartes_automatisme: cartes })) });
+          refuChoixMer(type), { annee, cartes_automatisme: cartes })) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Erreur');
       await atelRefRechargerListe();
       REFU.sel = 'I:' + ((d.ref && d.ref.id) || d.id);
     } else {
       const modele = (document.getElementById('refu-c-modele') || {}).value || '';
-      const r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify({
-        niveau, annee: _rpeAnnee(), description: desc.value, type_ref: type, modele, gabarit }) });
+      const r = await _rpeApi(_RPE_API, { method: 'POST', body: JSON.stringify(Object.assign({
+        niveau, annee: _rpeAnnee(), description: desc.value, type_ref: type, modele, gabarit },
+        refuChoixMer(type))) });                                      // v0.60.1 (D18b)
       await rpeCharger();
       await refuChargerModeles();
       REFU.sel = 'E:' + r.id;

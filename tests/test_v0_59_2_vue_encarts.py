@@ -158,7 +158,7 @@ def test_vue_ensemble_en_tete_de_tous_les_catalogues_le_reste_inchange(gabarit, 
     if type_ref == "mer" and gabarit == "sixieme":
         reste = gd._CATALOGUE_MER_FICHES
     elif cartes:
-        reste = gd._CATALOGUE_SIXIEME + gd._types_cartes()
+        reste = gd._CATALOGUE_SIXIEME + gd._types_cartes() + (gd.TYPE_TESTS_COURTS,)  # v0.60.1
     else:
         reste = gd._catalogue_cycle4() if gabarit == "cycle4" else gd._CATALOGUE_SIXIEME
     assert tuple(t.cle for t in cat[1:]) == tuple(t.cle for t in reste)

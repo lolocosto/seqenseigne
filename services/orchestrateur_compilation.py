@@ -686,6 +686,36 @@ def _produire_corriges_6e(conn, cible, options, tikz, tblr):
 # évaluation du niveau, une par atome des séries TP, AC, AT).
 
 
+@enregistrer_producteur('tests_courts_6e')
+def _produire_tests_courts_6e(conn, cible, options, tikz, tblr):
+    """v0.60.1 (D17a) — Test court d'une partie (corrigé : cartes évaluées)."""
+    from services.documents_evaluation_v2 import generer_test_court
+    eval_id = cible.get('eval_id')
+    if not eval_id:
+        raise ProducteurErreur(
+            f"tests_courts_6e requiert eval_id : reçu {cible!r}", code='cible_invalide')
+    return generer_test_court(conn, eval_id, options=options, tikz_libraries=tikz,
+                              tblr_libraries=tblr)
+
+
+@enregistrer_producteur('seance_evaluation')
+def _produire_seance_evaluation(conn, cible, options, tikz, tblr):
+    """v0.60.1 (D-SE) — Séance d'évaluation d'une semaine du calendrier des
+    rituels (hors catalogue)."""
+    from services.documents_evaluation_v2 import (DocumentEvaluationErreur,
+                                                  generer_seance_evaluation)
+    ref_id, semaine = cible.get('referentiel_id'), cible.get('semaine')
+    if not ref_id or not semaine:
+        raise ProducteurErreur(
+            f"seance_evaluation requiert referentiel_id et semaine : reçu {cible!r}",
+            code='cible_invalide')
+    try:
+        return generer_seance_evaluation(conn, ref_id, int(semaine), options=options,
+                                         tikz_libraries=tikz, tblr_libraries=tblr)
+    except DocumentEvaluationErreur as e:
+        raise ProducteurErreur(str(e), code='seance_invalide') from None
+
+
 @enregistrer_producteur('evaluation_6e')
 def _produire_evaluation_6e(conn, cible, options, tikz, tblr):
     """Évaluation au gabarit de l'équipe de 6e (sujet A ou B)."""

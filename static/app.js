@@ -2859,7 +2859,7 @@ function atelChargerSelections(portee) {
     if (raw) return JSON.parse(raw);
   } catch (e) { /* ignore parse error */ }
   // Valeurs par défaut
-  if (portee === 'sequence') return { niveau: 'N10', sequence: 'S01' };
+  if (portee === 'sequence') return { niveau: 'N10', sequence: 'A1' };   // v0.60.1 (C12b)
   if (portee === 'niveau')   return { niveau: 'N10' };
   if (portee === 'cycle')    return { cycle: 'C04' };
   return {};
@@ -3051,7 +3051,7 @@ async function atelRafraichirSelectSequence(selectEl, niveau, portee) {
   if (valeurCourante === '' || codes.includes(valeurCourante)) {
     selectEl.value = valeurCourante || '';
   } else {
-    selectEl.value = codes[0] || 'S01';
+    selectEl.value = codes[0] || '';                         // v0.60.1 (C12b)
     ATL_SELECTIONS[portee].sequence = selectEl.value;
     atelSauverSelections(portee, ATL_SELECTIONS[portee]);
   }
@@ -5396,6 +5396,8 @@ function _compilLireParams() {
     tikz_libraries: val('pref-rdl-tikz-libs',
                         'babel,shapes.geometric,arrows.meta,positioning,calc'),
     tblr_libraries: val('pref-rdl-tblr-libs', 'booktabs,varwidth'),
+    // v0.60.1 (C11) — case « Sans cache » du rendu par lot.
+    sans_cache: !!(document.getElementById('rdl-sans-cache') || {}).checked,
   };
 }
 
@@ -5425,6 +5427,7 @@ async function compilBatchPreview() {
       <div class="card" style="padding:8px"><div style="color:var(--text-secondary)">Exercices</div><div style="font-size:18px;font-weight:600">${d.par_type.exercice}</div></div>
       <div class="card" style="padding:8px"><div style="color:var(--text-secondary)">Fiches</div><div style="font-size:18px;font-weight:600">${d.par_type.fiche || 0}</div></div>
       <div class="card" style="padding:8px"><div style="color:var(--text-secondary)">Cartes</div><div style="font-size:18px;font-weight:600">${d.par_type.carte || 0}</div></div>
+      <div class="card" style="padding:8px"><div style="color:var(--text-secondary)">Cartes mentales</div><div style="font-size:18px;font-weight:600">${d.par_type.carte_mentale || 0}</div></div>
     `;
 
     if (d.total === 0) {
@@ -5472,6 +5475,7 @@ function compilBatchRun() {
     tikz_libraries: p.tikz_libraries,
     tblr_libraries: p.tblr_libraries,
   });
+  if (p.sans_cache) qs.set('sans_cache', '1');               // v0.60.1 (C11)
 
   // Reset UI
   const liste     = document.getElementById('rdl-liste');

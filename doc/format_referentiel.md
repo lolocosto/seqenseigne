@@ -1,7 +1,9 @@
 # Format d'échange d'un référentiel — `seqenseigne.referentiel` v1
 
-> Version du format : **1.6** (seqenseigne v0.56.0 : champ facultatif
-> `partie.facultatifs`, exercices de mention F). Version 1.5 : seqenseigne v0.55.0,
+> Version du format : **1.7** (seqenseigne v0.60.1 : champ facultatif
+> `referentiel.mise_en_route`, mode de mise en route d'un référentiel principal).
+> Version 1.6 : seqenseigne v0.56.0, champ facultatif
+> `partie.facultatifs`, exercices de mention F. Version 1.5 : seqenseigne v0.55.0,
 > champ facultatif `partie.carte_mentale`, carte mentale de la partie. Version 1.4 :
 > seqenseigne v0.54.0, documents compilés
 > rattachés à une **partie**, référentiel interne de mises en route. Version
@@ -282,7 +284,10 @@ externe est toujours exporté à partir de son état du moment.
   1.3 (v0.52.7) ajoute `partie.materiel` ; 1.4 (v0.54.0) range des
   documents compilés dans une partie (mises en route internes) ; 1.5
   (v0.55.0) ajoute `partie.carte_mentale` ; 1.6 (v0.56.0) ajoute
-  `partie.facultatifs`.
+  `partie.facultatifs` ; 1.7 (v0.60.1) ajoute `referentiel.mise_en_route`
+  (`{"mode": "aucune" | "cartes" | "progression", "mer": id}`, `mer` pour une
+  progression seulement ; absent quand le mode n'est pas renseigné : document et
+  empreinte inchangés).
   Une publication figée produite en 1.0 est resservie telle quelle (sans le
   champ, donc lue `cycle4`).
 - Un document déclare la plus petite version qui décrit son contenu : un
@@ -294,7 +299,8 @@ externe est toujours exporté à partir de son état du moment.
   (aucun référentiel existant : document et empreinte inchangés) ; un
   référentiel dont au moins une partie a une carte mentale est en 1.5 (sans
   carte : document et empreinte inchangés) ; un référentiel dont au moins un exercice est
-  de mention F est en 1.6 (tout à O : document et empreinte inchangés).
+  de mention F est en 1.6 (tout à O : document et empreinte inchangés) ; un référentiel
+  principal dont le mode de mise en route est renseigné est en 1.7.
 - `format_version` = `majeure.mineure`. Ajout d'un champ **facultatif** :
   version mineure (1.1, 1.2…) ; changement incompatible : version majeure
   (2.0).

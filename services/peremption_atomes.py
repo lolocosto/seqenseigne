@@ -68,11 +68,13 @@ ATOMES_PAR_TYPE_DOCUMENT: dict[str, list[str]] = {
     'cartes_mentales_6e':     ['cartes_mentales'],                     # v0.55.0
     # v0.52.2
     'evaluation_6e':          ['exercices', 'evaluations'],
+    'tests_courts_6e':        ['exercices', 'evaluations', 'cartes_automatisme'],   # v0.60.1
     'travaux_personnels_6e':  ['exercices'],
     'activites_complementaires_6e': ['exercices'],
     'seances_atelier_6e':     ['exercices'],
     # v0.52.3 — numéros du livret, fiches « à retenir », évaluations.
-    'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations'],
+    'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations',
+                               'cartes_automatisme'],   # v0.60.1 (E9) : cartes de la partie
     # v0.54.0 (RI6) — référentiel de mises en route (modèle « Fiches »).
     'mer_fiches_cours_6e':    ['fiches_resume'],
     'mer_seances_6e':         ['exercices'],

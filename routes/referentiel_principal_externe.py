@@ -57,6 +57,15 @@ def api_creer():
     b = _b()
 
     def _creer(c):
+        # v0.60.1 (D18b) — mode de mise en route contrôlé avant la création.
+        if b.get("mise_en_route") and b.get("type_ref", "principal") == "principal":
+            from services import mise_en_route_referentiel as _m
+            _m.migrer(c)
+            try:
+                _m.valider(c, None, b["mise_en_route"], b.get("mer_referentiel"),
+                           niveau=b.get("niveau", ""))
+            except _m.MiseEnRouteErreur as e:
+                raise RefExtErreur(str(e)) from None
         # v0.52.1 — gabarit de documents (liste préremplie selon le niveau).
         gabarit = b.get("gabarit") or None
         if gabarit is not None and gabarit not in gd.GABARITS:
@@ -66,6 +75,15 @@ def api_creer():
                       cle=b.get("modele") or None, aujourd_hui=_auj())
         r["gabarit_documents"] = gd.poser_a_la_creation(c, r["id"], b.get("niveau", ""),
                                                         gabarit)
+        # v0.60.1 (D18b) — mode de mise en route d'un principal externe.
+        if b.get("mise_en_route") and b.get("type_ref", "principal") == "principal":
+            from services import mise_en_route_referentiel as mer
+            try:
+                m = mer.poser(c, r["id"], b["mise_en_route"], b.get("mer_referentiel"),
+                              creation=True)
+            except mer.MiseEnRouteErreur as e:
+                raise RefExtErreur(str(e)) from None
+            r["mise_en_route"], r["mer_referentiel"] = m["mode"], m["mer"]
         return r
     return _fait(_creer, 201)
 

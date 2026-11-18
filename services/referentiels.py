@@ -126,6 +126,11 @@ def lister_par_niveau(store, niveau: str) -> list[dict]:
             # v0.59.0 (D4) — option « cartes d'automatisme » (clé présente
             # seulement si posée : listes existantes inchangées).
             **({"cartes_automatisme": True} if r.get("cartes_automatisme") else {}),
+            # v0.60.1 (D18) — mode de mise en route (clés présentes seulement
+            # s'il est renseigné : listes existantes inchangées).
+            **({"mise_en_route": r["mise_en_route"],
+                "mer_referentiel": r.get("mer_referentiel") or ""}
+               if r.get("mise_en_route") else {}),
         }
         for r in refs
     ]

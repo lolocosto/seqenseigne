@@ -223,6 +223,8 @@ def structure(conn: sqlite3.Connection, ref_id: str) -> dict:
             "instantane" if instantane else "atelier",
         "type_ref": ref.get("type_ref") or "principal",
         "gabarit": ref.get("gabarit_documents") or "cycle4",
+        # v0.60.1 (D18c) — mode de mise en route ('' : non renseigné, pas de ligne).
+        "mise_en_route": _mise_en_route(conn, ref_id, ref),
         "domaines": domaines,
         "nb_sequences": len(seqs), "nb_parties": len(parties),
         "nb_objectifs": sum(s["nb_objectifs"] for s in seqs),
@@ -231,6 +233,14 @@ def structure(conn: sqlite3.Connection, ref_id: str) -> dict:
         "parties_non_multiples": sum(1 for p in parties if p["seances"] and not p["multiple"]),
         "parties_sans_seance": sum(1 for p in parties if not p["seances"]),
     }
+
+
+def _mise_en_route(conn, ref_id: str, ref: dict) -> str:
+    if (ref.get("type_ref") or "principal") != "principal":
+        return ""
+    from services.mise_en_route_referentiel import lire
+    m = lire(conn, ref_id)
+    return m["libelle"] if m["mode"] else ""
 
 
 def _annee(ref: dict) -> str:
@@ -292,7 +302,10 @@ def generer_vue_ensemble(conn: sqlite3.Connection, ref_id: str) -> str:
           r"Niveau & " + _t(niv) + r" \\",
           r"Année & " + _t(st["annee"] or "—") + r" \\",
           r"Modèle & " + _t(_MODELES.get(st["gabarit"], st["gabarit"]))
-          + (" (mises en route)" if st["type_ref"] == "mer" else "") + r" \\",
+          + (" (mises en route)" if st["type_ref"] == "mer" else "") + r" \\"]
+    if st.get("mise_en_route"):                                     # v0.60.1 (D18c)
+        L.append(r"Mise en route & " + _t(st["mise_en_route"]) + r" \\")
+    L += [
           r"État & " + _t(_ETATS.get(st["etat"], st["etat"])) + " ; " + source + r" \\",
           r"Contenu & %d séquence(s), %d partie(s), %d objectif(s) \\"
           % (st["nb_sequences"], st["nb_parties"], st["nb_objectifs"]),

@@ -71,6 +71,7 @@ def test_preview_sans_filtre(client, store):
     # v0.18.0 — par_type couvre désormais les 5 types (fiche/carte = 0 ici).
     assert d['par_type'] == {
         'notion': 2, 'methode': 0, 'exercice': 1, 'fiche': 0, 'carte': 0,
+        'carte_mentale': 0,                     # v0.60.1 (C11) : cartes mentales
     }
     # La config courante est retournée.
     assert 'config' in d

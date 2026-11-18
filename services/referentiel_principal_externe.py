@@ -26,6 +26,12 @@ Règles (validées) :
     jamais publié) : recalculés au réordonnancement et à la suppression ;
     ensuite ils ne changent plus (les créneaux, les parties posées en MER et
     l'appli en ligne s'y réfèrent) ;
+  - v0.60.1 (C12a) — un référentiel externe garde ses codes S01… (M01… pour
+    une MER), sans passer aux codes de thème A1 des référentiels internes
+    depuis la rentrée 2027 : ses thèmes sont locaux (A, B… recalculés d'après
+    le rang, pas les domaines du programme), une séquence peut n'avoir aucun
+    thème et un thème peut compter plus de 9 séquences (A1 va de 1 à 9). Les
+    codes S… restent reconnus partout (`services/codes_sequence.py`) ;
   - v0.51.4 — la durée d'une partie (nb_seances_R_AE) est calculée : somme
     des nombres de séances de ses objectifs (lecture seule) ;
   - v0.51.5 — thèmes (code, nom, couleur, ordre) : les séquences d'un même

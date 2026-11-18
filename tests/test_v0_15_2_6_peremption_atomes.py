@@ -84,7 +84,9 @@ def test_mapping_decisions_laurent_v0_15_2_6():
         'activites_complementaires_6e': ['exercices'],
         'seances_atelier_6e':     ['exercices'],
         # v0.52.3 — plan de travail 6e (numéros du livret, fiches, évaluations)
-        'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations'],
+        'plans_travail_6e':       ['exercices', 'fiches_resume', 'evaluations',
+                                   'cartes_automatisme'],   # v0.60.1 (E9) : cartes de la partie
+        'tests_courts_6e':        ['exercices', 'evaluations', 'cartes_automatisme'],  # v0.60.1
         # v0.54.0 (changement voulu) — référentiel de mises en route (RI6).
         'mer_fiches_cours_6e':    ['fiches_resume'],
         'mer_seances_6e':         ['exercices'],

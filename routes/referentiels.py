@@ -149,6 +149,16 @@ def api_creer_coquille():
                                  "« Fiches de résumé par objectif » (au modèle « Notions et "
                                  "méthodes », les cartes comptent déjà)."}), 400
     with store._conn() as conn:
+        # v0.60.1 (D18b) — mode de mise en route contrôlé AVANT la création
+        # (creer_coquille valide sa transaction) : un refus ne crée rien.
+        if body.get("mise_en_route") and (body.get("type_ref") or "principal") == "principal":
+            from services import mise_en_route_referentiel as mer
+            mer.migrer(conn)
+            try:
+                mer.valider(conn, None, body.get("mise_en_route"),
+                            body.get("mer_referentiel"), niveau=niveau)
+            except mer.MiseEnRouteErreur as e:
+                return jsonify({"error": str(e)}), 400
         try:
             ref = svc.creer_coquille(conn, niveau, description,
                                      type_ref=(body.get("type_ref") or "principal"),
@@ -159,8 +169,20 @@ def api_creer_coquille():
                 conn, ref["id"], niveau, gabarit)
             from services import fiches_cycle4 as fc4
             ref["cartes_automatisme"] = fc4.poser_option_cartes(conn, ref["id"], cartes)
+            # v0.60.1 (D18b) — mode de mise en route d'un principal, choisi à la
+            # création (option cartes sans choix explicite : « cartes »).
+            if (body.get("type_ref") or "principal") == "principal":
+                from services import mise_en_route_referentiel as mer
+                mode = body.get("mise_en_route")
+                if mode is None and cartes:
+                    mode = "cartes"
+                if mode:
+                    m = mer.poser(conn, ref["id"], mode, body.get("mer_referentiel"),
+                                  creation=True)
+                    ref["mise_en_route"], ref["mer_referentiel"] = m["mode"], m["mer"]
             conn.commit()
         except ValueError as e:
+            conn.rollback()                   # v0.60.1 : rien de créé à moitié
             return jsonify({"error": str(e)}), 400
         except RuntimeError as e:
             return jsonify({"error": str(e)}), 409
@@ -168,6 +190,52 @@ def api_creer_coquille():
             return jsonify({"error": f"conflit BDD : {e}"}), 409
 
     return jsonify({"ref": ref}), 201
+
+
+# ── v0.60.1 (D18) — Mode de mise en route d'un référentiel principal ─────────
+
+@bp.route("/api/referentiels/mises-en-route", methods=["GET"])
+def api_referentiels_mer():
+    """Référentiels de MER d'un niveau (?niveau=N09), pour la saisie du mode."""
+    from services import mise_en_route_referentiel as mer
+    niveau = (request.args.get("niveau") or "").strip()
+    with _store()._conn() as conn:
+        return jsonify({"mers": mer.referentiels_mer(conn, niveau) if niveau else [],
+                        "modes": [{"valeur": "", "libelle": mer.LIBELLES[""]}]
+                        + [{"valeur": m, "libelle": mer.LIBELLES[m]} for m in mer.MODES]})
+
+
+@bp.route("/api/referentiels/<ref_id>/mise-en-route", methods=["GET"])
+def api_mise_en_route(ref_id):
+    """{mode, mer, libelle, modifiable, mers: [{id, version, source, etat}]}."""
+    from services import mise_en_route_referentiel as mer
+    store = _store()
+    with store._conn() as conn:
+        mer.migrer(conn)
+        r = conn.execute("SELECT niveau, etat, COALESCE(type_ref, 'principal') FROM "
+                         "referentiel_niveaux WHERE id = ?", (ref_id,)).fetchone()
+        if r is None:
+            return jsonify({"error": "introuvable"}), 404
+        return jsonify({**mer.lire(conn, ref_id), "type_ref": r[2], "etat": r[1],
+                        "modifiable": r[2] == "principal" and r[1] not in mer.ETATS_FIGES
+                        and r[1] != "annule",
+                        "mers": mer.referentiels_mer(conn, r[0])})
+
+
+@bp.route("/api/referentiels/<ref_id>/mise-en-route", methods=["PUT"])
+def api_poser_mise_en_route(ref_id):
+    """Body : {mode: '' | 'aucune' | 'cartes' | 'progression', mer?: id}.
+    409 si le référentiel est figé (verrouillé, utilisé) ou annulé."""
+    from services import mise_en_route_referentiel as mer
+    b = request.get_json(silent=True) or {}
+    store = _store()
+    with store._conn() as conn:
+        try:
+            m = mer.poser(conn, ref_id, b.get("mode"), b.get("mer"))
+        except mer.MiseEnRouteErreur as e:
+            return jsonify({"error": str(e), "code": e.code}), e.statut
+        conn.commit()
+    return jsonify(m)
 
 
 # ── v0.54.0 — Aperçu avant création ─────────────────────────────────────────

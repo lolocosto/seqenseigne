@@ -259,6 +259,10 @@ class niveau_actif:
         return False
 
 
+# v0.60.1 (D16) — niveaux où toute évaluation a un bonus de 1 point (cycle 4).
+NIVEAUX_BONUS_1 = ("N10", "N11", "N12")
+
+
 def est_sixieme() -> bool:
     """Niveau actif = 6e (archivage du cycle 3, cycle 3 écrit, mises en route)."""
     return NIVEAU == "N09"
@@ -416,6 +420,8 @@ class Rapport:
         self.seances: list[str] = []                          # v0.59.2
         self.encarts: "OrderedDict[str, dict]" = OrderedDict()  # v0.59.2
         self.avertissements: list[str] = []                   # v0.60.0 (non bloquants)
+        # v0.60.1 (R7) — à repasser en cours pour que le réimport s'applique.
+        self.a_repasser: dict = {"sequences": [], "evaluations": [], "exercices": []}
 
     def seq(self, code: str) -> dict:
         return self.sequences.setdefault(code, {"lignes": [], "objectifs": OrderedDict(),
@@ -504,6 +510,33 @@ class Rapport:
                      f"{c['inchanges']}, retirés {c['retires']}")
         return L
 
+    def texte_a_repasser(self) -> list[str]:
+        """v0.60.1 (R7) — Ce qui bloque un réimport, et comment le débloquer."""
+        a = self.a_repasser
+        if not any(a.values()):
+            return []
+        L = ["== À repasser en cours avant l'import (sinon non réimporté) =="]
+        if a["sequences"]:
+            L += [f"  Séquences validées (lot non importé) : {', '.join(a['sequences'])}",
+                  "    → Ateliers › portée Séquence › niveau › « — Toutes les séquences — » : "
+                  "clic sur la première, Maj+clic sur la dernière, « ⟲ En cours »."]
+        if a["evaluations"]:
+            L.append(f"  Évaluations et tests courts validés que le lot modifie "
+                     f"({len(a['evaluations'])}) :")
+            L += [f"    {x}" for x in a["evaluations"]]
+            L.append("    → Ateliers › portée Niveau › Évaluation : clic sur la première, "
+                     "Maj+clic sur la dernière (ou Ctrl+clic), « ⟲ En cours » ; leurs exercices "
+                     "EV propres repassent en cours avec elles (v0.60.1).")
+        if a["exercices"]:
+            L.append(f"  Exercices EV validés d'évaluations en cours ({len(a['exercices'])}) :")
+            L += [f"    {x}" for x in a["exercices"]]
+            L.append("    → Ateliers › portée Séquence › Exercice › série EV : sélection, "
+                     "« ⟲ En cours » ; ou, dans Évaluation : « ✓ Valider » puis « ⟲ En cours » "
+                     "sur l'évaluation.")
+        L += ["  Puis relancer l'essai à blanc, appliquer (--apply) et revalider (« ✓ Valider "
+              "» des mêmes listes).", ""]
+        return L
+
     def texte(self) -> str:
         L = []
         if self.niveau == "N09":
@@ -554,6 +587,7 @@ class Rapport:
         L.append("")
         L += self.texte_seances_encarts()                            # v0.59.2
         L.append("")
+        L += self.texte_a_repasser()                                 # v0.60.1 (R7)
         L.append(f"== Anomalies ({len(self.anomalies)}) ==")
         L += [f"  - {x}" for x in self.anomalies] or ["  aucune"]
         if self.avertissements:                                      # v0.60.0
@@ -1271,6 +1305,7 @@ def importer_lot(conn, lot: dict, ref: dict, rapport: Rapport) -> set:
                                  "(référentiel retenu)")
         oid, etat = _objectif(conn, sn["id"], parties[numero], d["code"], d, rapport, code)
         etat = _seances(conn, oid, o.get("seances"), etat, code, rapport)   # v0.59.2
+        etat = _sans_carte(conn, oid, o, etat, code, rapport)              # v0.60.1 (F4)
         ro = rapport.obj(seq, code, d["nom"])
         ro["objectif"] = etat
         series: dict[str, list] = {"F": [], "A": [], "E": []}
@@ -1511,6 +1546,26 @@ def _seances(conn, oid: str, valeur, etat: str, etiquette: str, rapport: "Rappor
         return etat
     conn.execute("UPDATE objectifs SET nb_seances=? WHERE id=?", (nb, oid))
     rapport.seances.append(f"{etiquette} : {_fmt_nb(avant)} → {_fmt_nb(nb)} séance(s)")
+    return "mis à jour" if etat == "inchangé" else etat
+
+
+def _sans_carte(conn, oid: str, o: dict, etat: str, etiquette: str,
+                rapport: "Rapport") -> str:
+    """v0.60.1 (F4) — Propriété « pas de carte voulue » de l'objectif (clé
+    `"sans_carte": true` de l'objectif du lot ; clé absente : valeur gardée).
+    Elle lève l'avertissement « objectif sans carte » de la validation."""
+    if "sans_carte" not in o:
+        return etat
+    v = o["sans_carte"]
+    if not isinstance(v, bool):
+        rapport.anomalie(f"{etiquette} : sans_carte {v!r} invalide (true ou false attendu), "
+                         "ignoré")
+        return etat
+    from services.cartes_partie import poser_sans_carte
+    if not poser_sans_carte(conn, oid, v):
+        return etat
+    rapport.seq(etiquette.split("-")[0])["lignes"].append(
+        f"{etiquette} : " + ("sans carte voulue" if v else "carte attendue (sans_carte retiré)"))
     return "mis à jour" if etat == "inchangé" else etat
 
 
@@ -2116,12 +2171,18 @@ def controler_evaluation(seq: str, titre: str, type_ev: str, exos: list[dict],
         if total != 10:
             rapport.avertissements.append(f"{quoi} : sur {total:g} (un test court est sur 10)")
         if bonus != 1:
-            rapport.avertissements.append(f"{quoi} : bonus de {bonus:g} pt (règle : 1 pt)")
-    elif bonus and bonus != 1 and not est_sixieme():
-        # B10b — hors 6e : les 18 évaluations des lots de 6e ont un bonus de
-        # 2 points (convention de l'équipe de 6e, à confirmer) ; la règle
-        # « bonus 1 pt » est celle des lots de 4e.
-        rapport.avertissements.append(f"{quoi} : bonus de {bonus:g} pts (règle : 1 pt)")
+            rapport.avertissements.append(f"{quoi} : " + (
+                f"bonus de {bonus:g} pt{'s' if bonus >= 2 else ''}" if bonus else "pas de bonus")
+                + " (règle : 1 pt)")
+    elif bonus != 1 and NIVEAU in NIVEAUX_BONUS_1:
+        # B10b, v0.60.1 (D16, décision du 18 novembre) — bonus de 2 pts en 6e
+        # (accepté, rien n'est signalé) ; 1 pt sur tout le cycle 4 : une
+        # évaluation de 5e, 4e ou 3e dont le bonus n'est pas 1 (bonus absent
+        # compris) est signalée.
+        rapport.avertissements.append(
+            f"{quoi} : " + (f"bonus de {bonus:g} pt{'s' if bonus >= 2 else ''}" if bonus
+                            else "pas de bonus")
+            + " (règle : 1 pt)")
 
 
 def controler_tests_courts_parties(conn, seq: str, sn_id: str | None, lot: dict,
@@ -2306,7 +2367,7 @@ def _resume_deux_parties(conn, ev_id: str | None, exos: list[dict],
         return "ex. " + (" et ".join([", ".join(map(str, nums[:-1])), str(nums[-1])])
                          if len(nums) > 1 else str(nums[0]))
     def pts(i):
-        return f"{points[i]:g} pts" + (" + bonus" if bonus[i] else "")
+        return f"{points[i]:g} pt{'s' if points[i] >= 2 else ''}" + (" + bonus" if bonus[i] else "")
     d = (f"{reglee} min réglée(s) dans l'atelier, calcul {duree} min" if reglee is not None
          else f"{duree} min")
     return (f"en deux parties ({duree_ev} min) : partie 1 sans calculatrice {ex(parties[0])} "
@@ -2451,6 +2512,7 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
     num = 0
     pris: set = set()
     nums_pris: set = set()
+    retires_ev: list = []                                           # v0.60.1 (R6)
     liens: "OrderedDict[tuple, list]" = OrderedDict()
     for titre, paire, exos in plan:
         type_ev = type_evaluation_lot(lot, titre)                    # v0.60.0 (E6)
@@ -2516,7 +2578,15 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
         ev_id, etat_ev = _evaluation(conn, titre, rapport, seq)
         n_obj = 0
         if etat_ev != "validée, non modifiée":
-            change = _poser_exercices_evaluation(conn, ev_id, voulus)
+            # v0.60.1 (R6) — le lot fait foi pour une évaluation en cours : ses
+            # exercices EV de la séquence qui ne sont plus dans le lot la
+            # quittent (retirés ensuite s'ils deviennent orphelins).
+            change = _retirer_ev_absents(conn, ev_id, seq, [i for i, _ in voulus], titre,
+                                         retires_ev, rapport)
+            change += _retirer_objectifs_absents(
+                conn, ev_id, {objectifs_ids[x["objectif"]] for x in exos if not x["bonus"]},
+                titre, seq, rapport)
+            change += _poser_exercices_evaluation(conn, ev_id, voulus)
             change += _poser_type_evaluation(conn, ev_id, type_ev)   # v0.60.0 (E6)
             # v0.52.9 (I3) — sujet coupé en deux (D1) : réglage '' (les deux
             # mentions sont imposées par D2, aucun avertissement C3).
@@ -2542,6 +2612,8 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             + (f" — {_resume_deux_parties(conn, ev_id, exos, marques_exos)}" if coupe
                else f" — {mq.LIBELLES_CALCULATRICE[marques_ev['calculatrice']]}"
                if marques_ev["calculatrice"] else ""))
+    _retirer_ev_orphelins(conn, seq, [e for e in dict.fromkeys(retires_ev) if e not in pris],
+                          {}, rapport)                               # v0.60.1 (R6)
     n = _lier_objectifs(conn, liens)
     if n:
         rapport.seq(seq)["lignes"].append(f"évaluations : {n} lien(s) exercice EV-objectif créé(s)")
@@ -2549,6 +2621,93 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
                       "sequence_code = ?", (NIVEAU, seq)).fetchone()
     controler_tests_courts_parties(conn, seq, sn[0] if sn else None, lot, plan,
                                    rapport)                          # v0.60.0 (E6)
+
+
+def _retirer_ev_absents(conn, ev_id: str, seq: str, voulus: list, titre: str,
+                       retires: list, rapport: Rapport) -> int:
+    """v0.60.1 (R6) — Une évaluation en cours prend exactement les exercices EV
+    du lot : ceux de la séquence (série EV) qu'elle contient encore et que le
+    lot ne cite plus en sortent (ligne d'`evaluation_exercices` copiée dans le
+    journal). Les exercices d'autres séries, ajoutés par l'auteur, restent.
+    Retourne 1 si quelque chose a changé ; les ids retirés vont dans `retires`
+    (orphelins retirés en fin d'import des évaluations)."""
+    sortants = _lignes(conn,
+        "SELECT ee.* FROM evaluation_exercices ee JOIN exercices x ON x.id = ee.exercice_id "
+        "WHERE ee.evaluation_id = ? AND x.niveau = ? AND x.sequence = ? AND "
+        "x.serie_code = 'EV' ORDER BY ee.ordre", (ev_id, NIVEAU, seq))
+    sortants = [r for r in sortants if r["exercice_id"] not in voulus]
+    for r in sortants:
+        conn.execute("DELETE FROM evaluation_exercices WHERE evaluation_id = ? AND "
+                     "exercice_id = ?", (ev_id, r["exercice_id"]))
+        retires.append(r["exercice_id"])
+    if sortants:
+        rapport.journal.setdefault("retraits", []).append({
+            "quoi": "exercices d'évaluation", "sequence": seq, "titre": titre,
+            "evaluation_exercices": sortants})
+        rapport.documents.append(f"{seq} évaluation « {titre} » : {len(sortants)} ancien(s) "
+                                 "exercice(s) EV retiré(s) de l'évaluation (remplacée par le lot)")
+    return 1 if sortants else 0
+
+
+def _retirer_objectifs_absents(conn, ev_id: str, voulus: set, titre: str, seq: str,
+                               rapport: Rapport) -> int:
+    """v0.60.1 (R6) — Objectifs évalués : ceux du barème du lot seulement."""
+    sortants = [r for r in _lignes(conn, "SELECT * FROM evaluation_objectifs WHERE "
+                                         "evaluation_id = ?", (ev_id,))
+                if r["objectif_id"] not in voulus]
+    for r in sortants:
+        conn.execute("DELETE FROM evaluation_objectifs WHERE evaluation_id = ? AND "
+                     "objectif_id = ?", (ev_id, r["objectif_id"]))
+    if sortants:
+        rapport.journal.setdefault("retraits", []).append({
+            "quoi": "objectifs d'évaluation", "sequence": seq, "titre": titre,
+            "evaluation_objectifs": sortants})
+    return 1 if sortants else 0
+
+
+# ── v0.60.1 (R7) — Réimport : ce qu'il faut repasser en cours ───────────────
+
+def diagnostiquer_reimport(conn, lot: dict, rapport: Rapport) -> None:
+    """Avant l'import d'un lot (essai à blanc compris) : séquence validée,
+    évaluations validées dont le lot change le contenu, exercices EV validés
+    d'évaluations en cours que le lot réécrit. Rangés dans `rapport.a_repasser`
+    (section « À repasser en cours avant l'import » du rapport)."""
+    seq = lot["sequence"]
+    sn = conn.execute("SELECT etat_code FROM sequences_par_niveau WHERE niveau = ? AND "
+                      "sequence_code = ?", (NIVEAU, seq)).fetchone()
+    if sn is not None and sn[0] == "valide":
+        rapport.a_repasser["sequences"].append(seq)
+    for titre, paire in paires_evaluations(lot).items():
+        try:
+            exos = preparer_evaluation(titre, paire)
+        except ImportErreur:
+            continue
+        ev = conn.execute("SELECT id, etat_code FROM evaluations WHERE niveau = ? AND "
+                          "titre = ? ORDER BY numero LIMIT 1", (NIVEAU, titre)).fetchone()
+        if ev is None:
+            continue
+        actuels = conn.execute(
+            "SELECT x.*, ee.bareme_points FROM evaluation_exercices ee JOIN exercices x ON "
+            "x.id = ee.exercice_id WHERE ee.evaluation_id = ? AND x.niveau = ? AND "
+            "x.sequence = ? AND x.serie_code = 'EV' ORDER BY ee.ordre",
+            (ev["id"], NIVEAU, seq)).fetchall()
+        voulus = [(_vals_ev(x), float(x["points"])) for x in exos]
+        meme = len(actuels) == len(voulus) and all(
+            _meme_contenu(a, v) and float(a["bareme_points"] or 0) == p
+            for a, (v, p) in zip(actuels, voulus))
+        type_ev = type_evaluation_lot(lot, titre)
+        from services import evaluations_v2 as ev2
+        if ev2.colonnes_presentes(conn) and ev2.type_evaluation(conn, ev["id"]) != type_ev:
+            meme = False
+        if meme:
+            continue
+        if ev["etat_code"] == "valide":
+            rapport.a_repasser["evaluations"].append(f"{seq} « {titre} »")
+            continue
+        for a in actuels:
+            if a["etat_code"] == "valide" and len(_evaluations_de(conn, a["id"])) == 1:
+                rapport.a_repasser["exercices"].append(
+                    f"{NIVEAU}/{seq}/EV{a['num']:02d} (« {titre} »)")
 
 
 def _poser_type_evaluation(conn, ev_id: str, type_ev: str) -> int:
@@ -2631,7 +2790,16 @@ def retirer_evaluations(conn, lot: dict, voulu_par_num: dict, rapport: Rapport) 
             rapport.documents.append(f"{seq} évaluation « {titre} » (n° {ev['numero']}) : "
                                      f"retirée ({len(exos)} exercice(s), {len(objs)} objectif(s) "
                                      "évalué(s))")
-    for eid in dict.fromkeys(liberes):
+    _retirer_ev_orphelins(conn, seq, list(dict.fromkeys(liberes)), voulu_par_num, rapport)
+
+
+def _retirer_ev_orphelins(conn, seq: str, ids: list, voulu_par_num: dict,
+                          rapport: Rapport) -> None:
+    """Exercices EV de la séquence qui ne sont plus utilisés par aucune
+    évaluation (R1, v0.52.6 ; v0.60.1 : aussi ceux qu'une évaluation en cours
+    a quittés, R6) : non validés → retirés avec leurs liens (journal de
+    restauration) ; validés → gardés, anomalie."""
+    for eid in ids:
         x = conn.execute("SELECT * FROM exercices WHERE id = ?", (eid,)).fetchone()
         if x is None or (x["niveau"], x["sequence"], x["serie_code"]) != (NIVEAU, seq, "EV"):
             continue                    # exercice d'ailleurs ajouté par l'auteur : intouché
@@ -2781,6 +2949,7 @@ def _executer(conn, lots: list[dict], ref: dict, rapport: Rapport, images: Path,
             figures[lot["sequence"]] = mer_imp.importer_lot_mer(conn, imp, lot, themes,
                                                                 ref_mer, rapport)
         else:
+            diagnostiquer_reimport(conn, lot, rapport)                # v0.60.1 (R7)
             figures[lot["sequence"]] = importer_lot(conn, lot, ref, rapport)
     copier_figures(lots, figures, images, rapport, ecrire_fichiers)
     if est_sixieme():

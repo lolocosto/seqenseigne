@@ -426,6 +426,23 @@ def _types_cartes() -> tuple:
     return tuple(t for t in _catalogue_cycle4() if t.cle in TYPES_CARTES)
 
 
+# v0.60.1 (D17a) — Tests courts du principal, associés aux cartes d'automatisme
+# de la partie (décision 17 du 18 novembre) : avec l'option cartes seulement,
+# après le récap et les planches (services/documents_evaluation_v2.py).
+TYPE_TESTS_COURTS = TypeDocument(
+    cle="tests_courts_6e",
+    libelle="Tests courts",
+    description=("Un par partie (sur 10, sur les cartes d'automatisme de la partie) : "
+                 "sujet A ou B ; la version corrigée liste les cartes évaluées."),
+    options={"actif": False, "sujet": "A", "version": "eleve"},
+    valeurs={"sujet": SUJETS_6E, "version": VERSIONS_6E},
+    generateur="services.documents_evaluation_v2.generer_test_court",
+    champs=(("sujet", "Sujet", (("A", "A"), ("B", "B"))),
+            ("version", "Version", (("eleve", "élève"),
+                                    ("corrigee", "corrigée (cartes évaluées)")))),
+)
+
+
 def catalogue_type(gabarit: str, type_ref: str | None, cartes: bool = False) -> tuple:
     """v0.54.0 (RI6) — Catalogue d'un référentiel selon son modèle **et son
     type** : une mise en route au modèle « Fiches » publie les documents de
@@ -436,7 +453,8 @@ def catalogue_type(gabarit: str, type_ref: str | None, cartes: bool = False) -> 
     if tr == "mer" and normaliser(gabarit) == "sixieme":
         return _avec_vue(_CATALOGUE_MER_FICHES)                      # v0.59.2
     if cartes and tr == "principal" and normaliser(gabarit) == "sixieme":
-        return _avec_vue(_CATALOGUE_SIXIEME + _types_cartes())       # v0.59.2
+        return _avec_vue(_CATALOGUE_SIXIEME + _types_cartes()        # v0.59.2
+                         + (TYPE_TESTS_COURTS,))                     # v0.60.1 (D17a)
     return catalogue(gabarit)
 
 
@@ -453,6 +471,7 @@ def tous_les_types() -> dict:
             out[t.cle] = t
     for t in _CATALOGUE_MER_FICHES:
         out[t.cle] = t
+    out[TYPE_TESTS_COURTS.cle] = TYPE_TESTS_COURTS                  # v0.60.1
     return out
 
 

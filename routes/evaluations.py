@@ -499,6 +499,35 @@ def api_devalider(eval_id):
     return jsonify({"evaluation": ev})
 
 
+@bp.route("/api/evaluations/<eval_id>/etat", methods=["PATCH"])
+def api_etat(eval_id):
+    """v0.60.1 — Changement d'état unitaire pour la multisélection du module
+    Évaluations (« ✓ Valider », « ⟲ En cours ») : body {etat_code: 'valide' |
+    'en_cours'} → mêmes services que /valider et /devalider (déjà dans l'état
+    demandé : 200, rien n'est fait). Refus de validation : 400 avec `raisons`
+    (textes lisibles, affichés dans le résumé de l'action groupée)."""
+    cible = (request.get_json(silent=True) or {}).get("etat_code")
+    if cible not in ("valide", "en_cours"):
+        return jsonify({"error": "etat_code : 'valide' ou 'en_cours' attendu",
+                        "code": "etat_invalide"}), 400
+    store = _store()
+    with store._conn() as conn:
+        try:
+            ev = svc.lire_evaluation(conn, eval_id)
+            if ev["etat_code"] != cible:
+                ev = (svc.valider_evaluation(conn, eval_id) if cible == "valide"
+                      else svc.devalider_evaluation(conn, eval_id))
+        except svc.ValidationPedagogiqueErreur as e:
+            raisons = (getattr(e, "details", None) or {}).get("raisons") or []
+            return jsonify({"error": "validation impossible",
+                            "code": "validation_pedagogique_echouee",
+                            "raisons": [str(r.get("code", r)) if isinstance(r, dict) else str(r)
+                                        for r in raisons]}), 400
+        except EvaluationErreur as e:
+            return _erreur_metier(e)
+    return jsonify({"evaluation": ev})
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # Couverture (matrice objectifs × exos)
 # ═════════════════════════════════════════════════════════════════════════════

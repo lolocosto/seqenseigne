@@ -190,7 +190,7 @@
         <input type="text" placeholder="N10"
                id="seqniv-prec-niv-${esc(p.id)}"
                maxlength="3" size="4" class="seqniv-prec-input">
-        <input type="text" placeholder="S01"
+        <input type="text" placeholder="A1"
                id="seqniv-prec-seq-${esc(p.id)}"
                maxlength="3" size="4" class="seqniv-prec-input">
         <button class="seqniv-edit-btn seqniv-edit-btn--sm"
@@ -295,7 +295,7 @@
         ? `<span class="seqniv-ajout-R" id="seqniv-ajoutR-${esc(o.id)}">
              <input type="text" placeholder="N10" maxlength="3"
                     id="seqniv-ajoutR-niv-${esc(o.id)}" class="seqniv-prec-input">
-             <input type="text" placeholder="S01" maxlength="3"
+             <input type="text" placeholder="A1" maxlength="3"
                     id="seqniv-ajoutR-seq-${esc(o.id)}" class="seqniv-prec-input">
              <button class="seqniv-edit-btn seqniv-edit-btn--sm"
                      onclick="seqnivEditChargerExosRevision('${esc(o.id)}')">

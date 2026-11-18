@@ -557,6 +557,12 @@ def _points(p) -> str:
     return str(int(p)) if p == int(p) else f"{p:g}".replace(".", ",")
 
 
+def libelle_points(p) -> str:
+    """v0.60.1 — « 1 pt », « 0,5 pt », « 2 pts » (accord : pluriel à partir de
+    2 ; avant : « 1 pts »)."""
+    return _points(p) + (" pt" if float(p or 0) < 2 else " pts")
+
+
 def _sujet_b(remed_enonce: str, titre_a: str) -> tuple[str, str]:
     """(titre, énoncé) du sujet B : E3, ligne « % titre B : … » en tête."""
     texte = remed_enonce or ""
@@ -703,7 +709,7 @@ def _lignes_exercice_6e(conn, e: dict, opts: dict) -> list[str]:
         titre, enonce, corrige = e["titre"], atome.corps or "", atome.corrige or ""
     if (atome.variables or "").strip():
         L.append(atome.variables.rstrip())
-    tag = f"{_points(e['points'])} pts --- {e['objectif'] or 'bonus'}"
+    tag = f"{libelle_points(e['points'])} --- {e['objectif'] or 'bonus'}"   # v0.60.1
     L.append("")
     L.append(r"\seqExoEval{" + titre + "}{" + tag + "}")
     L.append(enonce.strip())
@@ -770,7 +776,7 @@ def corps_evaluation_6e(conn: sqlite3.Connection, st: dict, opts: dict,
         morceaux = []
         for i, p in enumerate(decoupage["parties"]):
             nums = [str(decoupage["numeros"][e["exercice_id"]]) for e in p]
-            pts = _points(decoupage["points"][i]) + " pts" \
+            pts = libelle_points(decoupage["points"][i]) \
                 + (" + bonus" if decoupage["bonus"][i] else "")
             morceaux.append(f"artie {i + 1} : ex. {_liste_nums(nums)} ({pts})")
         L.append(r"\par{\scriptsize\color{seqSixGrisTexte}P" + " ; p".join(morceaux) + ".}")

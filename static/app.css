@@ -1459,7 +1459,8 @@ body.atelier-mode-split .atl-main > .atelier-splitter-split:active {
 .atelier-splitter-split { display: none; }
 
 /* Forcer la visibilité simultanée de form et rendu */
-body.atelier-mode-split #atl-exo-form,
+/* v0.60.1 (C11) — identifiant réel du formulaire Exercice (l'ancien atl-exo-form n'existait plus). */
+body.atelier-mode-split #atl-exercice-form,
 body.atelier-mode-split #atl-notion-form,
 body.atelier-mode-split #atl-methode-form,
 body.atelier-mode-split #atl-fiche-form,
@@ -2020,7 +2021,8 @@ textarea.latex-textarea {
    Exercice : le formulaire a déjà padding:20px à la racine, on retire
    les marges latérales pour que les cadres s'étendent sur toute la
    largeur. On garde une marge basse pour aérer entre cadres successifs. */
-#atl-exo-form .atl-cadre {
+/* v0.60.1 (C11) — #atl-exercice-form (et non l'ancien atl-exo-form, disparu). */
+#atl-exercice-form .atl-cadre {
   margin: 0 0 16px 0;
 }
 

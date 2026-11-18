@@ -88,6 +88,9 @@ def _valider_cartes(c, sequence="A1"):
 
 def test_catalogue_fiches_avec_option_cartes_ajoute_recap_et_planches_en_fin():
     avec = gd.catalogue_type("sixieme", "principal", True)
+    # v0.60.1 (D17a) : le document « Tests courts » suit le récap et les planches.
+    assert avec[-1].cle == "tests_courts_6e"
+    avec = avec[:-1]
     assert avec[:-2] == gd.catalogue("sixieme")
     assert tuple(t.cle for t in avec[-2:]) == CARTES
     # Mêmes objets que le cycle 4 : clés, options et producteurs inchangés (G3).
@@ -109,7 +112,7 @@ def test_types_du_referentiel_suivent_l_option(base4e):
     _ref(c, "2027_N11b", cartes=0, version="2027b")
     _ref(c, "2026_N09", cartes=0, niveau="N09", version="2026")
     avec = gd.types_du_referentiel(c, "2027_N11")
-    assert avec[-2:] == CARTES
+    assert avec[-3:] == CARTES + ("tests_courts_6e",)               # v0.60.1 (D17a)
     assert gd.types_du_referentiel(c, "2027_N11b") == gd.types("sixieme")
     assert gd.types_du_referentiel(c, "2026_N09") == gd.types("sixieme")
     c.close()
@@ -121,7 +124,7 @@ def test_apercu_de_creation_annonce_les_documents_de_cartes(base4e_lot):
     a = contenu(c, "N11", "principal", "sixieme", cartes=True)
     b = contenu(c, "N11", "principal", "sixieme", cartes=False)
     c.close()
-    assert [d["cle"] for d in a["documents"]][-2:] == list(CARTES)
+    assert [d["cle"] for d in a["documents"]][-3:] == list(CARTES) + ["tests_courts_6e"]
     assert not any(d["cle"] in CARTES for d in b["documents"])
 
 
@@ -140,12 +143,13 @@ def test_referentiel_cree_en_v0590_recoit_recap_et_planches_a_la_lecture(base4e)
              type_document=t.cle, options='{"actif": true}', ordre=i)
     c.commit()
     docs = lister_documents(c, "2027_N11")
-    assert [d["type_document"] for d in docs][-2:] == list(CARTES)
-    assert [d["ordre"] for d in docs][-2:] == [10, 11]
-    assert all(d["options"]["actif"] is False for d in docs[-2:])
+    # v0.60.1 (D17a) : + « Tests courts » après le récap et les planches.
+    assert [d["type_document"] for d in docs][-3:] == list(CARTES) + ["tests_courts_6e"]
+    assert [d["ordre"] for d in docs][-3:] == [10, 11, 12]
+    assert all(d["options"]["actif"] is False for d in docs[-3:])
     assert (docs[0]["type_document"], docs[0]["ordre"]) == ("vue_ensemble", 0)
     # Les lignes du modèle sont intactes (options gardées).
-    assert all(d["options"]["actif"] is True for d in docs[1:-2])
+    assert all(d["options"]["actif"] is True for d in docs[1:-3])
     c.close()
 
 

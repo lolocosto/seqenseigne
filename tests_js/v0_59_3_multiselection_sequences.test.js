@@ -114,7 +114,7 @@ describe('v0.59.3 — 1. « Toutes les séquences » : la liste des séquences d
     const src = lire('static/atelier_seqniv_assemblage.js');
     expect(src).not.toMatch(/selectionMulti(AppliquerEtat|Toggle|Plage|OuvrirMenu|Effacer)\s*\([^)]*\)\s*\{/);
     expect(S.selectionMultiAppliquerEtat).toBe(globalThis.window.AtelierEditeur.prototype.selectionMultiAppliquerEtat);
-    expect(lire('static/atelier_editeur.js')).toMatch(/'ATELIER_SEQNIV'\]/);   // Échap
+    expect(lire('static/atelier_editeur.js')).toMatch(/'ATELIER_SEQNIV'[,\]]/);   // Échap (v0.60.1 : + ATELIER_EVALUATION après lui)
   });
 
   it('mêmes gestes : Ctrl+clic, Maj+clic (plage), barre « ✓ Valider / ⟲ En cours », Échap', async () => {

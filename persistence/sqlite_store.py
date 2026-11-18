@@ -1645,6 +1645,17 @@ class SqliteStore:
             conn.commit()
         except Exception as _e:                       # pragma: no cover
             print(f"  [version 2 Fiches] migration impossible : {_e}")
+        # ── v0.60.1 — propriété « sans carte » des objectifs (F4), mode de mise
+        #    en route du référentiel principal (D18 : valeur déduite une seule
+        #    fois, à l'ajout des colonnes, quand elle est sûre) ─
+        try:
+            from services import cartes_partie as _cp
+            _cp.migrer(conn)
+            from services import mise_en_route_referentiel as _mer
+            _mer.migrer(conn)
+            conn.commit()
+        except Exception as _e:                       # pragma: no cover
+            print(f"  [v0.60.1] migration impossible : {_e}")
 
     # ── v0.13.0 — Peuplement initial param_niveaux depuis CSV ────────────────
 

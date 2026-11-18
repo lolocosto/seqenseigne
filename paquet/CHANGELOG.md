@@ -21,6 +21,16 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.60.1 — 2026-11-18 : suite de la version 2 du modèle Fiches (paquet inchangé)
+
+- Aucun changement du paquet LaTeX. Appli : mode de mise en route du référentiel principal
+  (format d'échange 1.7) ; documents « Tests courts » (cartes évaluées) et « séance
+  d'évaluation » ; cartes de la partie dans le plan de travail Fiches ; titre court saisi
+  dans l'atelier ; avertissement « objectif sans carte » ; bonus 1 pt sur le cycle 4 ;
+  bloc « Carte mentale » retiré du Rendu PDF de l'assemblage ; rendu par lot avec cartes
+  mentales et « Sans cache » ; réimport sûr des évaluations et tests courts, multisélection
+  du module Évaluations, « 1 pt » accordé. Détails : `doc/redemarrage_v0_60_1.md`.
+
 ## Appli v0.60.0 — 2026-11-18 : version 2 du modèle Fiches avec cartes, correctifs d'import (paquet inchangé)
 
 - Aucun changement du paquet LaTeX (le document de rituels utilise
