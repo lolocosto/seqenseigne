@@ -426,6 +426,12 @@ Voir `inventaire_ateliers.md` de la livraison v0.56.3.
     QCM (barème QCM posé par l'import, réimport qui répare, plus de contrôle « sur 10 » ni
     de bonus pour un test court ; figure d'origine déjà dans images non bloquante) ; cadre des rituels retiré de l'atelier Référentiel (voir
     « Progressions : rituels et séances d'évaluation » ci-dessous) ;
+  - **v0.60.3 livrée (19 novembre)** (`doc/redemarrage_v0_60_3.md`) : filets des tableaux
+    (couleur du tableau de suivi qui fuyait, `seqenseigne-style6e` v0.16, `seqenseigne-data`
+    v1.2) ; noms des PDF et libellés du modèle Fiches au niveau réel (6e inchangée) ;
+    reste possible : renommer les clés internes des types (`livret_sequence_6e`…, jamais
+    affichées) — migration de `referentiel_documents` et des références `type|cible` côté
+    classe, sans gain visible aujourd'hui ;
   - restent : durée affichée sur chaque sujet (aujourd'hui : en-tête de la séance
     d'évaluation et module Évaluations) ; planches de cartes par partie ; tests courts
     retirés du document « Évaluations » quand le document « Tests courts » est publié (à

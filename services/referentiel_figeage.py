@@ -512,6 +512,8 @@ def _trace_documents(conn: sqlite3.Connection, ref_id: str,
                 'cible_id':    c.get('cible_id'),
                 'libelle':     c.get('libelle'),
                 'nom_fichier': c.get('nom_fichier'),
+                # v0.60.3 (N2) — noms d'avant la v0.60.3, seulement s'il y en a
+                **({'noms_anciens': c['noms_anciens']} if c.get('noms_anciens') else {}),
                 # Chemin relatif au dossier _fige
                 'chemin_pdf':  f"pdfs/{c.get('nom_fichier')}" if c.get('nom_fichier') else None,
             })
@@ -582,7 +584,11 @@ def copier_pdfs(trace: dict, dossier_source: Path,
             if not nom:
                 continue
             src = dossier_source / nom
+            for ancien in cible.get('noms_anciens') or ():          # v0.60.3 (N2)
+                if not src.is_file():
+                    src = dossier_source / ancien
             if not src.is_file():
+                src = dossier_source / nom
                 echecs.append({'nom_fichier': nom,
                                 'raison': f"source absente : {src}"})
                 continue

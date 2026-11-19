@@ -21,6 +21,22 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.60.3 — 2026-11-19 : filets des tableaux ; noms des documents par niveau
+
+- **seqenseigne-style6e v0.16** — page de garde « Suivi par objectif » : la couleur gris
+  clair (`black!30`) des filets du tableau de suivi ne fuit plus dans les tableaux suivants.
+  Avec colortbl, `\arrayrulecolor` est global (`\gdef\CT@arc@`) malgré le groupe de la
+  boîte : tous les tableaux du livret et des corrigés avaient des filets gris clair,
+  invisibles sur les cellules colorées (`\rowcolor`, `\cellcolor`, `\seqLocCellule`). La
+  couleur d'avant le tableau est sauvée puis rétablie après lui ; le suivi garde son gris.
+- **seqenseigne-data v1.2** — `\seqTableauObjectifs` : couleur des filets posée dans le
+  groupe de `center` (elle restait en vigueur pour la suite du document).
+- Inventaire : aucune autre commande de couleur ou d'épaisseur de filets globale dans le
+  paquet ni dans les gabarits de l'appli.
+- Appli : noms des PDF et libellés du modèle Fiches au niveau réel (`livret_sequence_4e__N11__C2.pdf`
+  au lieu de `livret_sequence_6e__N11__C2.pdf`), 6e inchangée ; ancien nom lu en secours
+  jusqu'à la recompilation, qui le supprime. Détails : `doc/redemarrage_v0_60_3.md`.
+
 ## Appli v0.60.2 — 2026-11-18 : tests courts en QCM, rituels hors de l'atelier (paquet inchangé)
 
 - Aucun changement du paquet LaTeX. Appli : l'import des lots pose le barème QCM (bonne

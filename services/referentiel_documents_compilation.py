@@ -180,6 +180,79 @@ def _finaliser_statut(doc_id: str, erreur: str | None = None) -> None:
             s['erreur_globale'] = erreur
 
 
+# ── v0.60.3 — Noms des PDF du modèle « Fiches » : niveau réel ───────────────
+#
+# Signalement de Laurent (19 novembre) : « les livrets, corrections enseignant
+# et plans de travail sont nommés avec "6e" même en 4e ». Les clés des types
+# du modèle Fiches finissent par `_6e` (nom interne du module LaTeX
+# `seqenseigne-style6e`, clés G3 partagées avec l'appli de classe : elles ne
+# changent pas) ; seuls les noms de fichiers et les libellés prennent le niveau
+# réel. Décisions (doc/redemarrage_v0_60_3.md) :
+#   - N1 : nom = clé dont le suffixe `_6e` devient le niveau du référentiel
+#     (`livret_sequence_4e__N11__C2.pdf`) ; le reste du nom est inchangé ; en
+#     6e le nom ne change pas (PDF figés, publications et liens intacts) ;
+#   - N2 : une cible dont le nom a changé garde l'ancien dans `noms_anciens` :
+#     les lectures (téléchargement, PDF figés, publication) le cherchent en
+#     secours tant que le document n'a pas été recompilé ; la compilation pose
+#     le nouveau nom et supprime l'ancien PDF (plus de fichier orphelin) ;
+#   - N3 : identifiant de cible (`cible_id`) et clé d'artefact inchangés : ni
+#     recompilation forcée, ni lien côté classe à refaire.
+
+_NIVEAUX_FICHIER = {"N09": "6e", "N10": "5e", "N11": "4e", "N12": "3e"}
+SUFFIXE_CLE_FICHES = "_6e"
+
+
+def niveau_fichier(conn: sqlite3.Connection, niveau: str) -> str:
+    """Niveau en ASCII pour un nom de fichier : « 4ème » → « 4e », « CM1 » →
+    « CM1 » (d'après `param_niveaux.nom_court`) ; N09…N12 sans table : 6e…3e ;
+    inconnu : le code du niveau."""
+    import re
+    try:
+        from services.param_niveaux import lire_nom_court
+        nc = (lire_nom_court(conn, niveau) or "").strip()
+    except Exception:
+        nc = ""
+    if not nc or nc == niveau:
+        nc = _NIVEAUX_FICHIER.get(niveau, niveau or "")
+    m = re.fullmatch(r"(\d+)\s*(?:ème|eme|e)", nc)
+    if m:
+        return f"{m.group(1)}e"
+    return re.sub(r"[^A-Za-z0-9]", "", nc) or re.sub(r"[^A-Za-z0-9]", "", niveau or "") \
+        or "niveau"
+
+
+def racine_fichier(type_document: str, nf: str) -> str:
+    """Racine du nom de fichier d'un type : `livret_sequence_6e` → `livret_sequence_4e`
+    (clés du modèle Fiches) ; les autres clés sont reprises telles quelles."""
+    if type_document.endswith(SUFFIXE_CLE_FICHES):
+        return type_document[:-len(SUFFIXE_CLE_FICHES)] + "_" + nf
+    return type_document
+
+
+def noms_cible(type_document: str, nf: str, suite: str = "") -> dict:
+    """{'nom_fichier', ['noms_anciens']} d'une cible : `suite` = ce qui suit la
+    racine (`__N11__C2`, vide pour une cible annuelle)."""
+    nom = f"{racine_fichier(type_document, nf)}{suite}.pdf"
+    ancien = f"{type_document}{suite}.pdf"
+    return {"nom_fichier": nom, **({"noms_anciens": [ancien]} if ancien != nom else {})}
+
+
+def noms_pdf(cible: dict) -> list[str]:
+    """Noms possibles du PDF d'une cible, le nom courant d'abord (N2)."""
+    noms = [cible.get("nom_fichier")] + list(cible.get("noms_anciens") or [])
+    return [n for n in dict.fromkeys(noms) if n]
+
+
+def trouver_pdf(dossier: Path, cible: dict) -> Path | None:
+    """Premier PDF existant de la cible dans `dossier` (nom courant, puis
+    anciens noms) ; None sinon."""
+    for n in noms_pdf(cible):
+        p = Path(dossier) / n
+        if p.is_file():
+            return p
+    return None
+
+
 # ── Cibles d'un document : pour les types multi-cible ───────────────────────
 
 
@@ -402,22 +475,24 @@ def _cibles_6e(conn: sqlite3.Connection, doc_id: str, niveau: str,
     # v0.53.0 (MR7) — ni archives Xnn ni mises en route Mnn (hors principal).
     from services.mises_en_route_6e import hors_principal
     sequences = [x['seq'] for x in rows if x['seq'] and not hors_principal(x['seq'])]
-    libelles = {'livret_sequence_6e': 'Livret 6e', 'fiches_cours_6e': 'Fiches de cours 6e',
-                'plans_travail_6e': 'Plan de travail 6e',
-                'corriges_6e': 'Corrigés 6e', 'cartes_mentales_6e': 'Cartes mentales 6e'}
+    nf = niveau_fichier(conn, niveau)                          # v0.60.3 (N1)
+    libelles = {'livret_sequence_6e': 'Livret', 'fiches_cours_6e': 'Fiches de cours',
+                'plans_travail_6e': 'Plan de travail',
+                'corriges_6e': 'Corrigés', 'cartes_mentales_6e': 'Cartes mentales'}
+    libelles = {k: f"{v} {nf}" for k, v in libelles.items()}
     decoupage = ('par_sequence' if type_document in ('livret_sequence_6e', 'plans_travail_6e')
                  else opts.get('decoupage') or 'par_sequence')
     cibles = []
     if decoupage in ('annuel', 'les_deux'):
         cibles.append({'cible_id': 'unique',
                        'libelle': f"{libelles[type_document]} (annuel)",
-                       'nom_fichier': f"{type_document}.pdf", 'niveau': niveau})
+                       **noms_cible(type_document, nf), 'niveau': niveau})
     if decoupage in ('par_sequence', 'les_deux'):
         for seq in sequences:
             cibles.append({
                 'cible_id':    f"{niveau}/{seq}",
                 'libelle':     f"{libelles[type_document]} {niveau}/{seq}",
-                'nom_fichier': f"{type_document}__{niveau}__{seq}.pdf",
+                **noms_cible(type_document, nf, f"__{niveau}__{seq}"),
                 'niveau':      niveau,
                 'sequence':    seq,
             })
@@ -432,6 +507,7 @@ def _cibles_evaluations_6e(conn: sqlite3.Connection, niveau: str) -> list[dict]:
     classe avec cette séquence ; `titre_doc` distingue les documents d'une
     même séquence."""
     from collections import Counter
+    nf = niveau_fichier(conn, niveau)                          # v0.60.3 (N1)
     cibles = []
     for r in conn.execute("SELECT id, numero, titre FROM evaluations WHERE niveau = ? "
                           "ORDER BY ordre, numero, id", (niveau,)).fetchall():
@@ -449,7 +525,7 @@ def _cibles_evaluations_6e(conn: sqlite3.Connection, niveau: str) -> list[dict]:
         titre = r['titre'] or '(sans titre)'
         c = {'cible_id':    f"{code}/{niveau}/{seq}" if seq else code,
              'libelle':     f"Évaluation {code} : {titre}",
-             'nom_fichier': f"evaluation_6e__{niveau}__{seq or 'sans_sequence'}__{code}.pdf",
+             **noms_cible('evaluation_6e', nf, f"__{niveau}__{seq or 'sans_sequence'}__{code}"),
              'niveau':      niveau,
              'eval_id':     r['id'],
              'titre_doc':   titre}
@@ -465,6 +541,7 @@ def _cibles_documents_6e(conn: sqlite3.Connection, niveau: str,
     hors archives Xnn. Identifiant « TP01/N09/S01 » (cf. évaluations)."""
     from services.documents_6e import TYPES_SERIES, LIBELLES_COURTS, atomes_de_la_serie
     serie = TYPES_SERIES[type_document]
+    nf = niveau_fichier(conn, niveau)                          # v0.60.3 (N1)
     cibles = []
     for a in atomes_de_la_serie(conn, niveau, serie):
         code = f"{serie}{int(a['num'] or 0):02d}"
@@ -473,7 +550,7 @@ def _cibles_documents_6e(conn: sqlite3.Connection, niveau: str,
         cibles.append({
             'cible_id':    f"{code}/{niveau}/{seq}",
             'libelle':     f"{LIBELLES_COURTS[serie]} {seq} {code} : {titre}",
-            'nom_fichier': f"{type_document}__{niveau}__{seq}__{code}.pdf",
+            **noms_cible(type_document, nf, f"__{niveau}__{seq}__{code}"),
             'niveau':      niveau,
             'sequence':    seq,
             'exercice_id': a['id'],
@@ -509,6 +586,7 @@ def _cibles_mer(conn: sqlite3.Connection, niveau: str, type_document: str) -> li
     partie, à laquelle le document est rattaché dans la publication."""
     from services import mises_en_route_6e as mer
     from services.referentiels_internes import sequences_du_perimetre
+    nf = niveau_fichier(conn, niveau)                          # v0.60.3 (N1)
     cibles = []
     for sq in sequences_du_perimetre(conn, niveau, 'mer'):
         seq = sq['code']
@@ -525,7 +603,8 @@ def _cibles_mer(conn: sqlite3.Connection, niveau: str, type_document: str) -> li
                     cibles.append({**base, 'test': rang, 'eval_id': t['id'],
                                    'cible_id': f"{niveau}/{seq}/p{n}/T{rang}",
                                    'libelle': f"{_LIBELLES_MER[type_document]} {seq} p{n} n° {rang}",
-                                   'nom_fichier': f"{type_document}__{niveau}__{seq}__p{n}__T{rang}.pdf",
+                                   **noms_cible(type_document, nf,
+                                                f"__{niveau}__{seq}__p{n}__T{rang}"),
                                    'titre_doc': f"{titre} — test n° {rang}"})
                 continue
             if type_document == 'mer_fiches_cours_6e' and p.get('fiche') is None:
@@ -536,7 +615,7 @@ def _cibles_mer(conn: sqlite3.Connection, niveau: str, type_document: str) -> li
                 continue
             cibles.append({**base, 'cible_id': f"{niveau}/{seq}/p{n}",
                            'libelle': f"{_LIBELLES_MER[type_document]} {seq} p{n}",
-                           'nom_fichier': f"{type_document}__{niveau}__{seq}__p{n}.pdf",
+                           **noms_cible(type_document, nf, f"__{niveau}__{seq}__p{n}"),
                            'titre_doc': titre})
     return cibles
 
@@ -827,6 +906,10 @@ def compiler_document(store, doc_id: str,
                     try:
                         nom_metier = dossier_ref / cible['nom_fichier']
                         nom_metier.write_bytes(res.chemin_pdf.read_bytes())
+                        # v0.60.3 (N2) — l'ancien nom (« …_6e… » d'un
+                        # document de 4e) ne reste pas à côté du nouveau.
+                        for ancien in cible.get('noms_anciens') or ():
+                            (dossier_ref / ancien).unlink(missing_ok=True)
                     except Exception as e:
                         erreur_copie = (
                             f"PDF compilé mais copie vers le nom métier "
@@ -1031,8 +1114,7 @@ def _pdfs_figes_presents(conn: sqlite3.Connection, doc: dict, data_dir) -> bool:
     if not cibles:
         return False
     for c in cibles:
-        nom = c.get("nom_fichier")
-        if not nom or not (dossier / nom).is_file():
+        if trouver_pdf(dossier, c) is None:                     # v0.60.3 (N2)
             return False
     return True
 

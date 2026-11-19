@@ -256,6 +256,7 @@ def api_pdf(ref_id: str, doc_id: str):
 
     cible_demandee = request.args.get('cible', '')
     nom_fichier = None
+    cible = None
     if not cibles:
         return jsonify({
             "error": "aucune_cible",
@@ -265,6 +266,7 @@ def api_pdf(ref_id: str, doc_id: str):
         for c in cibles:
             if c['cible_id'] == cible_demandee:
                 nom_fichier = c['nom_fichier']
+                cible = c
                 break
         if nom_fichier is None:
             return jsonify({
@@ -276,6 +278,7 @@ def api_pdf(ref_id: str, doc_id: str):
         # cible. Si multi-cible, on refuse.
         if len(cibles) == 1:
             nom_fichier = cibles[0]['nom_fichier']
+            cible = cibles[0]
         else:
             return jsonify({
                 "error": "cible_requise",
@@ -287,6 +290,12 @@ def api_pdf(ref_id: str, doc_id: str):
             }), 400
 
     chemin = svc_cmp.chemin_pdf(store, ref_id, nom_fichier)
+    if not chemin.exists():
+        # v0.60.3 (N2) — PDF compilé avant le changement de nom (« …_6e… » d'un
+        # document de 4e) : servi sous son nouveau nom jusqu'à la recompilation.
+        ancien = svc_cmp.trouver_pdf(chemin.parent, cible or {})
+        if ancien is not None:
+            chemin = ancien
     if not chemin.exists():
         return jsonify({
             "error": "pdf_non_trouve",

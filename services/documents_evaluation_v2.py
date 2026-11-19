@@ -36,7 +36,9 @@ def cibles_tests_courts(conn: sqlite3.Connection, niveau: str) -> list[dict]:
     premier test de la partie) ; `sequence` et `partie` rattachent le document."""
     from services.progression_rituels import tests_courts_par_partie
     from services.referentiels_internes import sequences_du_perimetre
+    from services.referentiel_documents_compilation import niveau_fichier, noms_cible
     tests = tests_courts_par_partie(conn, niveau)
+    nf = niveau_fichier(conn, niveau)          # v0.60.3 (N1) : niveau réel dans le nom
     cibles = []
     for s in sequences_du_perimetre(conn, niveau, "principal"):
         for pid, num, lib in conn.execute(
@@ -48,8 +50,8 @@ def cibles_tests_courts(conn: sqlite3.Connection, niveau: str) -> list[dict]:
                     "cible_id": f"TC/{niveau}/{s['code']}/p{num}{suffixe}",
                     "libelle": f"Test court {s['code']} p{num}" + (f" n° {rang}" if rang > 1
                                                                    else ""),
-                    "nom_fichier": f"tests_courts_6e__{niveau}__{s['code']}__p{num}"
-                                   + (f"__T{rang}" if rang > 1 else "") + ".pdf",
+                    **noms_cible("tests_courts_6e", nf, f"__{niveau}__{s['code']}__p{num}"
+                                 + (f"__T{rang}" if rang > 1 else "")),
                     "niveau": niveau, "sequence": s["code"], "partie": num,
                     "eval_id": t["id"], "titre_doc": t["titre"] or lib})
     return cibles

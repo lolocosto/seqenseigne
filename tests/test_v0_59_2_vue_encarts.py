@@ -452,12 +452,13 @@ def test_route_encarts_en_lecture_seule(base4e_imp):
 
 def test_module_v0_15_definit_les_encarts_et_l_appli_les_connait():
     from services import style6e
-    assert style6e.VERSION == "v0.15"
+    # v0.60.3 : v0.16 (filets du suivi) garde les encarts ; la version citée suit le .dtx.
+    assert tuple(int(x) for x in style6e.VERSION[1:].split(".")) >= (0, 15)
     assert "seqEncartSix" in style6e.ENVIRONNEMENTS
     assert {"seqSolutionDefiSix", "seqPictoEncartSix"} <= set(style6e.MACROS)
     for f in (DTX, STY):
         src = f.read_text(encoding="utf-8")
-        assert "v0.15 seqenseigne" in src
+        assert style6e.VERSION + " seqenseigne" in src
         assert "\\NewDocumentEnvironment{seqEncartSix}{O{pleine} m m}" in src
         for t in enc.TYPES:
             assert f"\\seq@encart@nom@{t}" in src

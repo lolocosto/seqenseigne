@@ -510,7 +510,7 @@ def test_module_v0_9_fournit_seqLocItemCM_du_lot_M01_car_les_macros_locales_ne_s
     from services import style6e
     dtx = (APPLI / "paquet" / "seqenseigne-style6e.dtx").read_text(encoding="utf-8")
     sty = (APPLI / "paquet" / "seqenseigne-style6e.sty").read_text(encoding="utf-8")
-    assert "v0.15 seqenseigne" in dtx and "v0.15 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11 ; v0.54.3 : v0.12 ; v0.55.0 : v0.13 ; v0.56.0 : v0.14 ; v0.59.2 : v0.15
+    assert "v0.16 seqenseigne" in dtx and "v0.16 seqenseigne" in sty   # v0.53.1 : v0.10 ; v0.53.3 : v0.11 ; v0.54.3 : v0.12 ; v0.55.0 : v0.13 ; v0.56.0 : v0.14 ; v0.59.2 : v0.15 ; v0.60.3 : v0.16
     assert "seqLocItemCM" in style6e.MACROS
     assert r"\DescribeMacro{\seqLocItemCM}" in dtx
     assert re.search(r"\\changes\{v0\.9\}\{[^}]*\}\{\\cs\{seqLocItemCM\}", dtx)

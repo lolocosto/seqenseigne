@@ -1,10 +1,13 @@
 % \iffalse
 %<*driver>
 \ProvidesFile{seqenseigne-data.dtx}%
-[2026/11/15 v1.1 seqenseigne – Module data (chargement & accès aux données)]
+[2026/11/19 v1.2 seqenseigne – Module data (chargement & accès aux données)]
 %</driver>
 % \fi
 %
+% \changes{v1.2}{2026/11/19}{\cs{seqTableauObjectifs} : la couleur des filets
+%   du tableau reste locale au tableau (elle restait en vigueur dans la suite
+%   du document)}
 % \changes{v1.1}{2026/11/15}{Bases d'objectifs par séquence nommées par le
 %   code entier de la séquence (\texttt{seq@objectifs@S03},
 %   \texttt{seq@objectifs@A1}) et créées à la demande ; borne
@@ -29,7 +32,7 @@
 %<*package>
 \NeedsTeXFormat{LaTeX2e}%
 \ProvidesPackage{seqenseigne-data}%
-[2026/11/15 v1.1 seqenseigne data module]
+[2026/11/19 v1.2 seqenseigne data module]
 
 % On suppose que le core a déjà chargé les paquets génériques
 % --- Bases de données en fichiers
@@ -448,8 +451,9 @@
 % \begin{macrocode}%
 \newcommand{\seqTableauObjectifs}[1][]{%
 	\seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
-	\seq@rule@color{\seq@couleuri@vif}%
 	\begin{center}%
+	% v1.2 : couleur des filets dans le groupe de center (locale au tableau)
+	\seq@rule@color{\seq@couleuri@vif}%
 		\begin{xltabular}{0.9\linewidth}{L{0.36\linewidth} *{3}{L{0.18\linewidth}}}%
 			\toprule[1pt]
 			\multirow{2}{*}{\centering \color{\seq@couleuri@vif}\textbf{Objectif}} &

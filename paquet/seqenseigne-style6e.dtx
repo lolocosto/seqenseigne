@@ -21,7 +21,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}
 %<package>\ProvidesPackage{seqenseigne-style6e}
 %<*package>
-    [2026/11/17 v0.15 seqenseigne : style des documents de 6e]
+    [2026/11/19 v0.16 seqenseigne : style des documents de 6e]
 %</package>
 %
 %<*driver>
@@ -44,6 +44,10 @@
 %
 % \CheckSum{0}
 %
+% \changes{v0.16}{2026/11/19}{Page de garde avec suivi par objectif : la
+%   couleur gris clair des filets du tableau de suivi ne fuit plus dans les
+%   tableaux suivants (\cs{arrayrulecolor} est global avec colortbl ; la
+%   couleur d'avant le tableau est rétablie après lui)}
 % \changes{v0.15}{2026/11/17}{Encarts du livret d'exercices :
 %   environnement \texttt{seqEncartSix} (« Le saviez-vous ? », « Point
 %   histoire », « Les maths dans la vraie vie », « Défi »), un pictogramme et
@@ -729,6 +733,12 @@
 % tableau est composé en boîte : s'il dépasse la place restante sur la page, on
 % resserre (police \cs{footnotesize}, interligne réduit), puis, en dernier recours,
 % on le réduit : il tient toujours sur une page.
+% v0.16 (signalement du 19 novembre) : les filets du tableau sont gris clair
+% (\cs{arrayrulecolor}|{black!30}|) ; avec colortbl, cette commande est globale
+% malgré le groupe de la boîte : sans précaution, tous les tableaux suivants du
+% document avaient des filets gris clair, invisibles sur les cellules colorées.
+% La couleur des filets d'avant le tableau (\cs{CT@arc@}) est sauvée puis
+% rétablie (globalement) après chaque composition.
 %    \begin{macrocode}
 \ExplSyntaxOn
 \tl_new:N \l__seqsix_suivi_lignes_tl
@@ -762,6 +772,14 @@
 \cs_new_protected:Npn \__seqsix_suivi_composer:Nn #1#2
   {
     % #1 : taille de police ; #2 : \arraystretch
+    % v0.16 : avec colortbl, \arrayrulecolor est global (\gdef\CT@arc@) : la
+    % couleur des filets d'avant le tableau est rétablie après lui.
+    \cs_set_eq:NN \__seqsix_suivi_filets_sauves: \CT@arc@
+    \__seqsix_suivi_composer_boite:Nn #1 {#2}
+    \cs_gset_eq:NN \CT@arc@ \__seqsix_suivi_filets_sauves:
+  }
+\cs_new_protected:Npn \__seqsix_suivi_composer_boite:Nn #1#2
+  {
     \hbox_set:Nn \l__seqsix_suivi_box
       {
         #1

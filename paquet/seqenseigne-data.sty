@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}%
 \ProvidesPackage{seqenseigne-data}%
-[2026/11/15 v1.1 seqenseigne data module]
+[2026/11/19 v1.2 seqenseigne data module]
 
 \RequirePackage{datatool}%
 \RequirePackage{xkeyval}%
@@ -185,8 +185,8 @@
 }%
 \newcommand{\seqTableauObjectifs}[1][]{%
 \seq@bases@filter{\seq@code@niveau}{\seq@code@sequence}%
-\seq@rule@color{\seq@couleuri@vif}%
 \begin{center}%
+\seq@rule@color{\seq@couleuri@vif}%
 \begin{xltabular}{0.9\linewidth}{L{0.36\linewidth} *{3}{L{0.18\linewidth}}}%
 \toprule[1pt]
 \multirow{2}{*}{\centering \color{\seq@couleuri@vif}\textbf{Objectif}} &

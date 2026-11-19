@@ -47,7 +47,9 @@ NOM_PAQUET = "seqenseigne-style6e"
 #           carte non étirée, fiche de résumé insécable.
 # v0.59.2 — v0.15 : encarts du livret (seqEncartSix, \seqSolutionDefiSix,
 #           \seqPictoEncartSix).
-VERSION = "v0.15"
+# v0.60.3 — v0.16 : couleur des filets du tableau de suivi locale à ce tableau
+#           (\arrayrulecolor global avec colortbl), sans nouvelle macro.
+VERSION = "v0.16"
 
 ENVIRONNEMENTS = (
     "seqActiviteSix", "seqBande", "seqCalculMental", "seqCarteMentaleSix", "seqCopies",

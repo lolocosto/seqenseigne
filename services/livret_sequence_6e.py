@@ -624,6 +624,13 @@ def noms_niveau(conn, niveau: str) -> tuple[str, str]:
     return nc, nc
 
 
+def niveau_court(conn, niveau: str) -> str:
+    """v0.60.3 — Nom court du niveau en texte simple (« 4e ») pour les titres des
+    documents du modèle Fiches (commentaire de tête du .tex) : plus de « 6e » codé
+    en dur pour un document de 4e ; 6e inchangée."""
+    return noms_niveau(conn, niveau)[0]
+
+
 def macros_niveau(conn, niveau: str) -> list[str]:
     r"""T1 (v0.52.4) — Le modèle « Fiches de résumé par objectif » ne dépend
     pas du niveau : chaque document redéfinit \seqNiveauCourt et
@@ -695,7 +702,8 @@ def generer_livret_sequence_6e(conn: sqlite3.Connection, niveau: str, sequence_c
     inclure_serie_E, remediations)."""
     opts = normaliser_options(options)
     seq = lire_sequence_6e(conn, niveau, sequence_code)
-    return document(conn, niveau, f"Livret de séquence 6e — {sequence_code} — {seq['nom']}",
+    return document(conn, niveau, f"Livret de séquence {niveau_court(conn, niveau)} — {sequence_code} — "
+                    f"{seq['nom']}",
                     corps_livret(seq, opts), opts["version"] == "corrigee",
                     tikz_libraries, tblr_libraries)
 
@@ -722,7 +730,7 @@ def generer_corriges_6e(conn: sqlite3.Connection, niveau: str, sequence: str | N
         corps += corps_livret(seq, opts)
     if not corps:
         raise Livret6eErreur(f"Aucune séquence pour {niveau}.")
-    titre = f"Corrigés enseignant 6e — {sequence or 'annuel'}"
+    titre = f"Corrigés enseignant {niveau_court(conn, niveau)} — {sequence or 'annuel'}"
     return document(conn, niveau, titre, corps, True, tikz_libraries, tblr_libraries)
 
 
@@ -741,6 +749,6 @@ def generer_fiches_cours_6e(conn: sqlite3.Connection, niveau: str,
     if not corps:
         raise Livret6eErreur(f"Aucune fiche de résumé pour {niveau} {sequence or ''}.")
     corps.insert(0, r"\seqVersionComplete")
-    titre = f"Fiches de cours 6e — {sequence or 'annuel'}"
+    titre = f"Fiches de cours {niveau_court(conn, niveau)} — {sequence or 'annuel'}"
     return document(conn, niveau, titre, corps, False, tikz_libraries, tblr_libraries)
 

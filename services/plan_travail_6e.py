@@ -55,7 +55,7 @@ import sqlite3
 from services.codes_sequence import libelle_numero            # v0.57.0 (L1)
 from services import marqueurs_exercices as _mq
 from services.livret_sequence_6e import (
-    Livret6eErreur, document, latex_fiche, lire_sequence_6e, normaliser_options,
+    Livret6eErreur, document, latex_fiche, lire_sequence_6e, niveau_court, normaliser_options,
     numeros_livret, options_livret,
 )
 
@@ -421,6 +421,7 @@ def generer_plan_travail_6e(conn: sqlite3.Connection, niveau: str, sequence_code
                        _duree(conn, niveau, sequence_code), opts)
     if opts["fiches"] == "texte_complet":
         corps.insert(0, r"\seqVersionComplete")
-    return document(conn, niveau, f"Plan de travail 6e — {sequence_code} — {seq['nom']}",
+    return document(conn, niveau, f"Plan de travail {niveau_court(conn, niveau)} — {sequence_code} — "
+                    f"{seq['nom']}",
                     corps, False, tikz_libraries, tblr_libraries,
                     preambule_sup=PREAMBULE_PLAN)

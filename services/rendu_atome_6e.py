@@ -199,15 +199,17 @@ def generer_tex_atome_6e(conn: sqlite3.Connection, exercice_id: str,
     from services.livret_sequence_6e import document
     from services.series_fiches import code_affiche
     etiquette = code_affiche(code, ex["num"]) if ex.get("num") is not None else code
+    from services.livret_sequence_6e import niveau_court
+    nc = niveau_court(conn, ex["niveau"])                    # v0.60.3 (plus de « 6e » en dur)
     if code == "EV":
         corps, _ = _corps_evaluation(conn, ex, opts)
-        titre = f"Exercice d'évaluation 6e — {ex['sequence']} {etiquette} — sujet {opts['sujet']}"
+        titre = f"Exercice d'évaluation {nc} — {ex['sequence']} {etiquette} — sujet {opts['sujet']}"
     elif code == "MR":
         corps = _corps_mise_en_route(conn, ex, opts)
-        titre = f"Exercice de séance 6e — {ex['sequence']} {etiquette}"
+        titre = f"Exercice de séance {nc} — {ex['sequence']} {etiquette}"
     elif code in SERIES_LIVRET:
         corps = _corps_livret(conn, ex)
-        titre = f"Exercice 6e — {ex['sequence']} {etiquette}"
+        titre = f"Exercice {nc} — {ex['sequence']} {etiquette}"
     else:
         raise RenduAtome6eErreur(f"série {code!r} sans rendu 6e")
     return document(conn, ex["niveau"], titre, corps, opts["version"] == "corrigee",
@@ -260,5 +262,5 @@ def generer_tex_fiche_6e_si_gabarit(conn: sqlite3.Connection, fiche_id: str,
     if version == "corrigee":
         corps.append(r"\seqVersionComplete")
     l6._emettre_fiche(corps, fiche)
-    titre = f"Fiche de résumé 6e — {sequence} — {fiche.get('titre') or ''}"
+    titre = f"Fiche de résumé {l6.niveau_court(conn, niveau)} — {sequence} — {fiche.get('titre') or ''}"
     return l6.document(conn, niveau, titre, corps, False, tikz_libraries, tblr_libraries)

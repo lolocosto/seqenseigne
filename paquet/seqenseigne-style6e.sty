@@ -22,7 +22,7 @@
 %% 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{seqenseigne-style6e}
-    [2026/11/17 v0.15 seqenseigne : style des documents de 6e]
+    [2026/11/19 v0.16 seqenseigne : style des documents de 6e]
 \RequirePackage{xcolor}
 \RequirePackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
@@ -129,6 +129,14 @@
 \cs_new_protected:Npn \__seqsix_suivi_composer:Nn #1#2
   {
     % #1 : taille de police ; #2 : \arraystretch
+    % v0.16 : avec colortbl, \arrayrulecolor est global (\gdef\CT@arc@) : la
+    % couleur des filets d'avant le tableau est rétablie après lui.
+    \cs_set_eq:NN \__seqsix_suivi_filets_sauves: \CT@arc@
+    \__seqsix_suivi_composer_boite:Nn #1 {#2}
+    \cs_gset_eq:NN \CT@arc@ \__seqsix_suivi_filets_sauves:
+  }
+\cs_new_protected:Npn \__seqsix_suivi_composer_boite:Nn #1#2
+  {
     \hbox_set:Nn \l__seqsix_suivi_box
       {
         #1

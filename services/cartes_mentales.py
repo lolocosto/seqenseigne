@@ -337,5 +337,6 @@ def generer_cartes_mentales_6e(conn: sqlite3.Connection, niveau: str,
         raise Livret6eErreur(f"Aucune carte mentale pour {niveau} {sequence or ''}"
                              + (f" partie {partie}" if partie else "") + ".")
     corps.insert(0, r"\seqVersionComplete" if version != "eleve" else r"\seqVersionACompleter")
-    titre = f"Cartes mentales 6e — {sequence or 'annuel'}"
+    from services.livret_sequence_6e import niveau_court
+    titre = f"Cartes mentales {niveau_court(conn, niveau)} — {sequence or 'annuel'}"
     return document(conn, niveau, titre, corps, False, tikz_libraries, tblr_libraries)

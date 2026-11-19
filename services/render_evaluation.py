@@ -810,7 +810,8 @@ def generer_tex_evaluation_6e(conn: sqlite3.Connection, evaluation_id: str,
         from services.marqueurs_exercices import calculatrice_evaluation
         opts["calculatrice"] = calculatrice_evaluation(conn, evaluation_id)["valeur"]
     st = structure_evaluation_6e(conn, evaluation_id)
-    titre = f"Évaluation 6e — {st['titre']} — sujet {opts['sujet']}"
+    from services.livret_sequence_6e import niveau_court
+    titre = f"Évaluation {niveau_court(conn, st['niveau'])} — {st['titre']} — sujet {opts['sujet']}"
     # v0.52.9 (D1) — le découpage ne dépend que du marquage des exercices :
     # ni l'option du rendu ni le réglage de l'évaluation ne l'empêchent (ils
     # ne règlent que la mention d'un sujet d'un seul tenant).

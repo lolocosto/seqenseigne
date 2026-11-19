@@ -389,15 +389,22 @@ def _fichiers(conn, rid: str, seq: str, partie: int) -> list[dict]:
     return [dict(r) for r in conn.execute(q, (rid, seq, partie)).fetchall()]
 
 
-def _pdf_compile(data_dir: Path | None, rid: str, nom: str, fige: bool) -> dict | None:
+def _pdf_compile(data_dir: Path | None, rid: str, nom: str, fige: bool,
+                 anciens: list | tuple = ()) -> dict | None:
+    """v0.60.3 (N2) — `anciens` : noms d'avant la v0.60.3 (« …_6e… » d'un document
+    de 4e), cherchés après le nom courant ; `nom` du résultat = nom trouvé (la
+    publication relit le fichier sous ce nom)."""
     if data_dir is None:
         return None
     base = Path(data_dir) / "referentiels" / rid
-    for p in ((base / "_verrouille" / "pdfs" / nom) if fige else None, base / nom,
-              base / "_verrouille" / "pdfs" / nom):
-        if p is not None and p.is_file():
-            return {"nom": nom, "mime": "application/pdf", "taille": p.stat().st_size,
-                    "sha256": sha256_fichier(p)}
+    for n in dict.fromkeys([nom, *anciens]):
+        if not n:
+            continue
+        for p in ((base / "_verrouille" / "pdfs" / n) if fige else None, base / n,
+                  base / "_verrouille" / "pdfs" / n):
+            if p is not None and p.is_file():
+                return {"nom": n, "mime": "application/pdf", "taille": p.stat().st_size,
+                        "sha256": sha256_fichier(p)}
     return None
 
 
@@ -435,7 +442,8 @@ def _documents_compiles(conn, ref: dict, data_dir: Path | None,
                 # v0.52.2 — plusieurs documents d'un type dans une séquence
                 # (évaluations, travaux personnels… de 6e) : leur titre.
                 lib += f" : {c['titre_doc']}"
-            fichier = _pdf_compile(data_dir, ref["id"], c.get("nom_fichier", ""), fige)
+            fichier = _pdf_compile(data_dir, ref["id"], c.get("nom_fichier", ""), fige,
+                                   c.get("noms_anciens") or ())
             if fichier is None:
                 # v0.51.2 — Un document compilé sans PDF n'est pas publié
                 # (signalé dans le rapport).

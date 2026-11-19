@@ -93,7 +93,9 @@ def generer_document_6e(conn: sqlite3.Connection, exercice_id: str,
         raise Document6eErreur(f"version invalide : {version!r}")
     atome = lire_atome(conn, exercice_id)
     code = f"{atome['serie_code']}{int(atome['num'] or 0):02d}"
-    titre = f"{LIBELLES_COURTS[atome['serie_code']]} 6e — {atome['sequence']} {code} — " \
+    from services.livret_sequence_6e import niveau_court
+    titre = f"{LIBELLES_COURTS[atome['serie_code']]} {niveau_court(conn, atome['niveau'])} — " \
+            f"{atome['sequence']} {code} — " \
             f"{atome['titre']}"
     return document(conn, atome["niveau"], titre,
                     corps_document(conn, atome, version == "corrigee"),

@@ -868,7 +868,7 @@ def generer_test_court(conn, niveau: str, sequence: str, options: dict | None = 
     corrigé, marqueur calculatrice ; `exemplaires` = 2 : deux sujets par A4
     (A5), sauf sujet en deux parties."""
     from services import render_evaluation as rev
-    from services.livret_sequence_6e import document
+    from services.livret_sequence_6e import document, niveau_court
     o = options_mer(options)
     s = lire_sequence_mer(conn, niveau, sequence)
     ev_id = choisir_test(s, o["partie"], o["test"])["id"]
@@ -884,7 +884,8 @@ def generer_test_court(conn, niveau: str, sequence: str, options: dict | None = 
     corps = rev.corps_evaluation_6e(conn, st, opts, decoupage)
     if decoupage is None:
         corps = [corps[0], *_copies(corps[1:], o["exemplaires"])]
-    return document(conn, niveau, f"Test court 6e — {st['titre']} — sujet {o['sujet']}",
+    return document(conn, niveau, f"Test court {niveau_court(conn, niveau)} — {st['titre']} — "
+                    f"sujet {o['sujet']}",
                     corps, o["version"] == "corrigee", tikz_libraries, tblr_libraries)
 
 

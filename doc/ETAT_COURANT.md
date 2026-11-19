@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.60.2** (dernière livrée, delta par rapport à 0abb41f « v0.60.1 » ; v0.60.1 déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.60.3** (dernière livrée, delta par rapport à c2e104a « v0.60.2 » ; v0.60.2 déployée et poussée par Laurent). Paquet : `seqenseigne-style6e` v0.16, `seqenseigne-data` v1.2. Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -385,6 +385,17 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   Détails : `doc/redemarrage_v0_60_2.md`.
 - **À faire par Laurent (4e, v0.60.2)** : `--apply` des 12 lots QCM déjà importés, puis
   revalider les 16 tests courts (marche à suivre de `doc/redemarrage_v0_60_2.md`).
+- v0.60.3 livrée (19 novembre) : **filets des tableaux** — la couleur gris clair des
+  filets du tableau « Suivi par objectif » (page de garde des livrets et corrigés du modèle
+  Fiches) fuyait dans tous les tableaux suivants (`\arrayrulecolor` global avec colortbl) :
+  filets invisibles sur les cellules colorées ; `seqenseigne-style6e` v0.16 la rétablit
+  après le suivi, `seqenseigne-data` v1.2 rend locale celle de `\seqTableauObjectifs`.
+  **Noms des documents par niveau** : PDF et libellés du modèle Fiches au niveau réel
+  (`livret_sequence_4e__N11__C2.pdf`), 6e inchangée, ancien nom servi jusqu'à la
+  recompilation qui le supprime. Détails : `doc/redemarrage_v0_60_3.md`.
+- **À faire par Laurent (v0.60.3)** : copier les `.dtx`/`.sty` de `appli\paquet` dans
+  `reference\paquet` avant toute compilation, puis « Tester » le livret de séquence et les
+  corrigés enseignant du référentiel de 4e 2027-2028.
 - **À faire par Laurent (4e)** : ranger les activités de découverte sous « Cours »
   (`outils/migrer_ae_cours.py`, séquences repassées en cours).
 - **À faire par Laurent** : la création des référentiels 2027 en codes A1 (6e :
