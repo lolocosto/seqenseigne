@@ -5,7 +5,7 @@
 
 ## Version déployée
 
-**v0.60.1** (dernière livrée, delta par rapport à 7c47dc1 « v0.60 » ; v0.60.0 déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
+**v0.60.2** (dernière livrée, delta par rapport à 0abb41f « v0.60.1 » ; v0.60.1 déployée et poussée par Laurent). Historique complet : `doc/redemarrage_v0_*.md`.
 
 ## Chantier en cours : référentiel de 6e (v0.52)
 
@@ -374,13 +374,19 @@ remplacé par 10 séquences groupées en 6 thèmes (A à F).
   traces S… ; réimport sûr des évaluations et tests courts (contenu du lot qui fait foi,
   orphelins retirés, section « À repasser en cours » de l'essai à blanc), multisélection
   du module Évaluations, « 1 pt » accordé. Détails : `doc/redemarrage_v0_60_1.md`.
-- **À faire par Laurent (4e, v0.60.1)** : réimporter les 12 lots refaits (tests courts en
-  `tests_courts`, bonus 1 pt) selon la marche à suivre de `doc/redemarrage_v0_60_1.md` ;
-  `"sans_carte": true` sur A3-04, B2-04, C1-05, E1-05.
-- **À faire par Laurent (4e)** : saisir l'ordre des parties de 2027_N11 (atelier
-  Référentiel › Documents à publier) pour obtenir le document de rituels ; ranger les
-  activités de découverte sous « Cours » (`outils/migrer_ae_cours.py`, séquences repassées
-  en cours).
+- v0.60.2 livrée (18 novembre, soir) : **tests courts en QCM** — l'import pose le barème
+  QCM (bonne réponse = points d'une question, 1 pt ; partielle 0 ; mauvaise 0) exigé par la
+  validation (« bareme_qcm_manquant » des 16 tests courts de 4e) ; un nouvel `--apply` des
+  mêmes lots répare les tests courts en cours ; évaluation validée identique au lot : plus
+  d'anomalie ; plus d'avertissement « sur 10 » ni « bonus » pour un test court (décisions 16
+  et 17) ; figure absente du lot mais déjà dans images : signalée, plus une anomalie ;
+  cadre « Rituels d'automatismes et séances d'évaluation » retiré de l'atelier
+  Référentiel (relève des progressions, côté classe ; service et routes gardés).
+  Détails : `doc/redemarrage_v0_60_2.md`.
+- **À faire par Laurent (4e, v0.60.2)** : `--apply` des 12 lots QCM déjà importés, puis
+  revalider les 16 tests courts (marche à suivre de `doc/redemarrage_v0_60_2.md`).
+- **À faire par Laurent (4e)** : ranger les activités de découverte sous « Cours »
+  (`outils/migrer_ae_cours.py`, séquences repassées en cours).
 - **À faire par Laurent** : la création des référentiels 2027 en codes A1 (6e :
   `marche_a_suivre_referentiels_6e_v0_58.md`) ; ne pas déverrouiller les référentiels de
   cette année.

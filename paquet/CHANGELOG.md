@@ -21,6 +21,16 @@ Versionnement : [Semantic Versioning](https://semver.org/lang/fr/)
 
 ---
 
+## Appli v0.60.2 — 2026-11-18 : tests courts en QCM, rituels hors de l'atelier (paquet inchangé)
+
+- Aucun changement du paquet LaTeX. Appli : l'import des lots pose le barème QCM (bonne
+  réponse / partielle / mauvaise) des exercices QCM d'évaluation et de test court, exigé par
+  la validation ; un réimport des mêmes lots répare les tests courts en cours ; évaluation
+  validée identique au lot sans anomalie ; plus d'avertissement « sur 10 » ni « bonus » pour
+  les tests courts ; figure d'origine absente du lot mais déjà dans images : signalée,
+  plus une anomalie ; cadre des rituels retiré de l'atelier Référentiel (service et routes
+  gardés pour les progressions). Détails : `doc/redemarrage_v0_60_2.md`.
+
 ## Appli v0.60.1 — 2026-11-18 : suite de la version 2 du modèle Fiches (paquet inchangé)
 
 - Aucun changement du paquet LaTeX. Appli : mode de mise en route du référentiel principal

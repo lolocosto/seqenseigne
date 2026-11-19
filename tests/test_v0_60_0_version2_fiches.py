@@ -165,7 +165,9 @@ def test_e6_cle_tests_courts_type_et_controles_du_bareme_avertissements_seulemen
     assert types["Contrôle flash --- Produits"] == "test_court"      # clé tests_courts
     assert "== Avertissements" in out
     assert "évaluation « Évaluation --- Produits » : bonus de 2 pts (règle : 1 pt)" in out
-    assert "test court « Contrôle flash --- Produits » : sur 9 (un test court est sur 10)" in out
+    # v0.60.2 (décisions 16-17) : plus de contrôle « sur 10 » ni de bonus pour un
+    # test court (QCM, 1 pt par carte) — test_v0_60_2_tests_courts_qcm.py.
+    assert "test court « Contrôle flash --- Produits »" not in out
     assert "partie 1 : pas de test court" not in out
     # Avertissements : l'import passe quand même (rien de bloquant).
     assert "anomalie" not in out.split("== Avertissements")[1].lower()

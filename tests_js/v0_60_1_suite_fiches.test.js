@@ -113,15 +113,8 @@ describe('D18b — mode de mise en route', () => {
   });
 });
 
-describe('D17b, D-SE — cadre des rituels', () => {
-  it('choix des tests courts et séance d\'évaluation dans le cadre, envoyés au serveur', () => {
-    const src = lire('static/atelier_referentiel.js');
-    expect(src).toMatch(/<select id="atl-ref-rituels-tests"/);
-    expect(src).toMatch(/<option value="non_places">non placés/);
-    expect(src).toMatch(/tests_courts: \(document\.getElementById\('atl-ref-rituels-tests'\)/);
-    expect(src).toMatch(/\/seance\/\$\{n\}\/compiler\?\$\{q\}/);
-  });
-});
+// v0.60.2 — cadre des rituels (D17b, D-SE) retiré de l'atelier Référentiel :
+// voir v0_60_2_rituels_hors_atelier.test.js (routes et service gardés).
 
 describe('C11, C12b — petits manques', () => {
   it('exercice en « toutes les séquences » : la séquence entre dans l\'identifiant', () => {

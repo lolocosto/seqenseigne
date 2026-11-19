@@ -422,14 +422,42 @@ Voir `inventaire_ateliers.md` de la livraison v0.56.3.
     par lot avec cartes mentales et « Sans cache » ; traces S… (externe documenté en S01…,
     exemples « A1 », `/api/admin/cycle/importer` protégé) ; réimport sûr des évaluations
     et tests courts (R5 à R7), multisélection du module Évaluations, accord « pt » ;
+  - **v0.60.2 livrée (18 novembre, soir)** (`doc/redemarrage_v0_60_2.md`) : tests courts en
+    QCM (barème QCM posé par l'import, réimport qui répare, plus de contrôle « sur 10 » ni
+    de bonus pour un test court ; figure d'origine déjà dans images non bloquante) ; cadre des rituels retiré de l'atelier Référentiel (voir
+    « Progressions : rituels et séances d'évaluation » ci-dessous) ;
   - restent : durée affichée sur chaque sujet (aujourd'hui : en-tête de la séance
     d'évaluation et module Évaluations) ; planches de cartes par partie ; tests courts
     retirés du document « Évaluations » quand le document « Tests courts » est publié (à
     trancher) ; saisie du mode de mise en route dans l'éditeur d'un référentiel externe
     (aujourd'hui : création et barre du référentiel choisi) ;
-  - plus tard, avec le chantier des progressions côté classe : progression ordonnée par
-    semaines dans l'appli de classe (le document de rituels pourra la lire au lieu de
-    l'ordre saisi), cartes de la partie au début de séance (rappel Leitner) ;
+  - plus tard, avec le chantier des progressions côté classe : voir ci-dessous.
+
+### Progressions : rituels et séances d'évaluation (décision du 18 novembre, 22 h 39)
+
+Le cadre « Rituels d'automatismes et séances d'évaluation (progression) » de l'atelier
+Référentiel (v0.60.0 à v0.60.1) n'y a pas sa place : il relève des **progressions**, donc
+du **suivi de classe**. Retiré de l'interface en v0.60.2 ; à reconstruire côté classe :
+- **rituels d'automatismes** : cartes nouvelles après la partie où la notion est enseignée,
+  puis **rappels espacés** jusqu'en juin (Leitner à l'oral en mise en route), réactivation
+  des cartes des années précédentes au début des séquences qui en ont besoin
+  (décisions 10 et 17) ;
+- **séances d'évaluation par classe** : jour choisi pour chaque classe d'après son **emploi
+  du temps** (créneaux réels, projection séance → date déjà en place), une séance toutes
+  les deux semaines, 50 min et 5 objectifs au plus, au moins une semaine après la fin de la
+  séquence (règles P2 à P5 de la v0.60.0) ;
+- **tests courts possibles à l'écrit** (QCM, un par partie, sur les cartes de la partie) au
+  lieu de Leitner, « n cartes, 6 séances pour les connaître, puis évaluation » : choix
+  Leitner / écrit et rappels intégrés ou non quand on cale la progression (décision 17) ;
+- l'ordre des parties viendra de la progression ordonnée par semaines de la classe, pas
+  d'une saisie dans l'atelier ; cartes de la partie au début de séance (rappel Leitner).
+
+Gardé pour ce chantier : `services/progression_rituels.py` (calendrier, document .tex,
+séance d'évaluation), routes `/api/progression-rituels/…`, producteur `rituels_progression`
+de l'orchestrateur, données saisies (ordre des parties, paramètres jour d'évaluation,
+cartes du document, tests courts placés ou non, délai). Ancienne interface : fonctions
+`atelRefRituels*` de `static/atelier_referentiel.js` en v0.60.1 (0abb41f).
+
   - archivage de la structure de 2025 de N10 et N12 (même outil) au moment des
     référentiels de 5e et de 3e : outil essayé sur N10 en v0.60.0 (copie de la base) ;
     `outils/objectifs_5e.json` viendra avec le référentiel de 5e.

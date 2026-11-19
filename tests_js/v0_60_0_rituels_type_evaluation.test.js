@@ -4,10 +4,8 @@
 //   - T1/T2 : type (évaluation / test court) et durée de l'évaluation relus et
 //     envoyés à l'enregistrement (sinon perdus), rappel de la durée
 //     automatique ; masqués hors modèle Fiches, comme la calculatrice ;
-//   - P0 : cadre « Rituels d'automatismes » de l'atelier Référentiel, seulement
-//     pour un référentiel principal au modèle Fiches (le document dépend de
-//     l'ordre saisi, pas du catalogue) ; calendrier affiché avec ses
-//     avertissements.
+//   - P0 : (v0.60.2) cadre « Rituels d'automatismes » retiré de l'atelier
+//     Référentiel — voir v0_60_2_rituels_hors_atelier.test.js.
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -62,45 +60,9 @@ describe('type et durée de l\'évaluation (T1, T2)', () => {
   });
 });
 
-describe('cadre Rituels d\'automatismes de l\'atelier Référentiel (P0)', () => {
-  const debut = REF.indexOf('function atelRefRituelsVisible');
-  const fin = REF.indexOf('// v0.59.2 (V5)', debut);
-  const charger = (sel, esc, doc) => new Function('ATL_REF_SELECTION', 'atelRefEscape',
-    'document', REF.slice(debut, fin)
-    + '; return { atelRefRituelsVisible, atelRefRituelsCadreHtml, atelRefRituelsAfficher };'
-  )(sel, esc, doc);
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-
-  it('seulement pour un principal au modèle Fiches', () => {
-    expect(charger({ id: 'R', type_ref: 'principal', gabarit_documents: 'sixieme' }, esc, document)
-      .atelRefRituelsVisible()).toBe(true);
-    expect(charger({ id: 'R', type_ref: 'mer', gabarit_documents: 'sixieme' }, esc, document)
-      .atelRefRituelsVisible()).toBe(false);
-    expect(charger({ id: 'R', gabarit_documents: 'cycle4' }, esc, document)
-      .atelRefRituelsCadreHtml()).toBe('');
-  });
-
-  it('calendrier : semaines utiles, séance d\'évaluation et avertissements', () => {
-    document.body.innerHTML = '<div id="atl-ref-rituels-resultat"></div>';
-    const f = charger({ id: 'R', gabarit_documents: 'sixieme' }, esc, document);
-    f.atelRefRituelsAfficher({
-      avertissements: ['3 carte(s) non validée(s)'],
-      semaines: [
-        { numero: 1, parties: ['A1-P1'], nouvelles: [], reactivation: [{}], rappels: [],
-          evaluations: [], seance_evaluation: false },
-        { numero: 2, parties: [], nouvelles: [], reactivation: [], rappels: [],
-          evaluations: [], seance_evaluation: true },
-        { numero: 4, parties: [], nouvelles: [], reactivation: [], rappels: [{}],
-          evaluations: [{ titre: 'Évaluation --- Produits', duree: 30 }],
-          seance_evaluation: true },
-      ] }, [], null, ['parties non placées : B1-P1']);
-    const h = document.getElementById('atl-ref-rituels-resultat').innerHTML;
-    expect(h).toContain('parties non placées : B1-P1');
-    expect(h).toContain('3 carte(s) non validée(s)');
-    expect(h).toContain('Évaluation --- Produits (30 min)');
-    expect((h.match(/<tr>/g) || []).length).toBe(3);      // en-tête + semaines 1 et 4
-  });
-});
+// v0.60.2 — le cadre « Rituels d'automatismes » (P0) a quitté l'atelier
+// Référentiel (il relève des progressions, côté suivi de classe) : ses tests
+// d'interface sont remplacés par tests_js/v0_60_2_rituels_hors_atelier.test.js.
 
 describe('niveau de création d\'une carte (F3, coordinateur du 18 novembre)', () => {
   const CARTE = readFileSync(join(__dirname, '..', 'static', 'atelier_carte_automatisme.js'), 'utf-8');

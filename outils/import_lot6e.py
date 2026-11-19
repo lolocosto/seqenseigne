@@ -139,7 +139,8 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
        « Test court --- … » : `evaluations.type_evaluation = 'test_court'`
        (décision T1) ; contrôles non bloquants (section « Avertissements ») :
        un test court par partie, test court sur 10 avec bonus de 1, bonus de
-       1 point des évaluations (B10) ;
+       1 point des évaluations (B10) ; v0.60.2 : plus de contrôle « sur 10 » ni
+       de bonus pour un test court (voir 15) ;
      - activités de découverte sous l'objectif « Cours » d'une partie
        (`"code": "A1-01"`, ou `"code": "Cours", "partie": 1`) : rattachées à
        la partie et au « Cours », elles ouvrent la partie dans le livret (B6) ;
@@ -151,6 +152,21 @@ Ce que fait l'outil (cadrage v0.52.0, `doc/redemarrage_v0_52_0.md`) :
      - `--niveau N10` : lots de 5e (`outils/objectifs_5e.json`, F1) ;
      - `niveau_creation` d'une carte **validée** corrigé quand c'est le seul
        champ qui change (avertissement, mtime gardé : rendu inchangé ; F3).
+
+ 15. **v0.60.2 — tests courts en QCM** (`doc/redemarrage_v0_60_2.md`) :
+     - exercice QCM d'une évaluation ou d'un test court (énoncé avec
+       `\begin{seqQcm}`) : barème QCM posé (bonne réponse = points d'une
+       question, soit points de l'exercice / nombre de `\seqQcmQuestion`,
+       1 pt par défaut ; partielle 0 ; mauvaise 0), exigé par la validation
+       d'une évaluation notée ; un réimport sur une évaluation en cours pose
+       les champs manquants (rien d'autre ne change) ;
+     - test court : plus d'avertissement « sur 10 » ni « bonus » (décisions 16
+       et 17) ; total = somme des points de ses questions ; bonus de 1 pt
+       contrôlé pour les évaluations du cycle 4 seulement ;
+     - figure citée par un lot mais absente de son dossier `figures/` : déjà
+       présente dans `images\` de l'appli (image d'origine d'un exercice
+       repris) → signalée « déjà présente dans images (non fournie par le
+       lot) », pas une anomalie ; introuvable partout : anomalie (inchangé).
 
 Idempotence : objectifs repérés par (niveau, séquence, code), exercices et
 documents par (niveau, séquence, série, num), fiches par leur objectif,
@@ -1927,10 +1943,18 @@ def copier_figures(lots: list[dict], noms_par_seq: dict, images: Path, rapport: 
         d = lot["_dossier"] / "figures"
         for nom in sorted(noms_par_seq.get(lot["sequence"], ())):
             src = d / nom
-            if not src.is_file():
-                rapport.anomalie(f"{lot['sequence']} : figure manquante {nom}")
-                continue
             dst = images / nom
+            if not src.is_file():
+                # v0.60.2 — image d'origine d'un exercice repris de la base
+                # (\includegraphics avec son nom de fichier, ex.
+                # N11S04E07_enonce.png) : le lot ne la fournit pas, elle est
+                # déjà dans images\ de l'appli → signalée, pas une anomalie.
+                if dst.is_file():
+                    rapport.figures.append(f"{nom} : déjà présente dans images "
+                                           "(non fournie par le lot)")
+                else:
+                    rapport.anomalie(f"{lot['sequence']} : figure manquante {nom}")
+                continue
             if dst.is_file():
                 if _sha(dst) == _sha(src):
                     rapport.figures.append(f"{nom} : déjà présente")
@@ -2162,19 +2186,17 @@ def type_evaluation_lot(lot: dict, titre: str) -> str:
 def controler_evaluation(seq: str, titre: str, type_ev: str, exos: list[dict],
                          rapport: "Rapport") -> None:
     """v0.60.0 — Règles du barème, avertissements seulement (B10, E6) :
-    bonus de 1 point hors 6e (une évaluation qui a un bonus d'un autre
-    montant est signalée) ; test court sur 10 avec un bonus de 1."""
-    bonus = sum(x["points"] for x in exos if x["bonus"])
-    total = sum(x["points"] for x in exos if not x["bonus"])
-    quoi = f"{seq} {'test court' if type_ev == 'test_court' else 'évaluation'} « {titre} »"
+    bonus de 1 point des évaluations du cycle 4 (une évaluation qui a un
+    bonus d'un autre montant, ou pas de bonus, est signalée).
+
+    v0.60.2 (décisions 16 et 17) — plus aucun contrôle pour un test court :
+    son total est la somme des points de ses questions (QCM, 1 pt par carte
+    d'automatisme), sans bonus ; rien n'est signalé en 6e (bonus de 2 pts)."""
     if type_ev == "test_court":
-        if total != 10:
-            rapport.avertissements.append(f"{quoi} : sur {total:g} (un test court est sur 10)")
-        if bonus != 1:
-            rapport.avertissements.append(f"{quoi} : " + (
-                f"bonus de {bonus:g} pt{'s' if bonus >= 2 else ''}" if bonus else "pas de bonus")
-                + " (règle : 1 pt)")
-    elif bonus != 1 and NIVEAU in NIVEAUX_BONUS_1:
+        return
+    bonus = sum(x["points"] for x in exos if x["bonus"])
+    quoi = f"{seq} évaluation « {titre} »"
+    if bonus != 1 and NIVEAU in NIVEAUX_BONUS_1:
         # B10b, v0.60.1 (D16, décision du 18 novembre) — bonus de 2 pts en 6e
         # (accepté, rien n'est signalé) ; 1 pt sur tout le cycle 4 : une
         # évaluation de 5e, 4e ou 3e dont le bonus n'est pas 1 (bonus absent
@@ -2375,28 +2397,86 @@ def _resume_deux_parties(conn, ev_id: str | None, exos: list[dict],
             f"{max(0, duree_ev - (reglee if reglee is not None else duree))} min)")
 
 
+# v0.60.2 — Barème QCM d'un exercice d'évaluation importé. La validation d'une
+# évaluation notée exige, pour un exercice QCM (`type_format = 'qcm'`, énoncé
+# avec `\begin{seqQcm}`), les trois champs bonne réponse / réponse partielle /
+# mauvaise réponse (services/evaluations.py, `bareme_qcm_manquant`) ; l'import
+# ne posait que `bareme_points`. Bonne réponse = points d'une question (points
+# de l'exercice / nombre de `\seqQcmQuestion`, 1 pt par défaut), partielle et
+# mauvaise = 0. `bareme_points` (total de l'exercice) reste celui du lot : c'est
+# lui que lisent les sujets, le barème par objectif et les totaux.
+RE_QCM_QUESTION = re.compile(r"\\seqQcmQuestion(?![A-Za-z@])")
+PAS_BAREME_QCM = 0.5                     # pas des champs QCM du module Évaluations
+
+
+def bareme_qcm(enonce: str, points: float) -> tuple[tuple[float, float, float], str]:
+    """((bonne réponse, partielle, mauvaise), motif) pour un exercice QCM de
+    `points` points. Motif non vide quand le défaut (1 pt par question) est
+    pris faute de pouvoir répartir les points sur les questions."""
+    n = len(RE_QCM_QUESTION.findall(enonce or ""))
+    if n:
+        q = float(points) / n
+        if abs(q / PAS_BAREME_QCM - round(q / PAS_BAREME_QCM)) < 1e-9 and q > 0:
+            return (q, 0.0, 0.0), ""
+        return (1.0, 0.0, 0.0), f"{points:g} pts pour {n} question(s) : 1 pt par question"
+    return (1.0, 0.0, 0.0), "questions non repérées (\\seqQcmQuestion) : 1 pt par question"
+
+
+def bareme_qcm_exercice(conn, eid: str, points: float) -> "tuple[tuple, str] | tuple[None, str]":
+    """Barème QCM de l'exercice `eid` tel qu'il est en base (type et énoncé
+    lus en base : un exercice validé non réécrit garde les siens) ; (None, '')
+    pour un exercice standard."""
+    cols = _cols(conn, "exercices")
+    r = conn.execute("SELECT * FROM exercices WHERE id = ?", (eid,)).fetchone()
+    if r is None:
+        return None, ""
+    tf = r["type_format"] if "type_format" in cols else _deduire_type_format(r["enonce"] or "")
+    if (tf or "standard") != "qcm":
+        return None, ""
+    return bareme_qcm(r["enonce"] or "", points)
+
+
+CHAMPS_QCM = ("bareme_qcm_ok", "bareme_qcm_partiel", "bareme_qcm_ko")
+
+
 def _poser_exercices_evaluation(conn, ev_id: str, voulus: list[tuple]) -> int:
-    """Exercices importés (id, points) en tête, dans l'ordre du lot ; ceux
-    que l'auteur a ajoutés passent après. Retourne le nombre de changements."""
-    actuels = [(r["exercice_id"], r["bareme_points"]) for r in conn.execute(
-        "SELECT exercice_id, bareme_points FROM evaluation_exercices WHERE evaluation_id = ? "
-        "ORDER BY ordre", (ev_id,))]
-    ids = [i for i, _ in voulus]
+    """Exercices importés (id, points[, barème QCM]) en tête, dans l'ordre du
+    lot ; ceux que l'auteur a ajoutés passent après. Retourne le nombre de
+    changements.
+
+    v0.60.2 — troisième élément facultatif : (bonne, partielle, mauvaise)
+    pour un exercice QCM, écrit dans `bareme_qcm_ok/partiel/ko` et comparé
+    comme les points (un réimport pose les champs manquants) ; None ou
+    absent : ces champs ne sont pas touchés (exercice standard)."""
+    lignes = conn.execute(
+        "SELECT exercice_id, bareme_points, " + ", ".join(CHAMPS_QCM) + " FROM "
+        "evaluation_exercices WHERE evaluation_id = ? ORDER BY ordre", (ev_id,)).fetchall()
+    actuels = [(r["exercice_id"], r["bareme_points"]) for r in lignes]
+    qcm_actuels = {r["exercice_id"]: tuple(r[c] for c in CHAMPS_QCM) for r in lignes}
+    voulus = [tuple(v) + (None,) * (3 - len(v)) for v in voulus]
+    ids = [i for i, _, _ in voulus]
     ordre = ids + [i for i, _ in actuels if i not in ids]
     pts = dict(actuels)
-    pts.update(dict(voulus))
-    if [(i, pts[i]) for i in ordre] == actuels:
+    pts.update({i: p for i, p, _ in voulus})
+    qcm = dict(qcm_actuels)
+    qcm.update({i: tuple(b) for i, _, b in voulus if b is not None})
+    if [(i, pts[i]) for i in ordre] == actuels and all(
+            qcm.get(i) == qcm_actuels.get(i) for i in ordre):
         return 0
     conn.execute("UPDATE evaluation_exercices SET ordre = -ordre - 1000 WHERE evaluation_id = ?",
                  (ev_id,))
     deja = {i for i, _ in actuels}
     for k, i in enumerate(ordre, start=1):
+        b = qcm.get(i) or (None, None, None)
         if i in deja:
-            conn.execute("UPDATE evaluation_exercices SET ordre = ?, bareme_points = ? "
-                         "WHERE evaluation_id = ? AND exercice_id = ?", (k, pts[i], ev_id, i))
+            conn.execute("UPDATE evaluation_exercices SET ordre = ?, bareme_points = ?, "
+                         + ", ".join(c + " = ?" for c in CHAMPS_QCM)
+                         + " WHERE evaluation_id = ? AND exercice_id = ?",
+                         (k, pts[i], *b, ev_id, i))
         else:
             conn.execute("INSERT INTO evaluation_exercices (evaluation_id, exercice_id, ordre, "
-                         "bareme_points) VALUES (?,?,?,?)", (ev_id, i, k, pts[i]))
+                         "bareme_points, " + ", ".join(CHAMPS_QCM) + ") VALUES (?,?,?,?,?,?,?)",
+                         (ev_id, i, k, pts[i], *b))
     conn.execute("UPDATE evaluations SET mtime = CURRENT_TIMESTAMP WHERE id = ?", (ev_id,))
     return 1
 
@@ -2521,13 +2601,28 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
                              "titre = ? ORDER BY numero LIMIT 1", (NIVEAU, titre)).fetchone()
         if avant is not None and avant["etat_code"] == "valide":
             # R4 — rien n'est touché : ni l'évaluation, ni ses exercices EV.
-            _evaluation(conn, titre, rapport, seq)
+            # v0.60.2 — évaluation validée déjà identique au lot : pas
+            # d'anomalie (un réimport des mêmes lots ne signale que ce qui
+            # diffère) ; ses liens EV gardent leur rang parmi ceux du lot
+            # (sinon les exercices des évaluations suivantes passaient devant).
+            meme, actuels = evaluation_comme_le_lot(conn, lot, titre, exos, avant["id"])
+            if meme:
+                rapport.documents.append(f"{seq} évaluation « {titre} » : validée, identique "
+                                         "au lot — non modifiée")
+            else:
+                _evaluation(conn, titre, rapport, seq)
+                rapport.documents.append(f"{seq} évaluation « {titre} » : validée, non "
+                                         "modifiée — exercices EV non touchés")
+            for a in actuels:
+                pris.add(a["id"])
+                for (oid,) in conn.execute("SELECT objectif_id FROM objectif_exos WHERE "
+                                           "exercice_id = ? AND serie = 'EV'", (a["id"],)):
+                    liens.setdefault((oid, "EV"), []).append(a["id"])
             num += len(exos)
-            rapport.documents.append(f"{seq} évaluation « {titre} » : validée, non modifiée — "
-                                     "exercices EV non touchés")
             continue
         ev_avant = avant["id"] if avant is not None else None
         voulus, etats, nums = [], {}, []
+        n_qcm = 0                                                    # v0.60.2
         # v0.52.7 — marqueurs de l'entrée d'évaluation (sujet A, sinon B),
         # appliqués à tous ses exercices EV ; hors comparaison R2.
         entree = paire.get("A") or paire.get("B") or {}
@@ -2570,7 +2665,13 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
                              "AND objectif_id IS NOT ?", (eid, voulu_obj))
             if voulu_obj is not None:
                 liens.setdefault((voulu_obj, "EV"), []).append(eid)
-            voulus.append((eid, x["points"]))
+            bq, motif_qcm = bareme_qcm_exercice(conn, eid, x["points"])   # v0.60.2
+            if bq is not None:
+                n_qcm += 1
+                if motif_qcm:
+                    rapport.avertissements.append(
+                        f"{seq} évaluation « {titre} », exercice {i + 1} (QCM) : {motif_qcm}")
+            voulus.append((eid, x["points"], bq))
             rapport.journal["import"].append({
                 "cle": f"{NIVEAU}/{seq}/EV{n:02d}", "id": eid, "evaluation": titre,
                 "objectif": None if x["bonus"] else x["objectif"],
@@ -2581,7 +2682,7 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             # v0.60.1 (R6) — le lot fait foi pour une évaluation en cours : ses
             # exercices EV de la séquence qui ne sont plus dans le lot la
             # quittent (retirés ensuite s'ils deviennent orphelins).
-            change = _retirer_ev_absents(conn, ev_id, seq, [i for i, _ in voulus], titre,
+            change = _retirer_ev_absents(conn, ev_id, seq, [v[0] for v in voulus], titre,
                                          retires_ev, rapport)
             change += _retirer_objectifs_absents(
                 conn, ev_id, {objectifs_ids[x["objectif"]] for x in exos if not x["bonus"]},
@@ -2609,6 +2710,8 @@ def importer_evaluations(conn, lot: dict, objectifs_ids: dict, rapport: Rapport)
             f"({plage} : "
             + ", ".join(f"{e} {n}" for e, n in etats.items())
             + f"), total {total:g}" + (f" + bonus {bonus:g}" if bonus else "")
+            + (f" — QCM : {n_qcm} exercice(s), barème bonne/partielle/mauvaise posé"
+               if n_qcm else "")
             + (f" — {_resume_deux_parties(conn, ev_id, exos, marques_exos)}" if coupe
                else f" — {mq.LIBELLES_CALCULATRICE[marques_ev['calculatrice']]}"
                if marques_ev["calculatrice"] else ""))
@@ -2667,6 +2770,44 @@ def _retirer_objectifs_absents(conn, ev_id: str, voulus: set, titre: str, seq: s
 
 # ── v0.60.1 (R7) — Réimport : ce qu'il faut repasser en cours ───────────────
 
+def evaluation_comme_le_lot(conn, lot: dict, titre: str, exos: list[dict], ev_id: str
+                            ) -> "tuple[bool, list]":
+    """(identique, exercices EV actuels) : l'évaluation `ev_id` a-t-elle déjà
+    exactement le contenu du lot (exercices EV de la séquence dans l'ordre,
+    contenu, points, type d'évaluation, objectifs évalués ; v0.60.2 : barème
+    QCM attendu d'un exercice QCM) ? Utilisé par le diagnostic R7 et par R4."""
+    seq = lot["sequence"]
+    actuels = conn.execute(
+        "SELECT x.*, ee.bareme_points, ee.bareme_qcm_ok, ee.bareme_qcm_partiel, "
+        "ee.bareme_qcm_ko FROM evaluation_exercices ee JOIN exercices x ON "
+        "x.id = ee.exercice_id WHERE ee.evaluation_id = ? AND x.niveau = ? AND "
+        "x.sequence = ? AND x.serie_code = 'EV' ORDER BY ee.ordre",
+        (ev_id, NIVEAU, seq)).fetchall()
+    voulus = [(_vals_ev(x), float(x["points"])) for x in exos]
+
+    def meme_qcm(a, p) -> bool:
+        if (a["type_format"] if "type_format" in a.keys() else "standard") != "qcm":
+            return True
+        return tuple(a[c] for c in CHAMPS_QCM) == bareme_qcm(a["enonce"] or "", p)[0]
+    meme = len(actuels) == len(voulus) and all(
+        _meme_contenu(a, v) and float(a["bareme_points"] or 0) == p and meme_qcm(a, p)
+        for a, (v, p) in zip(actuels, voulus))
+    from services import evaluations_v2 as ev2
+    if ev2.colonnes_presentes(conn) and ev2.type_evaluation(conn, ev_id) \
+            != type_evaluation_lot(lot, titre):
+        meme = False
+    # Objectifs évalués : ceux du barème du lot (R6). Codes comparés sans
+    # le préfixe de séquence (« A1-02 » dans le lot, « 02 » en base).
+    def court(code) -> str:
+        return str(code or "").rsplit("-", 1)[-1]
+    evalues = {court(r[0]) for r in conn.execute(
+        "SELECT o.code FROM evaluation_objectifs eo JOIN objectifs o ON o.id = eo.objectif_id "
+        "WHERE eo.evaluation_id = ?", (ev_id,))}
+    if evalues != {court(x["objectif"]) for x in exos if not x["bonus"]}:
+        meme = False
+    return meme, actuels
+
+
 def diagnostiquer_reimport(conn, lot: dict, rapport: Rapport) -> None:
     """Avant l'import d'un lot (essai à blanc compris) : séquence validée,
     évaluations validées dont le lot change le contenu, exercices EV validés
@@ -2686,19 +2827,7 @@ def diagnostiquer_reimport(conn, lot: dict, rapport: Rapport) -> None:
                           "titre = ? ORDER BY numero LIMIT 1", (NIVEAU, titre)).fetchone()
         if ev is None:
             continue
-        actuels = conn.execute(
-            "SELECT x.*, ee.bareme_points FROM evaluation_exercices ee JOIN exercices x ON "
-            "x.id = ee.exercice_id WHERE ee.evaluation_id = ? AND x.niveau = ? AND "
-            "x.sequence = ? AND x.serie_code = 'EV' ORDER BY ee.ordre",
-            (ev["id"], NIVEAU, seq)).fetchall()
-        voulus = [(_vals_ev(x), float(x["points"])) for x in exos]
-        meme = len(actuels) == len(voulus) and all(
-            _meme_contenu(a, v) and float(a["bareme_points"] or 0) == p
-            for a, (v, p) in zip(actuels, voulus))
-        type_ev = type_evaluation_lot(lot, titre)
-        from services import evaluations_v2 as ev2
-        if ev2.colonnes_presentes(conn) and ev2.type_evaluation(conn, ev["id"]) != type_ev:
-            meme = False
+        meme, actuels = evaluation_comme_le_lot(conn, lot, titre, exos, ev["id"])
         if meme:
             continue
         if ev["etat_code"] == "valide":

@@ -432,8 +432,9 @@ def _types_cartes() -> tuple:
 TYPE_TESTS_COURTS = TypeDocument(
     cle="tests_courts_6e",
     libelle="Tests courts",
-    description=("Un par partie (sur 10, sur les cartes d'automatisme de la partie) : "
-                 "sujet A ou B ; la version corrigée liste les cartes évaluées."),
+    # v0.60.2 (décision 17) — QCM, 1 pt par carte : plus « sur 10 ».
+    description=("Un par partie (QCM sur les cartes d'automatisme de la partie, 1 pt "
+                 "par carte) : sujet A ou B ; la version corrigée liste les cartes évaluées."),
     options={"actif": False, "sujet": "A", "version": "eleve"},
     valeurs={"sujet": SUJETS_6E, "version": VERSIONS_6E},
     generateur="services.documents_evaluation_v2.generer_test_court",

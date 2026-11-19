@@ -16,7 +16,8 @@ Décisions :
   - **T2 Durée d'une évaluation** (E7) — colonne `evaluations.duree`
     (minutes, NULL = automatique) ; automatique = 10 min × objectifs évalués
     (bonus exclu) pour une évaluation, 10 min pour un test court (sur les
-    cartes de la partie, /10 + bonus 1 : à confirmer). Une séance d'évaluation
+    cartes de la partie ; v0.60.2 : QCM, 1 pt par carte, total = nombre de
+    questions, sans bonus). Une séance d'évaluation
     dure 50 min utiles et réunit au plus 5 objectifs.
   - **T3 Partie sans calculatrice** (correctif B8) — la partie 1 d'un sujet en
     deux parties dure la part de la durée de l'évaluation qui revient à ses
